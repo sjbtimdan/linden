@@ -1,0 +1,27 @@
+CREATE TABLE CategoryEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL
+);
+
+insert:
+INSERT INTO CategoryEntity (name, type)
+VALUES (?, ?);
+
+lastInsertId:
+SELECT last_insert_rowid();
+
+selectById:
+SELECT *
+FROM CategoryEntity
+WHERE id = ?;
+
+update:
+UPDATE CategoryEntity
+SET name = ?, type = ?
+WHERE id = ?;
+
+selectAll:
+SELECT *
+FROM CategoryEntity
+ORDER BY name ASC;
