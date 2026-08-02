@@ -9,10 +9,6 @@ plugins {
 }
 
 kotlin {
-    js {
-        browser()
-    }
-
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
@@ -28,9 +24,6 @@ kotlin {
         }
         androidResources {
             enable = true
-        }
-        withHostTest {
-            isIncludeAndroidResources = true
         }
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
@@ -56,9 +49,6 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        jsMain.dependencies {
-            implementation(libs.wrappers.browser)
         }
     }
 }

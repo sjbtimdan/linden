@@ -1,39 +1,21 @@
-This is a Kotlin Multiplatform project targeting Android, Web.
+# Linden
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications. It contains
-  several subfolders:
-    - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-    - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name. For
-      example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-      the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls. Similarly, if you want
-      to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-      folder is the appropriate location.
+An expense tracker app built with Kotlin Multiplatform and Compose Multiplatform, targeting Android and Web (Wasm).
 
-### Running the apps
+## Project Structure
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and
-options:
+- [shared](./shared/src) — shared UI and business logic
+  - [commonMain](./shared/src/commonMain/kotlin) — code common to all targets
+  - [androidMain](./shared/src/androidMain/kotlin) — Android-specific code
+  - [wasmJsMain](./shared/src/wasmJsMain/kotlin) — Web (Wasm)-specific code
+- [androidApp](./androidApp/src) — Android application entry point
+- [webApp](./webApp/src) — Web (Wasm) application entry point
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- Web app:
-    - Wasm target (faster, modern browsers): `./gradlew :webApp:wasmJsBrowserDevelopmentRun`
-    - JS target (slower, supports older browsers): `./gradlew :webApp:jsBrowserDevelopmentRun`
+## Running the App
 
-### Running tests
+- Android: `./gradlew :androidApp:assembleDebug`
+- Web: `./gradlew :webApp:wasmJsBrowserDevelopmentRun`
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+## Running Tests
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- Web tests:
-    - Wasm target: `./gradlew :shared:wasmJsTest`
-    - JS target: `./gradlew :shared:jsTest`
-
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
-
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack
-channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web). If you face any issues, please report them
-on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+- Web: `./gradlew :shared:wasmJsTest`
