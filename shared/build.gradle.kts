@@ -16,8 +16,14 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        browser()
+        browser {
+            testTask {
+                failOnNoDiscoveredTests.set(false)
+            }
+        }
     }
+
+    jvm()
 
     android {
         namespace = "org.sjbtimdan.linden.shared"
@@ -53,12 +59,25 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotest.framework.engine)
+            implementation(libs.kotest.assertions.core)
+
+        }
+        jvmMain.dependencies {
+            implementation(libs.sqldelight.jdbc.driver)
+        }
+        jvmTest.dependencies {
+            implementation(libs.sqldelight.jdbc.driver)
+            implementation(libs.kotest.runner.junit5)
         }
         wasmJsMain.dependencies {
             implementation(libs.sqldelight.web.worker.driver)
+            implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
+            implementation(npm("sql.js", "1.8.0"))
         }
     }
 }
@@ -74,4 +93,8 @@ sqldelight {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }

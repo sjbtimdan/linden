@@ -1,28 +1,22 @@
 package org.sjbtimdan.linden
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.ui.settings.SettingsScreen
+import org.sjbtimdan.linden.ui.settings.SettingsViewModel
+import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 @Composable
-fun App() {
-    MaterialTheme {
-        Box(
-            modifier = Modifier
-                .safeContentPadding()
-                .fillMaxSize(),
-            contentAlignment = Alignment.TopStart,
-        ) {
-            Text(
-                text = "Settings",
-                fontSize = 28.sp,
-            )
-        }
+fun App(database: LindenDatabase) {
+    val settingsDao = remember { SettingsDao(database.settingsQueries) }
+    val viewModel = remember { SettingsViewModel(settingsDao) }
+    val themeMode by viewModel.themeMode.collectAsState()
+
+    LindenTheme(themeMode = themeMode) {
+        SettingsScreen(viewModel)
     }
 }
