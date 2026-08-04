@@ -65,7 +65,7 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
-
+            implementation(libs.kotlinx.coroutines.test)
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
