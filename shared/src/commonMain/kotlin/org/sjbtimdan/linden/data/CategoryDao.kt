@@ -17,7 +17,7 @@ class CategoryDao(private val queries: CategoryQueries) {
     }
 
     suspend fun update(category: Category): Unit {
-        queries.update(category.name, category.type.name, category.id!!)
+        queries.update(category.name, category.type.name, category.id)
     }
 
     suspend fun getAll(): List<Category> {
