@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.kotest.framework.engine)
             implementation(libs.kotest.assertions.core)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.compose.ui.test)
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
@@ -64,6 +65,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
             implementation(libs.kotest.runner.junit5)
+            implementation(compose.desktop.currentOs)
         }
 
     }
