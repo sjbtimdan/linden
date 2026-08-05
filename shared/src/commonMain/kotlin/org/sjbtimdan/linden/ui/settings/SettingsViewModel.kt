@@ -14,15 +14,19 @@ class SettingsViewModel(
 ) : ViewModel() {
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+    private var userSelected = false
 
     init {
         viewModelScope.launch {
             val saved = settingsDao.getTheme()
-            _themeMode.value = saved
+            if (!userSelected) {
+                _themeMode.value = saved
+            }
         }
     }
 
     fun setThemeMode(mode: ThemeMode) {
+        userSelected = true
         _themeMode.value = mode
         viewModelScope.launch {
             settingsDao.setTheme(mode)
