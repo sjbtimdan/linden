@@ -5,6 +5,8 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 
 actual class DatabaseDriverFactory {
     actual fun createDriver(): SqlDriver {
-        return JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        val dir = java.io.File(System.getProperty("user.home"), ".linden")
+        dir.mkdirs()
+        return JdbcSqliteDriver("jdbc:sqlite:${dir.absolutePath}/linden.db")
     }
 }

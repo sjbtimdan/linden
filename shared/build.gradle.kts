@@ -59,6 +59,7 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
+            implementation(libs.kotlinx.coroutines.swing)
         }
         jvmTest.dependencies {
             implementation(libs.sqldelight.jdbc.driver)

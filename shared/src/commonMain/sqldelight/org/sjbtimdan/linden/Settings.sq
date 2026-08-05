@@ -1,4 +1,4 @@
-CREATE TABLE AppSettingsEntity (
+CREATE TABLE IF NOT EXISTS AppSettingsEntity (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );

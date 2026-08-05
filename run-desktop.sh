@@ -1,0 +1,2 @@
+ ./gradlew :desktopApp:run
+
