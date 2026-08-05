@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -12,15 +11,6 @@ plugins {
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser {
-            testTask {
-                failOnNoDiscoveredTests.set(false)
-            }
-        }
     }
 
     jvm()
@@ -74,11 +64,7 @@ kotlin {
             implementation(libs.sqldelight.jdbc.driver)
             implementation(libs.kotest.runner.junit5)
         }
-        wasmJsMain.dependencies {
-            implementation(libs.sqldelight.web.worker.driver)
-            implementation(npm("@cashapp/sqldelight-sqljs-worker", libs.versions.sqldelight.get()))
-            implementation(npm("sql.js", "1.8.0"))
-        }
+
     }
 }
 
