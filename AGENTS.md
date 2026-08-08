@@ -49,3 +49,5 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 - Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform. DAO tests use an in-memory driver via
   `expect fun createTestSqlDriver()` (commonTest) with an actual in `jvmTest`. Compose UI tests live in `commonTest`.
 - Configuration cache + build cache enabled (`gradle.properties`).
+- Comment minimally: only add comments for obscure code which should be very rare.
+- After each piece of work is done, scan through for omitted tests.

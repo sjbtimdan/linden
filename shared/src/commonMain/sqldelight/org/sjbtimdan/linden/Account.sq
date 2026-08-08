@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS AccountEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    currency TEXT NOT NULL
+);
+
+insert:
+INSERT INTO AccountEntity (name, currency)
+VALUES (?, ?);
+
+update:
+UPDATE AccountEntity
+SET name = ?, currency = ?
+WHERE id = ?;
+
+selectAll:
+SELECT *
+FROM AccountEntity
+ORDER BY name ASC;

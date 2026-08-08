@@ -6,10 +6,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.ui.accounts.AccountListScreen
+import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
@@ -19,6 +22,7 @@ import org.sjbtimdan.linden.ui.theme.LindenTheme
 sealed class Screen {
     data object Settings : Screen()
     data object CategoryList : Screen()
+    data object AccountList : Screen()
 }
 
 @Composable
@@ -29,16 +33,24 @@ fun App(database: LindenDatabase, initialTheme: ThemeMode) {
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val categoryDao = remember { CategoryDao(database.categoryQueries) }
     val categoryListViewModel = remember { CategoryListViewModel(categoryDao) }
+    val accountDao = remember { AccountDao(database.accountQueries) }
+    val accountListViewModel = remember { AccountListViewModel(accountDao) }
 
     LindenTheme(themeMode = themeMode) {
         when (currentScreen) {
             Screen.Settings -> SettingsScreen(
                 viewModel = settingsViewModel,
                 onNavigateToCategories = { currentScreen = Screen.CategoryList },
+                onNavigateToAccounts = { currentScreen = Screen.AccountList },
             )
 
             Screen.CategoryList -> CategoryListScreen(
                 viewModel = categoryListViewModel,
+                onNavigateBack = { currentScreen = Screen.Settings },
+            )
+
+            Screen.AccountList -> AccountListScreen(
+                viewModel = accountListViewModel,
                 onNavigateBack = { currentScreen = Screen.Settings },
             )
         }

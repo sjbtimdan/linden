@@ -23,8 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.ThemeMode
@@ -33,6 +31,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateToCategories: () -> Unit = {},
+    onNavigateToAccounts: () -> Unit = {},
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
 
@@ -91,6 +90,28 @@ fun SettingsScreen(
         ) {
             Text(
                 text = "Categories",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = ">",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    role = Role.Button,
+                    onClick = onNavigateToAccounts,
+                )
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Accounts",
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
