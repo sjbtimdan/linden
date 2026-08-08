@@ -33,12 +33,11 @@ class CategoryListViewModelTest : StringSpec({
         }
     }
 
-    "loadCategories refreshes from database" {
+    "direct database writes reflect in the list" {
         withViewModel { dao, viewModel ->
             viewModel.categories.value.shouldBeEmpty()
 
             dao.create("Salary", CategoryType.Income)
-            viewModel.loadCategories()
 
             viewModel.categories.value.shouldHaveSize(1)
             viewModel.categories.value.first().name shouldBe "Salary"

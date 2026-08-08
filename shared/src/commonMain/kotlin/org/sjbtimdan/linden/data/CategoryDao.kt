@@ -1,6 +1,9 @@
 package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.coroutines.asFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.sjbtimdan.linden.CategoryEntity
 import org.sjbtimdan.linden.CategoryQueries
 import org.sjbtimdan.linden.model.Category
@@ -15,8 +18,10 @@ class CategoryDao(private val queries: CategoryQueries) {
         queries.update(category.name, category.type.name, category.id)
     }
 
-    suspend fun getAll(): List<Category> {
-        return queries.selectAll().awaitAsList().map { it.toCategory() }
+    fun getAll(): Flow<List<Category>> {
+        return queries.selectAll()
+            .asFlow()
+            .map { it.awaitAsList().map { row -> row.toCategory() } }
     }
 
     private fun CategoryEntity.toCategory() = Category(
