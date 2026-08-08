@@ -17,7 +17,7 @@ class SettingsScreenTest : StringSpec({
         runComposeUiTest {
             val database = lindenDatabase()
             val dao = SettingsDao(database.settingsQueries)
-            val viewModel = SettingsViewModel(dao)
+            val viewModel = SettingsViewModel(dao, initialTheme = ThemeMode.SYSTEM)
 
             setContent { SettingsScreen(viewModel) }
             onNodeWithText("System").assertIsSelected()

@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
@@ -21,10 +22,10 @@ sealed class Screen {
 }
 
 @Composable
-fun App(database: LindenDatabase) {
+fun App(database: LindenDatabase, initialTheme: ThemeMode) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Settings) }
     val settingsDao = remember { SettingsDao(database.settingsQueries) }
-    val settingsViewModel = remember { SettingsViewModel(settingsDao) }
+    val settingsViewModel = remember { SettingsViewModel(settingsDao, initialTheme) }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val categoryDao = remember { CategoryDao(database.categoryQueries) }
     val categoryListViewModel = remember { CategoryListViewModel(categoryDao) }

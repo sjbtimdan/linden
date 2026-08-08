@@ -5,6 +5,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -13,10 +14,10 @@ import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun onTestMain(block: () -> Unit) {
+fun onTestMain(block: suspend () -> Unit) {
     Dispatchers.setMain(UnconfinedTestDispatcher())
     try {
-        block()
+        runBlocking { block() }
     } finally {
         Dispatchers.resetMain()
     }

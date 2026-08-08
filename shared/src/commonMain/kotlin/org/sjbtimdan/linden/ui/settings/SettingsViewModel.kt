@@ -10,23 +10,13 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.ThemeMode
 
 class SettingsViewModel(
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
+    initialTheme: ThemeMode,
 ) : ViewModel() {
-    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
-    private var userSelected = false
-
-    init {
-        viewModelScope.launch {
-            val saved = settingsDao.getTheme()
-            if (!userSelected) {
-                _themeMode.value = saved
-            }
-        }
-    }
 
     fun setThemeMode(mode: ThemeMode) {
-        userSelected = true
         _themeMode.value = mode
         viewModelScope.launch {
             settingsDao.setTheme(mode)
