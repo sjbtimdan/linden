@@ -1,21 +1,21 @@
 # Linden
 
-An expense tracker app built with Kotlin Multiplatform and Compose Multiplatform, targeting Android and Web (Wasm).
+An expense tracker app built with Kotlin Multiplatform and Compose Multiplatform, targeting Android and Desktop (JVM).
 
 ## Project Structure
 
 - [shared](./shared/src) — shared UI and business logic
   - [commonMain](./shared/src/commonMain/kotlin) — code common to all targets
   - [androidMain](./shared/src/androidMain/kotlin) — Android-specific code
-  - [wasmJsMain](./shared/src/wasmJsMain/kotlin) — Web (Wasm)-specific code
+  - [jvmMain](./shared/src/jvmMain/kotlin) — Desktop (JVM)-specific code
 - [androidApp](./androidApp/src) — Android application entry point
-- [webApp](./webApp/src) — Web (Wasm) application entry point
+- [desktopApp](./desktopApp/src) — Desktop (JVM) application entry point
 
 ## Running the App
 
 - Android: `./gradlew :androidApp:assembleDebug`
-- Web: `./gradlew :webApp:wasmJsBrowserDevelopmentRun`
+- Desktop: `./gradlew :desktopApp:run`
 
 ## Running Tests
 
-- Web: `./gradlew :shared:wasmJsTest`
+- `./gradlew :shared:jvmTest`
