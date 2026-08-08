@@ -8,11 +8,6 @@ enum class EntryType {
 
 sealed interface Entry {
     val type: EntryType
-        get() = when (this) {
-            is ExpenseEntry -> EntryType.Expense
-            is IncomeEntry -> EntryType.Income
-            is TransferEntry -> EntryType.Transfer
-        }
     val id: Long
     val category: Category?
     val description: String?
@@ -28,7 +23,9 @@ data class ExpenseEntry(
     override val account: Account,
     override val amount: Long,
     override val currency: Currency,
-) : Entry
+) : Entry {
+    override val type: EntryType = EntryType.Expense
+}
 
 data class IncomeEntry(
     override val id: Long,
@@ -37,7 +34,9 @@ data class IncomeEntry(
     override val account: Account,
     override val amount: Long,
     override val currency: Currency,
-) : Entry
+) : Entry {
+    override val type: EntryType = EntryType.Income
+}
 
 data class TransferEntry(
     override val id: Long,
@@ -49,4 +48,6 @@ data class TransferEntry(
     val toAccount: Account,
     val toAmount: Long,
     val toCurrency: Currency,
-) : Entry
+) : Entry {
+    override val type: EntryType = EntryType.Transfer
+}
