@@ -39,16 +39,19 @@ import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 
+private data class CategoryDialogState(
+    val category: Category?,
+    val name: String,
+    val type: CategoryType,
+)
+
 @Composable
 fun CategoryListScreen(
     viewModel: CategoryListViewModel,
     onNavigateBack: () -> Unit,
 ) {
     val categories by viewModel.categories.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
-    var editingCategory by remember { mutableStateOf<Category?>(null) }
-    var dialogName by remember { mutableStateOf("") }
-    var dialogType by remember { mutableStateOf(CategoryType.Expense) }
+    var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
 
     Column(
         modifier = Modifier
@@ -75,10 +78,7 @@ fun CategoryListScreen(
 
         FilledTonalButton(
             onClick = {
-                editingCategory = null
-                dialogName = ""
-                dialogType = CategoryType.Expense
-                showDialog = true
+                dialogState = CategoryDialogState(null, "", CategoryType.Expense)
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -109,10 +109,11 @@ fun CategoryListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(role = Role.Button) {
-                                editingCategory = category
-                                dialogName = category.name
-                                dialogType = category.type
-                                showDialog = true
+                                dialogState = CategoryDialogState(
+                                    category = category,
+                                    name = category.name,
+                                    type = category.type,
+                                )
                             }
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -141,28 +142,29 @@ fun CategoryListScreen(
         }
     }
 
-    if (showDialog) {
+    dialogState?.let { state ->
+        val isEditing = state.category != null
         CategoryDialog(
-            name = dialogName,
-            type = dialogType,
-            isEditing = editingCategory != null,
-            onNameChange = { dialogName = it },
-            onTypeChange = { dialogType = it },
+            name = state.name,
+            type = state.type,
+            isEditing = isEditing,
+            onNameChange = { dialogState = state.copy(name = it) },
+            onTypeChange = { dialogState = state.copy(type = it) },
             onSave = {
-                val name = dialogName.trim()
+                val name = state.name.trim()
                 if (name.isNotEmpty()) {
-                    val existing = editingCategory
+                    val existing = state.category
                     if (existing != null) {
                         viewModel.updateCategory(
-                            existing.copy(name = name, type = dialogType)
+                            existing.copy(name = name, type = state.type)
                         )
                     } else {
-                        viewModel.createCategory(name, dialogType)
+                        viewModel.createCategory(name, state.type)
                     }
-                    showDialog = false
+                    dialogState = null
                 }
             },
-            onDismiss = { showDialog = false },
+            onDismiss = { dialogState = null },
         )
     }
 }
