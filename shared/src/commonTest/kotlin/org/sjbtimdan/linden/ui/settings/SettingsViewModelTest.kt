@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
 
@@ -12,13 +13,35 @@ class SettingsViewModelTest : StringSpec({
         onTestMain {
             val database = lindenDatabase()
             val dao = SettingsDao(database.settingsQueries)
-            val viewModel = SettingsViewModel(dao, initialTheme = ThemeMode.SYSTEM)
+            val viewModel = SettingsViewModel(
+                dao,
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
 
             viewModel.themeMode.value shouldBe ThemeMode.SYSTEM
 
             viewModel.setThemeMode(ThemeMode.LIGHT)
 
             dao.getTheme() shouldBe ThemeMode.LIGHT
+        }
+    }
+
+    "setDefaultCurrency(EUR) updates the database" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = SettingsDao(database.settingsQueries)
+            val viewModel = SettingsViewModel(
+                dao,
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.defaultCurrency.value shouldBe Currency.CHF
+
+            viewModel.setDefaultCurrency(Currency.EUR)
+
+            dao.getDefaultCurrency() shouldBe Currency.EUR
         }
     }
 })

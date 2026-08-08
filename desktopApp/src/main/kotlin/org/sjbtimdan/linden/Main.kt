@@ -16,7 +16,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "Linden",
         ) {
-            App(dependencies.database, dependencies.initialTheme)
+            App(dependencies.database, dependencies.initialTheme, dependencies.initialCurrency)
         }
     }
 }

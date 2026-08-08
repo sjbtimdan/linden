@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
 
@@ -19,6 +20,17 @@ class SettingsScreenTest : StringSpec({
             onNodeWithText("Light").assertIsSelected()
 
             viewModel.themeMode.value shouldBe ThemeMode.LIGHT
+        }
+    }
+
+    "clicking EUR chip sets default currency" {
+        withSettingsViewModel(initialCurrency = Currency.CHF) { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("CHF").assertIsSelected()
+            onNodeWithText("EUR").performClick()
+            onNodeWithText("EUR").assertIsSelected()
+
+            viewModel.defaultCurrency.value shouldBe Currency.EUR
         }
     }
 

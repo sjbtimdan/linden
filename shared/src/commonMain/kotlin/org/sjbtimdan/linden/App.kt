@@ -10,6 +10,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
@@ -26,10 +27,14 @@ sealed class Screen {
 }
 
 @Composable
-fun App(database: LindenDatabase, initialTheme: ThemeMode) {
+fun App(
+    database: LindenDatabase,
+    initialTheme: ThemeMode,
+    initialCurrency: Currency,
+) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Settings) }
     val settingsDao = remember { SettingsDao(database.settingsQueries) }
-    val settingsViewModel = remember { SettingsViewModel(settingsDao, initialTheme) }
+    val settingsViewModel = remember { SettingsViewModel(settingsDao, initialTheme, initialCurrency) }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val categoryDao = remember { CategoryDao(database.categoryQueries) }
     val categoryListViewModel = remember { CategoryListViewModel(categoryDao) }

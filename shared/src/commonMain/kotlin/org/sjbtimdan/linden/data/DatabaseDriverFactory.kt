@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.db.SqlDriver
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 
 expect class DatabaseDriverFactory {
@@ -16,10 +17,13 @@ suspend fun createLindenDatabase(driver: SqlDriver): LindenDatabase {
 data class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
+    val initialCurrency: Currency,
 )
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val database = createLindenDatabase(driver)
-    val initialTheme = SettingsDao(database.settingsQueries).getTheme()
-    return AppDependencies(database, initialTheme)
+    val settingsDao = SettingsDao(database.settingsQueries)
+    val initialTheme = settingsDao.getTheme()
+    val initialCurrency = settingsDao.getDefaultCurrency()
+    return AppDependencies(database, initialTheme, initialCurrency)
 }

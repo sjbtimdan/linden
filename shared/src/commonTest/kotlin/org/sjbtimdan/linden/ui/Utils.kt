@@ -13,6 +13,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
@@ -69,13 +70,14 @@ fun withAccountViewModel(
 @OptIn(ExperimentalTestApi::class)
 fun withSettingsViewModel(
     initialTheme: ThemeMode = ThemeMode.SYSTEM,
+    initialCurrency: Currency = Currency.CHF,
     block: suspend ComposeUiTest.(SettingsViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val dao = SettingsDao(database.settingsQueries)
-            val viewModel = SettingsViewModel(dao, initialTheme)
+            val viewModel = SettingsViewModel(dao, initialTheme, initialCurrency)
             block(viewModel)
         }
     }

@@ -18,7 +18,11 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            App(database = dependencies.database, initialTheme = dependencies.initialTheme)
+            App(
+                database = dependencies.database,
+                initialTheme = dependencies.initialTheme,
+                initialCurrency = dependencies.initialCurrency,
+            )
         }
     }
 }
