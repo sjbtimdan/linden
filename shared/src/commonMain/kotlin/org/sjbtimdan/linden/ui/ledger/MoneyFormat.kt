@@ -18,7 +18,7 @@ fun formatAmount(amount: Long): String {
  * Returns null when the input is not a valid non-negative amount.
  */
 fun parseAmount(input: String): Long? {
-    var text = input.trim()
+    val text = input.trim()
     if (text.isEmpty()) return null
     if (text.startsWith("-") || text.startsWith("+")) return null
     val parts = text.split('.', ',')
