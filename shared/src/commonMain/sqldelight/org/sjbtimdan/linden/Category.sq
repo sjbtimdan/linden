@@ -17,3 +17,6 @@ selectAll:
 SELECT *
 FROM CategoryEntity
 ORDER BY name ASC;
+
+deleteAll:
+DELETE FROM CategoryEntity;

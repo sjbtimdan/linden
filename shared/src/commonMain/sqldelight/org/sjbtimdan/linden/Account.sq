@@ -17,3 +17,6 @@ selectAll:
 SELECT *
 FROM AccountEntity
 ORDER BY name ASC;
+
+deleteAll:
+DELETE FROM AccountEntity;

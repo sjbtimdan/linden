@@ -24,6 +24,7 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
@@ -51,7 +52,14 @@ fun App(
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
     val settingsDao = remember { SettingsDao(database.settingsQueries) }
-    val settingsViewModel = remember { SettingsViewModel(settingsDao, initialTheme, initialCurrency) }
+    val settingsViewModel = remember {
+        SettingsViewModel(
+            settingsDao = settingsDao,
+            importer = IvyImporter(database),
+            initialTheme = initialTheme,
+            initialCurrency = initialCurrency,
+        )
+    }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val categoryDao = remember { CategoryDao(database.categoryQueries) }
     val categoryListViewModel = remember { CategoryListViewModel(categoryDao) }

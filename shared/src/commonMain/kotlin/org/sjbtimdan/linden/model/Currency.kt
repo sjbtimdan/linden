@@ -5,9 +5,9 @@ enum class Currency {
     EUR,
     GBP,
     HKD,
+    JPY,
     SGD,
-    USD,
-    ;
+    USD;
 
     companion object {
         fun fromCode(code: String): Currency = entries.firstOrNull { it.name == code }

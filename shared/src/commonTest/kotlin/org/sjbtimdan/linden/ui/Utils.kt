@@ -14,6 +14,7 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
@@ -79,7 +80,12 @@ fun withSettingsViewModel(
         runComposeUiTest {
             val database = lindenDatabase()
             val dao = SettingsDao(database.settingsQueries)
-            val viewModel = SettingsViewModel(dao, initialTheme, initialCurrency)
+            val viewModel = SettingsViewModel(
+                settingsDao = dao,
+                importer = IvyImporter(database),
+                initialTheme = initialTheme,
+                initialCurrency = initialCurrency,
+            )
             block(viewModel)
         }
     }

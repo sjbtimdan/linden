@@ -1,7 +1,9 @@
 package org.sjbtimdan.linden.ui.settings
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
@@ -61,6 +63,48 @@ class SettingsScreenTest : StringSpec({
             }
             onNodeWithText("Accounts").performClick()
             navigatedToAccounts shouldBe true
+        }
+    }
+
+    "clicking Import in the confirmation dialog triggers the file picker" {
+        withSettingsViewModel { viewModel ->
+            var pickerInvoked = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    pickImportFile = { pickerInvoked = true },
+                )
+            }
+
+            onNodeWithText("Import from Ivy").performClick()
+            onNodeWithText(
+                "This will replace all your current accounts, categories and transactions. Continue?",
+            ).assertExists()
+            onNodeWithText("Import").performClick()
+
+            pickerInvoked shouldBe true
+        }
+    }
+
+    "clicking Cancel in the confirmation dialog does not trigger the file picker" {
+        withSettingsViewModel { viewModel ->
+            var pickerInvoked = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    pickImportFile = { pickerInvoked = true },
+                )
+            }
+
+            onNodeWithText("Import from Ivy").performClick()
+            onNodeWithText("Cancel").performClick()
+
+            pickerInvoked shouldBe false
+            onAllNodesWithText(
+                "This will replace all your current accounts, categories and transactions. Continue?",
+            ).assertCountEquals(0)
         }
     }
 })

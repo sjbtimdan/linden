@@ -11,22 +11,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 
@@ -35,9 +47,15 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateToCategories: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
+    pickImportFile: (() -> Unit)? = null,
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val importState by viewModel.importState.collectAsState()
+    var showImportConfirmation by remember { mutableStateOf(false) }
+
+    val importFilePicker = pickImportFile
+        ?: rememberZipFilePicker { input -> input?.let(viewModel::importIvy) }
 
     Column(
         modifier = Modifier
@@ -45,6 +63,7 @@ fun SettingsScreen(
             .fillMaxSize()
             .padding(16.dp)
             .widthIn(max = 480.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = "Settings",
@@ -101,49 +120,108 @@ fun SettingsScreen(
         HorizontalDivider()
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    role = Role.Button,
-                    onClick = onNavigateToCategories,
-                )
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = "Categories",
-                style = MaterialTheme.typography.titleMedium,
+            OutlinedButton(onClick = onNavigateToCategories) {
+                Text("Categories")
+            }
+            OutlinedButton(onClick = onNavigateToAccounts) {
+                Text("Accounts")
+            }
+            FilledTonalButton(
+                onClick = { showImportConfirmation = true },
+                enabled = importState !is ImportState.Importing,
+            ) {
+                Text("Import from Ivy")
+            }
+        }
+
+        when (val state = importState) {
+            ImportState.Idle -> Unit
+
+            ImportState.Importing -> Row(
+                modifier = Modifier.padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                )
+                Text(
+                    text = "Importing…",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+
+            is ImportState.Success -> ImportResultRow(
+                text = "Imported ${state.result.accounts} accounts, " +
+                    "${state.result.categories} categories, " +
+                    "${state.result.transactions} transactions",
+                onDismiss = viewModel::clearImportState,
             )
-            Text(
-                text = ">",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+
+            is ImportState.Error -> ImportResultRow(
+                text = "Import failed: ${state.message}",
+                onDismiss = viewModel::clearImportState,
             )
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    role = Role.Button,
-                    onClick = onNavigateToAccounts,
-                )
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Accounts",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = ">",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        if (showImportConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showImportConfirmation = false },
+                title = { Text("Import from Ivy") },
+                text = { Text("This will replace all your current accounts, categories and transactions. Continue?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showImportConfirmation = false
+                            importFilePicker()
+                        },
+                    ) {
+                        Text("Import")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showImportConfirmation = false },
+                    ) {
+                        Text("Cancel")
+                    }
+                },
             )
         }
+    }
+}
+
+@Composable
+private fun ImportResultRow(
+    text: String,
+    onDismiss: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                role = Role.Button,
+                onClick = onDismiss,
+            )
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = "Dismiss",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 

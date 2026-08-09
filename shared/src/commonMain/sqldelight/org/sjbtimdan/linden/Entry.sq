@@ -57,3 +57,6 @@ SET type = :type,
     to_amount = :toAmount,
     to_currency = :toCurrency
 WHERE id = :id;
+
+deleteAll:
+DELETE FROM EntryEntity;
