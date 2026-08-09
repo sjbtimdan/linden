@@ -2,8 +2,7 @@
 
 KMP + Compose Multiplatform expense tracker. Android + Desktop (JVM).
 
-> ⚠️ `README.md` is stale — it still documents a `webApp`/Wasm target that was removed.
-> Trust `settings.gradle.kts`: only `:androidApp`, `:shared`, `:desktopApp` exist.
+Only `:androidApp`, `:shared`, `:desktopApp` exist (see `settings.gradle.kts`).
 
 ## Modules
 
@@ -21,7 +20,7 @@ KMP + Compose Multiplatform expense tracker. Android + Desktop (JVM).
 ./gradlew :desktopApp:compileKotlin         # verify Desktop app
 ./gradlew :shared:jvmTest                   # run Kotest suite (commonTest + jvmTest)
 ./gradlew :androidApp:assembleDebug         # full Android debug build
-./gradlew check                             # full check (see check.sh)
+./gradlew check                             # full check — no CI pipeline (see check.sh)
 ./gradlew :desktopApp:run                   # run Desktop app
 ```
 
@@ -31,6 +30,8 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 ## Architecture & Gotchas
 
 - Package root `org.sjbtimdan.linden`. Models in `.model`, DAOs in `.data`, screens/ViewModels in `.ui.<feature>`. Kotlin source files use PascalCase.
+- Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Convert via
+  `formatAmount` / `parseAmount` in `ui/ledger/MoneyFormat.kt`; `amount` columns in `.sq` files are `INTEGER`.
 - SQLDelight is configured with `generateAsync = true` — the generated API is async:
   schema creation must be awaited (`LindenDatabase.Schema.create(driver).await()`), DB ops are `suspend`, and reactive reads use `.asFlow()` / `awaitAsList()`.
 - `.sq` files live in `shared/src/commonMain/sqldelight/org/sjbtimdan/linden/`. Entity/query classes
@@ -45,9 +46,11 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 
 - Conventional commits
 - Version catalog at `gradle/libs.versions.toml`
-- Kotlin 2.4.10, Compose Multiplatform 1.11.1, AGP 9.0.1, SQLDelight 2.3.2
-- Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform. DAO tests use an in-memory driver via
-  `expect fun createTestSqlDriver()` (commonTest) with an actual in `jvmTest`. Compose UI tests live in `commonTest`.
+- Kotlin 2.4.10, Compose Multiplatform 1.11.1, AGP 9.1.1, SQLDelight 2.3.2 (Gradle wrapper 9.6.1)
+- Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform. `createTestSqlDriver()` has a JVM-only actual,
+  so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers in `ui/Utils.kt` (`lindenDatabase()`,
+  `onTestMain`, `withViewModel`, `withLedgerViewModel`, ...) instead of wiring up in-memory DBs per test.
+  Compose UI tests live in `commonTest`.
 - Configuration cache + build cache enabled (`gradle.properties`).
 - Comment minimally: only add comments for obscure code which should be very rare.
 - After each piece of work is done, scan through for omitted tests.
