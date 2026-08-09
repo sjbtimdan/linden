@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,9 +48,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.Account
@@ -175,6 +178,7 @@ private data class EntryDialogState(
 @Composable
 fun LedgerScreen(
     viewModel: LedgerViewModel,
+    onNavigateToSettings: () -> Unit = {},
 ) {
     val entries by viewModel.entries.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
@@ -308,6 +312,7 @@ fun LedgerScreen(
                     dialogState = null
                 }
             },
+            onNavigateToSettings = onNavigateToSettings,
             onDismiss = { dialogState = null },
         )
     }
@@ -328,6 +333,7 @@ private fun EntryDialog(
     onDescriptionChange: (String) -> Unit,
     onSave: () -> Unit,
     onDelete: (() -> Unit)?,
+    onNavigateToSettings: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val visibleCategories = when (state.type) {
@@ -378,21 +384,41 @@ private fun EntryDialog(
 
                 if (state.type == EntryType.Transfer) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    DropdownField(
-                        label = "From account",
-                        selected = accounts.firstOrNull { it.id == state.accountId },
-                        options = accounts,
-                        optionLabel = { it.name },
-                        onSelect = { onAccountChange(it.id) },
-                    )
+                    if (accounts.isEmpty()) {
+                        MissingFieldLink(
+                            label = "From account",
+                            text = "Please enter account",
+                            onClick = onNavigateToSettings,
+                        )
+                    } else {
+                        DropdownField(
+                            label = "From account",
+                            selected = accounts.firstOrNull { it.id == state.accountId },
+                            options = accounts,
+                            optionLabel = { it.name },
+                            onSelect = { onAccountChange(it.id) },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    DropdownField(
-                        label = "To account",
-                        selected = accounts.firstOrNull { it.id == state.toAccountId },
-                        options = accounts,
-                        optionLabel = { it.name },
-                        onSelect = { onToAccountChange(it.id) },
-                    )
+                    if (accounts.size < 2) {
+                        MissingFieldLink(
+                            label = "To account",
+                            text = if (accounts.isEmpty()) {
+                                "Please enter account"
+                            } else {
+                                "Please add a second account"
+                            },
+                            onClick = onNavigateToSettings,
+                        )
+                    } else {
+                        DropdownField(
+                            label = "To account",
+                            selected = accounts.firstOrNull { it.id == state.toAccountId },
+                            options = accounts.filter { it.id != state.accountId },
+                            optionLabel = { it.name },
+                            onSelect = { onToAccountChange(it.id) },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     OutlinedTextField(
                         value = state.toAmountText,
@@ -404,21 +430,37 @@ private fun EntryDialog(
                     )
                 } else {
                     Spacer(modifier = Modifier.height(16.dp))
-                    DropdownField(
-                        label = "Category",
-                        selected = visibleCategories.firstOrNull { it.id == state.categoryId },
-                        options = visibleCategories,
-                        optionLabel = { it.name },
-                        onSelect = { onCategoryChange(it.id) },
-                    )
+                    if (visibleCategories.isEmpty()) {
+                        MissingFieldLink(
+                            label = "Category",
+                            text = "Please enter category",
+                            onClick = onNavigateToSettings,
+                        )
+                    } else {
+                        DropdownField(
+                            label = "Category",
+                            selected = visibleCategories.firstOrNull { it.id == state.categoryId },
+                            options = visibleCategories,
+                            optionLabel = { it.name },
+                            onSelect = { onCategoryChange(it.id) },
+                        )
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
-                    DropdownField(
-                        label = "Account",
-                        selected = accounts.firstOrNull { it.id == state.accountId },
-                        options = accounts,
-                        optionLabel = { it.name },
-                        onSelect = { onAccountChange(it.id) },
-                    )
+                    if (accounts.isEmpty()) {
+                        MissingFieldLink(
+                            label = "Account",
+                            text = "Please enter account",
+                            onClick = onNavigateToSettings,
+                        )
+                    } else {
+                        DropdownField(
+                            label = "Account",
+                            selected = accounts.firstOrNull { it.id == state.accountId },
+                            options = accounts,
+                            optionLabel = { it.name },
+                            onSelect = { onAccountChange(it.id) },
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -493,6 +535,40 @@ private fun <T> DropdownField(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MissingFieldLink(
+    label: String,
+    text: String,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraSmall)
+            .clickable(role = Role.Button, onClick = onClick)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = MaterialTheme.shapes.extraSmall,
+            )
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+            ),
+        )
     }
 }
 

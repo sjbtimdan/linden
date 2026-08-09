@@ -4,14 +4,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -173,6 +176,89 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Lunch").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
+        }
+    }
+
+    "shows settings links when no accounts or categories exist" {
+        withLedgerViewModel { viewModel ->
+            var settingsNavigations = 0
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToSettings = { settingsNavigations++ },
+                )
+            }
+
+            onNodeWithText("+ New Entry").performClick()
+
+            onNodeWithText("Please enter category").assertIsDisplayed()
+            onNodeWithText("Please enter account").assertIsDisplayed()
+
+            onNodeWithText("Please enter category").performClick()
+            onNodeWithText("Please enter account").performClick()
+
+            settingsNavigations shouldBe 2
+        }
+    }
+
+    "shows account link for transfer fields when no accounts exist" {
+        withLedgerViewModel { viewModel ->
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToSettings = {},
+                )
+            }
+
+            onNodeWithText("+ New Entry").performClick()
+            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+
+            onAllNodesWithText("Please enter account").assertCountEquals(2)
+            onNodeWithText("Please enter category").assertDoesNotExist()
+        }
+    }
+
+    "shows add-second-account link for transfer when only one account exists" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            var settingsNavigations = 0
+
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToSettings = { settingsNavigations++ },
+                )
+            }
+
+            onNodeWithText("+ New Entry").performClick()
+            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+
+            onNodeWithText("Please add a second account").assertIsDisplayed()
+            onNodeWithText("Please enter account").assertDoesNotExist()
+
+            onNodeWithText("Please add a second account").performClick()
+            settingsNavigations shouldBe 1
+        }
+    }
+
+    "to account dropdown excludes the from account" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("+ New Entry").performClick()
+            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+
+            onNodeWithText("To account").performClick()
+            onAllNodesWithText("Main").assertCountEquals(1)
+            onNodeWithText("Savings").assertIsDisplayed()
         }
     }
 })

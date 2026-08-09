@@ -98,6 +98,7 @@ fun App(
                 when (currentScreen) {
                     Screen.Ledger -> LedgerScreen(
                         viewModel = ledgerViewModel,
+                        onNavigateToSettings = { currentScreen = Screen.Settings },
                     )
 
                     Screen.Settings -> SettingsScreen(
