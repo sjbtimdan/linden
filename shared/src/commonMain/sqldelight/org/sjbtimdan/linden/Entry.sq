@@ -44,3 +44,16 @@ ORDER BY EntryEntity.id DESC;
 
 deleteById:
 DELETE FROM EntryEntity WHERE id = :id;
+
+updateById:
+UPDATE EntryEntity
+SET type = :type,
+    category_id = :categoryId,
+    description = :description,
+    account_id = :accountId,
+    amount = :amount,
+    currency = :currency,
+    to_account_id = :toAccountId,
+    to_amount = :toAmount,
+    to_currency = :toCurrency
+WHERE id = :id;

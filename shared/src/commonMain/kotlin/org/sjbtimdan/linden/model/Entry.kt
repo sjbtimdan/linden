@@ -19,7 +19,7 @@ sealed interface Entry {
 data class ExpenseEntry(
     override val id: Long,
     override val category: Category,
-    override val description: String,
+    override val description: String?,
     override val account: Account,
     override val amount: Long,
     override val currency: Currency,
@@ -30,7 +30,7 @@ data class ExpenseEntry(
 data class IncomeEntry(
     override val id: Long,
     override val category: Category,
-    override val description: String,
+    override val description: String?,
     override val account: Account,
     override val amount: Long,
     override val currency: Currency,

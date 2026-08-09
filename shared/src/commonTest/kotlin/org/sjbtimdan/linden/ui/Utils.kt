@@ -11,12 +11,14 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
+import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -82,3 +84,24 @@ fun withSettingsViewModel(
         }
     }
 }
+
+@OptIn(ExperimentalTestApi::class)
+fun withLedgerViewModel(
+    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val entryDao = EntryDao(database.entryQueries)
+            val accountDao = AccountDao(database.accountQueries)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val viewModel = LedgerViewModel(entryDao, accountDao, categoryDao)
+            block(entryDao, accountDao, categoryDao, viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withLedgerViewModel(
+    block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
+) = withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }

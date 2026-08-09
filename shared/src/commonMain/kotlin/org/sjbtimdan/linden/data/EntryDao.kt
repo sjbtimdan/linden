@@ -17,18 +17,90 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 
 class EntryDao(private val queries: EntryQueries) {
-    suspend fun create(entry: Entry) {
-        val transfer = entry as? TransferEntry
+    suspend fun create(entry: ExpenseEntry) {
         queries.insert(
-            type = entry.type.name,
+            type = EntryType.Expense.name,
+            categoryId = entry.category.id,
+            description = entry.description,
+            accountId = entry.account.id,
+            amount = entry.amount,
+            currency = entry.currency.name,
+            toAccountId = null,
+            toAmount = null,
+            toCurrency = null,
+        )
+    }
+
+    suspend fun create(entry: IncomeEntry) {
+        queries.insert(
+            type = EntryType.Income.name,
+            categoryId = entry.category.id,
+            description = entry.description,
+            accountId = entry.account.id,
+            amount = entry.amount,
+            currency = entry.currency.name,
+            toAccountId = null,
+            toAmount = null,
+            toCurrency = null,
+        )
+    }
+
+    suspend fun create(entry: TransferEntry) {
+        queries.insert(
+            type = EntryType.Transfer.name,
             categoryId = entry.category?.id,
             description = entry.description,
             accountId = entry.account.id,
             amount = entry.amount,
             currency = entry.currency.name,
-            toAccountId = transfer?.toAccount?.id,
-            toAmount = transfer?.toAmount,
-            toCurrency = transfer?.toCurrency?.name,
+            toAccountId = entry.toAccount.id,
+            toAmount = entry.toAmount,
+            toCurrency = entry.toCurrency.name,
+        )
+    }
+
+    suspend fun update(entry: ExpenseEntry) {
+        queries.updateById(
+            type = EntryType.Expense.name,
+            categoryId = entry.category.id,
+            description = entry.description,
+            accountId = entry.account.id,
+            amount = entry.amount,
+            currency = entry.currency.name,
+            toAccountId = null,
+            toAmount = null,
+            toCurrency = null,
+            id = entry.id,
+        )
+    }
+
+    suspend fun update(entry: IncomeEntry) {
+        queries.updateById(
+            type = EntryType.Income.name,
+            categoryId = entry.category.id,
+            description = entry.description,
+            accountId = entry.account.id,
+            amount = entry.amount,
+            currency = entry.currency.name,
+            toAccountId = null,
+            toAmount = null,
+            toCurrency = null,
+            id = entry.id,
+        )
+    }
+
+    suspend fun update(entry: TransferEntry) {
+        queries.updateById(
+            type = EntryType.Transfer.name,
+            categoryId = entry.category?.id,
+            description = entry.description,
+            accountId = entry.account.id,
+            amount = entry.amount,
+            currency = entry.currency.name,
+            toAccountId = entry.toAccount.id,
+            toAmount = entry.toAmount,
+            toCurrency = entry.toCurrency.name,
+            id = entry.id,
         )
     }
 
@@ -41,6 +113,12 @@ class EntryDao(private val queries: EntryQueries) {
             .asFlow()
             .map { it.awaitAsList().map { row -> row.toEntry() } }
     }
+
+    fun getExpenses(): Flow<List<ExpenseEntry>> = getAll().map { it.filterIsInstance<ExpenseEntry>() }
+
+    fun getIncomes(): Flow<List<IncomeEntry>> = getAll().map { it.filterIsInstance<IncomeEntry>() }
+
+    fun getTransfers(): Flow<List<TransferEntry>> = getAll().map { it.filterIsInstance<TransferEntry>() }
 
     private fun SelectAll.toEntry(): Entry {
         val account = Account(
@@ -59,7 +137,7 @@ class EntryDao(private val queries: EntryQueries) {
             EntryType.Income -> IncomeEntry(
                 id = id,
                 category = requireNotNull(category) { "Income entry $id has no category" },
-                description = requireNotNull(description) { "Income entry $id has no description" },
+                description = description,
                 account = account,
                 amount = amount,
                 currency = Currency.fromCode(currency),
@@ -68,7 +146,7 @@ class EntryDao(private val queries: EntryQueries) {
             EntryType.Expense -> ExpenseEntry(
                 id = id,
                 category = requireNotNull(category) { "Expense entry $id has no category" },
-                description = requireNotNull(description) { "Expense entry $id has no description" },
+                description = description,
                 account = account,
                 amount = amount,
                 currency = Currency.fromCode(currency),

@@ -107,4 +107,113 @@ class EntryDaoTest : StringSpec({
 
         entryDao.getAll().first() shouldBe listOf(first)
     }
+
+    "update modifies an entry in place" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+        val main = accountDao.getAll().first().first()
+        val categories = categoryDao.getAll().first()
+        val groceries = categories.first()
+        val salary = categories.last()
+
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
+        val created = entryDao.getAll().first().first()
+        val updatedEntry = IncomeEntry(
+            id = created.id,
+            category = salary,
+            description = "Bonus",
+            account = main,
+            amount = 5_000,
+            currency = Currency.CHF,
+        )
+
+        entryDao.update(updatedEntry)
+
+        entryDao.getAll().first().first() shouldBe updatedEntry
+    }
+
+    "entries with a null description round-trip" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val main = accountDao.getAll().first().first()
+        val groceries = categoryDao.getAll().first().first()
+
+        entryDao.create(ExpenseEntry(0, groceries, null, main, 100, Currency.CHF))
+
+        entryDao.getAll().first().first().description shouldBe null
+    }
+
+    "update modifies a transfer in place" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.EUR)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first()
+        val savings = accounts.last()
+
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, savings, 9_500, Currency.EUR))
+        val created = entryDao.getAll().first().first()
+
+        val updatedEntry = TransferEntry(
+            id = created.id,
+            category = null,
+            description = "Top up",
+            account = main,
+            amount = 20_000,
+            currency = Currency.CHF,
+            toAccount = savings,
+            toAmount = 19_000,
+            toCurrency = Currency.EUR,
+        )
+        entryDao.update(updatedEntry)
+
+        entryDao.getAll().first().first() shouldBe updatedEntry
+    }
+
+    "typed read helpers return only their own entries" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.EUR)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first()
+        val savings = accounts.last()
+        val categories = categoryDao.getAll().first()
+        val groceries = categories.first()
+        val salary = categories.last()
+
+        val expense = ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF)
+        val income = IncomeEntry(0, salary, "Salary", main, 50_000, Currency.CHF)
+        val transfer = TransferEntry(0, null, null, main, 10_000, Currency.CHF, savings, 9_500, Currency.EUR)
+
+        entryDao.create(expense)
+        entryDao.create(income)
+        entryDao.create(transfer)
+
+        // getAll() is newest first: transfer, income, expense
+        val entries = entryDao.getAll().first()
+        entryDao.getExpenses().first() shouldBe listOf(expense.copy(id = entries[2].id))
+        entryDao.getIncomes().first() shouldBe listOf(income.copy(id = entries[1].id))
+        entryDao.getTransfers().first() shouldBe listOf(transfer.copy(id = entries[0].id))
+    }
 })
