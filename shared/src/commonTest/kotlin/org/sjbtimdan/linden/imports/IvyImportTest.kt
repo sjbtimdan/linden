@@ -176,6 +176,186 @@ class IvyImporterSpec : StringSpec({
         EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
     }
 
+    "assigns uncategorised expenses and incomes to a single auto-created 'Imported Entries' category" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "title": "Untagged coffee",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "INCOME",
+                  "amount": 100.0,
+                  "accountId": "a1",
+                  "title": "Untagged gift",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.categories shouldBe 2
+        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Food", "Imported Entries")
+        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
+    }
+
+    "does not create a fallback category when only transfers lack a category" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "toAmount": 500.0,
+                  "title": "Sweep",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.categories shouldBe 0
+        database.categoryQueries.selectAll().awaitAsList() shouldBe emptyList()
+        EntryDao(database.entryQueries).getAll().first().map { it.category } shouldBe listOf(null)
+    }
+
+    "reuses an existing 'Imported Entries' category from the backup" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Imported Entries"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "title": "Untagged coffee",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.categories shouldBe 1
+        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Imported Entries")
+        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries")
+    }
+
+    "assigns entries with unknown category ids to the fallback category" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "missing-category",
+                  "title": "Dangling expense",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "toAmount": 500.0,
+                  "categoryId": "missing-category",
+                  "title": "Dangling transfer",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.categories shouldBe 2
+        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Food", "Imported Entries")
+        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
+    }
+
+    "resets fallback category state between imports" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "title": "Untagged coffee",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Imported Entries")
+        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries")
+    }
+
     "import throws when the archive contains no JSON file" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)

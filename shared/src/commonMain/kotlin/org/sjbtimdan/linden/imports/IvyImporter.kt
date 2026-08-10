@@ -23,11 +23,17 @@ data class IvyImportResult(
 
 class IvyImportException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
+
 class IvyImporter(private val database: LindenDatabase) {
     private val json = Json { ignoreUnknownKeys = true }
+    private var fallbackCategoryId: Long? = null
+    private var fallbackCategoryCreated = false
 
     suspend fun import(input: InputStream): IvyImportResult {
         val backup = decodeBackup(input)
+        fallbackCategoryId = null
+        fallbackCategoryCreated = false
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -37,16 +43,16 @@ class IvyImporter(private val database: LindenDatabase) {
                 account.id to insertAccount(account)
             }
             val categories = backup.categories.associate { category ->
-                category.id to insertCategory(category)
+                category.id to insertCategory(category.name)
             }
 
             backup.transactions.forEach { transaction ->
-                insertTransaction(transaction, accounts, categories)
+                insertTransaction(transaction, accounts, categories, backup.categories)
             }
         }
         return IvyImportResult(
             accounts = backup.accounts.size,
-            categories = backup.categories.size,
+            categories = backup.categories.size + if (fallbackCategoryCreated) 1 else 0,
             transactions = backup.transactions.size,
         )
     }
@@ -85,8 +91,8 @@ class IvyImporter(private val database: LindenDatabase) {
         return ResolvedAccount(id, currency)
     }
 
-    private suspend fun insertCategory(category: IvyCategory): Long {
-        database.categoryQueries.insert(category.name, CategoryType.Both.name)
+    private suspend fun insertCategory(name: String): Long {
+        database.categoryQueries.insert(name, CategoryType.Both.name)
         return database.importQueries.lastInsertId().awaitAsOne()
     }
 
@@ -94,6 +100,7 @@ class IvyImporter(private val database: LindenDatabase) {
         transaction: IvyTransaction,
         accounts: Map<String, ResolvedAccount>,
         categories: Map<String, Long>,
+        backupCategories: List<IvyCategory>,
     ) {
         val label = "\"${transaction.title}\""
         val account = accounts[transaction.accountId]
@@ -109,8 +116,8 @@ class IvyImporter(private val database: LindenDatabase) {
         } ?: account.currency
 
         val categoryId = when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, label, required = true)
-            EntryType.Transfer -> categoryId(transaction, categories, label, required = false)
+            EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, backupCategories, required = true)
+            EntryType.Transfer -> categoryId(transaction, categories, backupCategories, required = false)
         }
 
         val toAccount = if (type == EntryType.Transfer) {
@@ -147,19 +154,39 @@ class IvyImporter(private val database: LindenDatabase) {
         )
     }
 
-    private fun categoryId(
+    private suspend fun categoryId(
         transaction: IvyTransaction,
         categories: Map<String, Long>,
-        label: String,
+        backupCategories: List<IvyCategory>,
         required: Boolean,
     ): Long? {
-        val id = transaction.categoryId ?: return if (required) {
-            throw IvyImportException("Transaction $label has no categoryId")
+        val id = transaction.categoryId
+        if (id != null && id in categories) return categories.getValue(id)
+        return if (id != null || required) {
+            resolveFallbackCategory(categories, backupCategories)
         } else {
             null
         }
-        return categories[id] ?: throw IvyImportException("Transaction $label references unknown category $id")
     }
+
+    private suspend fun resolveFallbackCategory(
+        categories: Map<String, Long>,
+        backupCategories: List<IvyCategory>,
+    ): Long {
+        fallbackCategoryId?.let { return it }
+        val id = resolveBackupCategory(FALLBACK_CATEGORY_NAME, categories, backupCategories) ?: run {
+            fallbackCategoryCreated = true
+            insertCategory(FALLBACK_CATEGORY_NAME)
+        }
+        fallbackCategoryId = id
+        return id
+    }
+
+    private fun resolveBackupCategory(
+        name: String,
+        categories: Map<String, Long>,
+        backupCategories: List<IvyCategory>,
+    ): Long? = backupCategories.firstOrNull { it.name == name }?.let { categories[it.id] }
 
     private inline fun parseCurrency(code: String, message: () -> String): Currency =
         Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
