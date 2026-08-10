@@ -154,6 +154,7 @@ fun LedgerScreen(
             onToAccountChange = { dialogState = state.copy(toAccountId = it) },
             onToAmountChange = { dialogState = state.copy(toAmountText = it) },
             onDescriptionChange = { dialogState = state.copy(description = it) },
+            onCreatedAtChange = { dialogState = state.copy(createdAt = it) },
             onSave = {
                 state.toEntry(accounts, categories)?.let { entry ->
                     if (state.editing != null) {

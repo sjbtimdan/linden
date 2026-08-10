@@ -53,6 +53,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

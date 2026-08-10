@@ -9,6 +9,7 @@ composeMultiplatform = "1.11.1"
 materialIconsCore = "1.7.3"
 kotest = "6.2.0"
 kotlin = "2.4.10"
+kotlinx-datetime = "0.8.0"
 material3 = "1.11.0-alpha07"
 sqldelight = "2.3.2"
 coroutines = "1.10.2"
@@ -37,6 +38,7 @@ kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 [plugins]

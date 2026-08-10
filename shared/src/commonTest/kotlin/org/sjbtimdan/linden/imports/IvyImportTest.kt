@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.lindenDatabase
@@ -71,6 +72,7 @@ class IvyImporterSpec : StringSpec({
         bonus.account.name shouldBe "UK Savings"
         bonus.category.name shouldBe "Salary"
         bonus.description shouldBe "Bonus"
+        bonus.createdAt shouldBe Instant.fromEpochMilliseconds(946771200000)
 
         val coffee = entries[1].shouldBeInstanceOf<ExpenseEntry>()
         coffee.amount shouldBe 575
@@ -78,6 +80,7 @@ class IvyImporterSpec : StringSpec({
         coffee.account.name shouldBe "Wallet"
         coffee.category.name shouldBe "Food"
         coffee.description shouldBe "Coffee"
+        coffee.createdAt shouldBe Instant.fromEpochMilliseconds(946684800000)
 
         val transfer = entries[2].shouldBeInstanceOf<TransferEntry>()
         transfer.amount shouldBe 50_000

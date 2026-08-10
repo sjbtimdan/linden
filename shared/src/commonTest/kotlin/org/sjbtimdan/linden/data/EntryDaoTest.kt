@@ -2,7 +2,9 @@ package org.sjbtimdan.linden.data
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -35,6 +37,8 @@ class EntryDaoTest : StringSpec({
             account = main,
             amount = 450,
             currency = Currency.CHF,
+            createdAt = Instant.fromEpochMilliseconds(1_000),
+            createdZone = TimeZone.of("Europe/Berlin"),
         )
         val income = IncomeEntry(
             id = 0,
@@ -43,6 +47,8 @@ class EntryDaoTest : StringSpec({
             account = main,
             amount = 50_000,
             currency = Currency.CHF,
+            createdAt = Instant.fromEpochMilliseconds(2_000),
+            createdZone = TimeZone.of("Asia/Tokyo"),
         )
         val transfer = TransferEntry(
             id = 0,
@@ -54,6 +60,8 @@ class EntryDaoTest : StringSpec({
             toAccount = savings,
             toAmount = 9_500,
             toCurrency = Currency.EUR,
+            createdAt = Instant.fromEpochMilliseconds(3_000),
+            createdZone = TimeZone.of("America/New_York"),
         )
 
         entryDao.create(expense)
@@ -131,6 +139,8 @@ class EntryDaoTest : StringSpec({
             account = main,
             amount = 5_000,
             currency = Currency.CHF,
+            createdAt = Instant.fromEpochMilliseconds(4_000),
+            createdZone = TimeZone.of("Asia/Tokyo"),
         )
 
         entryDao.update(updatedEntry)
@@ -165,7 +175,7 @@ class EntryDaoTest : StringSpec({
         val main = accounts.first()
         val savings = accounts.last()
 
-        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, savings, 9_500, Currency.EUR))
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.EUR))
         val created = entryDao.getAll().first().first()
 
         val updatedEntry = TransferEntry(
@@ -204,7 +214,7 @@ class EntryDaoTest : StringSpec({
 
         val expense = ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF)
         val income = IncomeEntry(0, salary, "Salary", main, 50_000, Currency.CHF)
-        val transfer = TransferEntry(0, null, null, main, 10_000, Currency.CHF, savings, 9_500, Currency.EUR)
+        val transfer = TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.EUR)
 
         entryDao.create(expense)
         entryDao.create(income)

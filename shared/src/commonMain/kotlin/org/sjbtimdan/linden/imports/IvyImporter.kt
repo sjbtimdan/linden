@@ -7,6 +7,9 @@ import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.zip.ZipInputStream
 import kotlin.math.roundToLong
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -169,6 +172,9 @@ class IvyImporter(private val database: LindenDatabase) {
             toAccountId = toAccount?.id,
             toAmount = toAmount,
             toCurrency = toCurrency?.name,
+            createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: Clock.System.now())
+                .toEpochMilliseconds(),
+            createdZone = TimeZone.currentSystemDefault().id,
         )
     }
 
@@ -243,4 +249,5 @@ private data class IvyTransaction(
     val toAmount: Double? = null,
     val currency: String? = null,
     val toCurrency: String? = null,
+    val dateTime: Long? = null,
 )

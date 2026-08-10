@@ -8,16 +8,18 @@ CREATE TABLE IF NOT EXISTS EntryEntity (
     currency TEXT NOT NULL,
     to_account_id INTEGER,
     to_amount INTEGER,
-    to_currency TEXT
+    to_currency TEXT,
+    created_at INTEGER NOT NULL,
+    created_zone TEXT NOT NULL
 );
 
 insert:
 INSERT INTO EntryEntity (
     type, category_id, description, account_id, amount, currency,
-    to_account_id, to_amount, to_currency
+    to_account_id, to_amount, to_currency, created_at, created_zone
 )
 VALUES (:type, :categoryId, :description, :accountId, :amount, :currency,
-        :toAccountId, :toAmount, :toCurrency);
+        :toAccountId, :toAmount, :toCurrency, :createdAt, :createdZone);
 
 selectAll:
 SELECT EntryEntity.id,
@@ -30,6 +32,8 @@ SELECT EntryEntity.id,
        EntryEntity.to_account_id AS toAccountId,
        EntryEntity.to_amount AS toAmount,
        EntryEntity.to_currency AS toCurrency,
+       EntryEntity.created_at AS createdAt,
+       EntryEntity.created_zone AS createdZone,
        AccountEntity.name AS accountName,
        AccountEntity.currency AS accountCurrency,
        CategoryEntity.name AS categoryName,
@@ -55,7 +59,9 @@ SET type = :type,
     currency = :currency,
     to_account_id = :toAccountId,
     to_amount = :toAmount,
-    to_currency = :toCurrency
+    to_currency = :toCurrency,
+    created_at = :createdAt,
+    created_zone = :createdZone
 WHERE id = :id;
 
 deleteAll:

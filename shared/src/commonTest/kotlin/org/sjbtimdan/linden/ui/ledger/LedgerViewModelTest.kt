@@ -5,6 +5,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -79,11 +80,17 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Small", main, 100, Currency.CHF))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Large", main, 900, Currency.CHF))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Medium", main, 500, Currency.CHF))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Small", main, 100, Currency.CHF, createdAt = at(1_000)),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Large", main, 900, Currency.CHF, createdAt = at(2_000)),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Medium", main, 500, Currency.CHF, createdAt = at(3_000)),
+            )
 
-            // Newest first (default): Medium, Large, Small
+            // Newest first (default): Medium, Large, Small by createdAt
             viewModel.entries.value.map { it.amount } shouldBe listOf(500L, 900L, 100L)
 
             viewModel.setSortOrder(SortOrder.OldestFirst)
@@ -147,3 +154,5 @@ private suspend fun seed(
     val groceries = categoryDao.getAll().first().first()
     return main to groceries
 }
+
+private fun at(millis: Long) = Instant.fromEpochMilliseconds(millis)

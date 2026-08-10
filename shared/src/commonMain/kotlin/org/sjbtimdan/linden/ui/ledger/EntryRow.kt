@@ -66,6 +66,11 @@ fun EntryRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Text(
+                text = formatDateTime(entry.createdAt, entry.createdZone),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         Text(
             text = entry.amountLabel(),

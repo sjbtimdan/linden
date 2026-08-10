@@ -78,6 +78,21 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "new entry dialog shows a date and time section" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("+ New Entry").performClick()
+
+            onNodeWithText("Date & time").assertIsDisplayed()
+            onNodeWithText("Save").assertIsNotEnabled()
+        }
+    }
+
     "editing an entry shows current values and saves changes" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

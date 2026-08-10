@@ -120,8 +120,8 @@ private fun Entry.matches(query: String): Boolean {
 }
 
 private fun SortOrder.comparator(): Comparator<Entry> = when (this) {
-    SortOrder.NewestFirst -> compareByDescending<Entry> { it.id }.thenByDescending { it.id }
-    SortOrder.OldestFirst -> compareBy<Entry> { it.id }.thenBy { it.id }
+    SortOrder.NewestFirst -> compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id }
+    SortOrder.OldestFirst -> compareBy<Entry> { it.createdAt }.thenBy { it.id }
     SortOrder.AmountHighToLow -> compareByDescending<Entry> { it.amount }.thenByDescending { it.id }
     SortOrder.AmountLowToHigh -> compareBy<Entry> { it.amount }.thenByDescending { it.id }
 }

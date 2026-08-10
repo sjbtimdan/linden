@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,18 +12,36 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.number
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -47,6 +66,8 @@ data class EntryDialogState(
     val toAccountId: Long?,
     val toAmountText: String,
     val description: String,
+    val createdAt: Instant,
+    val createdZone: TimeZone,
 ) {
     val amount: Long? get() = parseAmount(amountText)
     val toAmount: Long? get() = parseAmount(toAmountText)
@@ -74,12 +95,18 @@ data class EntryDialogState(
         return when (type) {
             EntryType.Expense -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
-                ExpenseEntry(id, category, description, account, amountValue, account.currency)
+                ExpenseEntry(
+                    id, category, description, account, amountValue, account.currency,
+                    createdAt = createdAt, createdZone = createdZone,
+                )
             }
 
             EntryType.Income -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
-                IncomeEntry(id, category, description, account, amountValue, account.currency)
+                IncomeEntry(
+                    id, category, description, account, amountValue, account.currency,
+                    createdAt = createdAt, createdZone = createdZone,
+                )
             }
 
             EntryType.Transfer -> {
@@ -92,6 +119,8 @@ data class EntryDialogState(
                     account = account,
                     amount = amountValue,
                     currency = account.currency,
+                    createdAt = createdAt,
+                    createdZone = createdZone,
                     toAccount = toAccount,
                     toAmount = toValue,
                     toCurrency = toAccount.currency,
@@ -110,6 +139,8 @@ data class EntryDialogState(
             toAccountId = null,
             toAmountText = "",
             description = "",
+            createdAt = Clock.System.now(),
+            createdZone = TimeZone.currentSystemDefault(),
         )
 
         fun forEdit(entry: Entry): EntryDialogState = when (entry) {
@@ -122,6 +153,8 @@ data class EntryDialogState(
                 toAccountId = null,
                 toAmountText = "",
                 description = entry.description.orEmpty(),
+                createdAt = entry.createdAt,
+                createdZone = entry.createdZone,
             )
 
             is IncomeEntry -> EntryDialogState(
@@ -133,6 +166,8 @@ data class EntryDialogState(
                 toAccountId = null,
                 toAmountText = "",
                 description = entry.description.orEmpty(),
+                createdAt = entry.createdAt,
+                createdZone = entry.createdZone,
             )
 
             is TransferEntry -> EntryDialogState(
@@ -144,11 +179,14 @@ data class EntryDialogState(
                 toAccountId = entry.toAccount.id,
                 toAmountText = formatAmount(entry.toAmount),
                 description = entry.description.orEmpty(),
+                createdAt = entry.createdAt,
+                createdZone = entry.createdZone,
             )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryDialog(
     state: EntryDialogState,
@@ -161,6 +199,7 @@ fun EntryDialog(
     onToAccountChange: (Long?) -> Unit,
     onToAmountChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onCreatedAtChange: (Instant) -> Unit,
     onSave: () -> Unit,
     onDelete: (() -> Unit)?,
     onNavigateToSettings: () -> Unit,
@@ -171,6 +210,9 @@ fun EntryDialog(
         EntryType.Income -> categories.filter { it.type != CategoryType.Expense }
         EntryType.Transfer -> emptyList()
     }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,6 +344,22 @@ fun EntryDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Date & time",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { showDatePicker = true }) {
+                        Text(formatDate(state.createdAt, state.createdZone))
+                    }
+                    OutlinedButton(onClick = { showTimePicker = true }) {
+                        Text(formatTime(state.createdAt, state.createdZone))
+                    }
+                }
             }
         },
         confirmButton = {
@@ -325,4 +383,69 @@ fun EntryDialog(
             }
         },
     )
+
+    if (showDatePicker) {
+        val local = state.createdAt.toLocalDateTime(state.createdZone)
+        val initialUtcMillis = LocalDateTime(local.year, local.month.number, local.day, 0, 0)
+            .toInstant(TimeZone.UTC)
+            .toEpochMilliseconds()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialUtcMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val utcMillis = datePickerState.selectedDateMillis
+                    if (utcMillis != null) {
+                        onCreatedAtChange(
+                            combineDateAndTime(utcMillis, local.hour, local.minute, state.createdZone),
+                        )
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    if (showTimePicker) {
+        val local = state.createdAt.toLocalDateTime(state.createdZone)
+        val timePickerState = rememberTimePickerState(
+            initialHour = local.hour,
+            initialMinute = local.minute,
+            is24Hour = true,
+        )
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val newInstant = LocalDateTime(
+                        local.year, local.month.number, local.day,
+                        timePickerState.hour, timePickerState.minute,
+                    ).toInstant(state.createdZone)
+                    onCreatedAtChange(newInstant)
+                    showTimePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            title = {
+                Text("Select time")
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+        ) {
+            TimePicker(state = timePickerState)
+        }
+    }
 }

@@ -2,8 +2,10 @@ package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.coroutines.asFlow
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.SelectAll
 import org.sjbtimdan.linden.model.Account
@@ -28,6 +30,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = null,
             toAmount = null,
             toCurrency = null,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
         )
     }
 
@@ -42,6 +46,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = null,
             toAmount = null,
             toCurrency = null,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
         )
     }
 
@@ -56,6 +62,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = entry.toAccount.id,
             toAmount = entry.toAmount,
             toCurrency = entry.toCurrency.name,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
         )
     }
 
@@ -70,6 +78,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = null,
             toAmount = null,
             toCurrency = null,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
             id = entry.id,
         )
     }
@@ -85,6 +95,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = null,
             toAmount = null,
             toCurrency = null,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
             id = entry.id,
         )
     }
@@ -100,6 +112,8 @@ class EntryDao(private val queries: EntryQueries) {
             toAccountId = entry.toAccount.id,
             toAmount = entry.toAmount,
             toCurrency = entry.toCurrency.name,
+            createdAt = entry.createdAt.toEpochMilliseconds(),
+            createdZone = entry.createdZone.id,
             id = entry.id,
         )
     }
@@ -141,6 +155,8 @@ class EntryDao(private val queries: EntryQueries) {
                 account = account,
                 amount = amount,
                 currency = Currency.fromCode(currency),
+                createdAt = Instant.fromEpochMilliseconds(createdAt),
+                createdZone = TimeZone.of(createdZone),
             )
 
             EntryType.Expense -> ExpenseEntry(
@@ -150,6 +166,8 @@ class EntryDao(private val queries: EntryQueries) {
                 account = account,
                 amount = amount,
                 currency = Currency.fromCode(currency),
+                createdAt = Instant.fromEpochMilliseconds(createdAt),
+                createdZone = TimeZone.of(createdZone),
             )
 
             EntryType.Transfer -> TransferEntry(
@@ -159,6 +177,8 @@ class EntryDao(private val queries: EntryQueries) {
                 account = account,
                 amount = amount,
                 currency = Currency.fromCode(currency),
+                createdAt = Instant.fromEpochMilliseconds(createdAt),
+                createdZone = TimeZone.of(createdZone),
                 toAccount = Account(
                     id = requireNotNull(toAccountId) { "Transfer entry $id has no toAccount" },
                     name = requireNotNull(toAccountName) { "Transfer entry $id has no toAccount name" },
