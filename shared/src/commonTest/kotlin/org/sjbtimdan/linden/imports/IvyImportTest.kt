@@ -158,8 +158,9 @@ class IvyImporterSpec : StringSpec({
                   "id": "t1",
                   "type": "EXPENSE",
                   "amount": 10.0,
-                  "accountId": "missing-account",
+                  "accountId": "a1",
                   "categoryId": "c1",
+                  "currency": "XXX",
                   "title": "Orphan",
                   "dateTime": 946684800000
                 }
@@ -326,6 +327,131 @@ class IvyImporterSpec : StringSpec({
         EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
     }
 
+    "assigns entries with unknown account ids to per-currency fallback accounts" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "missing-account",
+                  "categoryId": "c1",
+                  "currency": "USD",
+                  "title": "Dangling USD expense",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "EXPENSE",
+                  "amount": 20.0,
+                  "accountId": "missing-account",
+                  "categoryId": "c1",
+                  "currency": "USD",
+                  "title": "Another dangling USD expense",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t3",
+                  "type": "INCOME",
+                  "amount": 100.0,
+                  "accountId": "missing-account",
+                  "categoryId": "c1",
+                  "currency": "EUR",
+                  "title": "Dangling EUR income",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 3
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe
+            listOf("Imported Account (EUR)", "Imported Account (USD)", "Wallet")
+        EntryDao(database.entryQueries).getAll().first().map { it.account.name } shouldBe
+            listOf("Imported Account (EUR)", "Imported Account (USD)", "Imported Account (USD)")
+    }
+
+    "assigns a transfer with an unknown toAccount to a fallback account" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "missing-account",
+                  "toAmount": 500.0,
+                  "currency": "USD",
+                  "title": "Dangling transfer",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 2
+        val transfer = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<TransferEntry>()
+        transfer.account.name shouldBe "Wallet"
+        transfer.toAccount.name shouldBe "Imported Account (USD)"
+        transfer.toCurrency shouldBe Currency.USD
+    }
+
+    "uses the default currency for fallback accounts when the entry has no currency" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "missing-account",
+                  "categoryId": "c1",
+                  "title": "Currency-less expense",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 1
+        val expense = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<ExpenseEntry>()
+        expense.account.name shouldBe "Imported Account (CHF)"
+        expense.currency shouldBe Currency.CHF
+    }
+
     "resets fallback category state between imports" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)
@@ -354,6 +480,40 @@ class IvyImporterSpec : StringSpec({
 
         database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Imported Entries")
         EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries")
+    }
+
+    "resets fallback account state between imports" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "missing-account",
+                  "categoryId": "c1",
+                  "currency": "USD",
+                  "title": "Dangling expense",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe
+            listOf("Imported Account (USD)")
+        EntryDao(database.entryQueries).getAll().first().map { it.account.name } shouldBe
+            listOf("Imported Account (USD)")
     }
 
     "import throws when the archive contains no JSON file" {

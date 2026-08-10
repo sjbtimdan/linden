@@ -10,6 +10,7 @@ import kotlin.math.roundToLong
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
@@ -29,11 +30,14 @@ class IvyImporter(private val database: LindenDatabase) {
     private val json = Json { ignoreUnknownKeys = true }
     private var fallbackCategoryId: Long? = null
     private var fallbackCategoryCreated = false
+    private val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
 
     suspend fun import(input: InputStream): IvyImportResult {
         val backup = decodeBackup(input)
+        val defaultCurrency = SettingsDao(database.settingsQueries).getDefaultCurrency()
         fallbackCategoryId = null
         fallbackCategoryCreated = false
+        fallbackAccounts.clear()
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -47,11 +51,11 @@ class IvyImporter(private val database: LindenDatabase) {
             }
 
             backup.transactions.forEach { transaction ->
-                insertTransaction(transaction, accounts, categories, backup.categories)
+                insertTransaction(transaction, accounts, categories, backup.categories, defaultCurrency)
             }
         }
         return IvyImportResult(
-            accounts = backup.accounts.size,
+            accounts = backup.accounts.size + fallbackAccounts.size,
             categories = backup.categories.size + if (fallbackCategoryCreated) 1 else 0,
             transactions = backup.transactions.size,
         )
@@ -96,34 +100,50 @@ class IvyImporter(private val database: LindenDatabase) {
         return database.importQueries.lastInsertId().awaitAsOne()
     }
 
+    private suspend fun fallbackAccount(currency: Currency): ResolvedAccount {
+        fallbackAccounts[currency]?.let { return it }
+        database.accountQueries.insert("Imported Account (${currency.name})", currency.name)
+        val id = database.importQueries.lastInsertId().awaitAsOne()
+        return ResolvedAccount(id, currency).also { fallbackAccounts[currency] = it }
+    }
+
     private suspend fun insertTransaction(
         transaction: IvyTransaction,
         accounts: Map<String, ResolvedAccount>,
         categories: Map<String, Long>,
         backupCategories: List<IvyCategory>,
+        defaultCurrency: Currency,
     ) {
         val label = "\"${transaction.title}\""
-        val account = accounts[transaction.accountId]
-            ?: throw IvyImportException("Transaction $label references unknown account ${transaction.accountId}")
         val type = when (transaction.type) {
             "EXPENSE" -> EntryType.Expense
             "INCOME" -> EntryType.Income
             "TRANSFER" -> EntryType.Transfer
             else -> throw IvyImportException("Transaction $label has unknown type \"${transaction.type}\"")
         }
-        val currency = transaction.currency?.let { code ->
+        val entryCurrency = transaction.currency?.let { code ->
             parseCurrency(code) { "Transaction $label has unknown currency \"$code\"" }
-        } ?: account.currency
+        }
+        val account = accounts[transaction.accountId]
+            ?: fallbackAccount(entryCurrency ?: defaultCurrency)
+        val currency = entryCurrency ?: account.currency
 
         val categoryId = when (type) {
             EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, backupCategories, required = true)
             EntryType.Transfer -> categoryId(transaction, categories, backupCategories, required = false)
         }
 
+        val toCurrencyOverride = if (type == EntryType.Transfer) {
+            transaction.toCurrency?.let { code ->
+                parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
+            }
+        } else {
+            null
+        }
         val toAccount = if (type == EntryType.Transfer) {
             val id = transaction.toAccountId
                 ?: throw IvyImportException("Transfer $label has no toAccountId")
-            accounts[id] ?: throw IvyImportException("Transfer $label references unknown toAccount $id")
+            accounts[id] ?: fallbackAccount(toCurrencyOverride ?: currency)
         } else {
             null
         }
@@ -134,9 +154,7 @@ class IvyImporter(private val database: LindenDatabase) {
             null
         }
         val toCurrency = if (type == EntryType.Transfer) {
-            transaction.toCurrency?.let { code ->
-                parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
-            } ?: toAccount!!.currency
+            toCurrencyOverride ?: toAccount!!.currency
         } else {
             null
         }
@@ -174,7 +192,7 @@ class IvyImporter(private val database: LindenDatabase) {
         backupCategories: List<IvyCategory>,
     ): Long {
         fallbackCategoryId?.let { return it }
-        val id = resolveBackupCategory(FALLBACK_CATEGORY_NAME, categories, backupCategories) ?: run {
+        val id = resolveBackupCategory(categories, backupCategories) ?: run {
             fallbackCategoryCreated = true
             insertCategory(FALLBACK_CATEGORY_NAME)
         }
@@ -182,11 +200,8 @@ class IvyImporter(private val database: LindenDatabase) {
         return id
     }
 
-    private fun resolveBackupCategory(
-        name: String,
-        categories: Map<String, Long>,
-        backupCategories: List<IvyCategory>,
-    ): Long? = backupCategories.firstOrNull { it.name == name }?.let { categories[it.id] }
+    private fun resolveBackupCategory(categories: Map<String, Long>, backupCategories: List<IvyCategory>): Long? =
+        backupCategories.firstOrNull { it.name == FALLBACK_CATEGORY_NAME }?.let { categories[it.id] }
 
     private inline fun parseCurrency(code: String, message: () -> String): Currency =
         Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
