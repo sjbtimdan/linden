@@ -158,7 +158,6 @@ fun LedgerScreen(
             state = state,
             accounts = accounts,
             categories = categories,
-            onTypeChange = { dialogState = state.copy(type = it) },
             onAmountChange = { dialogState = state.copy(amountText = it) },
             onCategoryChange = { dialogState = state.copy(categoryId = it) },
             onAccountChange = { dialogState = state.copy(accountId = it) },

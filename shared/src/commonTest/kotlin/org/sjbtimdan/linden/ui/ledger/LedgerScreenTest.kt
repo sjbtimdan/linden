@@ -1,14 +1,9 @@
 package org.sjbtimdan.linden.ui.ledger
 
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -52,7 +47,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Add Expense").performClick()
-            onNodeWithText("New Entry").assertIsDisplayed()
+            onNodeWithText("New Expense").assertIsDisplayed()
 
             onNodeWithText("Amount").performTextInput("12.50")
             onNodeWithText("Category").performClick()
@@ -105,8 +100,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Add Income").performClick()
-            onNodeWithText("Edit Entry").assertDoesNotExist()
-            onNode(hasText("Income") and hasRole(Role.RadioButton)).assertIsSelected()
+            onNodeWithText("New Income").assertIsDisplayed()
         }
     }
 
@@ -120,7 +114,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Coffee").performClick()
-            onNodeWithText("Edit Entry").assertIsDisplayed()
+            onNodeWithText("Edit Expense").assertIsDisplayed()
 
             onNodeWithText("Amount").performTextClearance()
             onNodeWithText("Amount").performTextInput("5.00")
@@ -290,9 +284,6 @@ class LedgerScreenTest : StringSpec({
         }
     }
 })
-
-private fun hasRole(role: Role): SemanticsMatcher =
-    SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
 
 private suspend fun seed(
     accountDao: AccountDao,

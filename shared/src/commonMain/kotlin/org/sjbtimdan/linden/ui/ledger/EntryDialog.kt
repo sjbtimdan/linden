@@ -18,9 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -192,7 +189,6 @@ fun EntryDialog(
     state: EntryDialogState,
     accounts: List<Account>,
     categories: List<Category>,
-    onTypeChange: (EntryType) -> Unit,
     onAmountChange: (String) -> Unit,
     onCategoryChange: (Long?) -> Unit,
     onAccountChange: (Long?) -> Unit,
@@ -217,34 +213,16 @@ fun EntryDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (state.editing != null) "Edit Entry" else "New Entry")
+            Text(
+                if (state.editing != null) {
+                    "Edit ${state.type.displayName()}"
+                } else {
+                    "New ${state.type.displayName()}"
+                },
+            )
         },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                Text(
-                    text = "Type",
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    EntryType.entries.forEachIndexed { index, type ->
-                        SegmentedButton(
-                            selected = state.type == type,
-                            onClick = { onTypeChange(type) },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = EntryType.entries.size,
-                            ),
-                        ) {
-                            Text(type.displayName())
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 OutlinedTextField(
                     value = state.amountText,
                     onValueChange = onAmountChange,
