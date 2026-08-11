@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.ledger
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -184,6 +185,33 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Move money").assertIsDisplayed()
             onNodeWithText("Main → Savings").assertIsDisplayed()
             onNodeWithText("100.00").assertIsDisplayed()
+        }
+    }
+
+    "same-currency transfer hides the received amount field" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.CHF)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add Transfer").performClick()
+
+            onNodeWithText("Amount (sent)").performTextInput("100")
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+
+            onNodeWithText("Amount (received)").assertDoesNotExist()
+            onNodeWithText("Save").assertIsEnabled()
+
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("100.00").assertIsDisplayed()
+            onNodeWithText("Main → Savings").assertIsDisplayed()
         }
     }
 

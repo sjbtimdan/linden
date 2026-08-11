@@ -33,6 +33,8 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
   backup import in `.imports` (`IvyImporter`, `ZipFilePicker`). Kotlin source files use PascalCase.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Convert via
   `formatAmount` / `parseAmount` in `ui/ledger/MoneyFormat.kt`; `amount` columns in `.sq` files are `INTEGER`.
+- `Entry` is a sealed interface (`ExpenseEntry` / `IncomeEntry` / `TransferEntry`) in `model/Entry.kt`. Transfers carry
+  `toAccount`/`toAmount`/`toCurrency`; adding a field touches all subclass branches plus the `Entry.sq` insert/update and `EntryDao`.
 - SQLDelight is configured with `generateAsync = true` — the generated API is async:
   schema creation must be awaited (`LindenDatabase.Schema.create(driver).await()`), DB ops are `suspend`, and reactive reads use `.asFlow()` / `awaitAsList()`.
 - `.sq` files live in `shared/src/commonMain/sqldelight/org/sjbtimdan/linden/`. Entity/query classes
@@ -41,6 +43,11 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
   (`org.sjbtimdan.linden.db`).
 - `Import.sq` declares no table — it only exposes `last_insert_rowid()`, used by `IvyImporter` to resolve
   auto-increment IDs when restoring a backup in a transaction.
+- No SQLDelight migrations exist (schema version 1). Editing an `.sq` table won't auto-migrate the persisted
+  desktop DB at `~/.linden/linden.db` — bump the version + add a `.sqm` migration, or delete the local DB.
+- Theme + default currency live in the settings table (`SettingsDao`) and are seeded once at startup via
+  `createAppDependencies(driver)`; `App` receives `initialTheme`/`initialCurrency`, and theme applies live via the
+  `SettingsViewModel.themeMode` flow.
 - `DatabaseDriverFactory` is an `expect class` (shared enables `-Xexpect-actual-classes`), with per-source-set
   actuals at `shared/src/{androidMain,jvmMain}/.../DatabaseDriverFactory.kt`.
 - Desktop persists to `~/.linden/linden.db` (file-based); Android uses `AndroidSqliteDriver`.

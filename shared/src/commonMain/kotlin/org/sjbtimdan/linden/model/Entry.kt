@@ -57,7 +57,7 @@ data class TransferEntry(
     override val createdAt: Instant = Instant.fromEpochMilliseconds(0),
     override val createdZone: TimeZone = TimeZone.UTC,
     val toAccount: Account,
-    val toAmount: Long,
+    val toAmount: Long?,
     val toCurrency: Currency,
 ) : Entry {
     override val type: EntryType = EntryType.Transfer

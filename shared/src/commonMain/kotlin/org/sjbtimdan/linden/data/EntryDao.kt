@@ -60,7 +60,7 @@ class EntryDao(private val queries: EntryQueries) {
             amount = entry.amount,
             currency = entry.currency.name,
             toAccountId = entry.toAccount.id,
-            toAmount = entry.toAmount,
+            toAmount = if (entry.currency == entry.toCurrency) null else entry.toAmount,
             toCurrency = entry.toCurrency.name,
             createdAt = entry.createdAt.toEpochMilliseconds(),
             createdZone = entry.createdZone.id,
@@ -110,7 +110,7 @@ class EntryDao(private val queries: EntryQueries) {
             amount = entry.amount,
             currency = entry.currency.name,
             toAccountId = entry.toAccount.id,
-            toAmount = entry.toAmount,
+            toAmount = if (entry.currency == entry.toCurrency) null else entry.toAmount,
             toCurrency = entry.toCurrency.name,
             createdAt = entry.createdAt.toEpochMilliseconds(),
             createdZone = entry.createdZone.id,
@@ -170,23 +170,26 @@ class EntryDao(private val queries: EntryQueries) {
                 createdZone = TimeZone.of(createdZone),
             )
 
-            EntryType.Transfer -> TransferEntry(
-                id = id,
-                category = category,
-                description = description,
-                account = account,
-                amount = amount,
-                currency = Currency.fromCode(currency),
-                createdAt = Instant.fromEpochMilliseconds(createdAt),
-                createdZone = TimeZone.of(createdZone),
-                toAccount = Account(
+            EntryType.Transfer -> {
+                val toAccount = Account(
                     id = requireNotNull(toAccountId) { "Transfer entry $id has no toAccount" },
                     name = requireNotNull(toAccountName) { "Transfer entry $id has no toAccount name" },
                     currency = Currency.fromCode(requireNotNull(toAccountCurrency) { "Transfer entry $id has no toAccount currency" }),
-                ),
-                toAmount = requireNotNull(toAmount) { "Transfer entry $id has no toAmount" },
-                toCurrency = Currency.fromCode(requireNotNull(toCurrency) { "Transfer entry $id has no toCurrency" }),
-            )
+                )
+                TransferEntry(
+                    id = id,
+                    category = category,
+                    description = description,
+                    account = account,
+                    amount = amount,
+                    currency = Currency.fromCode(currency),
+                    createdAt = Instant.fromEpochMilliseconds(createdAt),
+                    createdZone = TimeZone.of(createdZone),
+                    toAccount = toAccount,
+                    toAmount = if (Currency.fromCode(currency) == toAccount.currency) null else toAmount,
+                    toCurrency = Currency.fromCode(requireNotNull(toCurrency) { "Transfer entry $id has no toCurrency" }),
+                )
+            }
         }
     }
 }

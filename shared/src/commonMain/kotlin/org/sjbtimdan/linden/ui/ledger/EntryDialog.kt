@@ -70,15 +70,23 @@ data class EntryDialogState(
     val toAmount: Long? get() = parseAmount(toAmountText)
 
     // TODO: Move to a helper that can be tested
-    fun isValid(): Boolean {
+    fun isValid(accounts: List<Account>): Boolean {
         val amountValue = amount ?: return false
         if (amountValue <= 0) return false
         if (accountId == null) return false
         return when (type) {
             EntryType.Expense, EntryType.Income -> categoryId != null
             EntryType.Transfer -> {
-                val toValue = toAmount
-                toValue != null && toValue > 0 && toAccountId != null && toAccountId != accountId
+                val toAccountIdValue = toAccountId ?: return false
+                if (toAccountIdValue == accountId) return false
+                val toAccount = accounts.firstOrNull { it.id == toAccountIdValue } ?: return false
+                val account = accounts.firstOrNull { it.id == accountId } ?: return false
+                if (account.currency == toAccount.currency) {
+                    true
+                } else {
+                    val toValue = toAmount
+                    toValue != null && toValue > 0
+                }
             }
         }
     }
@@ -108,7 +116,8 @@ data class EntryDialogState(
 
             EntryType.Transfer -> {
                 val toAccount = accounts.firstOrNull { it.id == toAccountId } ?: return null
-                val toValue = toAmount ?: return null
+                val sameCurrency = account.currency == toAccount.currency
+                val toValue = if (sameCurrency) null else toAmount ?: return null
                 TransferEntry(
                     id = id,
                     category = null,
@@ -174,7 +183,7 @@ data class EntryDialogState(
                 categoryId = null,
                 accountId = entry.account.id,
                 toAccountId = entry.toAccount.id,
-                toAmountText = formatAmount(entry.toAmount),
+                toAmountText = formatAmount(entry.toAmount ?: entry.amount),
                 description = entry.description.orEmpty(),
                 createdAt = entry.createdAt,
                 createdZone = entry.createdZone,
@@ -206,6 +215,11 @@ fun EntryDialog(
         EntryType.Income -> categories.filter { it.type != CategoryType.Expense }
         EntryType.Transfer -> emptyList()
     }
+    val fromAccount = accounts.firstOrNull { it.id == state.accountId }
+    val toAccount = accounts.firstOrNull { it.id == state.toAccountId }
+    val showReceivedAmount = state.type == EntryType.Transfer &&
+        fromAccount != null && toAccount != null &&
+        fromAccount.currency != toAccount.currency
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -269,15 +283,17 @@ fun EntryDialog(
                             onSelect = { onToAccountChange(it.id) },
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = state.toAmountText,
-                        onValueChange = onToAmountChange,
-                        label = { Text("Amount (received)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    if (showReceivedAmount) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = state.toAmountText,
+                            onValueChange = onToAmountChange,
+                            label = { Text("Amount (received)") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 } else {
                     Spacer(modifier = Modifier.height(16.dp))
                     if (visibleCategories.isEmpty()) {
@@ -343,7 +359,7 @@ fun EntryDialog(
         confirmButton = {
             Button(
                 onClick = onSave,
-                enabled = state.isValid(),
+                enabled = state.isValid(accounts),
             ) {
                 Text("Save")
             }

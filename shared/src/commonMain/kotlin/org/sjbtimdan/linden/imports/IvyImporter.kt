@@ -151,14 +151,18 @@ class IvyImporter(private val database: LindenDatabase) {
         } else {
             null
         }
-        val toAmount = if (type == EntryType.Transfer) {
-            transaction.toAmount?.let(::toMinorUnits)
-                ?: throw IvyImportException("Transfer $label has no toAmount")
+        val toCurrency = if (type == EntryType.Transfer) {
+            toCurrencyOverride ?: toAccount!!.currency
         } else {
             null
         }
-        val toCurrency = if (type == EntryType.Transfer) {
-            toCurrencyOverride ?: toAccount!!.currency
+        val toAmount = if (type == EntryType.Transfer) {
+            if (currency == toCurrency) {
+                null
+            } else {
+                transaction.toAmount?.let(::toMinorUnits)
+                    ?: throw IvyImportException("Transfer $label has no toAmount")
+            }
         } else {
             null
         }

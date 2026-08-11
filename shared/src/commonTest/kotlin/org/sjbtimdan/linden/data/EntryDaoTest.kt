@@ -194,6 +194,23 @@ class EntryDaoTest : StringSpec({
         entryDao.getAll().first().first() shouldBe updatedEntry
     }
 
+    "same-currency transfers store a null toAmount" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.CHF)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first()
+        val savings = accounts.last()
+
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.CHF))
+
+        val created = entryDao.getAll().first().first() as TransferEntry
+        created.toAmount shouldBe null
+    }
+
     "typed read helpers return only their own entries" {
         val database = lindenDatabase()
         val entryDao = EntryDao(database.entryQueries)

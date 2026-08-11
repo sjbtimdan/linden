@@ -422,6 +422,73 @@ class IvyImporterSpec : StringSpec({
         transfer.toCurrency shouldBe Currency.USD
     }
 
+    "imports a same-currency transfer without a toAmount" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "title": "Sweep",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        val transfer = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<TransferEntry>()
+        transfer.amount shouldBe 50_000
+        transfer.toAmount shouldBe null
+        transfer.currency shouldBe Currency.USD
+        transfer.toCurrency shouldBe Currency.USD
+    }
+
+    "throws when a cross-currency transfer has no toAmount" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "GBP"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "title": "FX transfer",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val error = shouldThrow<IvyImportException> {
+            importer.import(ByteArrayInputStream(buildIvyZip(json)))
+        }
+        error.message shouldContain "no toAmount"
+    }
+
     "uses the default currency for fallback accounts when the entry has no currency" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)
