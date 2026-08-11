@@ -7,6 +7,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -29,14 +30,16 @@ import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenTest : StringSpec({
-    "displays empty state and new entry button" {
+    "displays empty state and add buttons" {
         withLedgerViewModel { viewModel ->
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("No entries yet.").assertIsDisplayed()
-            onNodeWithText("+ New Entry").assertIsDisplayed()
+            onNodeWithText("Add Expense").assertIsDisplayed()
+            onNodeWithText("Add Income").assertIsDisplayed()
+            onNodeWithText("Add Transfer").assertIsDisplayed()
         }
     }
 
@@ -48,7 +51,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("+ New Entry").performClick()
+            onNodeWithText("Add Expense").performClick()
             onNodeWithText("New Entry").assertIsDisplayed()
 
             onNodeWithText("Amount").performTextInput("12.50")
@@ -71,7 +74,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("+ New Entry").performClick()
+            onNodeWithText("Add Expense").performClick()
             onNodeWithText("Save").assertIsNotEnabled()
             onNodeWithText("Amount").performTextInput("12.50")
             onNodeWithText("Save").assertIsNotEnabled()
@@ -86,10 +89,24 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("+ New Entry").performClick()
+            onNodeWithText("Add Expense").performClick()
 
             onNodeWithText("Date & time").assertIsDisplayed()
             onNodeWithText("Save").assertIsNotEnabled()
+        }
+    }
+
+    "add buttons preselect the entry type in the dialog" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add Income").performClick()
+            onNodeWithText("Edit Entry").assertDoesNotExist()
+            onNode(hasText("Income") and hasRole(Role.RadioButton)).assertIsSelected()
         }
     }
 
@@ -159,8 +176,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("+ New Entry").performClick()
-            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+            onNodeWithText("Add Transfer").performClick()
 
             onNodeWithText("Amount (sent)").performTextInput("100")
             onNodeWithText("From account").performClick()
@@ -204,7 +220,7 @@ class LedgerScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Entry").performClick()
+            onNodeWithText("Add Expense").performClick()
 
             onNodeWithText("Please enter category").assertIsDisplayed()
             onNodeWithText("Please enter account").assertIsDisplayed()
@@ -225,8 +241,7 @@ class LedgerScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Entry").performClick()
-            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+            onNodeWithText("Add Transfer").performClick()
 
             onAllNodesWithText("Please enter account").assertCountEquals(2)
             onNodeWithText("Please enter category").assertDoesNotExist()
@@ -245,8 +260,7 @@ class LedgerScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Entry").performClick()
-            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+            onNodeWithText("Add Transfer").performClick()
 
             onNodeWithText("Please add a second account").assertIsDisplayed()
             onNodeWithText("Please enter account").assertDoesNotExist()
@@ -265,8 +279,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("+ New Entry").performClick()
-            onNode(hasText("Transfer") and hasRole(Role.RadioButton)).performClick()
+            onNodeWithText("Add Transfer").performClick()
 
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()

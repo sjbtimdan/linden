@@ -130,9 +130,9 @@ data class EntryDialogState(
     }
 
     companion object {
-        fun forNew(): EntryDialogState = EntryDialogState(
+        fun forNew(type: EntryType = EntryType.Expense): EntryDialogState = EntryDialogState(
             editing = null,
-            type = EntryType.Expense,
+            type = type,
             amountText = "",
             categoryId = null,
             accountId = null,

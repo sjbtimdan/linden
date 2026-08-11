@@ -134,11 +134,22 @@ fun LedgerScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        FilledTonalButton(
-            onClick = { dialogState = EntryDialogState.forNew() },
+        Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("+ New Entry")
+            listOf(
+                EntryType.Expense,
+                EntryType.Income,
+                EntryType.Transfer,
+            ).forEach { type ->
+                FilledTonalButton(
+                    onClick = { dialogState = EntryDialogState.forNew(type) },
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Add ${type.displayName()}")
+                }
+            }
         }
     }
 
