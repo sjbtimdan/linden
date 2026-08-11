@@ -101,7 +101,7 @@ data class EntryDialogState(
             EntryType.Expense -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
                 ExpenseEntry(
-                    id, category, description, account, amountValue, account.currency,
+                    id, category, description, account, amountValue,
                     createdAt = createdAt, createdZone = createdZone,
                 )
             }
@@ -109,7 +109,7 @@ data class EntryDialogState(
             EntryType.Income -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
                 IncomeEntry(
-                    id, category, description, account, amountValue, account.currency,
+                    id, category, description, account, amountValue,
                     createdAt = createdAt, createdZone = createdZone,
                 )
             }
@@ -124,12 +124,10 @@ data class EntryDialogState(
                     description = description,
                     account = account,
                     amount = amountValue,
-                    currency = account.currency,
                     createdAt = createdAt,
                     createdZone = createdZone,
                     toAccount = toAccount,
                     toAmount = toValue,
-                    toCurrency = toAccount.currency,
                 )
             }
         }

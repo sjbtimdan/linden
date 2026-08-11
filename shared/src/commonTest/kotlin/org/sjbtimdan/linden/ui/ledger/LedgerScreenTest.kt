@@ -108,7 +108,7 @@ class LedgerScreenTest : StringSpec({
     "editing an entry shows current values and saves changes" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -129,7 +129,7 @@ class LedgerScreenTest : StringSpec({
     "deleting an entry from the edit dialog removes it" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -145,8 +145,8 @@ class LedgerScreenTest : StringSpec({
     "type filter chip narrows the list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -218,8 +218,8 @@ class LedgerScreenTest : StringSpec({
     "search narrows the list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)

@@ -36,7 +36,6 @@ class EntryDaoTest : StringSpec({
             description = "Coffee",
             account = main,
             amount = 450,
-            currency = Currency.CHF,
             createdAt = Instant.fromEpochMilliseconds(1_000),
             createdZone = TimeZone.of("Europe/Berlin"),
         )
@@ -46,7 +45,6 @@ class EntryDaoTest : StringSpec({
             description = "Salary",
             account = main,
             amount = 50_000,
-            currency = Currency.CHF,
             createdAt = Instant.fromEpochMilliseconds(2_000),
             createdZone = TimeZone.of("Asia/Tokyo"),
         )
@@ -56,10 +54,8 @@ class EntryDaoTest : StringSpec({
             description = null,
             account = main,
             amount = 10_000,
-            currency = Currency.CHF,
             toAccount = savings,
             toAmount = 9_500,
-            toCurrency = Currency.EUR,
             createdAt = Instant.fromEpochMilliseconds(3_000),
             createdZone = TimeZone.of("America/New_York"),
         )
@@ -87,9 +83,9 @@ class EntryDaoTest : StringSpec({
         val main = accountDao.getAll().first().first()
         val groceries = categoryDao.getAll().first().first()
 
-        entryDao.create(ExpenseEntry(0, groceries, "First", main, 100, Currency.CHF))
-        entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200, Currency.CHF))
-        entryDao.create(ExpenseEntry(0, groceries, "Third", main, 300, Currency.CHF))
+        entryDao.create(ExpenseEntry(0, groceries, "First", main, 100))
+        entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200))
+        entryDao.create(ExpenseEntry(0, groceries, "Third", main, 300))
 
         entryDao.getAll().first().map { it.description } shouldBe listOf("Third", "Second", "First")
     }
@@ -105,8 +101,8 @@ class EntryDaoTest : StringSpec({
         val main = accountDao.getAll().first().first()
         val groceries = categoryDao.getAll().first().first()
 
-        entryDao.create(ExpenseEntry(0, groceries, "First", main, 100, Currency.CHF))
-        entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200, Currency.CHF))
+        entryDao.create(ExpenseEntry(0, groceries, "First", main, 100))
+        entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200))
 
         val created = entryDao.getAll().first()
         val second = created.first()
@@ -130,7 +126,7 @@ class EntryDaoTest : StringSpec({
         val groceries = categories.first()
         val salary = categories.last()
 
-        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
         val created = entryDao.getAll().first().first()
         val updatedEntry = IncomeEntry(
             id = created.id,
@@ -138,7 +134,6 @@ class EntryDaoTest : StringSpec({
             description = "Bonus",
             account = main,
             amount = 5_000,
-            currency = Currency.CHF,
             createdAt = Instant.fromEpochMilliseconds(4_000),
             createdZone = TimeZone.of("Asia/Tokyo"),
         )
@@ -159,7 +154,7 @@ class EntryDaoTest : StringSpec({
         val main = accountDao.getAll().first().first()
         val groceries = categoryDao.getAll().first().first()
 
-        entryDao.create(ExpenseEntry(0, groceries, null, main, 100, Currency.CHF))
+        entryDao.create(ExpenseEntry(0, groceries, null, main, 100))
 
         entryDao.getAll().first().first().description shouldBe null
     }
@@ -175,7 +170,7 @@ class EntryDaoTest : StringSpec({
         val main = accounts.first()
         val savings = accounts.last()
 
-        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.EUR))
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500))
         val created = entryDao.getAll().first().first()
 
         val updatedEntry = TransferEntry(
@@ -184,10 +179,8 @@ class EntryDaoTest : StringSpec({
             description = "Top up",
             account = main,
             amount = 20_000,
-            currency = Currency.CHF,
             toAccount = savings,
             toAmount = 19_000,
-            toCurrency = Currency.EUR,
         )
         entryDao.update(updatedEntry)
 
@@ -205,7 +198,7 @@ class EntryDaoTest : StringSpec({
         val main = accounts.first()
         val savings = accounts.last()
 
-        entryDao.create(TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.CHF))
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500))
 
         val created = entryDao.getAll().first().first() as TransferEntry
         created.toAmount shouldBe null
@@ -229,9 +222,9 @@ class EntryDaoTest : StringSpec({
         val groceries = categories.first()
         val salary = categories.last()
 
-        val expense = ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF)
-        val income = IncomeEntry(0, salary, "Salary", main, 50_000, Currency.CHF)
-        val transfer = TransferEntry(0, null, null, main, 10_000, Currency.CHF, toAccount = savings, toAmount = 9_500, toCurrency = Currency.EUR)
+        val expense = ExpenseEntry(0, groceries, "Coffee", main, 450)
+        val income = IncomeEntry(0, salary, "Salary", main, 50_000)
+        val transfer = TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500)
 
         entryDao.create(expense)
         entryDao.create(income)

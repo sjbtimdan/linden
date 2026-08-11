@@ -16,7 +16,6 @@ sealed interface Entry {
     val description: String?
     val account: Account
     val amount: Long
-    val currency: Currency
     val createdAt: Instant
     val createdZone: TimeZone
 }
@@ -27,7 +26,6 @@ data class ExpenseEntry(
     override val description: String?,
     override val account: Account,
     override val amount: Long,
-    override val currency: Currency,
     override val createdAt: Instant = Instant.fromEpochMilliseconds(0),
     override val createdZone: TimeZone = TimeZone.UTC,
 ) : Entry {
@@ -40,7 +38,6 @@ data class IncomeEntry(
     override val description: String?,
     override val account: Account,
     override val amount: Long,
-    override val currency: Currency,
     override val createdAt: Instant = Instant.fromEpochMilliseconds(0),
     override val createdZone: TimeZone = TimeZone.UTC,
 ) : Entry {
@@ -53,12 +50,10 @@ data class TransferEntry(
     override val description: String?,
     override val account: Account,
     override val amount: Long,
-    override val currency: Currency,
     override val createdAt: Instant = Instant.fromEpochMilliseconds(0),
     override val createdZone: TimeZone = TimeZone.UTC,
     val toAccount: Account,
     val toAmount: Long?,
-    val toCurrency: Currency,
 ) : Entry {
     override val type: EntryType = EntryType.Transfer
 }

@@ -68,7 +68,7 @@ class IvyImporterSpec : StringSpec({
 
         val bonus = entries[0].shouldBeInstanceOf<IncomeEntry>()
         bonus.amount shouldBe 15_000
-        bonus.currency shouldBe Currency.GBP
+        bonus.account.currency shouldBe Currency.GBP
         bonus.account.name shouldBe "UK Savings"
         bonus.category.name shouldBe "Salary"
         bonus.description shouldBe "Bonus"
@@ -76,7 +76,7 @@ class IvyImporterSpec : StringSpec({
 
         val coffee = entries[1].shouldBeInstanceOf<ExpenseEntry>()
         coffee.amount shouldBe 575
-        coffee.currency shouldBe Currency.USD
+        coffee.account.currency shouldBe Currency.USD
         coffee.account.name shouldBe "Wallet"
         coffee.category.name shouldBe "Food"
         coffee.description shouldBe "Coffee"
@@ -84,24 +84,24 @@ class IvyImporterSpec : StringSpec({
 
         val transfer = entries[2].shouldBeInstanceOf<TransferEntry>()
         transfer.amount shouldBe 50_000
-        transfer.currency shouldBe Currency.USD
+        transfer.account.currency shouldBe Currency.USD
         transfer.account.name shouldBe "Wallet"
         transfer.toAccount.name shouldBe "UK Savings"
+        transfer.toAccount.currency shouldBe Currency.GBP
         transfer.toAmount shouldBe 50_000
-        transfer.toCurrency shouldBe Currency.GBP
         transfer.category?.name shouldBe "General"
         transfer.description shouldBe "Transfer to savings"
 
         val salary = entries[3].shouldBeInstanceOf<IncomeEntry>()
         salary.amount shouldBe 320_000
-        salary.currency shouldBe Currency.EUR
+        salary.account.currency shouldBe Currency.EUR
         salary.account.name shouldBe "Euro Bank"
         salary.category.name shouldBe "Salary"
         salary.description shouldBe "June salary"
 
         val groceries = entries[4].shouldBeInstanceOf<ExpenseEntry>()
         groceries.amount shouldBe 4_550
-        groceries.currency shouldBe Currency.USD
+        groceries.account.currency shouldBe Currency.USD
         groceries.account.name shouldBe "Wallet"
         groceries.category.name shouldBe "Food"
         groceries.description shouldBe "Grocery run"
@@ -117,7 +117,7 @@ class IvyImporterSpec : StringSpec({
         categoryDao.create("Old Category", CategoryType.Expense)
         val oldAccount = accountDao.getAll().first().first()
         val oldCategory = categoryDao.getAll().first().first()
-        entryDao.create(ExpenseEntry(0, oldCategory, "Old entry", oldAccount, 100, Currency.CHF))
+        entryDao.create(ExpenseEntry(0, oldCategory, "Old entry", oldAccount, 100))
 
         importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
 
@@ -419,7 +419,7 @@ class IvyImporterSpec : StringSpec({
             .shouldBeInstanceOf<TransferEntry>()
         transfer.account.name shouldBe "Wallet"
         transfer.toAccount.name shouldBe "Imported Account (USD)"
-        transfer.toCurrency shouldBe Currency.USD
+        transfer.toAccount.currency shouldBe Currency.USD
     }
 
     "imports a same-currency transfer without a toAmount" {
@@ -454,8 +454,8 @@ class IvyImporterSpec : StringSpec({
             .shouldBeInstanceOf<TransferEntry>()
         transfer.amount shouldBe 50_000
         transfer.toAmount shouldBe null
-        transfer.currency shouldBe Currency.USD
-        transfer.toCurrency shouldBe Currency.USD
+        transfer.account.currency shouldBe Currency.USD
+        transfer.toAccount.currency shouldBe Currency.USD
     }
 
     "throws when a cross-currency transfer has no toAmount" {
@@ -519,7 +519,7 @@ class IvyImporterSpec : StringSpec({
         val expense = EntryDao(database.entryQueries).getAll().first().single()
             .shouldBeInstanceOf<ExpenseEntry>()
         expense.account.name shouldBe "Imported Account (CHF)"
-        expense.currency shouldBe Currency.CHF
+        expense.account.currency shouldBe Currency.CHF
     }
 
     "resets fallback category state between imports" {

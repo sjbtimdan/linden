@@ -32,12 +32,12 @@ class LedgerViewModelTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF)
+                ExpenseEntry(0, groceries, "Coffee", main, 450)
             )
 
             viewModel.entries.value.shouldHaveSize(1)
             val entry = viewModel.entries.value.first()
-            entry shouldBe ExpenseEntry(entry.id, groceries, "Coffee", main, 450, Currency.CHF)
+            entry shouldBe ExpenseEntry(entry.id, groceries, "Coffee", main, 450)
         }
     }
 
@@ -45,8 +45,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             viewModel.setTypeFilter(EntryType.Income)
 
@@ -62,8 +62,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setSearchQuery("coffee")
             viewModel.entries.value.map { it.description } shouldBe listOf("Coffee")
@@ -81,13 +81,13 @@ class LedgerViewModelTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Small", main, 100, Currency.CHF, createdAt = at(1_000)),
+                ExpenseEntry(0, groceries, "Small", main, 100, createdAt = at(1_000)),
             )
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Large", main, 900, Currency.CHF, createdAt = at(2_000)),
+                ExpenseEntry(0, groceries, "Large", main, 900, createdAt = at(2_000)),
             )
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Medium", main, 500, Currency.CHF, createdAt = at(3_000)),
+                ExpenseEntry(0, groceries, "Medium", main, 500, createdAt = at(3_000)),
             )
 
             // Newest first (default): Medium, Large, Small by createdAt
@@ -108,7 +108,7 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getExpenses().first().first()
             val updated = created.copy(description = "Tea", amount = 300)
 
@@ -122,8 +122,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, Currency.CHF))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Tea", main, 300, Currency.CHF))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Tea", main, 300))
             val created = viewModel.entries.value.first()
 
             viewModel.deleteEntry(created.id)
@@ -137,7 +137,7 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100, Currency.CHF))
+            entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100))
 
             viewModel.entries.value.shouldHaveSize(1)
         }

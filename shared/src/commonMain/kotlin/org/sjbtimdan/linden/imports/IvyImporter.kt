@@ -130,34 +130,25 @@ class IvyImporter(private val database: LindenDatabase) {
         }
         val account = accounts[transaction.accountId]
             ?: fallbackAccount(entryCurrency ?: defaultCurrency)
-        val currency = entryCurrency ?: account.currency
 
         val categoryId = when (type) {
             EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, backupCategories, required = true)
             EntryType.Transfer -> categoryId(transaction, categories, backupCategories, required = false)
         }
 
-        val toCurrencyOverride = if (type == EntryType.Transfer) {
-            transaction.toCurrency?.let { code ->
-                parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
-            }
-        } else {
-            null
-        }
         val toAccount = if (type == EntryType.Transfer) {
             val id = transaction.toAccountId
                 ?: throw IvyImportException("Transfer $label has no toAccountId")
-            accounts[id] ?: fallbackAccount(toCurrencyOverride ?: currency)
-        } else {
-            null
-        }
-        val toCurrency = if (type == EntryType.Transfer) {
-            toCurrencyOverride ?: toAccount!!.currency
+            val toCurrencyOverride = transaction.toCurrency?.let { code ->
+                parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
+            }
+            accounts[id] ?: fallbackAccount(toCurrencyOverride ?: account.currency)
         } else {
             null
         }
         val toAmount = if (type == EntryType.Transfer) {
-            if (currency == toCurrency) {
+            val toAccountValue = toAccount!!
+            if (account.currency == toAccountValue.currency) {
                 null
             } else {
                 transaction.toAmount?.let(::toMinorUnits)
@@ -173,10 +164,8 @@ class IvyImporter(private val database: LindenDatabase) {
             description = transaction.title,
             accountId = account.id,
             amount = toMinorUnits(transaction.amount),
-            currency = currency.name,
             toAccountId = toAccount?.id,
             toAmount = toAmount,
-            toCurrency = toCurrency?.name,
             createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: Clock.System.now())
                 .toEpochMilliseconds(),
             createdZone = TimeZone.currentSystemDefault().id,
