@@ -41,6 +41,7 @@ class IvyImporter(private val database: LindenDatabase) {
         fallbackCategoryId = null
         fallbackCategoryCreated = false
         fallbackAccounts.clear()
+        val transactions = backup.transactions.filter { it.dateTime != null }
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -53,14 +54,14 @@ class IvyImporter(private val database: LindenDatabase) {
                 category.id to insertCategory(category.name)
             }
 
-            backup.transactions.forEach { transaction ->
+            transactions.forEach { transaction ->
                 insertTransaction(transaction, accounts, categories, backup.categories, defaultCurrency)
             }
         }
         return IvyImportResult(
             accounts = backup.accounts.size + fallbackAccounts.size,
             categories = backup.categories.size + if (fallbackCategoryCreated) 1 else 0,
-            transactions = backup.transactions.size,
+            transactions = transactions.size,
         )
     }
 

@@ -528,6 +528,48 @@ class IvyImporterSpec : StringSpec({
         }
     }
 
+    "skips scheduled transactions that have no dateTime" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Posted coffee",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "EXPENSE",
+                  "amount": 168.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "3 WiFi",
+                  "dueDate": 1784376000000,
+                  "recurringRuleId": "f6ddf805-4e1f-4a91-b3db-ca59899005c4"
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        EntryDao(database.entryQueries).getAll().first().map { it.description } shouldBe listOf("Posted coffee")
+    }
+
     "imports a UTF-8 backup" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)
