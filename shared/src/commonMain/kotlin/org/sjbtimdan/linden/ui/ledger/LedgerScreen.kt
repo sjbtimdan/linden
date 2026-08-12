@@ -31,7 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.time.Clock
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
+import org.sjbtimdan.linden.predictions.predictDescriptions
 
 @Composable
 fun LedgerScreen(
@@ -41,10 +44,30 @@ fun LedgerScreen(
     val entries by viewModel.entries.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val allEntries by viewModel.allEntries.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
+
+    val descriptionSuggestions = remember(dialogState, allEntries) {
+        dialogState?.let { state ->
+            if (state.editing != null) {
+                emptyList()
+            } else {
+                predictDescriptions(
+                    entries = allEntries,
+                    input = DescriptionPredictionInput(
+                        type = state.type,
+                        categoryId = state.categoryId,
+                        accountId = state.accountId,
+                        amount = state.amount,
+                    ),
+                    now = Clock.System.now(),
+                )
+            }
+        } ?: emptyList()
+    }
 
     Column(
         modifier = Modifier
@@ -183,6 +206,7 @@ fun LedgerScreen(
             },
             onNavigateToSettings = onNavigateToSettings,
             onDismiss = { dialogState = null },
+            descriptionSuggestions = descriptionSuggestions,
         )
     }
 }

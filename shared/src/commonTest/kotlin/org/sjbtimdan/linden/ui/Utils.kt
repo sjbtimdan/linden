@@ -109,5 +109,10 @@ fun withLedgerViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
+) = withLedgerViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withLedgerViewModel(
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
 ) = withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }

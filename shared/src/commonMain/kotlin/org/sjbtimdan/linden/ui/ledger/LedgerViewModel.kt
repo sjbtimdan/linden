@@ -46,6 +46,13 @@ class LedgerViewModel(
             initialValue = emptyList(),
         )
 
+    val allEntries: StateFlow<List<Entry>> = entryDao.getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 

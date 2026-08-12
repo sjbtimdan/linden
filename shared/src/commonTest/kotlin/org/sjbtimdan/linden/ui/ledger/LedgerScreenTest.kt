@@ -5,6 +5,8 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -12,6 +14,8 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -40,7 +44,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "creating an expense via the dialog shows it in the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -63,7 +67,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "save is disabled until the form is valid" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -78,7 +82,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "new entry dialog shows a date and time section" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -93,7 +97,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "add buttons preselect the entry type in the dialog" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel {accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -106,7 +110,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "editing an entry shows current values and saves changes" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -127,7 +131,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "deleting an entry from the edit dialog removes it" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -143,7 +147,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "type filter chip narrows the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
@@ -163,7 +167,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "creating a transfer via the dialog shows it in the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -189,7 +193,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "same-currency transfer hides the received amount field" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
 
@@ -216,7 +220,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "search narrows the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -271,7 +275,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows add-second-account link for transfer when only one account exists" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             var settingsNavigations = 0
 
@@ -293,7 +297,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "to account dropdown excludes the from account" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -309,6 +313,53 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("To account").performClick()
             onAllNodesWithText("Main").assertCountEquals(1)
             onNodeWithText("Savings").assertIsDisplayed()
+        }
+    }
+    "shows description suggestions based on category, account and amount" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val now = Clock.System.now()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add Expense").performClick()
+            onNodeWithText("Amount").performTextInput("4.50")
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onAllNodesWithText("Main")[1].performClick()
+
+            onNodeWithText("Description (optional)").performClick()
+
+            // suggestion plus the ledger row behind the dialog
+            onAllNodesWithText("Coffee").assertCountEquals(2)
+        }
+    }
+
+    "selecting a description suggestion fills the field" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val now = Clock.System.now()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add Expense").performClick()
+            onNodeWithText("Amount").performTextInput("4.50")
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onAllNodesWithText("Main")[1].performClick()
+
+            onNodeWithText("Description (optional)").performClick()
+            onAllNodesWithText("Coffee")[1].performClick()
+
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
         }
     }
 })
