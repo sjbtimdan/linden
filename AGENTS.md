@@ -30,7 +30,8 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 ## Architecture & Gotchas
 
 - Package root `org.sjbtimdan.linden`. Models in `.model`, DAOs in `.data`, screens/ViewModels in `.ui.<feature>`,
-  backup import in `.imports` (`IvyImporter`, `ZipFilePicker`). Kotlin source files use PascalCase.
+  backup import in `.imports` (`IvyImporter`, `ZipFilePicker`), description prediction logic in `.predictions`
+  (`DescriptionPredictor` — heuristic scoring of past entries, pure functions, no DB). Kotlin source files use PascalCase.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Convert via
   `formatAmount` / `parseAmount` in `ui/ledger/MoneyFormat.kt`; `amount` columns in `.sq` files are `INTEGER`.
 - `Entry` is a sealed interface (`ExpenseEntry` / `IncomeEntry` / `TransferEntry`) in `model/Entry.kt`. Entries carry no
