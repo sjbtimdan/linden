@@ -1,7 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -16,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,8 +30,15 @@ fun <T> DropdownField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
-    LaunchedEffect(expanded) {
-        if (!expanded) query = ""
+    val anchorFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(expanded, selected) {
+        if (expanded) {
+            // Fresh search on open; the anchor field is the search box.
+            query = ""
+            anchorFocusRequester.requestFocus()
+        } else {
+            query = selected?.let(optionLabel).orEmpty()
+        }
     }
     val visibleOptions = query.trim().let { trimmed ->
         if (trimmed.isEmpty()) options
@@ -40,29 +48,23 @@ fun <T> DropdownField(
         expanded = expanded,
         onExpandedChange = { expanded = it },
     ) {
+        // The editable anchor doubles as the search box: text fields inside popups never
+        // connect to the IME on Android, but a regular field in the window does.
         OutlinedTextField(
-            value = selected?.let(optionLabel).orEmpty(),
-            onValueChange = {},
-            readOnly = true,
+            value = query,
+            onValueChange = { query = it },
             label = { Text(label) },
+            singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                .focusRequester(anchorFocusRequester)
                 .fillMaxWidth(),
         )
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = { Text("Search") },
-                singleLine = true,
-                modifier = Modifier
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-                    .fillMaxWidth(),
-            )
             visibleOptions.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(optionLabel(option)) },

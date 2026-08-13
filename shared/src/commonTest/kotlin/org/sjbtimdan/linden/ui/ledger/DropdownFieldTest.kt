@@ -1,7 +1,13 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -36,7 +42,7 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
-    "typing in the search field filters the options" {
+    "typing in the field filters the options" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -50,7 +56,7 @@ class DropdownFieldTest : StringSpec({
                 }
 
                 onNodeWithText("Account").performClick()
-                onNodeWithText("Search").performTextInput("sav")
+                onNode(hasSetTextAction()).performTextInput("sav")
 
                 onNodeWithText("Savings").assertIsDisplayed()
                 onNodeWithText("Checking").assertDoesNotExist()
@@ -73,7 +79,7 @@ class DropdownFieldTest : StringSpec({
                 }
 
                 onNodeWithText("Account").performClick()
-                onNodeWithText("Search").performTextInput("CREDIT")
+                onNode(hasSetTextAction()).performTextInput("CREDIT")
 
                 onNodeWithText("Credit Card").assertIsDisplayed()
                 onNodeWithText("Checking").assertDoesNotExist()
@@ -95,7 +101,7 @@ class DropdownFieldTest : StringSpec({
                 }
 
                 onNodeWithText("Account").performClick()
-                onNodeWithText("Search").performTextInput("zzz")
+                onNode(hasSetTextAction()).performTextInput("zzz")
 
                 accountOptions.forEach { option ->
                     onNodeWithText(option).assertDoesNotExist()
@@ -119,10 +125,61 @@ class DropdownFieldTest : StringSpec({
                 }
 
                 onNodeWithText("Account").performClick()
-                onNodeWithText("Search").performTextInput("sav")
+                onNode(hasSetTextAction()).performTextInput("sav")
                 onNodeWithText("Savings").performClick()
 
                 selected shouldBe "Savings"
+            }
+        }
+    }
+
+    "the field shows the selected option after the menu closes" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    var selected by remember { mutableStateOf<String?>(null) }
+                    DropdownField(
+                        label = "Account",
+                        selected = selected,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = { selected = it },
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+                onNode(hasSetTextAction()).performTextInput("sav")
+                onNodeWithText("Savings").performClick()
+
+                // Menu closed: only the anchor field shows the selection.
+                onNodeWithText("Savings").assertIsDisplayed()
+                onNodeWithText("Checking").assertDoesNotExist()
+            }
+        }
+    }
+
+    "opening the menu focuses the field for typing" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                waitUntil(timeoutMillis = 5_000) {
+                    onAllNodes(hasSetTextAction()).fetchSemanticsNodes()
+                        .any {
+                            it.config.contains(SemanticsProperties.Focused) &&
+                                it.config[SemanticsProperties.Focused] == true
+                        }
+                }
             }
         }
     }
@@ -142,7 +199,7 @@ class DropdownFieldTest : StringSpec({
                 }
 
                 onNodeWithText("Account").performClick()
-                onNodeWithText("Search").performTextInput("sav")
+                onNode(hasSetTextAction()).performTextInput("sav")
                 onNodeWithText("Savings").performClick()
 
                 selected shouldBe "Savings"
