@@ -17,6 +17,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -130,6 +131,60 @@ class LedgerViewModelTest : StringSpec({
 
             viewModel.entries.value.shouldHaveSize(1)
             viewModel.entries.value.first().description shouldBe "Coffee"
+        }
+    }
+
+    "new entry state prefills from the most recent entry of the same type" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            val state = viewModel.newEntryState(EntryType.Expense)
+
+            state.editing shouldBe null
+            state.type shouldBe EntryType.Expense
+            state.amountText shouldBe ""
+            state.categoryId shouldBe groceries.id
+            state.accountId shouldBe main.id
+            state.description shouldBe "Lunch"
+        }
+    }
+
+    "new entry state for a type with no entries is empty" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            val state = viewModel.newEntryState(EntryType.Income)
+
+            state.editing shouldBe null
+            state.amountText shouldBe ""
+            state.categoryId shouldBe null
+            state.accountId shouldBe null
+            state.toAccountId shouldBe null
+            state.description shouldBe ""
+        }
+    }
+
+    "new transfer state prefills accounts from the most recent transfer" {
+        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+            val accounts = accountDao.getAll().first()
+            val main = accounts.first()
+            val savings = accounts.last()
+
+            viewModel.createEntry(TransferEntry(0, null, "Move money", main, 10_000, toAccount = savings, toAmount = 9_500))
+
+            val state = viewModel.newEntryState(EntryType.Transfer)
+
+            state.type shouldBe EntryType.Transfer
+            state.amountText shouldBe ""
+            state.toAmountText shouldBe ""
+            state.accountId shouldBe main.id
+            state.toAccountId shouldBe savings.id
+            state.description shouldBe "Move money"
         }
     }
 

@@ -26,14 +26,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.time.Clock
+import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
+import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.predictDescriptions
 
 @Composable
@@ -49,6 +53,7 @@ fun LedgerScreen(
     val typeFilter by viewModel.typeFilter.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
+    val scope = rememberCoroutineScope()
 
     val descriptionSuggestions = remember(dialogState, allEntries) {
         dialogState?.let { state ->
@@ -64,6 +69,8 @@ fun LedgerScreen(
                         amount = state.amount,
                     ),
                     now = Clock.System.now(),
+                    timeZone = TimeZone.currentSystemDefault(),
+                    topN = PREDICTION_TOP_N
                 )
             }
         } ?: emptyList()
@@ -167,7 +174,7 @@ fun LedgerScreen(
                 EntryType.Transfer,
             ).forEach { type ->
                 FilledTonalButton(
-                    onClick = { dialogState = EntryDialogState.forNew(type) },
+                    onClick = { scope.launch { dialogState = viewModel.newEntryState(type) } },
                     modifier = Modifier.weight(1f),
                 ) {
                     Text("Add ${type.displayName()}")

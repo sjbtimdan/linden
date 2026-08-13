@@ -38,8 +38,8 @@ fun predictDescriptions(
     entries: List<Entry>,
     input: DescriptionPredictionInput,
     now: Instant,
-    timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    topN: Int = PREDICTION_TOP_N,
+    timeZone: TimeZone,
+    topN: Int,
 ): List<String> {
     if (input.categoryId == null && input.accountId == null && input.amount == null) return emptyList()
     val cutoff = now.minus(PREDICTION_HORIZON_MONTHS, DateTimeUnit.MONTH, timeZone)

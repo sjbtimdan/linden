@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
@@ -88,6 +89,32 @@ class EntryDaoTest : StringSpec({
         entryDao.create(ExpenseEntry(0, groceries, "Third", main, 300))
 
         entryDao.getAll().first().map { it.description } shouldBe listOf("Third", "Second", "First")
+    }
+
+    "latest returns the most recent entry of the requested type by date" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+        val main = accountDao.getAll().first().first()
+        val categories = categoryDao.getAll().first()
+        val groceries = categories.first()
+        val salary = categories.last()
+
+        // mirrored from a backup import: newest entries were inserted first,
+        // so a newer date can have a lower id than an older one
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Instant.fromEpochMilliseconds(1_000)))
+        entryDao.create(IncomeEntry(0, salary, "Salary", main, 50_000, createdAt = Instant.fromEpochMilliseconds(2_000)))
+        entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200, createdAt = Instant.fromEpochMilliseconds(3_000)))
+        entryDao.create(ExpenseEntry(0, groceries, "Old", main, 500, createdAt = Instant.fromEpochMilliseconds(500)))
+
+        entryDao.latest(EntryType.Expense)!!.description shouldBe "Lunch"
+        entryDao.latest(EntryType.Income)!!.description shouldBe "Salary"
+        entryDao.latest(EntryType.Transfer) shouldBe null
     }
 
     "delete removes an entry" {

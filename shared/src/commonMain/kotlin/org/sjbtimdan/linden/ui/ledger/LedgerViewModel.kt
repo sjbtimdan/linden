@@ -116,6 +116,9 @@ class LedgerViewModel(
             entryDao.delete(id)
         }
     }
+
+    suspend fun newEntryState(type: EntryType): EntryDialogState =
+        EntryDialogState.forNew(type, entryDao.latest(type))
 }
 
 private fun Entry.matches(query: String): Boolean {

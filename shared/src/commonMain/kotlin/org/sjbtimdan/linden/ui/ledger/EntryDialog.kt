@@ -139,18 +139,40 @@ data class EntryDialogState(
     }
 
     companion object {
-        fun forNew(type: EntryType = EntryType.Expense): EntryDialogState = EntryDialogState(
-            editing = null,
-            type = type,
-            amountText = "",
-            categoryId = null,
-            accountId = null,
-            toAccountId = null,
-            toAmountText = "",
-            description = "",
-            createdAt = Clock.System.now(),
-            createdZone = TimeZone.currentSystemDefault(),
-        )
+        fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDialogState {
+            val empty = EntryDialogState(
+                editing = null,
+                type = type,
+                amountText = "",
+                categoryId = null,
+                accountId = null,
+                toAccountId = null,
+                toAmountText = "",
+                description = "",
+                createdAt = Clock.System.now(),
+                createdZone = TimeZone.currentSystemDefault(),
+            )
+            if (previous == null || previous.type != type) return empty
+            return when (previous) {
+                is ExpenseEntry -> empty.copy(
+                    categoryId = previous.category.id,
+                    accountId = previous.account.id,
+                    description = previous.description.orEmpty(),
+                )
+
+                is IncomeEntry -> empty.copy(
+                    categoryId = previous.category.id,
+                    accountId = previous.account.id,
+                    description = previous.description.orEmpty(),
+                )
+
+                is TransferEntry -> empty.copy(
+                    accountId = previous.account.id,
+                    toAccountId = previous.toAccount.id,
+                    description = previous.description.orEmpty(),
+                )
+            }
+        }
 
         fun forEdit(entry: Entry): EntryDialogState = when (entry) {
             is ExpenseEntry -> EntryDialogState(

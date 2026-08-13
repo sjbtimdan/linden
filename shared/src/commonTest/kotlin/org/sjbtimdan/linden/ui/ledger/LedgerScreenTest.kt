@@ -315,6 +315,28 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Savings").assertIsDisplayed()
         }
     }
+    "new expense dialog prefills from the last expense" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add Expense").performClick()
+
+            // prefilled description field plus the ledger row behind the dialog
+            onAllNodesWithText("Coffee").assertCountEquals(2)
+            // prefilled category dropdown (row title shows the description, not the category)
+            onAllNodesWithText("Groceries").assertCountEquals(1)
+            // prefilled account dropdown plus the ledger row subtitle
+            onAllNodesWithText("Main").assertCountEquals(2)
+            // amount stays blank, so save is not enabled yet
+            onNodeWithText("Save").assertIsNotEnabled()
+        }
+    }
+
     "shows description suggestions based on category, account and amount" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -326,12 +348,10 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Add Expense").performClick()
+            // category and account are prefilled from the last expense; clear the
+            // prefilled description so suggestions can be verified independently
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Category").performClick()
-            onNodeWithText("Groceries").performClick()
-            onNodeWithText("Account").performClick()
-            onAllNodesWithText("Main")[1].performClick()
-
             onNodeWithText("Description (optional)").performClick()
 
             // suggestion plus the ledger row behind the dialog
@@ -350,12 +370,8 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Add Expense").performClick()
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Category").performClick()
-            onNodeWithText("Groceries").performClick()
-            onNodeWithText("Account").performClick()
-            onAllNodesWithText("Main")[1].performClick()
-
             onNodeWithText("Description (optional)").performClick()
             onAllNodesWithText("Coffee")[1].performClick()
 
