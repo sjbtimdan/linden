@@ -23,8 +23,30 @@ dependencies {
     implementation(compose.desktop.currentOs)
 }
 
+tasks.register<JavaExec>("renderIcon") {
+    workingDir = projectDir.parentFile
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("org.sjbtimdan.linden.IconRendererKt")
+}
+
 compose.desktop {
     application {
         mainClass = "org.sjbtimdan.linden.MainKt"
+
+        nativeDistributions {
+            packageName = "org.sjbtimdan.linden"
+            packageVersion = "1.0.0"
+            description = "Linden expense tracker"
+            vendor = "Linden"
+            macOS {
+                iconFile.set(project.file("icons/icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("icons/icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("icons/icon.png"))
+            }
+        }
     }
 }

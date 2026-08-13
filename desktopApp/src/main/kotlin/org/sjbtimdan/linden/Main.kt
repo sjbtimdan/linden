@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden
 
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.runBlocking
@@ -15,6 +16,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Linden",
+            icon = painterResource("linden_icon.svg"),
         ) {
             App(dependencies.database, dependencies.initialTheme, dependencies.initialCurrency)
         }
