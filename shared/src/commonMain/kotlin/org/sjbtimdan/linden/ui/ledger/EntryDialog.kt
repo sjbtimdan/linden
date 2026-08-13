@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
@@ -252,6 +253,9 @@ fun EntryDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        // Only Cancel (or the Android back button) closes the dialog; stray taps on
+        // the scrim must not discard an in-progress entry.
+        properties = DialogProperties(dismissOnClickOutside = false),
         title = {
             Text(
                 if (state.editing != null) {
