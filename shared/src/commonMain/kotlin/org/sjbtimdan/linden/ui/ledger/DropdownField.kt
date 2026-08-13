@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,6 +32,7 @@ fun <T> DropdownField(
     var expanded by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     val anchorFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(expanded, selected) {
         if (expanded) {
             // Fresh search on open; the anchor field is the search box.
@@ -38,6 +40,7 @@ fun <T> DropdownField(
             anchorFocusRequester.requestFocus()
         } else {
             query = selected?.let(optionLabel).orEmpty()
+            keyboardController?.hide()
         }
     }
     val visibleOptions = query.trim().let { trimmed ->
