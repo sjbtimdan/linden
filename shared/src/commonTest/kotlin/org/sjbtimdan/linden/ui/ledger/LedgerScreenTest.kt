@@ -25,7 +25,6 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -36,7 +35,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("No entries yet.").assertIsDisplayed()
+            onNodeWithText("No entries in the last 7 days.").assertIsDisplayed()
             onNodeWithText("Add Expense").assertIsDisplayed()
             onNodeWithText("Add Income").assertIsDisplayed()
             onNodeWithText("Add Transfer").assertIsDisplayed()
@@ -112,7 +111,7 @@ class LedgerScreenTest : StringSpec({
     "editing an entry shows current values and saves changes" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -133,7 +132,7 @@ class LedgerScreenTest : StringSpec({
     "deleting an entry from the edit dialog removes it" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -142,27 +141,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Coffee").performClick()
             onNodeWithText("Delete").performClick()
 
-            onNodeWithText("No entries yet.").assertIsDisplayed()
-        }
-    }
-
-    "type filter chip narrows the list" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
-
-            setContent {
-                LedgerScreen(viewModel = viewModel)
-            }
-
-            onNodeWithText("Coffee").assertIsDisplayed()
-            onNodeWithText("Refund").assertIsDisplayed()
-
-            onNodeWithText("Income").performClick()
-
-            onNodeWithText("Refund").assertIsDisplayed()
-            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithText("No entries in the last 7 days.").assertIsDisplayed()
         }
     }
 
@@ -216,23 +195,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("100.00").assertIsDisplayed()
             onNodeWithText("Main → Savings").assertIsDisplayed()
-        }
-    }
-
-    "search narrows the list" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
-
-            setContent {
-                LedgerScreen(viewModel = viewModel)
-            }
-
-            onNodeWithText("Search").performTextInput("lunch")
-
-            onNodeWithText("Lunch").assertIsDisplayed()
-            onNodeWithText("Coffee").assertDoesNotExist()
         }
     }
 
@@ -318,7 +280,7 @@ class LedgerScreenTest : StringSpec({
     "new expense dialog prefills from the last expense" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)

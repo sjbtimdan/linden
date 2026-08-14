@@ -117,6 +117,26 @@ class EntryDaoTest : StringSpec({
         entryDao.latest(EntryType.Transfer) shouldBe null
     }
 
+    "getSince returns only entries at or after the boundary, newest first" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val main = accountDao.getAll().first().first()
+        val groceries = categoryDao.getAll().first().first()
+
+        entryDao.create(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.fromEpochMilliseconds(1_000)))
+        entryDao.create(ExpenseEntry(0, groceries, "Mid", main, 200, createdAt = Instant.fromEpochMilliseconds(2_000)))
+        entryDao.create(ExpenseEntry(0, groceries, "New", main, 300, createdAt = Instant.fromEpochMilliseconds(3_000)))
+
+        entryDao.getSince(2_000).first().map { it.description } shouldBe listOf("New", "Mid")
+        entryDao.getSince(3_000).first().map { it.description } shouldBe listOf("New")
+        entryDao.getSince(4_000).first() shouldBe emptyList()
+    }
+
     "delete removes an entry" {
         val database = lindenDatabase()
         val entryDao = EntryDao(database.entryQueries)

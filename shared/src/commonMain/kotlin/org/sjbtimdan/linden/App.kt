@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -31,6 +32,8 @@ import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
+import org.sjbtimdan.linden.ui.history.HistoryScreen
+import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
@@ -39,6 +42,7 @@ import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 sealed class Screen {
     data object Ledger : Screen()
+    data object History : Screen()
     data object Settings : Screen()
     data object CategoryList : Screen()
     data object AccountList : Screen()
@@ -67,6 +71,7 @@ fun App(
     val accountListViewModel = remember { AccountListViewModel(accountDao) }
     val entryDao = remember { EntryDao(database.entryQueries) }
     val ledgerViewModel = remember { LedgerViewModel(entryDao, accountDao, categoryDao) }
+    val historyViewModel = remember { HistoryViewModel(entryDao, accountDao, categoryDao) }
 
     LindenTheme(themeMode = themeMode) {
         Scaffold(
@@ -83,6 +88,17 @@ fun App(
                             )
                         },
                         label = { Text("Ledger") },
+                    )
+                    NavigationBarItem(
+                        selected = currentScreen == Screen.History,
+                        onClick = { currentScreen = Screen.History },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                            )
+                        },
+                        label = { Text("History") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
@@ -106,6 +122,11 @@ fun App(
                 when (currentScreen) {
                     Screen.Ledger -> LedgerScreen(
                         viewModel = ledgerViewModel,
+                        onNavigateToSettings = { currentScreen = Screen.Settings },
+                    )
+
+                    Screen.History -> HistoryScreen(
+                        viewModel = historyViewModel,
                         onNavigateToSettings = { currentScreen = Screen.Settings },
                     )
 

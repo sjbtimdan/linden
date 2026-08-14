@@ -5,7 +5,8 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -16,121 +17,68 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerViewModelTest : StringSpec({
-    "entries start empty" {
+    "recent entries start empty" {
         withLedgerViewModel { viewModel ->
-            viewModel.entries.value.shouldBeEmpty()
+            viewModel.recentEntries.value.shouldBeEmpty()
         }
     }
 
-    "creating an entry adds it to the list" {
+    "creating an entry adds it to the recent list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Coffee", main, 450)
+                ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now())
             )
 
-            viewModel.entries.value.shouldHaveSize(1)
-            val entry = viewModel.entries.value.first()
-            entry shouldBe ExpenseEntry(entry.id, groceries, "Coffee", main, 450)
+            viewModel.recentEntries.value.shouldHaveSize(1)
+            val entry = viewModel.recentEntries.value.first()
+            entry shouldBe ExpenseEntry(entry.id, groceries, "Coffee", main, 450, createdAt = entry.createdAt)
         }
     }
 
-    "type filter keeps only matching entries" {
+    "entries older than 7 days are excluded from the ledger" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = now().minus(8.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Recent", main, 200, createdAt = now()))
 
-            viewModel.setTypeFilter(EntryType.Income)
-
-            viewModel.entries.value.shouldHaveSize(1)
-            viewModel.entries.value.first().type shouldBe EntryType.Income
-
-            viewModel.setTypeFilter(null)
-            viewModel.entries.value.shouldHaveSize(2)
+            viewModel.recentEntries.value.map { it.description } shouldBe listOf("Recent")
         }
     }
 
-    "search filters by description and account name" {
+    "update reflects in the recent list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
-
-            viewModel.setSearchQuery("coffee")
-            viewModel.entries.value.map { it.description } shouldBe listOf("Coffee")
-
-            viewModel.setSearchQuery("main")
-            viewModel.entries.value.shouldHaveSize(2)
-
-            viewModel.setSearchQuery("zzz")
-            viewModel.entries.value.shouldBeEmpty()
-        }
-    }
-
-    "sort orders apply correctly" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-
-            viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Small", main, 100, createdAt = at(1_000)),
-            )
-            viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Large", main, 900, createdAt = at(2_000)),
-            )
-            viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Medium", main, 500, createdAt = at(3_000)),
-            )
-
-            // Newest first (default): Medium, Large, Small by createdAt
-            viewModel.entries.value.map { it.amount } shouldBe listOf(500L, 900L, 100L)
-
-            viewModel.setSortOrder(SortOrder.OldestFirst)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(100L, 900L, 500L)
-
-            viewModel.setSortOrder(SortOrder.AmountHighToLow)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(900L, 500L, 100L)
-
-            viewModel.setSortOrder(SortOrder.AmountLowToHigh)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(100L, 500L, 900L)
-        }
-    }
-
-    "update reflects in the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now()))
             val created = entryDao.getExpenses().first().first()
             val updated = created.copy(description = "Tea", amount = 300)
 
             viewModel.updateEntry(updated)
 
-            viewModel.entries.value.first() shouldBe updated
+            viewModel.recentEntries.value.first() shouldBe updated
         }
     }
 
-    "delete removes an entry" {
+    "delete removes an entry from the recent list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Tea", main, 300))
-            val created = viewModel.entries.value.first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now()))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Tea", main, 300, createdAt = now()))
+            val created = viewModel.recentEntries.value.first()
 
             viewModel.deleteEntry(created.id)
 
-            viewModel.entries.value.shouldHaveSize(1)
-            viewModel.entries.value.first().description shouldBe "Coffee"
+            viewModel.recentEntries.value.shouldHaveSize(1)
+            viewModel.recentEntries.value.first().description shouldBe "Coffee"
         }
     }
 
@@ -188,13 +136,13 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
-    "direct database writes reflect in the list" {
+    "direct database writes reflect in the recent list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100))
+            entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100, createdAt = now()))
 
-            viewModel.entries.value.shouldHaveSize(1)
+            viewModel.recentEntries.value.shouldHaveSize(1)
         }
     }
 })
@@ -210,4 +158,4 @@ private suspend fun seed(
     return main to groceries
 }
 
-private fun at(millis: Long) = Instant.fromEpochMilliseconds(millis)
+private fun now() = Clock.System.now()

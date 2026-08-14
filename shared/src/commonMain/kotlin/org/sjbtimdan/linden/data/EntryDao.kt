@@ -10,6 +10,7 @@ import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.SelectAll
 import org.sjbtimdan.linden.SelectLatestByType
+import org.sjbtimdan.linden.SelectSince
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -124,10 +125,35 @@ class EntryDao(private val queries: EntryQueries) {
 
     fun getTransfers(): Flow<List<TransferEntry>> = getAll().map { it.filterIsInstance<TransferEntry>() }
 
+    fun getSince(epochMs: Long): Flow<List<Entry>> {
+        return queries.selectSince(epochMs)
+            .asFlow()
+            .map { it.awaitAsList().map { row -> row.toEntry() } }
+    }
+
     suspend fun latest(type: EntryType): Entry? =
         queries.selectLatestByType(type.name).awaitAsOneOrNull()?.toEntry()
 
     private fun SelectAll.toEntry(): Entry = toEntry(
+        id = id,
+        type = type,
+        categoryId = categoryId,
+        description = description,
+        accountId = accountId,
+        amount = amount,
+        toAccountId = toAccountId,
+        toAmount = toAmount,
+        createdAt = createdAt,
+        createdZone = createdZone,
+        accountName = accountName,
+        accountCurrency = accountCurrency,
+        categoryName = categoryName,
+        categoryType = categoryType,
+        toAccountName = toAccountName,
+        toAccountCurrency = toAccountCurrency,
+    )
+
+    private fun SelectSince.toEntry(): Entry = toEntry(
         id = id,
         type = type,
         categoryId = categoryId,

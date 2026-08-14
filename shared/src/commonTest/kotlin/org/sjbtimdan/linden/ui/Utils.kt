@@ -19,6 +19,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
+import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
@@ -116,3 +117,29 @@ fun withLedgerViewModel(
 fun withLedgerViewModel(
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
 ) = withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, HistoryViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val entryDao = EntryDao(database.entryQueries)
+            val accountDao = AccountDao(database.accountQueries)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val viewModel = HistoryViewModel(entryDao, accountDao, categoryDao)
+            block(entryDao, accountDao, categoryDao, viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, HistoryViewModel) -> Unit,
+) = withHistoryViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    block: suspend ComposeUiTest.(HistoryViewModel) -> Unit,
+) = withHistoryViewModel { _, _, _, viewModel -> block(viewModel) }
