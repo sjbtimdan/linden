@@ -1,13 +1,15 @@
 package org.sjbtimdan.linden.model
 
-enum class Currency {
-    CHF,
-    EUR,
-    GBP,
-    HKD,
-    JPY,
-    SGD,
-    USD;
+enum class Currency(
+    val symbol: String,
+) {
+    CHF("CHF"),
+    EUR("€"),
+    GBP("£"),
+    HKD("HK$"),
+    JPY("¥"),
+    SGD("S$"),
+    USD("$");
 
     companion object {
         fun fromCode(code: String): Currency = entries.firstOrNull { it.name == code }

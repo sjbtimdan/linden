@@ -98,8 +98,8 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Amount").performTextInput("5.00")
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("− 5.00").assertIsDisplayed()
-            onNodeWithText("− 4.50").assertDoesNotExist()
+            onNodeWithText("− 5.00 CHF").assertIsDisplayed()
+            onNodeWithText("− 4.50 CHF").assertDoesNotExist()
         }
     }
 

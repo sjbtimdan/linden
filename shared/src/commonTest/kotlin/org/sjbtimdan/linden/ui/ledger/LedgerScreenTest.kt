@@ -61,7 +61,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Save").performClick()
 
             onNodeWithText("Groceries").assertIsDisplayed()
-            onNodeWithText("− 12.50").assertIsDisplayed()
+            onNodeWithText("− 12.50 CHF").assertIsDisplayed()
         }
     }
 
@@ -124,8 +124,8 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Amount").performTextInput("5.00")
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("− 5.00").assertIsDisplayed()
-            onNodeWithText("− 4.50").assertDoesNotExist()
+            onNodeWithText("− 5.00 CHF").assertIsDisplayed()
+            onNodeWithText("− 4.50 CHF").assertDoesNotExist()
         }
     }
 
@@ -167,7 +167,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Move money").assertIsDisplayed()
             onNodeWithText("Main → Savings").assertIsDisplayed()
-            onNodeWithText("100.00").assertIsDisplayed()
+            onNodeWithText("100.00 CHF").assertIsDisplayed()
         }
     }
 
@@ -193,7 +193,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("100.00").assertIsDisplayed()
+            onNodeWithText("100.00 CHF").assertIsDisplayed()
             onNodeWithText("Main → Savings").assertIsDisplayed()
         }
     }
