@@ -33,7 +33,9 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
   backup import in `.imports` (`IvyImporter`, `ZipFilePicker`), description prediction logic in `.predictions`
   (`DescriptionPredictor` — heuristic scoring of past entries, pure functions, no DB). Kotlin source files use PascalCase.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Convert via
-  `formatAmount` / `parseAmount` in `ui/ledger/MoneyFormat.kt`; `amount` columns in `.sq` files are `INTEGER`.
+  `formatAmount` / `parseAmount` in `ui/entry/MoneyFormat.kt`; `formatAmount` is an `expect`/`actual` using the platform
+  locale (`java.text.NumberFormat`, thousands grouping) and `parseAmount` accepts grouped input; `amount` columns in
+  `.sq` files are `INTEGER`.
 - `Entry` is a sealed interface (`ExpenseEntry` / `IncomeEntry` / `TransferEntry`) in `model/Entry.kt`. Entries carry no
   currency — it's defined by `account.currency` (`toAccount.currency` for transfers). Transfers carry `toAccount`/`toAmount`
   (`toAmount` is null when both accounts share a currency); adding a field touches all subclass branches plus the

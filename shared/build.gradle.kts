@@ -91,4 +91,7 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    // Pin the JVM locale so amount-formatting assertions are deterministic.
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
 }

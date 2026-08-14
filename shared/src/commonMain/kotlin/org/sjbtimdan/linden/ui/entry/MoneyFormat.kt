@@ -4,31 +4,37 @@ package org.sjbtimdan.linden.ui.entry
  * All supported currencies use a 2-decimal minor unit, so amounts are stored as
  * `Long` in minor units (e.g. 4250 == "42.50").
  */
-fun formatAmount(amount: Long): String {
-    val negative = amount < 0
-    val absolute = if (negative) -amount else amount
-    val major = absolute / 100
-    val minor = absolute % 100
-    val text = "$major.${minor.toString().padStart(2, '0')}"
-    return if (negative) "-$text" else text
-}
 
 /**
- * Parses a user-typed amount (e.g. "42.50", "42,5", "42") into minor units.
+ * Formats minor units as a locale-aware amount with thousands grouping and two
+ * decimal digits (e.g. 1_000_000 == "10,000.00" in en-US, "10.000,00" in de-DE).
+ */
+expect fun formatAmount(amount: Long): String
+
+/**
+ * Parses a user-typed amount (e.g. "42.50", "42,5", "1,000.00") into minor units.
+ * The last `.` or `,` is the decimal separator; other occurrences of `.`/`,` and
+ * spaces in the integer part are treated as grouping separators.
  * Returns null when the input is not a valid non-negative amount.
  */
 fun parseAmount(input: String): Long? {
     val text = input.trim()
     if (text.isEmpty()) return null
     if (text.startsWith("-") || text.startsWith("+")) return null
-    val parts = text.split('.', ',')
-    if (parts.size > 2) return null
-    val integerPart = parts[0]
-    val fractionPart = if (parts.size == 2) parts[1] else ""
+
+    val decimalIndex = maxOf(text.lastIndexOf('.'), text.lastIndexOf(','))
+    val integerPart = if (decimalIndex == -1) text else text.substring(0, decimalIndex)
+    val fractionPart = if (decimalIndex == -1) "" else text.substring(decimalIndex + 1)
     if (integerPart.isEmpty() && fractionPart.isEmpty()) return null
-    if (integerPart.any { !it.isDigit() } || fractionPart.any { !it.isDigit() }) return null
+    if (fractionPart.any { !it.isDigit() }) return null
     if (fractionPart.length > 2) return null
-    val major = integerPart.ifEmpty { "0" }.toLongOrNull() ?: return null
+
+    val groupingChars =
+        if (decimalIndex == -1) "" else if (text[decimalIndex] == '.') ", \u00A0\u202F" else ". \u00A0\u202F"
+    if (decimalIndex != -1 && integerPart.contains(text[decimalIndex])) return null
+    if (integerPart.any { it !in groupingChars && !it.isDigit() }) return null
+
+    val major = integerPart.filter { it !in groupingChars }.ifEmpty { "0" }.toLongOrNull() ?: return null
     val minor = fractionPart.padEnd(2, '0').toLongOrNull() ?: return null
     return major * 100 + minor
 }
