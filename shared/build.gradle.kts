@@ -40,6 +40,7 @@ kotlin {
             implementation(libs.compose.uiTooling)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -55,6 +56,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktor.client.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -66,6 +68,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation(libs.ktor.client.cio)
         }
         jvmTest.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
