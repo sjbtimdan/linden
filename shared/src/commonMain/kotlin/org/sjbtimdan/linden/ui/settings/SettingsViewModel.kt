@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.IvyImportResult
@@ -26,7 +25,6 @@ sealed interface ImportState {
 class SettingsViewModel(
     private val settingsDao: SettingsDao,
     private val importer: IvyImporter,
-    private val fxRatesRepository: FxRatesRepository,
     initialTheme: ThemeMode,
     initialCurrency: Currency,
 ) : ViewModel() {

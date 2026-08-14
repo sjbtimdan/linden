@@ -6,5 +6,8 @@ CREATE TABLE IF NOT EXISTS AppSettingsEntity (
 selectByKey:
 SELECT * FROM AppSettingsEntity WHERE key = ?;
 
+selectAll:
+SELECT * FROM AppSettingsEntity;
+
 insertOrReplace:
 INSERT OR REPLACE INTO AppSettingsEntity (key, value) VALUES (?, ?);

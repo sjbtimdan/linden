@@ -1,6 +1,10 @@
 package org.sjbtimdan.linden.data
 
+import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
+import app.cash.sqldelight.coroutines.asFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.sjbtimdan.linden.SettingsQueries
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -34,5 +38,16 @@ class SettingsDao(private val queries: SettingsQueries) {
 
     suspend fun setDefaultCurrency(currency: Currency) {
         queries.insertOrReplace(CURRENCY_KEY, currency.name)
+    }
+
+    fun defaultCurrencyFlow(): Flow<Currency> {
+        return queries.selectAll()
+            .asFlow()
+            .map { rows ->
+                rows.awaitAsList()
+                    .firstOrNull { it.key == CURRENCY_KEY }
+                    ?.let { row -> runCatching { Currency.fromCode(row.value_) }.getOrNull() }
+                    ?: Currency.CHF
+            }
     }
 }

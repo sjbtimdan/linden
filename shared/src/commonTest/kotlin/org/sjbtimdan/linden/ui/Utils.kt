@@ -24,6 +24,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
+import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,10 +88,6 @@ fun withSettingsViewModel(
             val viewModel = SettingsViewModel(
                 settingsDao = dao,
                 importer = IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = initialTheme,
                 initialCurrency = initialCurrency,
             )
@@ -98,6 +95,32 @@ fun withSettingsViewModel(
         }
     }
 }
+
+@OptIn(ExperimentalTestApi::class)
+fun withRatesViewModel(
+    fxRatesSource: FakeFxRatesSource = FakeFxRatesSource(),
+    block: suspend ComposeUiTest.(SettingsDao, RatesViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val settingsDao = SettingsDao(database.settingsQueries)
+            val viewModel = RatesViewModel(
+                settingsDao = settingsDao,
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    fxRatesSource,
+                ),
+            )
+            block(settingsDao, viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withRatesViewModel(
+    block: suspend ComposeUiTest.(RatesViewModel) -> Unit,
+) = withRatesViewModel { _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(

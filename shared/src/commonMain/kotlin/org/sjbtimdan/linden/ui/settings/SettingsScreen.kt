@@ -47,6 +47,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateToCategories: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
+    onNavigateToRates: () -> Unit = {},
     pickImportFile: (() -> Unit)? = null,
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
@@ -130,6 +131,9 @@ fun SettingsScreen(
             }
             OutlinedButton(onClick = onNavigateToAccounts) {
                 Text("Accounts")
+            }
+            OutlinedButton(onClick = onNavigateToRates) {
+                Text("Currency rates")
             }
             FilledTonalButton(
                 onClick = { showImportConfirmation = true },

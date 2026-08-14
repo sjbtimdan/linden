@@ -40,6 +40,8 @@ import org.sjbtimdan.linden.ui.history.HistoryScreen
 import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
+import org.sjbtimdan.linden.ui.rates.RatesScreen
+import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 import org.sjbtimdan.linden.ui.theme.LindenTheme
@@ -50,6 +52,7 @@ sealed class Screen {
     data object Settings : Screen()
     data object CategoryList : Screen()
     data object AccountList : Screen()
+    data object Rates : Screen()
 }
 
 @Composable
@@ -67,11 +70,11 @@ fun App(
         SettingsViewModel(
             settingsDao = settingsDao,
             importer = IvyImporter(database),
-            fxRatesRepository = fxRatesRepository,
             initialTheme = initialTheme,
             initialCurrency = initialCurrency,
         )
     }
+    val ratesViewModel = remember { RatesViewModel(settingsDao, fxRatesRepository) }
     LaunchedEffect(Unit) {
         runCatching { fxRatesRepository.refreshRates(initialCurrency) }
     }
@@ -145,6 +148,7 @@ fun App(
                         viewModel = settingsViewModel,
                         onNavigateToCategories = { currentScreen = Screen.CategoryList },
                         onNavigateToAccounts = { currentScreen = Screen.AccountList },
+                        onNavigateToRates = { currentScreen = Screen.Rates },
                     )
 
                     Screen.CategoryList -> CategoryListScreen(
@@ -154,6 +158,11 @@ fun App(
 
                     Screen.AccountList -> AccountListScreen(
                         viewModel = accountListViewModel,
+                        onNavigateBack = { currentScreen = Screen.Settings },
+                    )
+
+                    Screen.Rates -> RatesScreen(
+                        viewModel = ratesViewModel,
                         onNavigateBack = { currentScreen = Screen.Settings },
                     )
                 }

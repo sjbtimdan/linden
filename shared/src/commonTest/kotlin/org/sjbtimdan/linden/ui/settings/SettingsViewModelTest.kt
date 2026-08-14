@@ -7,9 +7,6 @@ import io.kotest.matchers.string.shouldContain
 import java.io.ByteArrayInputStream
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
-import org.sjbtimdan.linden.data.FakeFxRatesSource
-import org.sjbtimdan.linden.data.FxRateDao
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
@@ -27,10 +24,6 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 dao,
                 IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -50,10 +43,6 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 dao,
                 IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -72,10 +61,6 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -99,10 +84,6 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -124,10 +105,6 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )

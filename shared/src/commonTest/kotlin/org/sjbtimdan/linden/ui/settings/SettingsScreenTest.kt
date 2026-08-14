@@ -107,4 +107,19 @@ class SettingsScreenTest : StringSpec({
             ).assertCountEquals(0)
         }
     }
+
+    "clicking Currency rates row triggers navigation" {
+        withSettingsViewModel { viewModel ->
+            var navigatedToRates = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onNavigateToRates = { navigatedToRates = true },
+                )
+            }
+            onNodeWithText("Currency rates").performClick()
+            navigatedToRates shouldBe true
+        }
+    }
 })
