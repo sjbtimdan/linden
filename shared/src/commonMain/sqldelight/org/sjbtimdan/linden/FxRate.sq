@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS FxRateEntity (
+    baseCurrency TEXT NOT NULL,
+    quoteCurrency TEXT NOT NULL,
+    rate REAL NOT NULL,
+    date TEXT NOT NULL,
+    PRIMARY KEY (baseCurrency, quoteCurrency)
+);
+
+selectByBase:
+SELECT *
+FROM FxRateEntity
+WHERE baseCurrency = ?
+ORDER BY quoteCurrency ASC;
+
+selectAll:
+SELECT *
+FROM FxRateEntity;
+
+insertOrReplace:
+INSERT OR REPLACE INTO FxRateEntity (baseCurrency, quoteCurrency, rate, date)
+VALUES (?, ?, ?, ?);
+
+deleteByBase:
+DELETE FROM FxRateEntity
+WHERE baseCurrency = ?;
