@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 /**
  * All supported currencies use a 2-decimal minor unit, so amounts are stored as

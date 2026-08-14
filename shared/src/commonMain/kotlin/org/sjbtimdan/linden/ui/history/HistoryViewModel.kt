@@ -13,8 +13,8 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
-import org.sjbtimdan.linden.ui.ledger.EntryEditorViewModel
-import org.sjbtimdan.linden.ui.ledger.SortOrder
+import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
+import org.sjbtimdan.linden.ui.entry.SortOrder
 
 class HistoryViewModel(
     entryDao: EntryDao,

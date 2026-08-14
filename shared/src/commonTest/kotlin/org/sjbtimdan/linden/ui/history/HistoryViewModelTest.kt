@@ -17,7 +17,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.ui.ledger.SortOrder
+import org.sjbtimdan.linden.ui.entry.SortOrder
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
 @OptIn(ExperimentalTestApi::class)

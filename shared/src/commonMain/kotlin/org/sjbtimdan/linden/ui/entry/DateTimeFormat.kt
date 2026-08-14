@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime

@@ -35,6 +35,10 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.predictDescriptions
+import org.sjbtimdan.linden.ui.entry.EntryDialog
+import org.sjbtimdan.linden.ui.entry.EntryDialogState
+import org.sjbtimdan.linden.ui.entry.EntryRow
+import org.sjbtimdan.linden.ui.entry.displayName
 
 @Composable
 fun LedgerScreen(

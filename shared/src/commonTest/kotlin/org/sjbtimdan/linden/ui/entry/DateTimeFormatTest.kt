@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

@@ -31,11 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.ui.ledger.EntryDialog
-import org.sjbtimdan.linden.ui.ledger.EntryDialogState
-import org.sjbtimdan.linden.ui.ledger.EntryRow
-import org.sjbtimdan.linden.ui.ledger.SortDropdown
-import org.sjbtimdan.linden.ui.ledger.displayName
+import org.sjbtimdan.linden.ui.entry.EntryDialog
+import org.sjbtimdan.linden.ui.entry.EntryDialogState
+import org.sjbtimdan.linden.ui.entry.EntryRow
+import org.sjbtimdan.linden.ui.entry.SortDropdown
+import org.sjbtimdan.linden.ui.entry.displayName
 
 @Composable
 fun HistoryScreen(
