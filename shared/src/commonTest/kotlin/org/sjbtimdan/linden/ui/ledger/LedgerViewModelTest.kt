@@ -53,6 +53,17 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "future entries are excluded from the ledger" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Future", main, 100, createdAt = now().plus(1.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Recent", main, 200, createdAt = now()))
+
+            viewModel.recentEntries.value.map { it.description } shouldBe listOf("Recent")
+        }
+    }
+
     "update reflects in the recent list" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

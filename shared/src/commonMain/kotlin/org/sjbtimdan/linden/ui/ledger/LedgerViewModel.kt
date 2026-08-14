@@ -5,6 +5,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -19,7 +20,11 @@ class LedgerViewModel(
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     val recentEntries: StateFlow<List<Entry>> = entryDao.getSince(
         (Clock.System.now() - 7.days).toEpochMilliseconds(),
-    ).stateIn(
+    ).map { entries ->
+        // Bounds are checked at emission time so entries created after this
+        // ViewModel was instantiated are not hidden behind a stale "now".
+        entries.filterNot { it.createdAt > Clock.System.now() }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = emptyList(),
