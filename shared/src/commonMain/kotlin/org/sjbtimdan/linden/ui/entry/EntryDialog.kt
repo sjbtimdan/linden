@@ -273,6 +273,9 @@ fun EntryDialog(
                     label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    suffix = fromAccount?.let { account ->
+                        { Text(account.currency.symbol) }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -321,6 +324,9 @@ fun EntryDialog(
                             label = { Text("Amount (received)") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            suffix = toAccount?.let { account ->
+                                { Text(account.currency.symbol) }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
