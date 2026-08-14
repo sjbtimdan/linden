@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,9 @@ import androidx.compose.ui.Modifier
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FxRateDao
+import org.sjbtimdan.linden.data.FxRatesFetcher
+import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
@@ -56,13 +60,20 @@ fun App(
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
     val settingsDao = remember { SettingsDao(database.settingsQueries) }
+    val fxRatesRepository = remember {
+        FxRatesRepository(FxRateDao(database.fxRateQueries), FxRatesFetcher())
+    }
     val settingsViewModel = remember {
         SettingsViewModel(
             settingsDao = settingsDao,
             importer = IvyImporter(database),
+            fxRatesRepository = fxRatesRepository,
             initialTheme = initialTheme,
             initialCurrency = initialCurrency,
         )
+    }
+    LaunchedEffect(Unit) {
+        runCatching { fxRatesRepository.refreshRates(initialCurrency) }
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val categoryDao = remember { CategoryDao(database.categoryQueries) }

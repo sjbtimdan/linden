@@ -28,10 +28,14 @@ fun parseFxRatesResponse(text: String): FxRates {
     )
 }
 
+interface FxRatesSource {
+    suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates
+}
+
 class FxRatesFetcher(
     private val client: HttpClient = HttpClient(),
-) {
-    suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates {
+) : FxRatesSource {
+    override suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates {
         val response = client.get(FRANKFURTER_LATEST_URL) {
             parameter("base", base.name)
             parameter("symbols", symbols.joinToString(",") { it.name })

@@ -12,6 +12,9 @@ import kotlinx.coroutines.test.setMain
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FakeFxRatesSource
+import org.sjbtimdan.linden.data.FxRateDao
+import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
@@ -84,6 +87,10 @@ fun withSettingsViewModel(
             val viewModel = SettingsViewModel(
                 settingsDao = dao,
                 importer = IvyImporter(database),
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource(),
+                ),
                 initialTheme = initialTheme,
                 initialCurrency = initialCurrency,
             )
