@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -92,9 +93,27 @@ dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
 
+kover {
+    reports {
+        // Coverage is only meaningful for the JVM target: the Android target
+        // only runs device tests, which Kover does not support.
+        variant("jvm") {
+            verify {
+                rule {
+                    minBound(50)
+                }
+            }
+        }
+    }
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("koverVerifyJvm"))
 }
