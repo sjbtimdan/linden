@@ -9,6 +9,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -150,6 +154,7 @@ fun withLedgerViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, HistoryViewModel) -> Unit,
 ) {
     onTestMain {
@@ -158,11 +163,25 @@ fun withHistoryViewModel(
             val entryDao = EntryDao(database.entryQueries)
             val accountDao = AccountDao(database.accountQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = HistoryViewModel(entryDao, accountDao, categoryDao)
+            val viewModel = HistoryViewModel(entryDao, accountDao, categoryDao, today)
             block(entryDao, accountDao, categoryDao, viewModel)
         }
     }
 }
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    today: () -> LocalDate,
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, HistoryViewModel) -> Unit,
+) = withHistoryViewModel(today) { _, accountDao, categoryDao, model ->
+    block(accountDao, categoryDao, model)
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    today: () -> LocalDate,
+    block: suspend ComposeUiTest.(HistoryViewModel) -> Unit,
+) = withHistoryViewModel(today) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(

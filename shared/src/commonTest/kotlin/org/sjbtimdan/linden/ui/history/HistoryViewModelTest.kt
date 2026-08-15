@@ -7,6 +7,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -127,6 +128,68 @@ class HistoryViewModelTest : StringSpec({
             entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100))
 
             viewModel.entries.value.shouldHaveSize(1)
+        }
+    }
+
+    "month period shows only entries in the window and navigates" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.entries.value.map { it.description } shouldBe listOf("Inside")
+
+            viewModel.goToNextPeriod()
+            viewModel.entries.value.map { it.description } shouldBe listOf("After")
+
+            viewModel.goToPreviousPeriod()
+            viewModel.entries.value.map { it.description } shouldBe listOf("Inside")
+
+            viewModel.goToPreviousPeriod()
+            viewModel.entries.value.map { it.description } shouldBe listOf("Before")
+
+            viewModel.setPeriod(HistoryPeriod.All)
+            viewModel.entries.value.shouldHaveSize(3)
+        }
+    }
+
+    "week period shows only entries in the calendar week" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 13) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "MonInside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "SunInside", main, 300, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "MonAfter", main, 400, createdAt = Instant.parse("2026-08-17T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Week)
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("SunInside", "MonInside")
+        }
+    }
+
+    "year period shows only entries in the year" {
+        withHistoryViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.parse("2025-12-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Current", main, 200, createdAt = Instant.parse("2026-01-01T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Year)
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Current")
+        }
+    }
+
+    "period with no entries shows an empty list" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Year)
+            viewModel.goToNextPeriod()
+
+            viewModel.entries.value.shouldBeEmpty()
         }
     }
 })

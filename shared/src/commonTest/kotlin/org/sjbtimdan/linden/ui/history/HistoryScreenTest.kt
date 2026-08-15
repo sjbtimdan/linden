@@ -2,6 +2,8 @@ package org.sjbtimdan.linden.ui.history
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -9,6 +11,7 @@ import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Account
@@ -170,6 +173,70 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Lunch").assertIsDisplayed()
             onNodeWithText("9 Sep 2001").assertDoesNotExist()
             onNodeWithText("10 Sep 2001").assertDoesNotExist()
+        }
+    }
+
+    "selecting a period narrows the list" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "In Jul", main, 200, createdAt = Instant.parse("2026-07-01T12:00:00Z")))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("In Aug").assertIsDisplayed()
+            onNodeWithText("In Jul").assertIsDisplayed()
+
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithText("In Aug").assertIsDisplayed()
+            onNodeWithText("In Jul").assertDoesNotExist()
+        }
+    }
+
+    "arrows move between periods" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "In Sep", main, 200, createdAt = Instant.parse("2026-09-10T12:00:00Z")))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithText("In Aug").assertIsDisplayed()
+            onNodeWithText("In Sep").assertDoesNotExist()
+
+            onNodeWithContentDescription("Next period").performClick()
+
+            onNodeWithText("Sep 2026").assertIsDisplayed()
+            onNodeWithText("In Sep").assertIsDisplayed()
+            onNodeWithText("In Aug").assertDoesNotExist()
+        }
+    }
+
+    "period with no entries shows no entries match" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Year").performClick()
+            onNodeWithContentDescription("Previous period").performClick()
+
+            onNodeWithText("2025").assertIsDisplayed()
+            onNodeWithText("No entries match.").assertIsDisplayed()
         }
     }
 })

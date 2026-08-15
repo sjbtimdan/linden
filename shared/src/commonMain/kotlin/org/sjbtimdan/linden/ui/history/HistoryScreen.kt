@@ -51,6 +51,8 @@ fun HistoryScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
+    val period by viewModel.period.collectAsState()
+    val periodAnchor by viewModel.periodAnchor.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
 
     val listItems = remember(entries, sortOrder) {
@@ -109,6 +111,16 @@ fun HistoryScreen(
             onChange = viewModel::setSortOrder,
         )
 
+        Spacer(modifier = Modifier.height(4.dp))
+
+        PeriodNavigator(
+            period = period,
+            anchor = periodAnchor,
+            onPeriodChange = viewModel::setPeriod,
+            onPrevious = viewModel::goToPreviousPeriod,
+            onNext = viewModel::goToNextPeriod,
+        )
+
         if (entries.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -117,7 +129,7 @@ fun HistoryScreen(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (searchQuery.isBlank() && typeFilter == null) {
+                    text = if (searchQuery.isBlank() && typeFilter == null && period == HistoryPeriod.All) {
                         "No entries yet."
                     } else {
                         "No entries match."

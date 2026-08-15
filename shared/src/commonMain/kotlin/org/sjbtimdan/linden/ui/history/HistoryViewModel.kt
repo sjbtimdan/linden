@@ -1,12 +1,17 @@
 package org.sjbtimdan.linden.ui.history
 
 import androidx.lifecycle.viewModelScope
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -20,6 +25,7 @@ class HistoryViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -30,13 +36,31 @@ class HistoryViewModel(
     private val _sortOrder = MutableStateFlow(SortOrder.NewestFirst)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
-    val entries: StateFlow<List<Entry>> = combine(
+    private val _period = MutableStateFlow(HistoryPeriod.All)
+    val period: StateFlow<HistoryPeriod> = _period.asStateFlow()
+
+    private val _periodAnchor = MutableStateFlow(today())
+    val periodAnchor: StateFlow<LocalDate> = _periodAnchor.asStateFlow()
+
+    private val periodEntries: StateFlow<List<Entry>> = combine(
         allEntries,
+        _period,
+        _periodAnchor,
+    ) { all, period, anchor ->
+        all.filter { entry -> entry.isInPeriod(period, anchor) }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList(),
+    )
+
+    val entries: StateFlow<List<Entry>> = combine(
+        periodEntries,
         _searchQuery,
         _typeFilter,
         _sortOrder,
-    ) { all, query, type, order ->
-        all.asSequence()
+    ) { periodEntries, query, type, order ->
+        periodEntries.asSequence()
             .filter { entry -> type == null || entry.type == type }
             .filter { entry -> query.isBlank() || entry.matches(query) }
             .sortedWith(order.comparator())
@@ -58,6 +82,25 @@ class HistoryViewModel(
     fun setSortOrder(order: SortOrder) {
         _sortOrder.value = order
     }
+
+    fun setPeriod(period: HistoryPeriod) {
+        _period.value = period
+    }
+
+    fun goToPreviousPeriod() {
+        _periodAnchor.value = _period.value.previousAnchor(_periodAnchor.value)
+    }
+
+    fun goToNextPeriod() {
+        _periodAnchor.value = _period.value.nextAnchor(_periodAnchor.value)
+    }
+}
+
+private fun Entry.isInPeriod(period: HistoryPeriod, anchor: LocalDate): Boolean {
+    val start = period.windowStart(anchor) ?: return true
+    val end = period.windowEnd(anchor) ?: return true
+    val date = createdAt.toLocalDateTime(createdZone).date
+    return date >= start && date <= end
 }
 
 private fun Entry.matches(query: String): Boolean {
