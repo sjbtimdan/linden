@@ -39,7 +39,7 @@ private fun Entry.amountLabel(): String = when (type) {
 
 @Composable
 private fun Entry.amountColor(): Color = when (type) {
-    EntryType.Expense -> MaterialTheme.colorScheme.error
+    EntryType.Expense -> Color(0xFFE53935)
     EntryType.Income -> Color(0xFF43A047)
     EntryType.Transfer -> MaterialTheme.colorScheme.onSurfaceVariant
 }
