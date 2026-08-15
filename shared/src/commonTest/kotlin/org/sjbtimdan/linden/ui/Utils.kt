@@ -13,12 +13,14 @@ import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import org.sjbtimdan.linden.AppDependencies
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.FxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
@@ -39,6 +41,24 @@ fun onTestMain(block: suspend () -> Unit) {
         runBlocking { block() }
     } finally {
         Dispatchers.resetMain()
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withApp(
+    fxRatesSource: FxRatesSource = FakeFxRatesSource(),
+    block: suspend ComposeUiTest.(AppDependencies) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val dependencies = AppDependencies(
+                database = lindenDatabase(),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+                fxRatesSource = fxRatesSource,
+            )
+            block(dependencies)
+        }
     }
 }
 

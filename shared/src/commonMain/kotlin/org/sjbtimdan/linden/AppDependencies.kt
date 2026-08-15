@@ -8,6 +8,7 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.FxRatesFetcher
 import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.FxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
@@ -30,6 +31,7 @@ class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
+    private val fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao by lazy { SettingsDao(database.settingsQueries) }
     val accountDao by lazy { AccountDao(database.accountQueries) }
@@ -37,7 +39,7 @@ class AppDependencies(
     val entryDao by lazy { EntryDao(database.entryQueries) }
     val httpClient by lazy { HttpClient() }
     val fxRatesRepository by lazy {
-        FxRatesRepository(FxRateDao(database.fxRateQueries), FxRatesFetcher(httpClient))
+        FxRatesRepository(FxRateDao(database.fxRateQueries), fxRatesSource ?: FxRatesFetcher(httpClient))
     }
     val settingsViewModel by lazy {
         SettingsViewModel(settingsDao, IvyImporter(database), initialTheme, initialCurrency)
