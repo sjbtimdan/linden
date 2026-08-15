@@ -9,9 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
@@ -47,29 +51,41 @@ class HistoryViewModel(
     private val _periodAnchor = MutableStateFlow(today())
     val periodAnchor: StateFlow<LocalDate> = _periodAnchor.asStateFlow()
 
-    private val periodEntries: StateFlow<List<Entry>> = combine(
-        allEntries,
+    private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
         _period,
         _periodAnchor,
-    ) { all, period, anchor ->
-        // Bounds are checked at emission time so entries created after this
-        // ViewModel was instantiated are not hidden behind a stale "today".
-        all.filter { entry -> entry.isInPeriod(period, anchor) && !entry.isInFuture(today()) }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList(),
-    )
+    ) { period, anchor -> period to anchor }
+        .flatMapLatest { (period, anchor) ->
+            val start = period.windowStart(anchor)
+            val end = period.windowEnd(anchor)
+            // Only rows at or after a safe lower bound are fetched from the database.
+            // The exact window and the "nothing in the future" rule are still enforced
+            // here at emission time so a stale "today" never hides new entries.
+            val source = start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: entryDao.getAll()
+            source.map { rows ->
+                val now = today()
+                rows
+                    .filter { entry -> entry.isInWindow(start, end, now) }
+                    .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
+                    .map(::SearchableEntry)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
 
     val entries: StateFlow<List<Entry>> = combine(
         periodEntries,
         _searchQuery,
         _typeFilter,
     ) { periodEntries, query, type ->
+        val normalized = query.trim().lowercase()
         periodEntries.asSequence()
-            .filter { entry -> type == null || entry.type == type }
-            .filter { entry -> query.isBlank() || entry.matches(query) }
-            .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
+            .filter { searchable -> type == null || searchable.entry.type == type }
+            .filter { searchable -> normalized.isEmpty() || searchable.matches(normalized) }
+            .map { it.entry }
             .toList()
     }.stateIn(
         scope = viewModelScope,
@@ -126,20 +142,31 @@ class HistoryViewModel(
     }
 }
 
-private fun Entry.isInPeriod(period: HistoryPeriod, anchor: LocalDate): Boolean {
-    val start = period.windowStart(anchor) ?: return true
-    val end = period.windowEnd(anchor) ?: return true
+/** An entry with its searchable fields pre-lowercased, so filtering on a keystroke does not re-lowercase every field. */
+private class SearchableEntry(val entry: Entry) {
+    private val description = entry.description?.lowercase()
+    private val categoryName = entry.category?.name?.lowercase()
+    private val accountName = entry.account.name.lowercase()
+    private val toAccountName = (entry as? TransferEntry)?.toAccount?.name?.lowercase()
+
+    fun matches(query: String): Boolean =
+        description?.contains(query) == true ||
+            categoryName?.contains(query) == true ||
+            accountName.contains(query) ||
+            toAccountName?.contains(query) == true
+}
+
+private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate): Boolean {
     val date = createdAt.toLocalDateTime(createdZone).date
-    return date >= start && date <= end
+    return date <= today &&
+        (start == null || date >= start) &&
+        (end == null || date <= end)
 }
 
-private fun Entry.isInFuture(today: LocalDate): Boolean =
-    createdAt.toLocalDateTime(createdZone).date > today
-
-private fun Entry.matches(query: String): Boolean {
-    val q = query.lowercase()
-    return description?.lowercase()?.contains(q) == true ||
-        category?.name?.lowercase()?.contains(q) == true ||
-        account.name.lowercase().contains(q) ||
-        (this as? TransferEntry)?.toAccount?.name?.lowercase()?.contains(q) == true
-}
+/**
+ * Epoch-millis lower bound for a period query. Entries are re-filtered in memory
+ * afterwards, so this only needs to be safe: entries in zones ahead of UTC can
+ * fall up to 14 hours before UTC midnight of [this], hence the one-day margin.
+ */
+private fun LocalDate.sqlLowerBound(): Long =
+    minus(1, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()

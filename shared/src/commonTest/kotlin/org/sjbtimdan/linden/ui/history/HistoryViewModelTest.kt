@@ -19,6 +19,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -43,6 +44,32 @@ class HistoryViewModelTest : StringSpec({
             viewModel.entries.value.shouldHaveSize(2)
 
             viewModel.setSearchQuery("zzz")
+            viewModel.entries.value.shouldBeEmpty()
+        }
+    }
+
+    "search matches a transfer's to-account name" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(
+                TransferEntry(
+                    id = 0,
+                    category = null,
+                    description = "Move",
+                    account = main,
+                    amount = 500,
+                    toAccount = savings,
+                    toAmount = null,
+                ),
+            )
+
+            viewModel.setSearchQuery("savings")
+            viewModel.entries.value.map { it.description } shouldBe listOf("Move")
+
+            viewModel.setSearchQuery("nope")
             viewModel.entries.value.shouldBeEmpty()
         }
     }
