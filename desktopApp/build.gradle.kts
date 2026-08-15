@@ -21,6 +21,11 @@ java {
 dependencies {
     implementation(project(":shared"))
     implementation(compose.desktop.currentOs)
+    implementation(libs.compose.components.resources)
+}
+
+compose.resources {
+    packageOfResClass = "org.sjbtimdan.linden.generated.resources"
 }
 
 tasks.register<JavaExec>("renderIcon") {

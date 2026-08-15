@@ -1,10 +1,12 @@
 package org.sjbtimdan.linden
 
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.painterResource
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
+import org.sjbtimdan.linden.generated.resources.Res
+import org.sjbtimdan.linden.generated.resources.linden_icon
 
 fun main() {
     val dependencies = runBlocking {
@@ -15,7 +17,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = "Linden",
-            icon = painterResource("linden_icon.svg"),
+            icon = painterResource(Res.drawable.linden_icon),
         ) {
             App(dependencies)
         }
