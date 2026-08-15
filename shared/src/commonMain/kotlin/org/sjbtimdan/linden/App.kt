@@ -14,6 +14,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import io.ktor.client.HttpClient
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -63,8 +65,12 @@ fun App(
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
     val settingsDao = remember { SettingsDao(database.settingsQueries) }
+    val httpClient = remember { HttpClient() }
     val fxRatesRepository = remember {
-        FxRatesRepository(FxRateDao(database.fxRateQueries), FxRatesFetcher())
+        FxRatesRepository(FxRateDao(database.fxRateQueries), FxRatesFetcher(httpClient))
+    }
+    DisposableEffect(httpClient) {
+        onDispose { httpClient.close() }
     }
     val settingsViewModel = remember {
         SettingsViewModel(

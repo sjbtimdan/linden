@@ -33,7 +33,7 @@ interface FxRatesSource {
 }
 
 class FxRatesFetcher(
-    private val client: HttpClient = HttpClient(),
+    private val client: HttpClient,
 ) : FxRatesSource {
     override suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates {
         val response = client.get(FRANKFURTER_LATEST_URL) {
