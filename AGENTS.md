@@ -27,6 +27,9 @@ Only `:androidApp`, `:shared`, `:desktopApp` exist (see `settings.gradle.kts`).
 The `:shared` Android target compiles via `compileAndroidMain`, **not** `compileDebugKotlin`
 (that task only exists on `:androidApp`). `:shared` uses the AGP 9 `com.android.kotlin.multiplatform.library` plugin.
 
+`./gradlew check` also runs the Kover coverage gate (`koverVerifyJvm`, 50% min) on the shared JVM variant —
+coverage is only enforced there because the Android target runs device tests only, which Kover doesn't support.
+
 ## Architecture & Gotchas
 
 - Package root `org.sjbtimdan.linden`. Models in `.model`, DAOs in `.data`, screens/ViewModels in `.ui.<feature>`,
@@ -51,8 +54,12 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 - No SQLDelight migrations exist (schema version 1). Editing an `.sq` table won't auto-migrate the persisted
   desktop DB at `~/.linden/linden.db` — add a `.sqm` migration, or delete the local DB.
 - Theme + default currency live in the settings table (`SettingsDao`) and are seeded once at startup via
-  `createAppDependencies(driver)`; `App` receives `initialTheme`/`initialCurrency`, and theme applies live via the
-  `SettingsViewModel.themeMode` flow.
+  `createAppDependencies(driver)`, which builds an `AppDependencies` composition root (lazy DAOs/ViewModels, shared
+  `HttpClient`); `App` takes that root, and theme applies live via the `SettingsViewModel.themeMode` flow.
+- FX rates power cross-currency totals in History/Rates: `FxRatesFetcher` (in `.data`) calls Frankfurter
+  (`api.frankfurter.dev/v1/latest`) over Ktor (OkHttp on Android, CIO on JVM), rates are refreshed once at app startup
+  in `App.kt`, cached in `FxRateEntity` (`FxRateDao`), and consumed via `FxRatesRepository`; the `Rates` screen lives
+  in `ui/rates`. Tests inject `FakeFxRatesSource` — never hit the real API.
 - `DatabaseDriverFactory` is an `expect class` (shared enables `-Xexpect-actual-classes`), with per-source-set
   actuals at `shared/src/{androidMain,jvmMain}/.../DatabaseDriverFactory.kt`.
 - Desktop persists to `~/.linden/linden.db` (file-based); Android uses `AndroidSqliteDriver`.
@@ -65,8 +72,9 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
 - Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform. `createTestSqlDriver()` has a JVM-only actual,
   so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers instead of wiring up in-memory DBs
   per test: `lindenDatabase()` / `createTestSqlDriver()` live in `data/TestSqlUtils.kt`; Compose harnesses
-  `onTestMain`, `withViewModel`, `withAccountViewModel`, `withSettingsViewModel`, `withLedgerViewModel` live
-  in `ui/Utils.kt`. Compose UI tests live in `commonTest`.
+  (`onTestMain`, `withApp`, `withViewModel`, `withAccountViewModel`, `withSettingsViewModel`, `withRatesViewModel`,
+  `withLedgerViewModel`, `withHistoryViewModel`) live in `ui/Utils.kt`. Compose UI tests live in `commonTest`.
+  JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic.
 - Configuration cache + build cache enabled (`gradle.properties`).
 - Each Composable goes in its own file (e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file).
 - Comment minimally: only add comments for obscure code which should be very rare.
