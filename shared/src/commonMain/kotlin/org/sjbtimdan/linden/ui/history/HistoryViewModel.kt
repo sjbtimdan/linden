@@ -43,7 +43,9 @@ class HistoryViewModel(
         _period,
         _periodAnchor,
     ) { all, period, anchor ->
-        all.filter { entry -> entry.isInPeriod(period, anchor) }
+        // Bounds are checked at emission time so entries created after this
+        // ViewModel was instantiated are not hidden behind a stale "today".
+        all.filter { entry -> entry.isInPeriod(period, anchor) && !entry.isInFuture(today()) }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
@@ -93,6 +95,9 @@ private fun Entry.isInPeriod(period: HistoryPeriod, anchor: LocalDate): Boolean 
     val date = createdAt.toLocalDateTime(createdZone).date
     return date >= start && date <= end
 }
+
+private fun Entry.isInFuture(today: LocalDate): Boolean =
+    createdAt.toLocalDateTime(createdZone).date > today
 
 private fun Entry.matches(query: String): Boolean {
     val q = query.lowercase()

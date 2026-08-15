@@ -9,6 +9,7 @@ import kotlinx.datetime.plus
 import org.sjbtimdan.linden.ui.entry.MONTHS
 
 enum class HistoryPeriod {
+    Day,
     Week,
     Month,
     Year,
@@ -17,6 +18,7 @@ enum class HistoryPeriod {
 
 /** First day of the calendar period containing [anchor]; null for [HistoryPeriod.All]. */
 fun HistoryPeriod.windowStart(anchor: LocalDate): LocalDate? = when (this) {
+    HistoryPeriod.Day -> anchor
     HistoryPeriod.Week -> anchor.minus(anchor.dayOfWeek.isoDayNumber - 1, DateTimeUnit.DAY)
     HistoryPeriod.Month -> LocalDate(anchor.year, anchor.month.number, 1)
     HistoryPeriod.Year -> LocalDate(anchor.year, 1, 1)
@@ -42,11 +44,12 @@ fun HistoryPeriod.nextAnchor(anchor: LocalDate): LocalDate {
     return anchor.plus(amount, unit)
 }
 
-/** Navigator label, e.g. "10–16 Aug 2026", "Aug 2026" or "2026"; null for [HistoryPeriod.All]. */
+/** Navigator label, e.g. "15 Aug 2026", "10–16 Aug 2026", "Aug 2026" or "2026"; null for [HistoryPeriod.All]. */
 fun HistoryPeriod.windowLabel(anchor: LocalDate): String? {
     val start = windowStart(anchor) ?: return null
     val end = windowEnd(anchor) ?: return null
     return when (this) {
+        HistoryPeriod.Day -> "${start.day} ${MONTHS[start.month.number - 1]} ${start.year}"
         HistoryPeriod.Week -> weekLabel(start, end)
         HistoryPeriod.Month -> "${MONTHS[start.month.number - 1]} ${start.year}"
         HistoryPeriod.Year -> "${start.year}"
@@ -55,6 +58,7 @@ fun HistoryPeriod.windowLabel(anchor: LocalDate): String? {
 }
 
 private fun HistoryPeriod.step(): Pair<Int, DateTimeUnit.DateBased>? = when (this) {
+    HistoryPeriod.Day -> 1 to DateTimeUnit.DAY
     HistoryPeriod.Week -> 7 to DateTimeUnit.DAY
     HistoryPeriod.Month -> 1 to DateTimeUnit.MONTH
     HistoryPeriod.Year -> 1 to DateTimeUnit.YEAR

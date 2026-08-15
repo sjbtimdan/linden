@@ -5,11 +5,26 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.ui.history.HistoryPeriod.All
+import org.sjbtimdan.linden.ui.history.HistoryPeriod.Day
 import org.sjbtimdan.linden.ui.history.HistoryPeriod.Month
 import org.sjbtimdan.linden.ui.history.HistoryPeriod.Week
 import org.sjbtimdan.linden.ui.history.HistoryPeriod.Year
 
 class HistoryPeriodTest : StringSpec({
+    "day window is the anchor day" {
+        Day.windowStart(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 13)
+        Day.windowEnd(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 13)
+    }
+
+    "day navigation moves by one day" {
+        Day.nextAnchor(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 14)
+        Day.previousAnchor(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 12)
+    }
+
+    "day label shows the date" {
+        Day.windowLabel(LocalDate(2026, 8, 13)) shouldBe "13 Aug 2026"
+    }
+
     "week window is Monday to Sunday around the anchor" {
         Week.windowStart(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 10)
         Week.windowEnd(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 16)

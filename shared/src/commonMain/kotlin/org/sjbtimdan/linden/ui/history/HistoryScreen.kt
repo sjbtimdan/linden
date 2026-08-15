@@ -100,13 +100,18 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        PeriodNavigator(
-            period = period,
-            anchor = periodAnchor,
-            onPeriodChange = viewModel::setPeriod,
-            onPrevious = viewModel::goToPreviousPeriod,
-            onNext = viewModel::goToNextPeriod,
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            PeriodNavigator(
+                period = period,
+                anchor = periodAnchor,
+                onPeriodChange = viewModel::setPeriod,
+                onPrevious = viewModel::goToPreviousPeriod,
+                onNext = viewModel::goToNextPeriod,
+            )
+        }
 
         if (entries.isEmpty()) {
             Box(

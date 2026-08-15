@@ -121,16 +121,19 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "month period shows only entries in the window and navigates" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
             viewModel.createEntry(ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
 
             viewModel.setPeriod(HistoryPeriod.Month)
-            viewModel.entries.value.map { it.description } shouldBe listOf("Inside")
+            viewModel.entries.value.map { it.description } shouldBe listOf("After")
 
             viewModel.goToNextPeriod()
+            viewModel.entries.value.shouldBeEmpty()
+
+            viewModel.goToPreviousPeriod()
             viewModel.entries.value.map { it.description } shouldBe listOf("After")
 
             viewModel.goToPreviousPeriod()
@@ -145,7 +148,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "week period shows only entries in the calendar week" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 13) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withHistoryViewModel(today = { LocalDate(2026, 8, 16) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")))
             viewModel.createEntry(ExpenseEntry(0, groceries, "MonInside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
@@ -155,6 +158,33 @@ class HistoryViewModelTest : StringSpec({
             viewModel.setPeriod(HistoryPeriod.Week)
 
             viewModel.entries.value.map { it.description } shouldBe listOf("SunInside", "MonInside")
+        }
+    }
+
+    "day period shows only entries on the anchor day and navigates" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "SameDay", main, 200, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Yesterday", main, 100, createdAt = Instant.parse("2026-08-14T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Day)
+            viewModel.entries.value.map { it.description } shouldBe listOf("SameDay")
+
+            viewModel.goToPreviousPeriod()
+            viewModel.entries.value.map { it.description } shouldBe listOf("Yesterday")
+
+            viewModel.setPeriod(HistoryPeriod.All)
+            viewModel.entries.value.shouldHaveSize(2)
+        }
+    }
+
+    "future entries are excluded from the history" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Today")
         }
     }
 

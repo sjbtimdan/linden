@@ -171,7 +171,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "arrows move between periods" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
             viewModel.createEntry(ExpenseEntry(0, groceries, "In Sep", main, 200, createdAt = Instant.parse("2026-09-10T12:00:00Z")))
@@ -183,6 +183,13 @@ class HistoryScreenTest : StringSpec({
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
 
+            onNodeWithText("Sep 2026").assertIsDisplayed()
+            onNodeWithText("In Sep").assertIsDisplayed()
+            onNodeWithText("In Aug").assertDoesNotExist()
+
+            onNodeWithContentDescription("Previous period").performClick()
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
             onNodeWithText("In Aug").assertIsDisplayed()
             onNodeWithText("In Sep").assertDoesNotExist()
 
