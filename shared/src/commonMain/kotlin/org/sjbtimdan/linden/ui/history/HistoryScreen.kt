@@ -14,12 +14,14 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
@@ -41,6 +42,7 @@ import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
+import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
 fun HistoryScreen(
@@ -80,6 +82,7 @@ fun HistoryScreen(
                     contentDescription = null,
                 )
             },
+            shape = RoundedCornerShape(24.dp),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -150,6 +153,7 @@ fun HistoryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 listItems.forEach { item ->
                     when (item) {
@@ -230,28 +234,35 @@ private fun TotalLabel(
     total: Long?,
     currency: Currency,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = "Total",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        if (total == null) {
+    val colors = lindenColors()
+    val tint = when {
+        total != null && total < 0 -> colors.expense
+        total != null && total > 0 -> colors.income
+        else -> null
+    }
+    val container = when {
+        total != null && total < 0 -> colors.expenseContainer
+        total != null && total > 0 -> colors.incomeContainer
+        else -> MaterialTheme.colorScheme.surfaceContainer
+    }
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = container,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = "–",
-                style = MaterialTheme.typography.titleMedium,
+                text = "Total",
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        } else {
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = formatTotal(total, currency),
+                text = total?.let { formatTotal(it, currency) } ?: "–",
                 style = MaterialTheme.typography.titleMedium,
-                color = when {
-                    total < 0 -> Color(0xFFE53935)
-                    total > 0 -> Color(0xFF43A047)
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color = tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

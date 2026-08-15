@@ -1,5 +1,10 @@
 package org.sjbtimdan.linden
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -63,7 +69,7 @@ fun App(
         Scaffold(
             contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
-                NavigationBar {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                     NavigationBarItem(
                         selected = currentScreen == Screen.Ledger,
                         onClick = { currentScreen = Screen.Ledger },
@@ -105,38 +111,47 @@ fun App(
                     .padding(innerPadding)
                     .fillMaxSize(),
             ) {
-                when (currentScreen) {
-                    Screen.Ledger -> LedgerScreen(
-                        viewModel = ledgerViewModel,
-                        onNavigateToSettings = { currentScreen = Screen.Settings },
-                    )
+                AnimatedContent(
+                    targetState = currentScreen,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(220)) togetherWith
+                            fadeOut(animationSpec = tween(120))
+                    },
+                    label = "screenTransition",
+                ) { screen ->
+                    when (screen) {
+                        Screen.Ledger -> LedgerScreen(
+                            viewModel = ledgerViewModel,
+                            onNavigateToSettings = { currentScreen = Screen.Settings },
+                        )
 
-                    Screen.History -> HistoryScreen(
-                        viewModel = historyViewModel,
-                        onNavigateToSettings = { currentScreen = Screen.Settings },
-                    )
+                        Screen.History -> HistoryScreen(
+                            viewModel = historyViewModel,
+                            onNavigateToSettings = { currentScreen = Screen.Settings },
+                        )
 
-                    Screen.Settings -> SettingsScreen(
-                        viewModel = settingsViewModel,
-                        onNavigateToCategories = { currentScreen = Screen.CategoryList },
-                        onNavigateToAccounts = { currentScreen = Screen.AccountList },
-                        onNavigateToRates = { currentScreen = Screen.Rates },
-                    )
+                        Screen.Settings -> SettingsScreen(
+                            viewModel = settingsViewModel,
+                            onNavigateToCategories = { currentScreen = Screen.CategoryList },
+                            onNavigateToAccounts = { currentScreen = Screen.AccountList },
+                            onNavigateToRates = { currentScreen = Screen.Rates },
+                        )
 
-                    Screen.CategoryList -> CategoryListScreen(
-                        viewModel = categoryListViewModel,
-                        onNavigateBack = { currentScreen = Screen.Settings },
-                    )
+                        Screen.CategoryList -> CategoryListScreen(
+                            viewModel = categoryListViewModel,
+                            onNavigateBack = { currentScreen = Screen.Settings },
+                        )
 
-                    Screen.AccountList -> AccountListScreen(
-                        viewModel = accountListViewModel,
-                        onNavigateBack = { currentScreen = Screen.Settings },
-                    )
+                        Screen.AccountList -> AccountListScreen(
+                            viewModel = accountListViewModel,
+                            onNavigateBack = { currentScreen = Screen.Settings },
+                        )
 
-                    Screen.Rates -> RatesScreen(
-                        viewModel = ratesViewModel,
-                        onNavigateBack = { currentScreen = Screen.Settings },
-                    )
+                        Screen.Rates -> RatesScreen(
+                            viewModel = ratesViewModel,
+                            onNavigateBack = { currentScreen = Screen.Settings },
+                        )
+                    }
                 }
             }
         }

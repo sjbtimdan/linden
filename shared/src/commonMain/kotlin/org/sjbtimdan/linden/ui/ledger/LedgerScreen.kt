@@ -12,8 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -44,6 +49,7 @@ import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
+import org.sjbtimdan.linden.ui.entry.icon
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
@@ -118,9 +124,15 @@ fun LedgerScreen(
                     selected = selectedType == type,
                     onClick = { selectedType = type },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
-                ) {
-                    Text(type.displayName())
-                }
+                    icon = {
+                        Icon(
+                            imageVector = type.icon(),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    label = { Text(type.displayName()) },
+                )
             }
         }
 
@@ -173,6 +185,12 @@ fun LedgerScreen(
                 enabled = draft?.isValid(accounts) == true,
                 modifier = Modifier.weight(1f),
             ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text("Add")
             }
 

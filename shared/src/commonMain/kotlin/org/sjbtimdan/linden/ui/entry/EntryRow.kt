@@ -1,22 +1,31 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.theme.lindenColors
 
 private fun Entry.title(): String {
     val description = description?.takeIf { it.isNotBlank() }
@@ -38,10 +47,10 @@ private fun Entry.amountLabel(): String = when (type) {
 }
 
 @Composable
-private fun Entry.amountColor(): Color = when (type) {
-    EntryType.Expense -> Color(0xFFE53935)
-    EntryType.Income -> Color(0xFF43A047)
-    EntryType.Transfer -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun Entry.tintColor(): Color = when (type) {
+    EntryType.Expense -> lindenColors().expense
+    EntryType.Income -> lindenColors().income
+    EntryType.Transfer -> lindenColors().transfer
 }
 
 @Composable
@@ -49,13 +58,30 @@ fun EntryRow(
     entry: Entry,
     onClick: () -> Unit,
 ) {
+    val tint = entry.tintColor()
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(tint.copy(alpha = 0.16f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = entry.type.icon(),
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = entry.title(),
@@ -72,11 +98,12 @@ fun EntryRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = entry.amountLabel(),
-            style = MaterialTheme.typography.bodyLarge,
-            color = entry.amountColor(),
+            style = MaterialTheme.typography.titleMedium,
+            color = tint,
+            maxLines = 1,
         )
     }
-    HorizontalDivider()
 }
