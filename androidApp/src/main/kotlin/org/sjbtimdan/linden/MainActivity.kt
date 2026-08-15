@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import kotlinx.coroutines.runBlocking
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
-import org.sjbtimdan.linden.data.createAppDependencies
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,11 +17,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            App(
-                database = dependencies.database,
-                initialTheme = dependencies.initialTheme,
-                initialCurrency = dependencies.initialCurrency,
-            )
+            App(dependencies)
         }
     }
 }

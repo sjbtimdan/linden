@@ -22,30 +22,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import io.ktor.client.HttpClient
-import org.sjbtimdan.linden.data.AccountDao
-import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FxRateDao
-import org.sjbtimdan.linden.data.FxRatesFetcher
-import org.sjbtimdan.linden.data.FxRatesRepository
-import org.sjbtimdan.linden.data.SettingsDao
-import org.sjbtimdan.linden.db.LindenDatabase
-import org.sjbtimdan.linden.imports.IvyImporter
-import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
-import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
-import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.history.HistoryScreen
-import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
-import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesScreen
-import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
-import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 sealed class Screen {
@@ -59,41 +41,23 @@ sealed class Screen {
 
 @Composable
 fun App(
-    database: LindenDatabase,
-    initialTheme: ThemeMode,
-    initialCurrency: Currency,
+    dependencies: AppDependencies,
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
-    val settingsDao = remember { SettingsDao(database.settingsQueries) }
-    val httpClient = remember { HttpClient() }
-    val fxRatesRepository = remember {
-        FxRatesRepository(FxRateDao(database.fxRateQueries), FxRatesFetcher(httpClient))
+    val settingsViewModel = dependencies.settingsViewModel
+    val fxRatesRepository = dependencies.fxRatesRepository
+    val ratesViewModel = dependencies.ratesViewModel
+    val categoryListViewModel = dependencies.categoryListViewModel
+    val accountListViewModel = dependencies.accountListViewModel
+    val ledgerViewModel = dependencies.ledgerViewModel
+    val historyViewModel = dependencies.historyViewModel
+    DisposableEffect(dependencies.httpClient) {
+        onDispose { dependencies.httpClient.close() }
     }
-    DisposableEffect(httpClient) {
-        onDispose { httpClient.close() }
-    }
-    val settingsViewModel = remember {
-        SettingsViewModel(
-            settingsDao = settingsDao,
-            importer = IvyImporter(database),
-            initialTheme = initialTheme,
-            initialCurrency = initialCurrency,
-        )
-    }
-    val ratesViewModel = remember { RatesViewModel(settingsDao, fxRatesRepository) }
     LaunchedEffect(Unit) {
-        runCatching { fxRatesRepository.refreshRates(initialCurrency) }
+        runCatching { fxRatesRepository.refreshRates(dependencies.initialCurrency) }
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
-    val categoryDao = remember { CategoryDao(database.categoryQueries) }
-    val categoryListViewModel = remember { CategoryListViewModel(categoryDao) }
-    val accountDao = remember { AccountDao(database.accountQueries) }
-    val accountListViewModel = remember { AccountListViewModel(accountDao) }
-    val entryDao = remember { EntryDao(database.entryQueries) }
-    val ledgerViewModel = remember { LedgerViewModel(entryDao, accountDao, categoryDao) }
-    val historyViewModel = remember {
-        HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
-    }
 
     LindenTheme(themeMode = themeMode) {
         Scaffold(
