@@ -1,7 +1,9 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -138,21 +141,36 @@ fun LedgerScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = {
-                val state = draft ?: return@Button
-                state.toEntry(accounts, categories)?.let { entry ->
-                    viewModel.createEntry(entry)
-                    // Reset to a fresh draft prefilled from the saved entry so
-                    // the next entry of the same type can be entered right away.
-                    draft = EntryDraft.forNew(entry.type, entry)
-                    scope.launch { snackbarHostState.showSnackbar("Saved") }
-                }
-            },
-            enabled = draft?.isValid(accounts) == true,
+        Row(
             modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Save")
+            Button(
+                onClick = {
+                    val state = draft ?: return@Button
+                    state.toEntry(accounts, categories)?.let { entry ->
+                        viewModel.createEntry(entry)
+                        // Reset to a fresh draft prefilled from the saved entry so
+                        // the next entry of the same type can be entered right away.
+                        draft = EntryDraft.forNew(entry.type, entry)
+                        scope.launch { snackbarHostState.showSnackbar("Added") }
+                    }
+                },
+                enabled = draft?.isValid(accounts) == true,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Add")
+            }
+
+            OutlinedButton(
+                onClick = {
+                    draft = EntryDraft.forNew(selectedType)
+                },
+                enabled = draft != null,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("Clear")
+            }
         }
     }
 }

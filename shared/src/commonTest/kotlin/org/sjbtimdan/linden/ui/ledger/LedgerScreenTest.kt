@@ -33,7 +33,7 @@ import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenTest : StringSpec({
-    "shows the expense form with save disabled initially" {
+    "shows the expense form with add disabled initially" {
         withLedgerViewModel { viewModel ->
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -41,7 +41,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Amount").assertIsDisplayed()
             onNodeWithText("Date & time").assertIsDisplayed()
-            onNodeWithText("Save").assertIsNotEnabled()
+            onNodeWithText("Add").assertIsNotEnabled()
         }
     }
 
@@ -71,9 +71,9 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("Description (optional)").performTextInput("Coffee")
-            onNodeWithText("Save").performClick()
+            onNodeWithText("Add").performClick()
 
-            onNodeWithText("Saved").assertIsDisplayed()
+            onNodeWithText("Added").assertIsDisplayed()
             // amount is cleared for the next entry
             onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
             // description is prefilled from the saved entry
@@ -82,7 +82,36 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "save is enabled once the form is valid" {
+    "clear resets the form without adding an entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            // A prior entry prefills the form, so Clear must empty it rather
+            // than restoring the prefill.
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Coffee")
+            onNodeWithText("Amount").performTextInput("12.50")
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
+            onNodeWithText("Description (optional)").performTextInput("Lunch")
+            onNodeWithText("Add").assertIsEnabled()
+
+            onNodeWithText("Clear").performClick()
+
+            onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
+            onNode(hasSetTextAction() and hasText("Lunch")).assertDoesNotExist()
+            // not reset to the prefill from the last entry either
+            onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
+            onNodeWithText("Groceries").assertDoesNotExist()
+            onNodeWithText("Main").assertDoesNotExist()
+            entryDao.getExpenses().first().shouldHaveSize(1)
+        }
+    }
+
+    "add is enabled once the form is valid" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -90,14 +119,14 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Save").assertIsNotEnabled()
+            onNodeWithText("Add").assertIsNotEnabled()
             onNodeWithText("Amount").performTextInput("12.50")
-            onNodeWithText("Save").assertIsNotEnabled()
+            onNodeWithText("Add").assertIsNotEnabled()
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
-            onNodeWithText("Save").assertIsEnabled()
+            onNodeWithText("Add").assertIsEnabled()
         }
     }
 
@@ -172,11 +201,11 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Savings").performClick()
 
             onNodeWithText("Amount (received)").assertIsDisplayed()
-            onNodeWithText("Save").assertIsNotEnabled()
+            onNodeWithText("Add").assertIsNotEnabled()
             onNodeWithText("Amount (received)").performTextInput("95")
-            onNodeWithText("Save").performClick()
+            onNodeWithText("Add").performClick()
 
-            onNodeWithText("Saved").assertIsDisplayed()
+            onNodeWithText("Added").assertIsDisplayed()
             entryDao.getTransfers().first().shouldHaveSize(1)
         }
     }
@@ -198,7 +227,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Savings").performClick()
 
             onNodeWithText("Amount (received)").assertDoesNotExist()
-            onNodeWithText("Save").assertIsEnabled()
+            onNodeWithText("Add").assertIsEnabled()
         }
     }
 
@@ -294,8 +323,8 @@ class LedgerScreenTest : StringSpec({
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Main").assertIsDisplayed()
-            // amount stays blank, so save is not enabled yet
-            onNodeWithText("Save").assertIsNotEnabled()
+            // amount stays blank, so add is not enabled yet
+            onNodeWithText("Add").assertIsNotEnabled()
         }
     }
 

@@ -11,7 +11,7 @@ class AppTest : StringSpec({
     "starts on the ledger screen" {
         withApp { dependencies ->
             setContent { App(dependencies) }
-            onNodeWithText("Save").assertExists()
+            onNodeWithText("Add").assertExists()
         }
     }
 
@@ -26,7 +26,7 @@ class AppTest : StringSpec({
             onNodeWithText("Import from Ivy").assertExists()
 
             onNodeWithText("Ledger").performClick()
-            onNodeWithText("Save").assertExists()
+            onNodeWithText("Add").assertExists()
         }
     }
 
