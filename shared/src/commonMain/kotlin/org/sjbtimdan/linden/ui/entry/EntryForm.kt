@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlin.time.Instant
@@ -182,8 +184,15 @@ fun EntryForm(
         Spacer(modifier = Modifier.height(16.dp))
 
         var descriptionExpanded by remember { mutableStateOf(false) }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusManager = LocalFocusManager.current
+        val visibleSuggestions = state.description.trim().let { query ->
+            if (query.isEmpty()) descriptionSuggestions
+            else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+        }
+        val expanded = descriptionExpanded && visibleSuggestions.isNotEmpty()
         ExposedDropdownMenuBox(
-            expanded = descriptionExpanded && descriptionSuggestions.isNotEmpty(),
+            expanded = expanded,
             onExpandedChange = { descriptionExpanded = it },
         ) {
             OutlinedTextField(
@@ -193,7 +202,7 @@ fun EntryForm(
                 singleLine = true,
                 trailingIcon = {
                     if (descriptionSuggestions.isNotEmpty()) {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = descriptionExpanded)
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                     }
                 },
                 modifier = Modifier
@@ -202,15 +211,17 @@ fun EntryForm(
                     .fillMaxWidth(),
             )
             ExposedDropdownMenu(
-                expanded = descriptionExpanded && descriptionSuggestions.isNotEmpty(),
+                expanded = expanded,
                 onDismissRequest = { descriptionExpanded = false },
             ) {
-                descriptionSuggestions.forEach { suggestion ->
+                visibleSuggestions.forEach { suggestion ->
                     DropdownMenuItem(
                         text = { Text(suggestion) },
                         onClick = {
                             onDescriptionChange(suggestion)
                             descriptionExpanded = false
+                            keyboardController?.hide()
+                            focusManager.clearFocus()
                         },
                     )
                 }

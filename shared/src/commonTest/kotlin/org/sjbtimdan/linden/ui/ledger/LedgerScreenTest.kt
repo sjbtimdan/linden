@@ -340,6 +340,30 @@ class LedgerScreenTest : StringSpec({
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
         }
     }
+
+    "typing filters the description suggestions" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val now = Clock.System.now()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Cocoa", main, 450, createdAt = now.minus(1.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Cocoa")
+            onNode(hasSetTextAction() and hasText("Cocoa")).performTextClearance()
+            onNodeWithText("Amount").performTextInput("4.50")
+            onNodeWithText("Description (optional)").performClick()
+            waitForText("Coffee")
+
+            onNodeWithText("Description (optional)").performTextInput("cof")
+
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithText("Cocoa").assertDoesNotExist()
+        }
+    }
 })
 
 @OptIn(ExperimentalTestApi::class)
