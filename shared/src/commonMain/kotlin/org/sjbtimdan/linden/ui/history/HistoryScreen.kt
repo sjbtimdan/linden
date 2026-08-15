@@ -4,12 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -27,9 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.EntryDialog
@@ -50,6 +54,8 @@ fun HistoryScreen(
     val typeFilter by viewModel.typeFilter.collectAsState()
     val period by viewModel.period.collectAsState()
     val periodAnchor by viewModel.periodAnchor.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val totalMinor by viewModel.totalMinor.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
 
     val listItems = remember(entries) {
@@ -100,16 +106,25 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Box(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            PeriodNavigator(
-                period = period,
-                anchor = periodAnchor,
-                onPeriodChange = viewModel::setPeriod,
-                onPrevious = viewModel::goToPreviousPeriod,
-                onNext = viewModel::goToNextPeriod,
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                PeriodNavigator(
+                    period = period,
+                    anchor = periodAnchor,
+                    onPeriodChange = viewModel::setPeriod,
+                    onPrevious = viewModel::goToPreviousPeriod,
+                    onNext = viewModel::goToNextPeriod,
+                )
+            }
+            TotalLabel(
+                total = totalMinor,
+                currency = defaultCurrency,
             )
         }
 
@@ -209,3 +224,35 @@ internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> =
             add(EntryListItem(entry))
         }
     }
+
+@Composable
+private fun TotalLabel(
+    total: Long?,
+    currency: Currency,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "Total",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        if (total == null) {
+            Text(
+                text = "–",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            Text(
+                text = formatTotal(total, currency),
+                style = MaterialTheme.typography.titleMedium,
+                color = when {
+                    total < 0 -> Color(0xFFE53935)
+                    total > 0 -> Color(0xFF43A047)
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        }
+    }
+}

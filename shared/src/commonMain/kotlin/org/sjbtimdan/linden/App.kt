@@ -85,7 +85,9 @@ fun App(
     val accountListViewModel = remember { AccountListViewModel(accountDao) }
     val entryDao = remember { EntryDao(database.entryQueries) }
     val ledgerViewModel = remember { LedgerViewModel(entryDao, accountDao, categoryDao) }
-    val historyViewModel = remember { HistoryViewModel(entryDao, accountDao, categoryDao) }
+    val historyViewModel = remember {
+        HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
+    }
 
     LindenTheme(themeMode = themeMode) {
         Scaffold(

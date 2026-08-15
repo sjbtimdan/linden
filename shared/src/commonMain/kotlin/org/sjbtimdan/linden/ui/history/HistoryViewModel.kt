@@ -2,11 +2,13 @@ package org.sjbtimdan.linden.ui.history
 
 import androidx.lifecycle.viewModelScope
 import kotlin.time.Clock
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -15,15 +17,22 @@ import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
+    settingsDao: SettingsDao,
+    fxRatesRepository: FxRatesRepository,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val _searchQuery = MutableStateFlow("")
@@ -66,6 +75,34 @@ class HistoryViewModel(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = emptyList(),
+    )
+
+    val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = Currency.CHF,
+        )
+
+    private val rates: StateFlow<List<FxRate>> = defaultCurrency
+        .flatMapLatest { currency -> fxRatesRepository.ratesFor(currency) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
+
+    /** Net total of the displayed entries in the default currency; null when a rate is missing. */
+    val totalMinor: StateFlow<Long?> = combine(
+        entries,
+        defaultCurrency,
+        rates,
+    ) { entries, currency, rates ->
+        periodTotalMinor(entries, currency, rates)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 0L,
     )
 
     fun setSearchQuery(query: String) {

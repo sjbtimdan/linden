@@ -1,7 +1,9 @@
 package org.sjbtimdan.linden.ui.history
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -19,6 +21,7 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
@@ -102,7 +105,8 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Amount").performTextInput("5.00")
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("− 5.00 CHF").assertIsDisplayed()
+            // The edited row and the period total both show the new amount.
+            onAllNodesWithText("− 5.00 CHF").assertCountEquals(2)
             onNodeWithText("− 4.50 CHF").assertDoesNotExist()
         }
     }
@@ -216,6 +220,60 @@ class HistoryScreenTest : StringSpec({
 
             onNodeWithText("2025").assertIsDisplayed()
             onNodeWithText("No entries match.").assertIsDisplayed()
+        }
+    }
+
+    "shows the net total of the period next to the navigator" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Total").assertIsDisplayed()
+            onNodeWithText("+ 15.50 CHF").assertIsDisplayed()
+        }
+    }
+
+    "shows the total converted to the default currency" {
+        withHistoryViewModel(
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            // 450 CHF + 200 USD / 2.0 = 550 CHF
+            onNodeWithText("− 5.50 CHF").assertIsDisplayed()
+        }
+    }
+
+    "shows a dash when the total cannot be computed" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val usd = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Total").assertIsDisplayed()
+            onNodeWithText("–").assertIsDisplayed()
         }
     }
 })

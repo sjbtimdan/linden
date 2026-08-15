@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
@@ -155,7 +156,19 @@ fun withLedgerViewModel(
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, HistoryViewModel) -> Unit,
+) = withHistoryViewModel(today, defaultCurrency, rates) { entryDao, accountDao, categoryDao, _, viewModel ->
+    block(entryDao, accountDao, categoryDao, viewModel)
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withHistoryViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency,
+    rates: List<FxRate>,
+    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, SettingsDao, HistoryViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
@@ -163,8 +176,19 @@ fun withHistoryViewModel(
             val entryDao = EntryDao(database.entryQueries)
             val accountDao = AccountDao(database.accountQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = HistoryViewModel(entryDao, accountDao, categoryDao, today)
-            block(entryDao, accountDao, categoryDao, viewModel)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            val fxRateDao = FxRateDao(database.fxRateQueries)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            val viewModel = HistoryViewModel(
+                entryDao,
+                accountDao,
+                categoryDao,
+                settingsDao,
+                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                today,
+            )
+            block(entryDao, accountDao, categoryDao, settingsDao, viewModel)
         }
     }
 }
@@ -172,23 +196,33 @@ fun withHistoryViewModel(
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
     today: () -> LocalDate,
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, HistoryViewModel) -> Unit,
-) = withHistoryViewModel(today) { _, accountDao, categoryDao, model ->
-    block(accountDao, categoryDao, model)
+) = withHistoryViewModel(today, defaultCurrency, rates) { _, accountDao, categoryDao, _, viewModel ->
+    block(accountDao, categoryDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
     today: () -> LocalDate,
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(HistoryViewModel) -> Unit,
-) = withHistoryViewModel(today) { _, _, _, viewModel -> block(viewModel) }
+) = withHistoryViewModel(today, defaultCurrency, rates) { _, _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, HistoryViewModel) -> Unit,
-) = withHistoryViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
+) = withHistoryViewModel(defaultCurrency = defaultCurrency, rates = rates) { _, accountDao, categoryDao, _, viewModel ->
+    block(accountDao, categoryDao, viewModel)
+}
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(HistoryViewModel) -> Unit,
-) = withHistoryViewModel { _, _, _, viewModel -> block(viewModel) }
+) = withHistoryViewModel(defaultCurrency = defaultCurrency, rates = rates) { _, _, _, _, viewModel -> block(viewModel) }

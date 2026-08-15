@@ -17,6 +17,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
@@ -209,6 +210,77 @@ class HistoryViewModelTest : StringSpec({
             viewModel.goToNextPeriod()
 
             viewModel.entries.value.shouldBeEmpty()
+        }
+    }
+
+    "total is the net of income and expenses" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            viewModel.totalMinor.value shouldBe 1_550L
+        }
+    }
+
+    "total converts foreign currency entries via stored rates" {
+        withHistoryViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (_, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.totalMinor.value shouldBe -100L
+        }
+    }
+
+    "total is null when a foreign rate is missing" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (_, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.totalMinor.value shouldBe null
+        }
+    }
+
+    "total follows search and type filters" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            viewModel.totalMinor.value shouldBe -1_650L
+
+            viewModel.setSearchQuery("coffee")
+            viewModel.totalMinor.value shouldBe -450L
+
+            viewModel.setSearchQuery("")
+            viewModel.setTypeFilter(EntryType.Income)
+            viewModel.totalMinor.value shouldBe 0L
+        }
+    }
+
+    "total follows the default currency" {
+        withHistoryViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.totalMinor.value shouldBe -550L
+
+            settingsDao.setDefaultCurrency(Currency.USD)
+
+            viewModel.totalMinor.value shouldBe null
         }
     }
 })
