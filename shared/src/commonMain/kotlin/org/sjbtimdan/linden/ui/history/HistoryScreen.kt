@@ -3,7 +3,7 @@ package org.sjbtimdan.linden.ui.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
@@ -30,12 +29,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toLocalDateTime
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryDialogState
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.SortDropdown
+import org.sjbtimdan.linden.ui.entry.SortOrder
 import org.sjbtimdan.linden.ui.entry.displayName
+import org.sjbtimdan.linden.ui.entry.formatDate
 
 @Composable
 fun HistoryScreen(
@@ -49,6 +53,13 @@ fun HistoryScreen(
     val typeFilter by viewModel.typeFilter.collectAsState()
     val sortOrder by viewModel.sortOrder.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
+
+    val listItems = remember(entries, sortOrder) {
+        historyListItems(
+            entries = entries,
+            showDayHeaders = sortOrder == SortOrder.NewestFirst || sortOrder == SortOrder.OldestFirst,
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -79,20 +90,21 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterChip(
                 selected = typeFilter == null,
                 onClick = { viewModel.setTypeFilter(null) },
-                label = { Text("All") },
+                label = { Text("All", style = MaterialTheme.typography.labelMedium) },
             )
             EntryType.entries.forEach { type ->
                 FilterChip(
                     selected = typeFilter == type,
                     onClick = { viewModel.setTypeFilter(type) },
-                    label = { Text(type.displayName()) },
+                    label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
                 )
             }
         }
@@ -127,11 +139,18 @@ fun HistoryScreen(
                     .fillMaxWidth()
                     .weight(1f),
             ) {
-                items(entries, key = { it.id }) { entry ->
-                    EntryRow(
-                        entry = entry,
-                        onClick = { dialogState = EntryDialogState.forEdit(entry) },
-                    )
+                listItems.forEach { item ->
+                    when (item) {
+                        is DayHeaderItem -> stickyHeader(item.key) {
+                            DayHeader(label = item.label)
+                        }
+                        is EntryListItem -> item(item.key) {
+                            EntryRow(
+                                entry = item.entry,
+                                onClick = { dialogState = EntryDialogState.forEdit(item.entry) },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -166,3 +185,37 @@ fun HistoryScreen(
         )
     }
 }
+
+internal sealed interface HistoryListItem {
+    val key: Any
+}
+
+internal data class DayHeaderItem(
+    override val key: Any,
+    val label: String,
+) : HistoryListItem
+
+internal data class EntryListItem(val entry: Entry) : HistoryListItem {
+    override val key: Any get() = entry.id
+}
+
+/** Builds the flat list of headers and entries shown by the history list. */
+internal fun historyListItems(
+    entries: List<Entry>,
+    showDayHeaders: Boolean,
+): List<HistoryListItem> =
+    if (!showDayHeaders) {
+        entries.map { EntryListItem(it) }
+    } else {
+        buildList {
+            var previousDay: LocalDate? = null
+            entries.forEach { entry ->
+                val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
+                if (day != previousDay) {
+                    add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
+                    previousDay = day
+                }
+                add(EntryListItem(entry))
+            }
+        }
+    }

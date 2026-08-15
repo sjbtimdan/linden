@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -16,6 +17,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.ui.entry.SortOrder
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -116,6 +118,58 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Delete").performClick()
 
             onNodeWithText("No entries yet.").assertIsDisplayed()
+        }
+    }
+
+    "day headers appear when entries span multiple days" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0, groceries, "Coffee", main, 450,
+                    createdAt = Instant.fromEpochMilliseconds(1_000_000_000_000),
+                )
+            )
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0, groceries, "Lunch", main, 1_200,
+                    createdAt = Instant.fromEpochMilliseconds(1_000_086_400_000),
+                )
+            )
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("10 Sep 2001").assertIsDisplayed()
+            onNodeWithText("9 Sep 2001").assertIsDisplayed()
+        }
+    }
+
+    "no day headers when sorted by amount" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0, groceries, "Coffee", main, 450,
+                    createdAt = Instant.fromEpochMilliseconds(1_000_000_000_000),
+                )
+            )
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0, groceries, "Lunch", main, 1_200,
+                    createdAt = Instant.fromEpochMilliseconds(1_000_086_400_000),
+                )
+            )
+            viewModel.setSortOrder(SortOrder.AmountHighToLow)
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Lunch").assertIsDisplayed()
+            onNodeWithText("9 Sep 2001").assertDoesNotExist()
+            onNodeWithText("10 Sep 2001").assertDoesNotExist()
         }
     }
 })

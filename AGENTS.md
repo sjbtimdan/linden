@@ -68,5 +68,6 @@ The `:shared` Android target compiles via `compileAndroidMain`, **not** `compile
   `onTestMain`, `withViewModel`, `withAccountViewModel`, `withSettingsViewModel`, `withLedgerViewModel` live
   in `ui/Utils.kt`. Compose UI tests live in `commonTest`.
 - Configuration cache + build cache enabled (`gradle.properties`).
+- Each Composable goes in its own file (e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file).
 - Comment minimally: only add comments for obscure code which should be very rare.
 - After each piece of work is done, scan through for omitted tests.
