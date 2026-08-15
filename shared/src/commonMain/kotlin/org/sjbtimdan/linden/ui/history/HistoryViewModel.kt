@@ -19,7 +19,6 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
-import org.sjbtimdan.linden.ui.entry.SortOrder
 
 class HistoryViewModel(
     entryDao: EntryDao,
@@ -32,9 +31,6 @@ class HistoryViewModel(
 
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
-
-    private val _sortOrder = MutableStateFlow(SortOrder.NewestFirst)
-    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
     private val _period = MutableStateFlow(HistoryPeriod.All)
     val period: StateFlow<HistoryPeriod> = _period.asStateFlow()
@@ -58,12 +54,11 @@ class HistoryViewModel(
         periodEntries,
         _searchQuery,
         _typeFilter,
-        _sortOrder,
-    ) { periodEntries, query, type, order ->
+    ) { periodEntries, query, type ->
         periodEntries.asSequence()
             .filter { entry -> type == null || entry.type == type }
             .filter { entry -> query.isBlank() || entry.matches(query) }
-            .sortedWith(order.comparator())
+            .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
             .toList()
     }.stateIn(
         scope = viewModelScope,
@@ -77,10 +72,6 @@ class HistoryViewModel(
 
     fun setTypeFilter(type: EntryType?) {
         _typeFilter.value = type
-    }
-
-    fun setSortOrder(order: SortOrder) {
-        _sortOrder.value = order
     }
 
     fun setPeriod(period: HistoryPeriod) {
@@ -109,11 +100,4 @@ private fun Entry.matches(query: String): Boolean {
         category?.name?.lowercase()?.contains(q) == true ||
         account.name.lowercase().contains(q) ||
         (this as? TransferEntry)?.toAccount?.name?.lowercase()?.contains(q) == true
-}
-
-private fun SortOrder.comparator(): Comparator<Entry> = when (this) {
-    SortOrder.NewestFirst -> compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id }
-    SortOrder.OldestFirst -> compareBy<Entry> { it.createdAt }.thenBy { it.id }
-    SortOrder.AmountHighToLow -> compareByDescending<Entry> { it.amount }.thenByDescending { it.id }
-    SortOrder.AmountLowToHigh -> compareBy<Entry> { it.amount }.thenByDescending { it.id }
 }

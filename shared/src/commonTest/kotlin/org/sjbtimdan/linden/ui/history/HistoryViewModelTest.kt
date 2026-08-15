@@ -18,7 +18,6 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.ui.entry.SortOrder
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -64,31 +63,21 @@ class HistoryViewModelTest : StringSpec({
         }
     }
 
-    "sort orders apply correctly" {
+    "entries are always latest first by createdAt then id" {
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Small", main, 100, createdAt = at(1_000)),
+                ExpenseEntry(0, groceries, "Oldest", main, 100, createdAt = at(1_000)),
             )
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Large", main, 900, createdAt = at(2_000)),
+                ExpenseEntry(0, groceries, "Middle", main, 500, createdAt = at(2_000)),
             )
             viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Medium", main, 500, createdAt = at(3_000)),
+                ExpenseEntry(0, groceries, "Newest", main, 900, createdAt = at(3_000)),
             )
 
-            // Newest first (default): Medium, Large, Small by createdAt
-            viewModel.entries.value.map { it.amount } shouldBe listOf(500L, 900L, 100L)
-
-            viewModel.setSortOrder(SortOrder.OldestFirst)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(100L, 900L, 500L)
-
-            viewModel.setSortOrder(SortOrder.AmountHighToLow)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(900L, 500L, 100L)
-
-            viewModel.setSortOrder(SortOrder.AmountLowToHigh)
-            viewModel.entries.value.map { it.amount } shouldBe listOf(100L, 500L, 900L)
+            viewModel.entries.value.map { it.description } shouldBe listOf("Newest", "Middle", "Oldest")
         }
     }
 

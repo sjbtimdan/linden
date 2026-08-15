@@ -29,13 +29,12 @@ class HistoryDayHeadersTest : StringSpec({
     val day = 86_400_000L
 
     "empty list produces no items" {
-        historyListItems(emptyList(), showDayHeaders = true) shouldBe emptyList()
+        historyListItems(emptyList()) shouldBe emptyList()
     }
 
     "entries on a single day produce one header" {
         val items = historyListItems(
             listOf(expense(1, 0), expense(2, day - 1)),
-            showDayHeaders = true,
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L)
         items.first().shouldBeInstanceOf<DayHeaderItem>().label shouldBe "1 Jan 1970"
@@ -50,7 +49,6 @@ class HistoryDayHeadersTest : StringSpec({
                 expense(4, 2 * day - 1),
                 expense(5, 2 * day),
             ),
-            showDayHeaders = true,
         )
         items.map { it.key } shouldBe listOf(
             "day-1970-01-01", 1L, 2L,
@@ -67,7 +65,6 @@ class HistoryDayHeadersTest : StringSpec({
                 expense(2, 8 * 3_600_000, la),
                 expense(3, 32 * 3_600_000, la),
             ),
-            showDayHeaders = true,
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L, "day-1970-01-02", 3L)
     }
@@ -75,20 +72,11 @@ class HistoryDayHeadersTest : StringSpec({
     "non-chronological input produces a header per contiguous run" {
         val items = historyListItems(
             listOf(expense(1, day), expense(2, 0), expense(3, 2 * day)),
-            showDayHeaders = true,
         )
         items.map { it.key } shouldBe listOf(
             "day-1970-01-02", 1L,
             "day-1970-01-01", 2L,
             "day-1970-01-03", 3L,
         )
-    }
-
-    "no headers when showDayHeaders is false" {
-        val items = historyListItems(
-            listOf(expense(1, 0), expense(2, day)),
-            showDayHeaders = false,
-        )
-        items.map { it.key } shouldBe listOf(1L, 2L)
     }
 })

@@ -35,8 +35,6 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryDialogState
 import org.sjbtimdan.linden.ui.entry.EntryRow
-import org.sjbtimdan.linden.ui.entry.SortDropdown
-import org.sjbtimdan.linden.ui.entry.SortOrder
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
 
@@ -50,16 +48,12 @@ fun HistoryScreen(
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
-    val sortOrder by viewModel.sortOrder.collectAsState()
     val period by viewModel.period.collectAsState()
     val periodAnchor by viewModel.periodAnchor.collectAsState()
     var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
 
-    val listItems = remember(entries, sortOrder) {
-        historyListItems(
-            entries = entries,
-            showDayHeaders = sortOrder == SortOrder.NewestFirst || sortOrder == SortOrder.OldestFirst,
-        )
+    val listItems = remember(entries) {
+        historyListItems(entries = entries)
     }
 
     Column(
@@ -103,13 +97,6 @@ fun HistoryScreen(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        SortDropdown(
-            current = sortOrder,
-            onChange = viewModel::setSortOrder,
-        )
 
         Spacer(modifier = Modifier.height(4.dp))
 
@@ -205,22 +192,15 @@ internal data class EntryListItem(val entry: Entry) : HistoryListItem {
 }
 
 /** Builds the flat list of headers and entries shown by the history list. */
-internal fun historyListItems(
-    entries: List<Entry>,
-    showDayHeaders: Boolean,
-): List<HistoryListItem> =
-    if (!showDayHeaders) {
-        entries.map { EntryListItem(it) }
-    } else {
-        buildList {
-            var previousDay: LocalDate? = null
-            entries.forEach { entry ->
-                val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
-                if (day != previousDay) {
-                    add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
-                    previousDay = day
-                }
-                add(EntryListItem(entry))
+internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> =
+    buildList {
+        var previousDay: LocalDate? = null
+        entries.forEach { entry ->
+            val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
+            if (day != previousDay) {
+                add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
+                previousDay = day
             }
+            add(EntryListItem(entry))
         }
     }
