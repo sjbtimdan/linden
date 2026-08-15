@@ -35,7 +35,7 @@ import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.ui.entry.EntryDialog
-import org.sjbtimdan.linden.ui.entry.EntryDialogState
+import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 
@@ -48,7 +48,7 @@ fun LedgerScreen(
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val allEntries by viewModel.allEntries.collectAsState()
-    var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
+    var dialogState by remember { mutableStateOf<EntryDraft?>(null) }
     val scope = rememberCoroutineScope()
 
     val descriptionSuggestions = remember(dialogState, allEntries) {
@@ -101,7 +101,7 @@ fun LedgerScreen(
                 items(entries, key = { it.id }) { entry ->
                     EntryRow(
                         entry = entry,
-                        onClick = { dialogState = EntryDialogState.forEdit(entry) },
+                        onClick = { dialogState = EntryDraft.forEdit(entry) },
                     )
                 }
             }

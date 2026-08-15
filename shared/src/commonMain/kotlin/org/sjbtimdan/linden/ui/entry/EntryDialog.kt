@@ -38,7 +38,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.number
@@ -48,11 +47,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.model.TransferEntry
 
 fun EntryType.displayName(): String = when (this) {
     EntryType.Expense -> "Expense"
@@ -60,168 +55,10 @@ fun EntryType.displayName(): String = when (this) {
     EntryType.Transfer -> "Transfer"
 }
 
-data class EntryDialogState(
-    val editing: Entry?,
-    val type: EntryType,
-    val amountText: String,
-    val categoryId: Long?,
-    val accountId: Long?,
-    val toAccountId: Long?,
-    val toAmountText: String,
-    val description: String,
-    val createdAt: Instant,
-    val createdZone: TimeZone,
-) {
-    val amount: Long? get() = parseAmount(amountText)
-    val toAmount: Long? get() = parseAmount(toAmountText)
-
-    // TODO: Move to a helper that can be tested
-    fun isValid(accounts: List<Account>): Boolean {
-        val amountValue = amount ?: return false
-        if (amountValue <= 0) return false
-        if (accountId == null) return false
-        return when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId != null
-            EntryType.Transfer -> {
-                val toAccountIdValue = toAccountId ?: return false
-                if (toAccountIdValue == accountId) return false
-                val toAccount = accounts.firstOrNull { it.id == toAccountIdValue } ?: return false
-                val account = accounts.firstOrNull { it.id == accountId } ?: return false
-                if (account.currency == toAccount.currency) {
-                    true
-                } else {
-                    val toValue = toAmount
-                    toValue != null && toValue > 0
-                }
-            }
-        }
-    }
-
-    // TODO: Move to a helper that can be tested
-    fun toEntry(accounts: List<Account>, categories: List<Category>): Entry? {
-        val amountValue = amount ?: return null
-        val account = accounts.firstOrNull { it.id == accountId } ?: return null
-        val id = editing?.id ?: 0L
-        val description = description.trim().ifEmpty { null }
-        return when (type) {
-            EntryType.Expense -> {
-                val category = categories.firstOrNull { it.id == categoryId } ?: return null
-                ExpenseEntry(
-                    id, category, description, account, amountValue,
-                    createdAt = createdAt, createdZone = createdZone,
-                )
-            }
-
-            EntryType.Income -> {
-                val category = categories.firstOrNull { it.id == categoryId } ?: return null
-                IncomeEntry(
-                    id, category, description, account, amountValue,
-                    createdAt = createdAt, createdZone = createdZone,
-                )
-            }
-
-            EntryType.Transfer -> {
-                val toAccount = accounts.firstOrNull { it.id == toAccountId } ?: return null
-                val sameCurrency = account.currency == toAccount.currency
-                val toValue = if (sameCurrency) null else toAmount ?: return null
-                TransferEntry(
-                    id = id,
-                    category = null,
-                    description = description,
-                    account = account,
-                    amount = amountValue,
-                    createdAt = createdAt,
-                    createdZone = createdZone,
-                    toAccount = toAccount,
-                    toAmount = toValue,
-                )
-            }
-        }
-    }
-
-    companion object {
-        fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDialogState {
-            val empty = EntryDialogState(
-                editing = null,
-                type = type,
-                amountText = "",
-                categoryId = null,
-                accountId = null,
-                toAccountId = null,
-                toAmountText = "",
-                description = "",
-                createdAt = Clock.System.now(),
-                createdZone = TimeZone.currentSystemDefault(),
-            )
-            if (previous == null || previous.type != type) return empty
-            return when (previous) {
-                is ExpenseEntry -> empty.copy(
-                    categoryId = previous.category.id,
-                    accountId = previous.account.id,
-                    description = previous.description.orEmpty(),
-                )
-
-                is IncomeEntry -> empty.copy(
-                    categoryId = previous.category.id,
-                    accountId = previous.account.id,
-                    description = previous.description.orEmpty(),
-                )
-
-                is TransferEntry -> empty.copy(
-                    accountId = previous.account.id,
-                    toAccountId = previous.toAccount.id,
-                    description = previous.description.orEmpty(),
-                )
-            }
-        }
-
-        fun forEdit(entry: Entry): EntryDialogState = when (entry) {
-            is ExpenseEntry -> EntryDialogState(
-                editing = entry,
-                type = EntryType.Expense,
-                amountText = formatAmount(entry.amount),
-                categoryId = entry.category.id,
-                accountId = entry.account.id,
-                toAccountId = null,
-                toAmountText = "",
-                description = entry.description.orEmpty(),
-                createdAt = entry.createdAt,
-                createdZone = entry.createdZone,
-            )
-
-            is IncomeEntry -> EntryDialogState(
-                editing = entry,
-                type = EntryType.Income,
-                amountText = formatAmount(entry.amount),
-                categoryId = entry.category.id,
-                accountId = entry.account.id,
-                toAccountId = null,
-                toAmountText = "",
-                description = entry.description.orEmpty(),
-                createdAt = entry.createdAt,
-                createdZone = entry.createdZone,
-            )
-
-            is TransferEntry -> EntryDialogState(
-                editing = entry,
-                type = EntryType.Transfer,
-                amountText = formatAmount(entry.amount),
-                categoryId = null,
-                accountId = entry.account.id,
-                toAccountId = entry.toAccount.id,
-                toAmountText = formatAmount(entry.toAmount ?: entry.amount),
-                description = entry.description.orEmpty(),
-                createdAt = entry.createdAt,
-                createdZone = entry.createdZone,
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryDialog(
-    state: EntryDialogState,
+    state: EntryDraft,
     accounts: List<Account>,
     categories: List<Category>,
     onAmountChange: (String) -> Unit,

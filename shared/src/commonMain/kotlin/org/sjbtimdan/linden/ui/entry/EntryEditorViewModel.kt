@@ -69,6 +69,6 @@ abstract class EntryEditorViewModel(
         }
     }
 
-    suspend fun newEntryState(type: EntryType): EntryDialogState =
-        EntryDialogState.forNew(type, entryDao.latest(type))
+    suspend fun newEntryState(type: EntryType): EntryDraft =
+        EntryDraft.forNew(type, entryDao.latest(type))
 }

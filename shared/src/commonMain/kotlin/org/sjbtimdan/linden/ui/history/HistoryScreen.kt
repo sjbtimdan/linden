@@ -37,7 +37,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.EntryDialog
-import org.sjbtimdan.linden.ui.entry.EntryDialogState
+import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
@@ -56,7 +56,7 @@ fun HistoryScreen(
     val periodAnchor by viewModel.periodAnchor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
-    var dialogState by remember { mutableStateOf<EntryDialogState?>(null) }
+    var dialogState by remember { mutableStateOf<EntryDraft?>(null) }
 
     val listItems = remember(entries) {
         historyListItems(entries = entries)
@@ -159,7 +159,7 @@ fun HistoryScreen(
                         is EntryListItem -> item(item.key) {
                             EntryRow(
                                 entry = item.entry,
-                                onClick = { dialogState = EntryDialogState.forEdit(item.entry) },
+                                onClick = { dialogState = EntryDraft.forEdit(item.entry) },
                             )
                         }
                     }
