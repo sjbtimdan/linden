@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
@@ -53,6 +57,8 @@ fun LedgerScreen(
     val allEntries by viewModel.allEntries.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     var selectedType by remember { mutableStateOf(EntryType.Expense) }
     var draft by remember { mutableStateOf<EntryDraft?>(null) }
@@ -97,6 +103,14 @@ fun LedgerScreen(
             .imePadding()
             .padding(16.dp)
             .widthIn(max = 480.dp)
+            // Tapping anywhere outside a field dismisses the keyboard. Focus loss
+            // alone doesn't always close the IME on Android, so hide explicitly.
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                }
+            }
     ) {
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             entryTypes.forEachIndexed { index, type ->

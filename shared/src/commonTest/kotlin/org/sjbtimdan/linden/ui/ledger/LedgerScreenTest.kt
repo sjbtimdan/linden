@@ -5,9 +5,12 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -15,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -367,6 +371,35 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+        }
+    }
+
+    "tapping outside the description field clears focus and hides suggestions" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val now = Clock.System.now()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Coffee")
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
+            onNodeWithText("Amount").performTextInput("4.50")
+            onNodeWithText("Description (optional)").performClick()
+            waitForText("Coffee")
+
+            onNodeWithText("Description (optional)").assertIsFocused()
+
+            // tapping another field drops focus from description and closes its suggestions
+            onNodeWithText("Amount").performTouchInput { click() }
+
+            onNodeWithText("Description (optional)").assertIsNotFocused()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            // the tapped field takes focus and stays typeable
+            onNodeWithText("Amount").assertIsFocused()
+            onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
         }
     }
 

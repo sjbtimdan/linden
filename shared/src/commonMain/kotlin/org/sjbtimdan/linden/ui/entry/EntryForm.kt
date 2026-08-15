@@ -207,12 +207,18 @@ fun EntryForm(
                 },
                 modifier = Modifier
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                    .onFocusChanged { if (it.isFocused) descriptionExpanded = true }
+                    .onFocusChanged { descriptionExpanded = it.isFocused }
                     .fillMaxWidth(),
             )
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { descriptionExpanded = false },
+                onDismissRequest = {
+                    descriptionExpanded = false
+                    // Outside taps land here (the popup is touch-modal on Android),
+                    // so this is where focus and the keyboard are actually dismissed.
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                },
             ) {
                 visibleSuggestions.forEach { suggestion ->
                     DropdownMenuItem(
