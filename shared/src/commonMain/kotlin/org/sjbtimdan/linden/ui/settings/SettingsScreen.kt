@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -66,12 +65,6 @@ fun SettingsScreen(
             .widthIn(max = 480.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "Settings",
-            fontSize = 28.sp,
-            modifier = Modifier.padding(bottom = 24.dp),
-        )
-
         Text(
             text = "Theme",
             style = MaterialTheme.typography.titleMedium,

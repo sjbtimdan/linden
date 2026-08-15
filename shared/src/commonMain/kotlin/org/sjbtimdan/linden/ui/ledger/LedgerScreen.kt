@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -80,12 +79,6 @@ fun LedgerScreen(
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        Text(
-            text = "Ledger",
-            fontSize = 28.sp,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
-
         if (entries.isEmpty()) {
             Box(
                 modifier = Modifier

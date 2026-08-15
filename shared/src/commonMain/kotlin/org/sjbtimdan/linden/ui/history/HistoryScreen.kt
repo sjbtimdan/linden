@@ -28,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
@@ -68,12 +67,6 @@ fun HistoryScreen(
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        Text(
-            text = "History",
-            fontSize = 28.sp,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
-
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::setSearchQuery,

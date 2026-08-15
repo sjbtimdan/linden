@@ -324,7 +324,7 @@ fun EntryDialog(
                             label = { Text("Amount (received)") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            suffix = toAccount?.let { account ->
+                            suffix = toAccount.let { account ->
                                 { Text(account.currency.symbol) }
                             },
                             modifier = Modifier.fillMaxWidth(),

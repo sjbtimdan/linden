@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 
@@ -59,18 +58,8 @@ fun AccountListScreen(
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Accounts",
-                fontSize = 28.sp,
-            )
-            TextButton(onClick = onNavigateBack) {
-                Text("< Settings")
-            }
+        TextButton(onClick = onNavigateBack) {
+            Text("< Settings")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

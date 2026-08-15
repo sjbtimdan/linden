@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlin.math.roundToLong
 
 @Composable
@@ -46,18 +45,8 @@ fun RatesScreen(
             .widthIn(max = 480.dp)
             .verticalScroll(rememberScrollState()),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Currency rates",
-                fontSize = 28.sp,
-            )
-            TextButton(onClick = onNavigateBack) {
-                Text("< Settings")
-            }
+        TextButton(onClick = onNavigateBack) {
+            Text("< Settings")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
