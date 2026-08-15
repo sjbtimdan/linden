@@ -1,30 +1,30 @@
 package org.sjbtimdan.linden.ui.ledger
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlin.time.Clock
@@ -34,25 +34,40 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.predictDescriptions
-import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryDraft
-import org.sjbtimdan.linden.ui.entry.EntryRow
+import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
+
+private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
 @Composable
 fun LedgerScreen(
     viewModel: LedgerViewModel,
     onNavigateToSettings: () -> Unit = {},
 ) {
-    val entries by viewModel.recentEntries.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val allEntries by viewModel.allEntries.collectAsState()
-    var dialogState by remember { mutableStateOf<EntryDraft?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val descriptionSuggestions = remember(dialogState, allEntries) {
-        dialogState?.let { state ->
+    var selectedType by remember { mutableStateOf(EntryType.Expense) }
+    var draft by remember { mutableStateOf<EntryDraft?>(null) }
+
+    // Rebuild the draft when the type changes, carrying over the fields that
+    // are shared across types (amount, description, date & time).
+    LaunchedEffect(selectedType) {
+        val previous = draft
+        val fresh = viewModel.newEntryState(selectedType)
+        draft = if (previous != null && previous.type != selectedType) {
+            fresh.carryOverCommonFields(previous)
+        } else {
+            fresh
+        }
+    }
+
+    val descriptionSuggestions = remember(draft, allEntries) {
+        draft?.let { state ->
             if (state.editing != null) {
                 emptyList()
             } else {
@@ -76,90 +91,68 @@ fun LedgerScreen(
         modifier = Modifier
             .safeContentPadding()
             .fillMaxSize()
+            .imePadding()
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        if (entries.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "No entries in the last 7 days.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            ) {
-                items(entries, key = { it.id }) { entry ->
-                    EntryRow(
-                        entry = entry,
-                        onClick = { dialogState = EntryDraft.forEdit(entry) },
-                    )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            entryTypes.forEachIndexed { index, type ->
+                SegmentedButton(
+                    selected = selectedType == type,
+                    onClick = { selectedType = type },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
+                ) {
+                    Text(type.displayName())
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
         ) {
-            listOf(
-                EntryType.Expense,
-                EntryType.Income,
-                EntryType.Transfer,
-            ).forEach { type ->
-                FilledTonalButton(
-                    onClick = { scope.launch { dialogState = viewModel.newEntryState(type) } },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                ) {
-                    Text("Add ${type.displayName()}")
-                }
+            draft?.let { state ->
+                EntryForm(
+                    state = state,
+                    accounts = accounts,
+                    categories = categories,
+                    onAmountChange = { draft = state.copy(amountText = it) },
+                    onCategoryChange = { draft = state.copy(categoryId = it) },
+                    onAccountChange = { draft = state.copy(accountId = it) },
+                    onToAccountChange = { draft = state.copy(toAccountId = it) },
+                    onToAmountChange = { draft = state.copy(toAmountText = it) },
+                    onDescriptionChange = { draft = state.copy(description = it) },
+                    onCreatedAtChange = { draft = state.copy(createdAt = it) },
+                    onNavigateToSettings = onNavigateToSettings,
+                    descriptionSuggestions = descriptionSuggestions,
+                )
             }
         }
-    }
 
-    dialogState?.let { state ->
-        EntryDialog(
-            state = state,
-            accounts = accounts,
-            categories = categories,
-            onAmountChange = { dialogState = state.copy(amountText = it) },
-            onCategoryChange = { dialogState = state.copy(categoryId = it) },
-            onAccountChange = { dialogState = state.copy(accountId = it) },
-            onToAccountChange = { dialogState = state.copy(toAccountId = it) },
-            onToAmountChange = { dialogState = state.copy(toAmountText = it) },
-            onDescriptionChange = { dialogState = state.copy(description = it) },
-            onCreatedAtChange = { dialogState = state.copy(createdAt = it) },
-            onSave = {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SnackbarHost(hostState = snackbarHostState)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = {
+                val state = draft ?: return@Button
                 state.toEntry(accounts, categories)?.let { entry ->
-                    if (state.editing != null) {
-                        viewModel.updateEntry(entry)
-                    } else {
-                        viewModel.createEntry(entry)
-                    }
-                    dialogState = null
+                    viewModel.createEntry(entry)
+                    // Reset to a fresh draft prefilled from the saved entry so
+                    // the next entry of the same type can be entered right away.
+                    draft = EntryDraft.forNew(entry.type, entry)
+                    scope.launch { snackbarHostState.showSnackbar("Saved") }
                 }
             },
-            onDelete = state.editing?.let { editing ->
-                {
-                    viewModel.deleteEntry(editing.id)
-                    dialogState = null
-                }
-            },
-            onNavigateToSettings = onNavigateToSettings,
-            onDismiss = { dialogState = null },
-            descriptionSuggestions = descriptionSuggestions,
-        )
+            enabled = draft?.isValid(accounts) == true,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Save")
+        }
     }
 }

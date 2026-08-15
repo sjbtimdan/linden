@@ -93,6 +93,19 @@ data class EntryDraft(
         }
     }
 
+    /**
+     * Returns this draft with the type-independent fields (amount, description,
+     * date & time) replaced by [previous]'s values. Used when switching the
+     * entry type so already-entered common fields are preserved.
+     */
+    fun carryOverCommonFields(previous: EntryDraft): EntryDraft =
+        copy(
+            amountText = previous.amountText,
+            description = previous.description,
+            createdAt = previous.createdAt,
+            createdZone = previous.createdZone,
+        )
+
     companion object {
         fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDraft {
             val empty = EntryDraft(

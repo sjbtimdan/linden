@@ -1,10 +1,13 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -13,59 +16,73 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenTest : StringSpec({
-    "displays empty state and add buttons" {
+    "shows the expense form with save disabled initially" {
         withLedgerViewModel { viewModel ->
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("No entries in the last 7 days.").assertIsDisplayed()
-            onNodeWithText("Add Expense").assertIsDisplayed()
-            onNodeWithText("Add Income").assertIsDisplayed()
-            onNodeWithText("Add Transfer").assertIsDisplayed()
+            onNodeWithText("Amount").assertIsDisplayed()
+            onNodeWithText("Date & time").assertIsDisplayed()
+            onNodeWithText("Save").assertIsNotEnabled()
         }
     }
 
-    "creating an expense via the dialog shows it in the list" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+    "expense is the default selected type" {
+        withLedgerViewModel { viewModel ->
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Expense").assertIsSelected()
+            onNodeWithText("Income").assertIsNotSelected()
+            onNodeWithText("Transfer").assertIsNotSelected()
+        }
+    }
+
+    "creating an expense saves it and resets the form" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
-
-            onNodeWithText("Add Expense").performClick()
-            onNodeWithText("New Expense").assertIsDisplayed()
 
             onNodeWithText("Amount").performTextInput("12.50")
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
+            onNodeWithText("Description (optional)").performTextInput("Coffee")
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("Groceries").assertIsDisplayed()
-            onNodeWithText("− 12.50 CHF").assertIsDisplayed()
+            onNodeWithText("Saved").assertIsDisplayed()
+            // amount is cleared for the next entry
+            onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
+            // description is prefilled from the saved entry
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            entryDao.getExpenses().first().shouldHaveSize(1)
         }
     }
 
-    "save is disabled until the form is valid" {
+    "save is enabled once the form is valid" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -73,14 +90,18 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Expense").performClick()
             onNodeWithText("Save").assertIsNotEnabled()
             onNodeWithText("Amount").performTextInput("12.50")
             onNodeWithText("Save").assertIsNotEnabled()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Save").assertIsEnabled()
         }
     }
 
-    "new entry dialog shows a date and time section" {
+    "switching type keeps amount and description" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -88,65 +109,54 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Expense").performClick()
+            onNodeWithText("Amount").performTextInput("12.50")
+            onNodeWithText("Description (optional)").performTextInput("Lunch")
+            onNodeWithText("Income").performClick()
 
-            onNodeWithText("Date & time").assertIsDisplayed()
-            onNodeWithText("Save").assertIsNotEnabled()
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Lunch")).assertIsDisplayed()
         }
     }
 
-    "add buttons preselect the entry type in the dialog" {
-        withLedgerViewModel {accountDao, categoryDao, viewModel ->
+    "switching type swaps the type-specific fields" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Income").performClick()
-            onNodeWithText("New Income").assertIsDisplayed()
+            onNodeWithText("Category").assertIsDisplayed()
+            onNodeWithText("From account").assertDoesNotExist()
+
+            onNodeWithText("Transfer").performClick()
+
+            onNodeWithText("From account").assertIsDisplayed()
+            onNodeWithText("Category").assertDoesNotExist()
         }
     }
 
-    "editing an entry shows current values and saves changes" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+    "switching to transfer prefills accounts from the last transfer" {
+        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+            val accounts = accountDao.getAll().first()
+            viewModel.createEntry(
+                TransferEntry(0, null, "Move money", accounts.first(), 10_000, toAccount = accounts.last(), toAmount = 9_500),
+            )
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Coffee").performClick()
-            onNodeWithText("Edit Expense").assertIsDisplayed()
-
-            onNodeWithText("Amount").performTextClearance()
-            onNodeWithText("Amount").performTextInput("5.00")
-            onNodeWithText("Save").performClick()
-
-            onNodeWithText("− 5.00 CHF").assertIsDisplayed()
-            onNodeWithText("− 4.50 CHF").assertDoesNotExist()
+            onNodeWithText("Transfer").performClick()
+            waitForText("Main")
+            onNodeWithText("Savings").assertIsDisplayed()
         }
     }
 
-    "deleting an entry from the edit dialog removes it" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-
-            setContent {
-                LedgerScreen(viewModel = viewModel)
-            }
-
-            onNodeWithText("Coffee").performClick()
-            onNodeWithText("Delete").performClick()
-
-            onNodeWithText("No entries in the last 7 days.").assertIsDisplayed()
-        }
-    }
-
-    "creating a transfer via the dialog shows it in the list" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+    "cross-currency transfer requires the received amount" {
+        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -154,20 +164,20 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Transfer").performClick()
-
+            onNodeWithText("Transfer").performClick()
             onNodeWithText("Amount (sent)").performTextInput("100")
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("To account").performClick()
             onNodeWithText("Savings").performClick()
+
+            onNodeWithText("Amount (received)").assertIsDisplayed()
+            onNodeWithText("Save").assertIsNotEnabled()
             onNodeWithText("Amount (received)").performTextInput("95")
-            onNodeWithText("Description (optional)").performTextInput("Move money")
             onNodeWithText("Save").performClick()
 
-            onNodeWithText("Move money").assertIsDisplayed()
-            onNodeWithText("Main → Savings").assertIsDisplayed()
-            onNodeWithText("100.00 CHF").assertIsDisplayed()
+            onNodeWithText("Saved").assertIsDisplayed()
+            entryDao.getTransfers().first().shouldHaveSize(1)
         }
     }
 
@@ -180,8 +190,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Transfer").performClick()
-
+            onNodeWithText("Transfer").performClick()
             onNodeWithText("Amount (sent)").performTextInput("100")
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()
@@ -190,11 +199,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Amount (received)").assertDoesNotExist()
             onNodeWithText("Save").assertIsEnabled()
-
-            onNodeWithText("Save").performClick()
-
-            onNodeWithText("100.00 CHF").assertIsDisplayed()
-            onNodeWithText("Main → Savings").assertIsDisplayed()
         }
     }
 
@@ -207,8 +211,6 @@ class LedgerScreenTest : StringSpec({
                     onNavigateToSettings = { settingsNavigations++ },
                 )
             }
-
-            onNodeWithText("Add Expense").performClick()
 
             onNodeWithText("Please enter category").assertIsDisplayed()
             onNodeWithText("Please enter account").assertIsDisplayed()
@@ -229,7 +231,7 @@ class LedgerScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Add Transfer").performClick()
+            onNodeWithText("Transfer").performClick()
 
             onAllNodesWithText("Please enter account").assertCountEquals(2)
             onNodeWithText("Please enter category").assertDoesNotExist()
@@ -248,7 +250,7 @@ class LedgerScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Add Transfer").performClick()
+            onNodeWithText("Transfer").performClick()
 
             onNodeWithText("Please add a second account").assertIsDisplayed()
             onNodeWithText("Please enter account").assertDoesNotExist()
@@ -267,7 +269,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Transfer").performClick()
+            onNodeWithText("Transfer").performClick()
 
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()
@@ -277,8 +279,9 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Savings").assertIsDisplayed()
         }
     }
-    "new expense dialog prefills from the last expense" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+
+    "expense form prefills from the last expense" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
@@ -286,21 +289,18 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Expense").performClick()
+            waitForText("Coffee")
 
-            // prefilled description field plus the ledger row behind the dialog
-            onAllNodesWithText("Coffee").assertCountEquals(2)
-            // prefilled category dropdown (row title shows the description, not the category)
-            onAllNodesWithText("Groceries").assertCountEquals(1)
-            // prefilled account dropdown plus the ledger row subtitle
-            onAllNodesWithText("Main").assertCountEquals(2)
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Main").assertIsDisplayed()
             // amount stays blank, so save is not enabled yet
             onNodeWithText("Save").assertIsNotEnabled()
         }
     }
 
     "shows description suggestions based on category, account and amount" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
@@ -309,20 +309,18 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Expense").performClick()
-            // category and account are prefilled from the last expense; clear the
-            // prefilled description so suggestions can be verified independently
+            waitForText("Coffee")
+            // clear the prefilled description so suggestions can be verified independently
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
             onNodeWithText("Description (optional)").performClick()
 
-            // suggestion plus the ledger row behind the dialog
-            onAllNodesWithText("Coffee").assertCountEquals(2)
+            waitForText("Coffee")
         }
     }
 
     "selecting a description suggestion fills the field" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
@@ -331,16 +329,25 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Add Expense").performClick()
+            waitForText("Coffee")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
             onNodeWithText("Description (optional)").performClick()
-            onAllNodesWithText("Coffee")[1].performClick()
+            waitForText("Coffee")
+
+            onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
         }
     }
 })
+
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.waitForText(text: String) {
+    waitUntil(timeoutMillis = 5_000) {
+        onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+    }
+}
 
 private suspend fun seed(
     accountDao: AccountDao,

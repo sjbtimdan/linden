@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.entry
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
@@ -239,5 +240,36 @@ class EntryDraftTest : StringSpec({
         val state = EntryDraft.forEdit(entry)
         state.toAccountId shouldBe savingsEur.id
         state.toAmountText shouldBe formatAmount(9_500)
+    }
+
+    // carryOverCommonFields
+
+    "carryOverCommonFields keeps the common fields but not the type-specific ones" {
+        val previous = draft(
+            amountText = "12.50",
+            description = "Lunch",
+            categoryId = groceries.id,
+            accountId = main.id,
+        )
+        val fresh = draft(
+            type = EntryType.Income,
+            amountText = "999.00",
+            categoryId = salary.id,
+            accountId = savingsChf.id,
+            description = "Prefill",
+        ).copy(
+            createdAt = createdAt + 60.seconds,
+            createdZone = TimeZone.of("Europe/Zurich"),
+        )
+
+        val carried = fresh.carryOverCommonFields(previous)
+
+        carried.type shouldBe EntryType.Income
+        carried.amountText shouldBe "12.50"
+        carried.description shouldBe "Lunch"
+        carried.createdAt shouldBe previous.createdAt
+        carried.createdZone shouldBe previous.createdZone
+        carried.categoryId shouldBe salary.id
+        carried.accountId shouldBe savingsChf.id
     }
 })
