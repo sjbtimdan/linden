@@ -1,8 +1,10 @@
 # Linden
 
-KMP + Compose Multiplatform expense tracker. Android + Desktop (JVM).
+An expenses tracker written in KMP for Android and Desktop
 
-Only `:androidApp`, `:shared`, `:desktopApp` exist (see `settings.gradle.kts`).
+## Skills
+Read `../compose-kotlin-agent-skills/SKILL.md` first.
+Load the matching reference file from `references/` for the specific topic.
 
 ## Modules
 
