@@ -107,6 +107,71 @@ class IvyImporterSpec : StringSpec({
         groceries.description shouldBe "Grocery run"
     }
 
+    "imports decimal amounts without floating-point rounding errors" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [{"id": "a1", "name": "Wallet", "currency": "USD"}],
+              "categories": [{"id": "c1", "name": "Food"}],
+              "transactions": [
+                {
+                  "id": "t1", "type": "EXPENSE", "amount": 19.99,
+                  "accountId": "a1", "categoryId": "c1", "title": "Lunch",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2", "type": "EXPENSE", "amount": 0.29,
+                  "accountId": "a1", "categoryId": "c1", "title": "Snack",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t3", "type": "EXPENSE", "amount": 1000,
+                  "accountId": "a1", "categoryId": "c1", "title": "Whole",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        EntryDao(database.entryQueries).getAll().first()
+            .map { it.amount }
+            .sorted() shouldBe listOf(29L, 1_999L, 100_000L)
+    }
+
+    "rounds amounts with more than two decimal places to the nearest minor unit" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [{"id": "a1", "name": "Wallet", "currency": "USD"}],
+              "categories": [{"id": "c1", "name": "Food"}],
+              "transactions": [
+                {
+                  "id": "t1", "type": "EXPENSE", "amount": 19.999,
+                  "accountId": "a1", "categoryId": "c1", "title": "Rounded up",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2", "type": "EXPENSE", "amount": 19.994,
+                  "accountId": "a1", "categoryId": "c1", "title": "Rounded down",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        EntryDao(database.entryQueries).getAll().first()
+            .map { it.amount }
+            .sorted() shouldBe listOf(1_999L, 2_000L)
+    }
+
     "import replaces existing data" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)

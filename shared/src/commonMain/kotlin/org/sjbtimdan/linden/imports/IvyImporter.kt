@@ -6,13 +6,21 @@ import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.zip.ZipInputStream
-import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.model.CategoryType
@@ -170,7 +178,7 @@ class IvyImporter(private val database: LindenDatabase) {
                 transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true))
         ) {
             if (initialBalanceApplied.add(account.id)) {
-                val balance = toMinorUnits(transaction.amount)
+                val balance = transaction.amount
                 database.accountQueries.updateInitialBalance(
                     if (type == EntryType.Expense) -balance else balance,
                     account.id,
@@ -199,7 +207,7 @@ class IvyImporter(private val database: LindenDatabase) {
             if (account.currency == toAccountValue.currency) {
                 null
             } else {
-                transaction.toAmount?.let(::toMinorUnits)
+                transaction.toAmount
                     ?: throw IvyImportException("Transfer $label has no toAmount")
             }
         } else {
@@ -211,7 +219,7 @@ class IvyImporter(private val database: LindenDatabase) {
             categoryId = categoryId,
             description = transaction.title,
             accountId = account.id,
-            amount = toMinorUnits(transaction.amount),
+            amount = transaction.amount,
             toAccountId = toAccount?.id,
             toAmount = toAmount,
             createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: Clock.System.now())
@@ -255,9 +263,53 @@ class IvyImporter(private val database: LindenDatabase) {
     private inline fun parseCurrency(code: String, message: () -> String): Currency =
         Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
 
-    private fun toMinorUnits(amount: Double): Long = (amount * 100).roundToLong()
-
     private data class ResolvedAccount(val id: Long, val currency: Currency)
+}
+
+/**
+ * Parses a decimal amount such as "45.50", "3200.0" or "-5.75" into minor units
+ * without floating-point arithmetic. Amounts with more than two decimal places
+ * are rounded to the nearest minor unit (half-up).
+ */
+internal fun parseMinorUnits(text: String): Long {
+    val trimmed = text.trim()
+    val negative = trimmed.startsWith("-")
+    val unsigned = if (negative) trimmed.drop(1) else trimmed
+    if (unsigned.isEmpty() || unsigned.any { it != '.' && !it.isDigit() }) {
+        throw SerializationException("Invalid amount \"$text\"")
+    }
+    val parts = unsigned.split('.')
+    if (parts.size > 2 || parts[0].isEmpty()) {
+        throw SerializationException("Invalid amount \"$text\"")
+    }
+    val whole = parts[0].toLongOrNull()
+        ?: throw SerializationException("Invalid amount \"$text\"")
+    val fraction = parts.getOrNull(1).orEmpty()
+    val minor = when {
+        fraction.length <= 2 -> whole * 100 + fraction.padEnd(2, '0').toLong()
+        else -> {
+            val base = whole * 100 + fraction.take(2).toLong()
+            if (fraction[2] >= '5') base + 1 else base
+        }
+    }
+    return if (negative) -minor else minor
+}
+
+private object MinorUnitsSerializer : KSerializer<Long> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("IvyMinorUnits", PrimitiveKind.DOUBLE)
+
+    override fun deserialize(decoder: Decoder): Long {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw SerializationException("Ivy amounts require a JSON decoder")
+        val content = jsonDecoder.decodeJsonElement().jsonPrimitive.contentOrNull
+            ?: throw SerializationException("Amount is missing")
+        return parseMinorUnits(content)
+    }
+
+    override fun serialize(encoder: Encoder, value: Long) {
+        error("Ivy backups are only decoded, never serialized")
+    }
 }
 
 @Serializable
@@ -284,12 +336,14 @@ private data class IvyCategory(
 private data class IvyTransaction(
     val id: String,
     val type: String,
-    val amount: Double,
+    @Serializable(with = MinorUnitsSerializer::class)
+    val amount: Long,
     val accountId: String,
     val categoryId: String? = null,
     val title: String? = null,
     val toAccountId: String? = null,
-    val toAmount: Double? = null,
+    @Serializable(with = MinorUnitsSerializer::class)
+    val toAmount: Long? = null,
     val currency: String? = null,
     val toCurrency: String? = null,
     val dateTime: Long? = null,

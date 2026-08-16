@@ -28,6 +28,11 @@ fun periodTotalMinor(entries: List<Entry>, defaultCurrency: Currency, rates: Lis
     return total
 }
 
+/**
+ * Converts [amount] from [from] into [defaultCurrency] minor units using [ratesByQuote].
+ * The division is performed in [Double] and rounds to the nearest minor unit; period
+ * totals are display-only, so sub-minor rounding is acceptable.
+ */
 internal fun toDefaultMinor(
     amount: Long,
     from: Currency,
