@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.data.SettingsDao
@@ -54,18 +55,20 @@ class SettingsViewModel(
 
     fun importIvy(input: InputStream) {
         viewModelScope.launch {
-            _importState.value = ImportState.Importing
-            _importState.value = try {
-                ImportState.Success(withContext(Dispatchers.IO) { importer.import(input) })
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                ImportState.Error(e.message ?: "Import failed")
+            _importState.update { ImportState.Importing }
+            _importState.update {
+                try {
+                    ImportState.Success(withContext(Dispatchers.IO) { importer.import(input) })
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    ImportState.Error(e.message ?: "Import failed")
+                }
             }
         }
     }
 
     fun clearImportState() {
-        _importState.value = ImportState.Idle
+        _importState.update { ImportState.Idle }
     }
 }

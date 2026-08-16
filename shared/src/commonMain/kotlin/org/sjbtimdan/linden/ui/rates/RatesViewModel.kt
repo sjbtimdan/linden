@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
@@ -57,19 +58,21 @@ class RatesViewModel(
     }
 
     fun clearRatesError() {
-        _ratesRefreshState.value = RatesRefreshState.Idle
+        _ratesRefreshState.update { RatesRefreshState.Idle }
     }
 
     private fun refresh(currency: Currency) {
         viewModelScope.launch {
-            _ratesRefreshState.value = RatesRefreshState.Refreshing
-            _ratesRefreshState.value = try {
-                fxRatesRepository.refreshRates(currency)
-                RatesRefreshState.Idle
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                RatesRefreshState.Error(e.message ?: "Failed to refresh rates")
+            _ratesRefreshState.update { RatesRefreshState.Refreshing }
+            _ratesRefreshState.update {
+                try {
+                    fxRatesRepository.refreshRates(currency)
+                    RatesRefreshState.Idle
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    RatesRefreshState.Error(e.message ?: "Failed to refresh rates")
+                }
             }
         }
     }
