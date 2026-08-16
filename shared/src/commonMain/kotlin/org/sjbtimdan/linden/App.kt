@@ -51,7 +51,6 @@ fun App(
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
     val settingsViewModel = dependencies.settingsViewModel
-    val fxRatesRepository = dependencies.fxRatesRepository
     val ratesViewModel = dependencies.ratesViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
@@ -61,7 +60,8 @@ fun App(
         onDispose { dependencies.httpClient.close() }
     }
     LaunchedEffect(Unit) {
-        runCatching { fxRatesRepository.refreshRates(dependencies.initialCurrency) }
+        // Refresh rates once at startup; failures surface as an error on the Rates screen.
+        ratesViewModel.refreshRates(dependencies.initialCurrency)
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
 

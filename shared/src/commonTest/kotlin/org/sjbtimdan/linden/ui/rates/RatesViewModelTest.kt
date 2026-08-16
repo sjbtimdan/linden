@@ -33,6 +33,23 @@ class RatesViewModelTest : StringSpec({
         }
     }
 
+    "refreshRates fetches and caches rates for the given currency" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = FxRateDao(database.fxRateQueries)
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(dao, FakeFxRatesSource()),
+            )
+
+            viewModel.refreshRates(Currency.USD)
+
+            val rates = withTimeout(5_000) { dao.ratesFor(Currency.USD).first() }
+            rates.isNotEmpty() shouldBe true
+            rates.all { it.baseCurrency == Currency.USD } shouldBe true
+        }
+    }
+
     "refreshRates reports an error when the source fails" {
         onTestMain {
             val database = lindenDatabase()

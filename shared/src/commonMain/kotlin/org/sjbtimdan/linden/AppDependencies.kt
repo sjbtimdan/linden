@@ -2,6 +2,7 @@ package org.sjbtimdan.linden
 
 import app.cash.sqldelight.db.SqlDriver
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -37,7 +38,16 @@ class AppDependencies(
     val accountDao by lazy { AccountDao(database.accountQueries) }
     val categoryDao by lazy { CategoryDao(database.categoryQueries) }
     val entryDao by lazy { EntryDao(database.entryQueries) }
-    val httpClient by lazy { HttpClient() }
+    val httpClient by lazy {
+        HttpClient {
+            install(HttpTimeout) {
+                // Generous timeouts: rates are fetched over a network that may be slow.
+                requestTimeoutMillis = 60_000
+                connectTimeoutMillis = 30_000
+                socketTimeoutMillis = 60_000
+            }
+        }
+    }
     val fxRatesRepository by lazy {
         FxRatesRepository(FxRateDao(database.fxRateQueries), fxRatesSource ?: FxRatesFetcher(httpClient))
     }

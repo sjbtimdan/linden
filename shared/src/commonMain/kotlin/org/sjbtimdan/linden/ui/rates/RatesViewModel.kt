@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.ui.rates
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,8 +52,8 @@ class RatesViewModel(
         }
     }
 
-    fun refreshRates() {
-        refresh(base.value)
+    fun refreshRates(currency: Currency = base.value) {
+        refresh(currency)
     }
 
     fun clearRatesError() {
@@ -65,6 +66,8 @@ class RatesViewModel(
             _ratesRefreshState.value = try {
                 fxRatesRepository.refreshRates(currency)
                 RatesRefreshState.Idle
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 RatesRefreshState.Error(e.message ?: "Failed to refresh rates")
             }
