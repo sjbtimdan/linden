@@ -276,6 +276,72 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("–").assertIsDisplayed()
         }
     }
+
+    "accounts chip switches to the accounts view and back" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Refund").assertIsDisplayed()
+
+            onNodeWithText("Accounts").performClick()
+
+            // Accounts view: the balance row replaces the entries; entry controls hide.
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("20.00 CHF").assertIsDisplayed()
+            onNodeWithText("+ 20.00 CHF").assertIsDisplayed()
+            onNodeWithText("Refund").assertDoesNotExist()
+            onNodeWithText("Search").assertDoesNotExist()
+            onNodeWithText("Expense").assertDoesNotExist()
+
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithText("20.00 CHF").assertDoesNotExist()
+        }
+    }
+
+    "accounts view shows balances at the end of the selected period" {
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            // Anchor is today (2026-09-15): September's window includes all three entries.
+            onNodeWithText("-6.00 CHF").assertIsDisplayed()
+
+            onNodeWithContentDescription("Previous period").performClick()
+
+            // August's window stops at the end of the month: July and August only.
+            onNodeWithText("-3.00 CHF").assertIsDisplayed()
+            onNodeWithText("-6.00 CHF").assertDoesNotExist()
+        }
+    }
+
+    "accounts view shows the empty state when there are no accounts" {
+        withHistoryViewModel { viewModel ->
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithText("No accounts yet.").assertIsDisplayed()
+        }
+    }
 })
 
 private suspend fun seed(

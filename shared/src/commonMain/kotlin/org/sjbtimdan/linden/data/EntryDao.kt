@@ -60,6 +60,9 @@ class EntryDao(private val queries: EntryQueries) {
     fun getSince(epochMs: Long): Flow<List<Entry>> =
         queries.selectSince(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
+    fun getUpTo(epochMs: Long): Flow<List<Entry>> =
+        queries.selectUpTo(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
+
     suspend fun latest(type: EntryType): Entry? =
         queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 

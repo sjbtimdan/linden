@@ -16,6 +16,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
@@ -29,6 +30,8 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 
@@ -54,6 +57,9 @@ class HistoryViewModel(
 
     private val _periodAnchor = MutableStateFlow(today())
     val periodAnchor: StateFlow<LocalDate> = _periodAnchor.asStateFlow()
+
+    private val _viewMode = MutableStateFlow(HistoryViewMode.Entries)
+    val viewMode: StateFlow<HistoryViewMode> = _viewMode.asStateFlow()
 
     private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
         _period,
@@ -114,6 +120,63 @@ class HistoryViewModel(
         initialValue = 0L,
     )
 
+    /** Last day of the selected period (inclusive); null for [HistoryPeriod.All]. */
+    private val periodEnd: StateFlow<LocalDate?> = combine(
+        _period,
+        _periodAnchor,
+    ) { period, anchor -> period to anchor }
+        .map { (period, anchor) -> period.windowEnd(anchor) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = null,
+        )
+
+    /** All entries created at or before the end of the selected period (safety margin included). */
+    private val entriesUpToPeriodEnd: StateFlow<List<Entry>> = periodEnd
+        .flatMapLatest { end ->
+            val source = end?.let { entryDao.getUpTo(it.sqlUpperBound()) } ?: entryDao.getAll()
+            source
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList(),
+        )
+
+    /**
+     * Balance of each account at the end of the selected period in the account's own
+     * currency: initial balance plus the net of entries dated on or before the last
+     * day of the period (or today, whichever is earlier — entries in the future never
+     * count). For [HistoryPeriod.All] this is the current balance.
+     */
+    val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
+        entriesUpToPeriodEnd,
+        periodEnd,
+        accounts,
+    ) { entries, end, accounts ->
+        val now = today()
+        val cutoff = end?.let { minOf(it, now) } ?: now
+        accountBalancesAtEnd(entries, cutoff, accounts)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList(),
+    )
+
+    /** Net total of all period-end balances in the default currency; null when a rate is missing. */
+    val accountTotalAtPeriodEnd: StateFlow<Long?> = combine(
+        accountBalancesAtPeriodEnd,
+        defaultCurrency,
+        rates,
+    ) { balances, currency, rates ->
+        accountTotalMinor(balances, currency, rates)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null,
+    )
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
@@ -124,6 +187,10 @@ class HistoryViewModel(
 
     fun setPeriod(period: HistoryPeriod) {
         _period.value = period
+    }
+
+    fun setViewMode(mode: HistoryViewMode) {
+        _viewMode.value = mode
     }
 
     fun goToPreviousPeriod() {
@@ -189,3 +256,17 @@ private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDat
  */
 private fun LocalDate.sqlLowerBound(): Long =
     minus(1, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+
+/**
+ * Epoch-millis upper bound for a period query. Entries are re-filtered in memory
+ * afterwards, so this only needs to be safe: entries in zones behind UTC can fall
+ * up to ~14 hours after UTC midnight of the day after [this], hence the two-day margin.
+ */
+private fun LocalDate.sqlUpperBound(): Long =
+    plus(2, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+
+/** What the history screen shows: the entry list or the period-end account balances. */
+enum class HistoryViewMode {
+    Entries,
+    Accounts,
+}

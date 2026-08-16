@@ -55,6 +55,9 @@ fun HistoryScreen(
     val periodAnchor by viewModel.periodAnchor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
+    val viewMode by viewModel.viewMode.collectAsState()
+    val accountBalances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
+    val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
 
     val listItems = remember(entries) {
@@ -68,40 +71,57 @@ fun HistoryScreen(
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = viewModel::setSearchQuery,
-            label = { Text("Search") },
-            singleLine = true,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                )
-            },
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (viewMode == HistoryViewMode.Entries) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::setSearchQuery,
+                label = { Text("Search") },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                    )
+                },
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.fillMaxWidth(),
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            FilterChip(
-                selected = typeFilter == null,
-                onClick = { viewModel.setTypeFilter(null) },
-                label = { Text("All", style = MaterialTheme.typography.labelMedium) },
-            )
-            EntryType.entries.forEach { type ->
+            if (viewMode == HistoryViewMode.Entries) {
                 FilterChip(
-                    selected = typeFilter == type,
-                    onClick = { viewModel.setTypeFilter(type) },
-                    label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
+                    selected = typeFilter == null,
+                    onClick = { viewModel.setTypeFilter(null) },
+                    label = { Text("All", style = MaterialTheme.typography.labelMedium) },
                 )
+                EntryType.entries.forEach { type ->
+                    FilterChip(
+                        selected = typeFilter == type,
+                        onClick = { viewModel.setTypeFilter(type) },
+                        label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
+                    )
+                }
             }
+            FilterChip(
+                selected = viewMode == HistoryViewMode.Accounts,
+                onClick = {
+                    viewModel.setViewMode(
+                        if (viewMode == HistoryViewMode.Accounts) {
+                            HistoryViewMode.Entries
+                        } else {
+                            HistoryViewMode.Accounts
+                        },
+                    )
+                },
+                label = { Text("Accounts", style = MaterialTheme.typography.labelMedium) },
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -123,12 +143,19 @@ fun HistoryScreen(
                 )
             }
             TotalLabel(
-                total = totalMinor,
+                total = if (viewMode == HistoryViewMode.Accounts) accountTotal else totalMinor,
                 currency = defaultCurrency,
             )
         }
 
-        if (entries.isEmpty()) {
+        if (viewMode == HistoryViewMode.Accounts) {
+            AccountsList(
+                balances = accountBalances,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        } else if (entries.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

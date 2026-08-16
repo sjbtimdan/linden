@@ -91,6 +91,30 @@ WHERE EntryEntity.type = :type
 ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC
 LIMIT 1;
 
+selectUpTo:
+SELECT EntryEntity.id,
+       EntryEntity.type,
+       EntryEntity.category_id AS categoryId,
+       EntryEntity.description,
+       EntryEntity.account_id AS accountId,
+       EntryEntity.amount,
+       EntryEntity.to_account_id AS toAccountId,
+       EntryEntity.to_amount AS toAmount,
+       EntryEntity.created_at AS createdAt,
+       EntryEntity.created_zone AS createdZone,
+       AccountEntity.name AS accountName,
+       AccountEntity.currency AS accountCurrency,
+       CategoryEntity.name AS categoryName,
+       CategoryEntity.type AS categoryType,
+       ToAccountEntity.name AS toAccountName,
+       ToAccountEntity.currency AS toAccountCurrency
+FROM EntryEntity
+JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
+LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
+LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
+WHERE EntryEntity.created_at <= :epochMs
+ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
+
 deleteById:
 DELETE FROM EntryEntity WHERE id = :id;
 

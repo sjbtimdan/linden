@@ -22,6 +22,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.withHistoryViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -369,6 +370,94 @@ class HistoryViewModelTest : StringSpec({
             viewModel.dismissDialog()
 
             viewModel.dialogState.value.shouldBeNull()
+        }
+    }
+
+    "view mode defaults to entries and toggles" {
+        withHistoryViewModel { viewModel ->
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+
+            viewModel.setViewMode(HistoryViewMode.Accounts)
+            viewModel.viewMode.value shouldBe HistoryViewMode.Accounts
+
+            viewModel.setViewMode(HistoryViewMode.Entries)
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+        }
+    }
+
+    "account balances follow the end of the selected period" {
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+
+            // Anchor is today (2026-09-15): the month window is Sep 2026, so the
+            // balance includes every entry before and during September.
+            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -600L))
+
+            viewModel.goToPreviousPeriod()
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -300L))
+
+            viewModel.goToPreviousPeriod()
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -100L))
+        }
+    }
+
+    "account balances exclude future entries" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
+
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -100L))
+        }
+    }
+
+    "account balances include the initial balance and react to direct writes" {
+        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 5_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 450))
+
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, 4_550L))
+        }
+    }
+
+    "account total converts foreign balances via stored rates" {
+        withHistoryViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Salary", CategoryType.Income)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            val salary = categoryDao.getAll().first().first()
+
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 1_000))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+
+            // 1'000 CHF + 200 USD / 2.0 = 1'100 CHF
+            viewModel.accountTotalAtPeriodEnd.value shouldBe 1_100L
+        }
+    }
+
+    "account total is null when a foreign rate is missing" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Salary", CategoryType.Income)
+            val usd = accountDao.getAll().first().first()
+            val salary = categoryDao.getAll().first().first()
+
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+
+            viewModel.accountTotalAtPeriodEnd.value shouldBe null
         }
     }
 })
