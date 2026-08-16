@@ -279,7 +279,7 @@ private fun CategoryDialog(
                                 count = CategoryType.entries.size,
                             ),
                         ) {
-                            Text(ct.displayName())
+                            Text(ct.dialogLabel())
                         }
                     }
                 }
@@ -302,4 +302,10 @@ private fun CategoryType.displayName(): String = when (this) {
     CategoryType.Expense -> "Expense"
     CategoryType.Income -> "Income"
     CategoryType.Both -> "As Income/Expense"
+}
+
+private fun CategoryType.dialogLabel(): String = when (this) {
+    CategoryType.Expense -> "Expense"
+    CategoryType.Income -> "Income"
+    CategoryType.Both -> "Both"
 }
