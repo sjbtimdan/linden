@@ -31,6 +31,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,6 +64,8 @@ fun AccountListScreen(
     onNavigateBack: () -> Unit,
 ) {
     val accounts by viewModel.accounts.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val totalMinor by viewModel.totalMinor.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
     Column(
@@ -83,6 +86,32 @@ fun AccountListScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (accounts.isNotEmpty()) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Total",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = totalMinor?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         FilledTonalButton(
             onClick = {
@@ -119,7 +148,8 @@ fun AccountListScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(accounts, key = { it.id }) { account ->
+                items(accounts, key = { it.account.id }) { item ->
+                    val account = item.account
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -150,7 +180,7 @@ fun AccountListScreen(
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = account.name,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -161,6 +191,10 @@ fun AccountListScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                        Text(
+                            text = "${formatAmount(item.balance)} ${account.currency.symbol}",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
                     }
                 }
             }

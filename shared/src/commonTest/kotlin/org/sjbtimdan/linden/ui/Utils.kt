@@ -83,22 +83,44 @@ fun withViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(
-    block: suspend ComposeUiTest.(AccountDao, AccountListViewModel) -> Unit,
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(AccountDao, EntryDao, CategoryDao, AccountListViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
-            val dao = AccountDao(database.accountQueries)
-            val viewModel = AccountListViewModel(dao)
-            block(dao, viewModel)
+            val accountDao = AccountDao(database.accountQueries)
+            val entryDao = EntryDao(database.entryQueries)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            val fxRateDao = FxRateDao(database.fxRateQueries)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            val viewModel = AccountListViewModel(
+                accountDao,
+                entryDao,
+                settingsDao,
+                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+            )
+            block(accountDao, entryDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(AccountDao, AccountListViewModel) -> Unit,
+) = withAccountViewModel(defaultCurrency, rates) { accountDao, _, _, viewModel -> block(accountDao, viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withAccountViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountListViewModel) -> Unit,
-) = withAccountViewModel { _, viewModel -> block(viewModel) }
+) = withAccountViewModel(defaultCurrency, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withSettingsViewModel(

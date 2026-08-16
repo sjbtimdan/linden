@@ -46,7 +46,7 @@ class AppDependencies(
     }
     val ratesViewModel by lazy { RatesViewModel(settingsDao, fxRatesRepository) }
     val categoryListViewModel by lazy { CategoryListViewModel(categoryDao) }
-    val accountListViewModel by lazy { AccountListViewModel(accountDao) }
+    val accountListViewModel by lazy { AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository) }
     val ledgerViewModel by lazy { LedgerViewModel(entryDao, accountDao, categoryDao) }
     val historyViewModel by lazy {
         HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)

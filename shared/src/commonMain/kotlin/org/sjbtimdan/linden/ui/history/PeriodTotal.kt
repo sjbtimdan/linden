@@ -28,7 +28,7 @@ fun periodTotalMinor(entries: List<Entry>, defaultCurrency: Currency, rates: Lis
     return total
 }
 
-private fun toDefaultMinor(
+internal fun toDefaultMinor(
     amount: Long,
     from: Currency,
     defaultCurrency: Currency,
