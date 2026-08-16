@@ -200,8 +200,8 @@ class LedgerViewModelTest : StringSpec({
 
             viewModel.saveDraft() shouldBe true
 
-            entryDao.getExpenses().first() shouldHaveSize 1
-            entryDao.getExpenses().first().first().description shouldBe "Coffee"
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>() shouldHaveSize 1
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first().description shouldBe "Coffee"
             viewModel.draft.value.let { draft ->
                 draft.shouldNotBeNull()
                 draft.amountText shouldBe ""

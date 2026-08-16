@@ -279,8 +279,8 @@ class EntryDaoTest : StringSpec({
 
         // getAll() is newest first: transfer, income, expense
         val entries = entryDao.getAll().first()
-        entryDao.getExpenses().first() shouldBe listOf(expense.copy(id = entries[2].id))
-        entryDao.getIncomes().first() shouldBe listOf(income.copy(id = entries[1].id))
-        entryDao.getTransfers().first() shouldBe listOf(transfer.copy(id = entries[0].id))
+        entries.filterIsInstance<ExpenseEntry>() shouldBe listOf(expense.copy(id = entries[2].id))
+        entries.filterIsInstance<IncomeEntry>() shouldBe listOf(income.copy(id = entries[1].id))
+        entries.filterIsInstance<TransferEntry>() shouldBe listOf(transfer.copy(id = entries[0].id))
     }
 })

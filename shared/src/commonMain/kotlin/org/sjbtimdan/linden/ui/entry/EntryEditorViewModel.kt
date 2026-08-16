@@ -17,9 +17,6 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.model.TransferEntry
 
 abstract class EntryEditorViewModel(
     private val entryDao: EntryDao,
@@ -61,21 +58,13 @@ abstract class EntryEditorViewModel(
 
     fun createEntry(entry: Entry) {
         viewModelScope.launch {
-            when (entry) {
-                is ExpenseEntry -> entryDao.create(entry)
-                is IncomeEntry -> entryDao.create(entry)
-                is TransferEntry -> entryDao.create(entry)
-            }
+            entryDao.create(entry)
         }
     }
 
     fun updateEntry(entry: Entry) {
         viewModelScope.launch {
-            when (entry) {
-                is ExpenseEntry -> entryDao.update(entry)
-                is IncomeEntry -> entryDao.update(entry)
-                is TransferEntry -> entryDao.update(entry)
-            }
+            entryDao.update(entry)
         }
     }
 

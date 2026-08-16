@@ -116,7 +116,7 @@ class HistoryViewModelTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            val created = entryDao.getExpenses().first().first()
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             val updated = created.copy(description = "Tea", amount = 300)
 
             viewModel.updateEntry(updated)
@@ -317,7 +317,7 @@ class HistoryViewModelTest : StringSpec({
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            val created = entryDao.getExpenses().first().first()
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
 
             viewModel.openEditDialog(created)
 
@@ -334,14 +334,14 @@ class HistoryViewModelTest : StringSpec({
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            val created = entryDao.getExpenses().first().first()
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
             viewModel.onAmountChange("5.00")
 
             viewModel.saveDialog() shouldBe true
 
             viewModel.dialogState.value.shouldBeNull()
-            entryDao.getExpenses().first().first().amount shouldBe 500
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first().amount shouldBe 500
         }
     }
 
@@ -349,13 +349,13 @@ class HistoryViewModelTest : StringSpec({
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            val created = entryDao.getExpenses().first().first()
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
             viewModel.deleteDialogEntry()
 
             viewModel.dialogState.value.shouldBeNull()
-            entryDao.getExpenses().first().shouldBeEmpty()
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
         }
     }
 
@@ -363,7 +363,7 @@ class HistoryViewModelTest : StringSpec({
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            val created = entryDao.getExpenses().first().first()
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
             viewModel.dismissDialog()

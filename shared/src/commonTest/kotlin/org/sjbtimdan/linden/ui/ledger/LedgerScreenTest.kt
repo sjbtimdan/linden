@@ -82,7 +82,7 @@ class LedgerScreenTest : StringSpec({
             onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
             // description is prefilled from the saved entry
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
-            entryDao.getExpenses().first().shouldHaveSize(1)
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
         }
     }
 
@@ -111,7 +111,7 @@ class LedgerScreenTest : StringSpec({
             onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
             onNodeWithText("Groceries").assertDoesNotExist()
             onNodeWithText("Main").assertDoesNotExist()
-            entryDao.getExpenses().first().shouldHaveSize(1)
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
         }
     }
 
@@ -210,7 +210,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Add").performClick()
 
             onNodeWithText("Added").assertIsDisplayed()
-            entryDao.getTransfers().first().shouldHaveSize(1)
+            entryDao.getAll().first().filterIsInstance<TransferEntry>().shouldHaveSize(1)
         }
     }
 

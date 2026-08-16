@@ -8,9 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.EntryQueries
-import org.sjbtimdan.linden.SelectAll
-import org.sjbtimdan.linden.SelectLatestByType
-import org.sjbtimdan.linden.SelectSince
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -22,87 +19,31 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 
 class EntryDao(private val queries: EntryQueries) {
-    suspend fun create(entry: ExpenseEntry) {
+    suspend fun create(entry: Entry) {
+        val args = entry.sqlArgs()
         queries.insert(
-            type = EntryType.Expense.name,
-            categoryId = entry.category.id,
+            type = entry.type.name,
+            categoryId = args.categoryId,
             description = entry.description,
             accountId = entry.account.id,
             amount = entry.amount,
-            toAccountId = null,
-            toAmount = null,
+            toAccountId = args.toAccountId,
+            toAmount = args.toAmount,
             createdAt = entry.createdAt.toEpochMilliseconds(),
             createdZone = entry.createdZone.id,
         )
     }
 
-    suspend fun create(entry: IncomeEntry) {
-        queries.insert(
-            type = EntryType.Income.name,
-            categoryId = entry.category.id,
-            description = entry.description,
-            accountId = entry.account.id,
-            amount = entry.amount,
-            toAccountId = null,
-            toAmount = null,
-            createdAt = entry.createdAt.toEpochMilliseconds(),
-            createdZone = entry.createdZone.id,
-        )
-    }
-
-    suspend fun create(entry: TransferEntry) {
-        queries.insert(
-            type = EntryType.Transfer.name,
-            categoryId = entry.category?.id,
-            description = entry.description,
-            accountId = entry.account.id,
-            amount = entry.amount,
-            toAccountId = entry.toAccount.id,
-            toAmount = if (entry.account.currency == entry.toAccount.currency) null else entry.toAmount,
-            createdAt = entry.createdAt.toEpochMilliseconds(),
-            createdZone = entry.createdZone.id,
-        )
-    }
-
-    suspend fun update(entry: ExpenseEntry) {
+    suspend fun update(entry: Entry) {
+        val args = entry.sqlArgs()
         queries.updateById(
-            type = EntryType.Expense.name,
-            categoryId = entry.category.id,
+            type = entry.type.name,
+            categoryId = args.categoryId,
             description = entry.description,
             accountId = entry.account.id,
             amount = entry.amount,
-            toAccountId = null,
-            toAmount = null,
-            createdAt = entry.createdAt.toEpochMilliseconds(),
-            createdZone = entry.createdZone.id,
-            id = entry.id,
-        )
-    }
-
-    suspend fun update(entry: IncomeEntry) {
-        queries.updateById(
-            type = EntryType.Income.name,
-            categoryId = entry.category.id,
-            description = entry.description,
-            accountId = entry.account.id,
-            amount = entry.amount,
-            toAccountId = null,
-            toAmount = null,
-            createdAt = entry.createdAt.toEpochMilliseconds(),
-            createdZone = entry.createdZone.id,
-            id = entry.id,
-        )
-    }
-
-    suspend fun update(entry: TransferEntry) {
-        queries.updateById(
-            type = EntryType.Transfer.name,
-            categoryId = entry.category?.id,
-            description = entry.description,
-            accountId = entry.account.id,
-            amount = entry.amount,
-            toAccountId = entry.toAccount.id,
-            toAmount = if (entry.account.currency == entry.toAccount.currency) null else entry.toAmount,
+            toAccountId = args.toAccountId,
+            toAmount = args.toAmount,
             createdAt = entry.createdAt.toEpochMilliseconds(),
             createdZone = entry.createdZone.id,
             id = entry.id,
@@ -113,83 +54,25 @@ class EntryDao(private val queries: EntryQueries) {
         queries.deleteById(id)
     }
 
-    fun getAll(): Flow<List<Entry>> {
-        return queries.selectAll()
-            .asFlow()
-            .map { it.awaitAsList().map { row -> row.toEntry() } }
-    }
+    fun getAll(): Flow<List<Entry>> =
+        queries.selectAll(::toEntry).asFlow().map { it.awaitAsList() }
 
-    fun getExpenses(): Flow<List<ExpenseEntry>> = getAll().map { it.filterIsInstance<ExpenseEntry>() }
-
-    fun getIncomes(): Flow<List<IncomeEntry>> = getAll().map { it.filterIsInstance<IncomeEntry>() }
-
-    fun getTransfers(): Flow<List<TransferEntry>> = getAll().map { it.filterIsInstance<TransferEntry>() }
-
-    fun getSince(epochMs: Long): Flow<List<Entry>> {
-        return queries.selectSince(epochMs)
-            .asFlow()
-            .map { it.awaitAsList().map { row -> row.toEntry() } }
-    }
+    fun getSince(epochMs: Long): Flow<List<Entry>> =
+        queries.selectSince(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
     suspend fun latest(type: EntryType): Entry? =
-        queries.selectLatestByType(type.name).awaitAsOneOrNull()?.toEntry()
+        queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
-    private fun SelectAll.toEntry(): Entry = toEntry(
-        id = id,
-        type = type,
-        categoryId = categoryId,
-        description = description,
-        accountId = accountId,
-        amount = amount,
-        toAccountId = toAccountId,
-        toAmount = toAmount,
-        createdAt = createdAt,
-        createdZone = createdZone,
-        accountName = accountName,
-        accountCurrency = accountCurrency,
-        categoryName = categoryName,
-        categoryType = categoryType,
-        toAccountName = toAccountName,
-        toAccountCurrency = toAccountCurrency,
-    )
-
-    private fun SelectSince.toEntry(): Entry = toEntry(
-        id = id,
-        type = type,
-        categoryId = categoryId,
-        description = description,
-        accountId = accountId,
-        amount = amount,
-        toAccountId = toAccountId,
-        toAmount = toAmount,
-        createdAt = createdAt,
-        createdZone = createdZone,
-        accountName = accountName,
-        accountCurrency = accountCurrency,
-        categoryName = categoryName,
-        categoryType = categoryType,
-        toAccountName = toAccountName,
-        toAccountCurrency = toAccountCurrency,
-    )
-
-    private fun SelectLatestByType.toEntry(): Entry = toEntry(
-        id = id,
-        type = type,
-        categoryId = categoryId,
-        description = description,
-        accountId = accountId,
-        amount = amount,
-        toAccountId = toAccountId,
-        toAmount = toAmount,
-        createdAt = createdAt,
-        createdZone = createdZone,
-        accountName = accountName,
-        accountCurrency = accountCurrency,
-        categoryName = categoryName,
-        categoryType = categoryType,
-        toAccountName = toAccountName,
-        toAccountCurrency = toAccountCurrency,
-    )
+    private fun Entry.sqlArgs(): SqlArgs =
+        when (this) {
+            is ExpenseEntry -> SqlArgs(category.id, null, null)
+            is IncomeEntry -> SqlArgs(category.id, null, null)
+            is TransferEntry -> SqlArgs(
+                category?.id,
+                toAccount.id,
+                if (account.currency == toAccount.currency) null else toAmount,
+            )
+        }
 
     private fun toEntry(
         id: Long,
@@ -263,3 +146,9 @@ class EntryDao(private val queries: EntryQueries) {
         }
     }
 }
+
+private data class SqlArgs(
+    val categoryId: Long?,
+    val toAccountId: Long?,
+    val toAmount: Long?,
+)
