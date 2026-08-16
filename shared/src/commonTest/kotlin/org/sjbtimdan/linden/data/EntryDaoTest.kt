@@ -283,4 +283,112 @@ class EntryDaoTest : StringSpec({
         entries.filterIsInstance<IncomeEntry>() shouldBe listOf(income.copy(id = entries[1].id))
         entries.filterIsInstance<TransferEntry>() shouldBe listOf(transfer.copy(id = entries[0].id))
     }
+
+    "aggregates are empty when there are no entries" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+
+        entryDao.accountDeltas().first() shouldBe emptyMap()
+        entryDao.categoryTotals().first() shouldBe emptyMap()
+    }
+
+    "accountDeltas nets income and expense per account" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        val categories = categoryDao.getAll().first()
+        val groceries = categories.first { it.name == "Groceries" }
+        val salary = categories.first { it.name == "Salary" }
+
+        entryDao.create(IncomeEntry(0, salary, "Pay", main, 50_000))
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+        entryDao.create(ExpenseEntry(0, groceries, "Lunch", savings, 1_200))
+
+        entryDao.accountDeltas().first() shouldBe mapOf(
+            main.id to 49_550L,
+            savings.id to -1_200L,
+        )
+    }
+
+    "accountDeltas nets transfers between accounts" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.EUR)
+        accountDao.create("Cash", Currency.CHF)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        val cash = accounts.first { it.name == "Cash" }
+
+        // cross-currency: the target gains the received amount
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500))
+        // same-currency: the target gains the sent amount
+        entryDao.create(TransferEntry(0, null, null, main, 5_000, toAccount = cash, toAmount = null))
+
+        entryDao.accountDeltas().first() shouldBe mapOf(
+            main.id to -15_000L,
+            savings.id to 9_500L,
+            cash.id to 5_000L,
+        )
+    }
+
+    "categoryTotals groups income and expense per category and currency" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Euros", Currency.EUR)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val euros = accounts.first { it.name == "Euros" }
+        val categories = categoryDao.getAll().first()
+        val groceries = categories.first { it.name == "Groceries" }
+        val salary = categories.first { it.name == "Salary" }
+
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+        entryDao.create(IncomeEntry(0, salary, "Pay", main, 50_000))
+        entryDao.create(IncomeEntry(0, salary, "Pay", euros, 5_000))
+
+        entryDao.categoryTotals().first() shouldBe mapOf(
+            (groceries.id to Currency.CHF) to -450L,
+            (salary.id to Currency.CHF) to 50_000L,
+            (salary.id to Currency.EUR) to 5_000L,
+        )
+    }
+
+    "categoryTotals excludes transfers even when they carry the category" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        val groceries = categoryDao.getAll().first().first()
+
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+        entryDao.create(TransferEntry(0, groceries, null, main, 10_000, toAccount = savings, toAmount = null))
+
+        entryDao.categoryTotals().first() shouldBe mapOf((groceries.id to Currency.CHF) to -450L)
+    }
 })

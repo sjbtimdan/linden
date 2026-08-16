@@ -2,9 +2,8 @@ package org.sjbtimdan.linden.ui.categories
 
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
-import org.sjbtimdan.linden.ui.history.periodTotalMinor
+import org.sjbtimdan.linden.ui.history.sumInDefaultMinor
 
 /** A category paired with its net balance in the default currency (minor units). */
 data class CategoryWithBalance(
@@ -13,18 +12,18 @@ data class CategoryWithBalance(
 )
 
 /**
- * Net balance of [category]'s entries (income minus expenses, transfers excluded)
- * converted to [defaultCurrency] minor units. Returns null when an entry assigned to
- * the category is in a foreign currency with no stored rate against the default
- * currency, since the balance would be incomplete.
+ * Net balance of [categoryId]'s entries (income minus expenses, transfers excluded)
+ * converted to [defaultCurrency] minor units from the per-currency [totals] produced
+ * by the categoryTotals aggregate. Returns null when an entry currency has no stored
+ * rate against the default currency, since the balance would be incomplete.
  */
 fun categoryBalanceMinor(
-    entries: List<Entry>,
-    category: Category,
+    totals: Map<Pair<Long, Currency>, Long>,
+    categoryId: Long,
     defaultCurrency: Currency,
     rates: List<FxRate>,
-): Long? = periodTotalMinor(
-    entries.filter { it.category?.id == category.id },
+): Long? = sumInDefaultMinor(
+    totals.filterKeys { it.first == categoryId }.map { (key, net) -> key.second to net },
     defaultCurrency,
     rates,
 )

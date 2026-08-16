@@ -22,6 +22,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -40,6 +41,8 @@ class HistoryViewModel(
     fxRatesRepository: FxRatesRepository,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
+    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -94,20 +97,9 @@ class HistoryViewModel(
         initialValue = emptyList(),
     )
 
-    val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = Currency.CHF,
-        )
+    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
 
-    private val rates: StateFlow<List<FxRate>> = defaultCurrency
-        .flatMapLatest { currency -> fxRatesRepository.ratesFor(currency) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
+    private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
 
     /** Net total of the displayed entries in the default currency; null when a rate is missing. */
     val totalMinor: StateFlow<Long?> = combine(

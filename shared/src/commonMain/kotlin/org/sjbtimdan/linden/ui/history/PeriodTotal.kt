@@ -44,6 +44,28 @@ internal fun toDefaultMinor(
     return (amount.toDouble() / rate).roundToLong()
 }
 
+/**
+ * Sums [groups] (amounts in their source currencies) converted to [defaultCurrency]
+ * minor units. Returns null when a source currency has no stored rate against the
+ * default currency, since the total would be incomplete.
+ */
+internal fun sumInDefaultMinor(
+    groups: Collection<Pair<Currency, Long>>,
+    defaultCurrency: Currency,
+    rates: List<FxRate>,
+): Long? {
+    val ratesByQuote = rates
+        .filter { it.baseCurrency == defaultCurrency }
+        .associate { it.quoteCurrency to it.rate }
+    var total = 0L
+    for ((from, amount) in groups) {
+        val converted = toDefaultMinor(amount, from, defaultCurrency, ratesByQuote)
+            ?: return null
+        total += converted
+    }
+    return total
+}
+
 /** Formats [minor] as a signed amount with currency symbol, e.g. "− 12.30 CHF". */
 fun formatTotal(minor: Long, currency: Currency): String {
     val sign = when {

@@ -90,6 +90,34 @@ class PeriodTotalTest : StringSpec({
         ) shouldBe -450L
     }
 
+    "sumInDefaultMinor totals same-currency groups without rates" {
+        sumInDefaultMinor(
+            listOf(Currency.CHF to 450L, Currency.CHF to -1_200L),
+            Currency.CHF,
+            emptyList(),
+        ) shouldBe -750L
+    }
+
+    "sumInDefaultMinor converts foreign groups via the stored rate" {
+        sumInDefaultMinor(
+            listOf(Currency.CHF to 1_000L, Currency.USD to 800L),
+            Currency.CHF,
+            chfUsdRate,
+        ) shouldBe 2_000L
+    }
+
+    "sumInDefaultMinor is null when a foreign group has no rate" {
+        sumInDefaultMinor(
+            listOf(Currency.CHF to 100L, Currency.EUR to 200L),
+            Currency.CHF,
+            chfUsdRate,
+        ) shouldBe null
+    }
+
+    "sumInDefaultMinor of no groups is zero" {
+        sumInDefaultMinor(emptyList(), Currency.CHF, emptyList()) shouldBe 0L
+    }
+
     "formatTotal prefixes a minus sign and appends the symbol" {
         val formatted = formatTotal(-1_230, Currency.CHF)
         formatted.startsWith("− ") shouldBe true

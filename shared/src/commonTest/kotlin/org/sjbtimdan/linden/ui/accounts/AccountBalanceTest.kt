@@ -4,65 +4,43 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlin.math.roundToLong
 import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
-import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.model.TransferEntry
 
 class AccountBalanceTest : StringSpec({
     val main = Account(id = 1, name = "Main", currency = Currency.CHF, initialBalance = 10_000)
     val savings = Account(id = 2, name = "Savings", currency = Currency.CHF)
     val euros = Account(id = 3, name = "Euros", currency = Currency.EUR, initialBalance = 5_000)
-    val groceries = Category(id = 1, name = "Groceries", type = CategoryType.Expense)
-    val salary = Category(id = 2, name = "Salary", type = CategoryType.Income)
 
-    "returns the initial balances when there are no entries" {
-        accountBalancesMinor(emptyList(), listOf(main, savings)) shouldBe mapOf(
+    "returns the initial balances when there are no deltas" {
+        accountBalancesMinor(emptyMap(), listOf(main, savings)) shouldBe mapOf(
             1L to 10_000L,
             2L to 0L,
         )
     }
 
     "adds income and subtracts expenses" {
-        val entries = listOf(
-            IncomeEntry(id = 1, category = salary, description = "Pay", account = main, amount = 50_000),
-            ExpenseEntry(id = 2, category = groceries, description = "Coffee", account = main, amount = 450),
-        )
+        val deltas = mapOf(1L to 49_550L)
 
-        accountBalancesMinor(entries, listOf(main)) shouldBe mapOf(1L to 59_550L)
+        accountBalancesMinor(deltas, listOf(main)) shouldBe mapOf(1L to 59_550L)
     }
 
-    "subtracts transfer-out and adds the received amount to the target" {
-        val entries = listOf(
-            TransferEntry(id = 1, category = null, description = null, account = main, amount = 10_000, toAccount = euros, toAmount = 9_500),
+    "adds the transfer-out loss and the received amount to the target" {
+        val deltas = mapOf(
+            1L to -10_000L,
+            3L to 9_500L,
         )
 
-        accountBalancesMinor(entries, listOf(main, euros)) shouldBe mapOf(
+        accountBalancesMinor(deltas, listOf(main, euros)) shouldBe mapOf(
             1L to 0L,
             3L to 14_500L,
         )
     }
 
-    "same-currency transfers credit the sent amount to the target" {
-        val entries = listOf(
-            TransferEntry(id = 1, category = null, description = null, account = main, amount = 10_000, toAccount = savings, toAmount = null),
-        )
+    "accounts without matching deltas keep their initial balance" {
+        val deltas = mapOf(2L to -450L)
 
-        accountBalancesMinor(entries, listOf(main, savings)) shouldBe mapOf(
-            1L to 0L,
-            2L to 10_000L,
-        )
-    }
-
-    "accounts without matching entries keep their initial balance" {
-        val entries = listOf(
-            ExpenseEntry(id = 1, category = groceries, description = "Coffee", account = savings, amount = 450),
-        )
-
-        accountBalancesMinor(entries, listOf(main, savings)) shouldBe mapOf(
+        accountBalancesMinor(deltas, listOf(main, savings)) shouldBe mapOf(
             1L to 10_000L,
             2L to -450L,
         )

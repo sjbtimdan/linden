@@ -63,6 +63,24 @@ class EntryDao(private val queries: EntryQueries) {
     suspend fun latest(type: EntryType): Entry? =
         queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
+    /** Net change per account in the account's own currency (minor units). */
+    fun accountDeltas(): Flow<Map<Long, Long>> =
+        queries.accountDeltas().asFlow().map { rows ->
+            rows.awaitAsList()
+                .mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
+                .toMap()
+        }
+
+    /** Net total per category and entry currency (minor units). */
+    fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> =
+        queries.categoryTotals().asFlow().map { rows ->
+            rows.awaitAsList()
+                .mapNotNull { row ->
+                    row.categoryId?.let { id -> (id to Currency.fromCode(row.currency)) to row.net }
+                }
+                .toMap()
+        }
+
     private fun Entry.sqlArgs(): SqlArgs =
         when (this) {
             is ExpenseEntry -> SqlArgs(category.id, null, null)
