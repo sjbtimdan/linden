@@ -71,43 +71,45 @@ fun HistoryScreen(
             .padding(16.dp)
             .widthIn(max = 480.dp)
     ) {
-        if (viewMode == HistoryViewMode.Entries) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = viewModel::setSearchQuery,
-                label = { Text("Search") },
-                singleLine = true,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
-                    )
-                },
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.fillMaxWidth(),
-            )
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::setSearchQuery,
+            label = { Text("Search") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                )
+            },
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth(),
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+        Spacer(modifier = Modifier.height(12.dp))
 
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (viewMode == HistoryViewMode.Entries) {
+            FilterChip(
+                selected = viewMode == HistoryViewMode.Entries && typeFilter == null,
+                onClick = {
+                    viewModel.setViewMode(HistoryViewMode.Entries)
+                    viewModel.setTypeFilter(null)
+                },
+                label = { Text("All", style = MaterialTheme.typography.labelMedium) },
+            )
+            EntryType.entries.forEach { type ->
                 FilterChip(
-                    selected = typeFilter == null,
-                    onClick = { viewModel.setTypeFilter(null) },
-                    label = { Text("All", style = MaterialTheme.typography.labelMedium) },
+                    selected = viewMode == HistoryViewMode.Entries && typeFilter == type,
+                    onClick = {
+                        viewModel.setViewMode(HistoryViewMode.Entries)
+                        viewModel.setTypeFilter(type)
+                    },
+                    label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
                 )
-                EntryType.entries.forEach { type ->
-                    FilterChip(
-                        selected = typeFilter == type,
-                        onClick = { viewModel.setTypeFilter(type) },
-                        label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
-                    )
-                }
             }
             FilterChip(
                 selected = viewMode == HistoryViewMode.Accounts,
@@ -149,8 +151,17 @@ fun HistoryScreen(
         }
 
         if (viewMode == HistoryViewMode.Accounts) {
+            val accountFilter = searchQuery.trim()
+            val shownBalances =
+                if (accountFilter.isEmpty()) {
+                    accountBalances
+                } else {
+                    accountBalances.filter { it.account.name.contains(accountFilter, ignoreCase = true) }
+                }
             AccountsList(
-                balances = accountBalances,
+                balances = shownBalances,
+                emptyMessage =
+                    if (accountFilter.isEmpty() || accountBalances.isEmpty()) "No accounts yet." else "No accounts match.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

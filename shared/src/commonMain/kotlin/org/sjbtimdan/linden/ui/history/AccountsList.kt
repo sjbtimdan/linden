@@ -25,6 +25,7 @@ import org.sjbtimdan.linden.ui.entry.formatAmount
 fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
+    emptyMessage: String = "No accounts yet.",
 ) {
     if (balances.isEmpty()) {
         Box(
@@ -32,7 +33,7 @@ fun AccountsList(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "No accounts yet.",
+                text = emptyMessage,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

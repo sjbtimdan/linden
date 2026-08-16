@@ -290,17 +290,60 @@ class HistoryScreenTest : StringSpec({
 
             onNodeWithText("Accounts").performClick()
 
-            // Accounts view: the balance row replaces the entries; entry controls hide.
+            // Accounts view: the balance row replaces the entries, but the search
+            // field and the type chips stay, like the other filters.
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertIsDisplayed()
             onNodeWithText("+ 20.00 CHF").assertIsDisplayed()
             onNodeWithText("Refund").assertDoesNotExist()
-            onNodeWithText("Search").assertDoesNotExist()
-            onNodeWithText("Expense").assertDoesNotExist()
+            onNodeWithText("Search").assertIsDisplayed()
+            onNodeWithText("Expense").assertIsDisplayed()
 
             onNodeWithText("Accounts").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithText("20.00 CHF").assertDoesNotExist()
+        }
+    }
+
+    "type chips in the accounts view switch back to filtered entries" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Accounts").performClick()
+            onNodeWithText("Income").performClick()
+
+            onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithText("20.00 CHF").assertDoesNotExist()
+        }
+    }
+
+    "search filters accounts by name in the accounts view" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(IncomeEntry(0, groceries, "Pay", main, 2_000))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Pay", usd, 200))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Accounts").performClick()
+            onNodeWithText("Search").performTextInput("usd")
+
+            onNodeWithText("2.00 $").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertDoesNotExist()
         }
     }
