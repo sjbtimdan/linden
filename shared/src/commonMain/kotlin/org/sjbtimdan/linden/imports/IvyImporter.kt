@@ -41,19 +41,12 @@ private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
 
 class IvyImporter(private val database: LindenDatabase) {
     private val json = Json { ignoreUnknownKeys = true }
-    private var fallbackCategoryId: Long? = null
-    private var fallbackCategoryCreated = false
-    private val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
-    private val initialBalanceApplied = mutableSetOf<Long>()
 
     suspend fun import(input: InputStream): IvyImportResult {
         val backup = decodeBackup(input)
         val defaultCurrency = SettingsDao(database.settingsQueries).getDefaultCurrency()
-        fallbackCategoryId = null
-        fallbackCategoryCreated = false
-        fallbackAccounts.clear()
-        initialBalanceApplied.clear()
         val transactions = backup.transactions.filter { it.dateTime != null }
+        val importState = ImportState()
         var importedTransactions = 0
         database.transaction {
             database.entryQueries.deleteAll()
@@ -69,14 +62,14 @@ class IvyImporter(private val database: LindenDatabase) {
             }
 
             transactions.forEach { transaction ->
-                if (insertTransaction(transaction, accounts, categories, backup.categories, defaultCurrency)) {
+                if (insertTransaction(importState, transaction, accounts, categories, backup.categories, defaultCurrency)) {
                     importedTransactions++
                 }
             }
         }
         return IvyImportResult(
-            accounts = backup.accounts.size + fallbackAccounts.size,
-            categories = backup.categories.size + if (fallbackCategoryCreated) 1 else 0,
+            accounts = backup.accounts.size + importState.fallbackAccounts.size,
+            categories = backup.categories.size + if (importState.fallbackCategoryCreated) 1 else 0,
             transactions = importedTransactions,
         )
     }
@@ -146,14 +139,15 @@ class IvyImporter(private val database: LindenDatabase) {
         }
     }
 
-    private suspend fun fallbackAccount(currency: Currency): ResolvedAccount {
-        fallbackAccounts[currency]?.let { return it }
+    private suspend fun fallbackAccount(importState: ImportState, currency: Currency): ResolvedAccount {
+        importState.fallbackAccounts[currency]?.let { return it }
         database.accountQueries.insert("Imported Account (${currency.name})", currency.name, 0)
         val id = database.importQueries.lastInsertId().awaitAsOne()
-        return ResolvedAccount(id, currency).also { fallbackAccounts[currency] = it }
+        return ResolvedAccount(id, currency).also { importState.fallbackAccounts[currency] = it }
     }
 
     private suspend fun insertTransaction(
+        importState: ImportState,
         transaction: IvyTransaction,
         accounts: Map<String, ResolvedAccount>,
         categories: Map<String, Long>,
@@ -171,13 +165,13 @@ class IvyImporter(private val database: LindenDatabase) {
             parseCurrency(code) { "Transaction $label has unknown currency \"$code\"" }
         }
         val account = accounts[transaction.accountId]
-            ?: fallbackAccount(entryCurrency ?: defaultCurrency)
+            ?: fallbackAccount(importState, entryCurrency ?: defaultCurrency)
 
         if (type != EntryType.Transfer &&
             (transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
                 transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true))
         ) {
-            if (initialBalanceApplied.add(account.id)) {
+            if (importState.initialBalanceApplied.add(account.id)) {
                 val balance = transaction.amount
                 database.accountQueries.updateInitialBalance(
                     if (type == EntryType.Expense) -balance else balance,
@@ -188,30 +182,28 @@ class IvyImporter(private val database: LindenDatabase) {
         }
 
         val categoryId = when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, backupCategories, required = true)
-            EntryType.Transfer -> categoryId(transaction, categories, backupCategories, required = false)
+            EntryType.Expense, EntryType.Income -> categoryId(importState, transaction, categories, backupCategories, required = true)
+            EntryType.Transfer -> categoryId(importState, transaction, categories, backupCategories, required = false)
         }
 
-        val toAccount = if (type == EntryType.Transfer) {
-            val id = transaction.toAccountId
-                ?: throw IvyImportException("Transfer $label has no toAccountId")
-            val toCurrencyOverride = transaction.toCurrency?.let { code ->
-                parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
+        val (toAccount, toAmount) = when (type) {
+            EntryType.Transfer -> {
+                val targetId = transaction.toAccountId
+                    ?: throw IvyImportException("Transfer $label has no toAccountId")
+                val toCurrencyOverride = transaction.toCurrency?.let { code ->
+                    parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
+                }
+                val target = accounts[targetId]
+                    ?: fallbackAccount(importState, toCurrencyOverride ?: account.currency)
+                val targetAmount = if (account.currency == target.currency) {
+                    null
+                } else {
+                    transaction.toAmount
+                        ?: throw IvyImportException("Transfer $label has no toAmount")
+                }
+                target to targetAmount
             }
-            accounts[id] ?: fallbackAccount(toCurrencyOverride ?: account.currency)
-        } else {
-            null
-        }
-        val toAmount = if (type == EntryType.Transfer) {
-            val toAccountValue = toAccount!!
-            if (account.currency == toAccountValue.currency) {
-                null
-            } else {
-                transaction.toAmount
-                    ?: throw IvyImportException("Transfer $label has no toAmount")
-            }
-        } else {
-            null
+            EntryType.Expense, EntryType.Income -> null to null
         }
 
         database.entryQueries.insert(
@@ -230,6 +222,7 @@ class IvyImporter(private val database: LindenDatabase) {
     }
 
     private suspend fun categoryId(
+        importState: ImportState,
         transaction: IvyTransaction,
         categories: Map<String, Long>,
         backupCategories: List<IvyCategory>,
@@ -238,22 +231,23 @@ class IvyImporter(private val database: LindenDatabase) {
         val id = transaction.categoryId
         if (id != null && id in categories) return categories.getValue(id)
         return if (id != null || required) {
-            resolveFallbackCategory(categories, backupCategories)
+            resolveFallbackCategory(importState, categories, backupCategories)
         } else {
             null
         }
     }
 
     private suspend fun resolveFallbackCategory(
+        importState: ImportState,
         categories: Map<String, Long>,
         backupCategories: List<IvyCategory>,
     ): Long {
-        fallbackCategoryId?.let { return it }
+        importState.fallbackCategoryId?.let { return it }
         val id = resolveBackupCategory(categories, backupCategories) ?: run {
-            fallbackCategoryCreated = true
+            importState.fallbackCategoryCreated = true
             insertCategory(FALLBACK_CATEGORY_NAME, CategoryType.Both)
         }
-        fallbackCategoryId = id
+        importState.fallbackCategoryId = id
         return id
     }
 
@@ -264,6 +258,14 @@ class IvyImporter(private val database: LindenDatabase) {
         Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
 
     private data class ResolvedAccount(val id: Long, val currency: Currency)
+
+    /** Per-import resolution data; created fresh for every [import] call so concurrent imports never share state. */
+    private class ImportState {
+        var fallbackCategoryId: Long? = null
+        var fallbackCategoryCreated = false
+        val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
+        val initialBalanceApplied = mutableSetOf<Long>()
+    }
 }
 
 /**

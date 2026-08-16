@@ -687,6 +687,21 @@ class IvyImporterSpec : StringSpec({
         EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries")
     }
 
+    "a failed import does not affect a subsequent successful import" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        shouldThrow<IvyImportException> {
+            importer.import(ByteArrayInputStream(buildIvyZip("this is not json")))
+        }
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
+
+        result.accounts shouldBe 3
+        result.categories shouldBe 3
+        result.transactions shouldBe 5
+        EntryDao(database.entryQueries).getAll().first().size shouldBe 5
+    }
+
     "resets fallback account state between imports" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)
