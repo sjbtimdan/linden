@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -42,14 +43,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.entry.parseAmount
 
 private data class AccountDialogState(
     val account: Account?,
     val name: String,
     val currency: Currency,
+    val initialBalanceText: String,
 )
 
 @Composable
@@ -81,7 +86,7 @@ fun AccountListScreen(
 
         FilledTonalButton(
             onClick = {
-                dialogState = AccountDialogState(null, "", Currency.CHF)
+                dialogState = AccountDialogState(null, "", Currency.CHF, "")
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -125,6 +130,7 @@ fun AccountListScreen(
                                     account = account,
                                     name = account.name,
                                     currency = account.currency,
+                                    initialBalanceText = formatAmount(account.initialBalance),
                                 )
                             }
                             .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -166,19 +172,26 @@ fun AccountListScreen(
         AccountDialog(
             name = state.name,
             currency = state.currency,
+            initialBalanceText = state.initialBalanceText,
             isEditing = isEditing,
             onNameChange = { dialogState = state.copy(name = it) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
+            onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it) },
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
+                    val initialBalance = parseAmount(state.initialBalanceText) ?: 0
                     val existing = state.account
                     if (existing != null) {
                         viewModel.updateAccount(
-                            existing.copy(name = name, currency = state.currency)
+                            existing.copy(
+                                name = name,
+                                currency = state.currency,
+                                initialBalance = initialBalance,
+                            )
                         )
                     } else {
-                        viewModel.createAccount(name, state.currency)
+                        viewModel.createAccount(name, state.currency, initialBalance)
                     }
                     dialogState = null
                 }
@@ -192,9 +205,11 @@ fun AccountListScreen(
 private fun AccountDialog(
     name: String,
     currency: Currency,
+    initialBalanceText: String,
     isEditing: Boolean,
     onNameChange: (String) -> Unit,
     onCurrencyChange: (Currency) -> Unit,
+    onInitialBalanceChange: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -210,6 +225,16 @@ private fun AccountDialog(
                     onValueChange = onNameChange,
                     label = { Text("Name") },
                     singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = initialBalanceText,
+                    onValueChange = onInitialBalanceChange,
+                    label = { Text("Initial balance") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    suffix = { Text(currency.symbol) },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))

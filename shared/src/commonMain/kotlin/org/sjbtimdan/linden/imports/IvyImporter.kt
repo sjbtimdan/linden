@@ -28,12 +28,15 @@ data class IvyImportResult(
 class IvyImportException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
+    private const val INITIAL_BALANCE_TITLE = "initial balance"
+    private const val ADJUST_BALANCE_TITLE = "adjust balance"
 
 class IvyImporter(private val database: LindenDatabase) {
     private val json = Json { ignoreUnknownKeys = true }
     private var fallbackCategoryId: Long? = null
     private var fallbackCategoryCreated = false
     private val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
+    private val initialBalanceApplied = mutableSetOf<Long>()
 
     suspend fun import(input: InputStream): IvyImportResult {
         val backup = decodeBackup(input)
@@ -41,7 +44,9 @@ class IvyImporter(private val database: LindenDatabase) {
         fallbackCategoryId = null
         fallbackCategoryCreated = false
         fallbackAccounts.clear()
+        initialBalanceApplied.clear()
         val transactions = backup.transactions.filter { it.dateTime != null }
+        var importedTransactions = 0
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -55,13 +60,15 @@ class IvyImporter(private val database: LindenDatabase) {
             }
 
             transactions.forEach { transaction ->
-                insertTransaction(transaction, accounts, categories, backup.categories, defaultCurrency)
+                if (insertTransaction(transaction, accounts, categories, backup.categories, defaultCurrency)) {
+                    importedTransactions++
+                }
             }
         }
         return IvyImportResult(
             accounts = backup.accounts.size + fallbackAccounts.size,
             categories = backup.categories.size + if (fallbackCategoryCreated) 1 else 0,
-            transactions = transactions.size,
+            transactions = importedTransactions,
         )
     }
 
@@ -94,7 +101,7 @@ class IvyImporter(private val database: LindenDatabase) {
         val currency = parseCurrency(account.currency) {
             "Account \"${account.name}\" has unknown currency \"${account.currency}\""
         }
-        database.accountQueries.insert(account.name, currency.name)
+        database.accountQueries.insert(account.name, currency.name, 0)
         val id = database.importQueries.lastInsertId().awaitAsOne()
         return ResolvedAccount(id, currency)
     }
@@ -106,7 +113,7 @@ class IvyImporter(private val database: LindenDatabase) {
 
     private suspend fun fallbackAccount(currency: Currency): ResolvedAccount {
         fallbackAccounts[currency]?.let { return it }
-        database.accountQueries.insert("Imported Account (${currency.name})", currency.name)
+        database.accountQueries.insert("Imported Account (${currency.name})", currency.name, 0)
         val id = database.importQueries.lastInsertId().awaitAsOne()
         return ResolvedAccount(id, currency).also { fallbackAccounts[currency] = it }
     }
@@ -117,7 +124,7 @@ class IvyImporter(private val database: LindenDatabase) {
         categories: Map<String, Long>,
         backupCategories: List<IvyCategory>,
         defaultCurrency: Currency,
-    ) {
+    ): Boolean {
         val label = "\"${transaction.title}\""
         val type = when (transaction.type) {
             "EXPENSE" -> EntryType.Expense
@@ -130,6 +137,20 @@ class IvyImporter(private val database: LindenDatabase) {
         }
         val account = accounts[transaction.accountId]
             ?: fallbackAccount(entryCurrency ?: defaultCurrency)
+
+        if (type != EntryType.Transfer &&
+            (transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
+                transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true))
+        ) {
+            if (initialBalanceApplied.add(account.id)) {
+                val balance = toMinorUnits(transaction.amount)
+                database.accountQueries.updateInitialBalance(
+                    if (type == EntryType.Expense) -balance else balance,
+                    account.id,
+                )
+                return false
+            }
+        }
 
         val categoryId = when (type) {
             EntryType.Expense, EntryType.Income -> categoryId(transaction, categories, backupCategories, required = true)
@@ -170,6 +191,7 @@ class IvyImporter(private val database: LindenDatabase) {
                 .toEpochMilliseconds(),
             createdZone = TimeZone.currentSystemDefault().id,
         )
+        return true
     }
 
     private suspend fun categoryId(

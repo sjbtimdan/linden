@@ -702,4 +702,247 @@ class IvyImporterSpec : StringSpec({
 
         result.accounts shouldBe 3
     }
+
+    "imports the first 'initial balance' entry as the account's initial balance" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "title": "Initial balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 0
+        result.categories shouldBe 0
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 100_000
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "treats subsequent 'initial balance' entries as normal entries" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Initial balance",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "INCOME",
+                  "amount": 50.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Initial balance",
+                  "dateTime": 946771200000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 100_000
+        val entry = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<IncomeEntry>()
+        entry.amount shouldBe 5_000
+        entry.description shouldBe "Initial balance"
+    }
+
+    "an expense-typed 'initial balance' entry yields a negative initial balance" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "title": "initial balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 0
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe -50_000
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "a transfer titled 'initial balance' is imported as a normal entry" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "title": "Initial balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().forEach { it.initialBalance shouldBe 0 }
+        EntryDao(database.entryQueries).getAll().first().single().shouldBeInstanceOf<TransferEntry>()
+    }
+
+    "resets initial balance state between imports" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "title": "Initial balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+        importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 100_000
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "imports an 'Adjust balance' entry as the account's initial balance" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 750.0,
+                  "accountId": "a1",
+                  "title": "Adjust balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 0
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 75_000
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "consumes only one balance entry per account regardless of title" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 750.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Adjust balance",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "INCOME",
+                  "amount": 100.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Initial balance",
+                  "dateTime": 946771200000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 75_000
+        val entry = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<IncomeEntry>()
+        entry.amount shouldBe 10_000
+        entry.description shouldBe "Initial balance"
+    }
 })

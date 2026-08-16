@@ -1,16 +1,22 @@
 CREATE TABLE IF NOT EXISTS AccountEntity (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    currency TEXT NOT NULL
+    currency TEXT NOT NULL,
+    initialBalance INTEGER NOT NULL DEFAULT 0
 );
 
 insert:
-INSERT INTO AccountEntity (name, currency)
-VALUES (?, ?);
+INSERT INTO AccountEntity (name, currency, initialBalance)
+VALUES (?, ?, ?);
 
 update:
 UPDATE AccountEntity
-SET name = ?, currency = ?
+SET name = ?, currency = ?, initialBalance = ?
+WHERE id = ?;
+
+updateInitialBalance:
+UPDATE AccountEntity
+SET initialBalance = ?
 WHERE id = ?;
 
 selectAll:

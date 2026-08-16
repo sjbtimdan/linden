@@ -22,6 +22,14 @@ class AccountListViewModelTest : StringSpec({
         }
     }
 
+    "creating an account stores its initial balance" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 25_000)
+
+            viewModel.accounts.value.single().initialBalance shouldBe 25_000
+        }
+    }
+
     "updating an account reflects in the list" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF)

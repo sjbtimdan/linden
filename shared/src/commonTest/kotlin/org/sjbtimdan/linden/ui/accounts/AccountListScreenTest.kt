@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.ui.accounts
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -39,12 +40,44 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("+ New Account").performClick()
             onNodeWithText("New Account").assertIsDisplayed()
 
-            onNode(hasSetTextAction()).performTextInput("Main")
+            onAllNodes(hasSetTextAction())[0].performTextInput("Main")
             onNodeWithText("USD").performClick()
             onNodeWithText("Save").performClick()
 
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("USD").assertIsDisplayed()
+        }
+    }
+
+    "creating an account with an initial balance persists it" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Account").performClick()
+            onAllNodes(hasSetTextAction())[0].performTextInput("Main")
+            onAllNodes(hasSetTextAction())[1].performTextInput("1500.50")
+            onNodeWithText("Save").performClick()
+
+            viewModel.accounts.value.single().initialBalance shouldBe 150_050
+        }
+    }
+
+    "dialog has an initial balance field" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("Initial balance").assertIsDisplayed()
         }
     }
 
@@ -82,7 +115,7 @@ class AccountListScreenTest : StringSpec({
 
     "opening edit dialog shows current values" {
         withAccountViewModel { viewModel ->
-            viewModel.createAccount("Savings", Currency.EUR)
+            viewModel.createAccount("Savings", Currency.EUR, initialBalance = 5_000)
 
             setContent {
                 AccountListScreen(
@@ -93,6 +126,7 @@ class AccountListScreenTest : StringSpec({
 
             onNodeWithText("Savings").performClick()
             onNodeWithText("Edit Account").assertIsDisplayed()
+            onAllNodes(hasSetTextAction())[1].assertTextContains("50.00")
         }
     }
 

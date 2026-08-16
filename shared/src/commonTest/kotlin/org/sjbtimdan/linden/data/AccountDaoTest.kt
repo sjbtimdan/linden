@@ -25,6 +25,33 @@ class AccountDaoTest : StringSpec({
         dao.getAll().first() shouldBe listOf(updated)
     }
 
+    "accounts default to a zero initial balance" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+
+        dao.getAll().first().single().initialBalance shouldBe 0
+    }
+
+    "initial balance is persisted on create, update and reload" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF, initialBalance = 45_000)
+
+        val created = dao.getAll().first().single()
+        created shouldBe Account(
+            id = created.id,
+            name = "Main",
+            currency = Currency.CHF,
+            initialBalance = 45_000,
+        )
+
+        dao.update(created.copy(initialBalance = 12_340))
+        dao.getAll().first().single().initialBalance shouldBe 12_340
+    }
+
     "multiple accounts are ordered by name" {
         val database = lindenDatabase()
         val dao = AccountDao(database.accountQueries)

@@ -20,9 +20,9 @@ class AccountListViewModel(
             initialValue = emptyList(),
         )
 
-    fun createAccount(name: String, currency: Currency) {
+    fun createAccount(name: String, currency: Currency, initialBalance: Long = 0) {
         viewModelScope.launch {
-            accountDao.create(name, currency)
+            accountDao.create(name, currency, initialBalance)
         }
     }
 

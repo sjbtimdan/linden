@@ -10,12 +10,12 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 
 class AccountDao(private val queries: AccountQueries) {
-    suspend fun create(name: String, currency: Currency) {
-        queries.insert(name, currency.name)
+    suspend fun create(name: String, currency: Currency, initialBalance: Long = 0) {
+        queries.insert(name, currency.name, initialBalance)
     }
 
     suspend fun update(account: Account) {
-        queries.update(account.name, account.currency.name, account.id)
+        queries.update(account.name, account.currency.name, account.initialBalance, account.id)
     }
 
     fun getAll(): Flow<List<Account>> {
@@ -28,5 +28,6 @@ class AccountDao(private val queries: AccountQueries) {
         id = id,
         name = name,
         currency = Currency.fromCode(currency),
+        initialBalance = initialBalance,
     )
 }
