@@ -64,22 +64,44 @@ fun withApp(
 
 @OptIn(ExperimentalTestApi::class)
 fun withViewModel(
-    block: suspend ComposeUiTest.(CategoryDao, CategoryListViewModel) -> Unit,
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(CategoryDao, EntryDao, AccountDao, CategoryListViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
-            val dao = CategoryDao(database.categoryQueries)
-            val viewModel = CategoryListViewModel(dao)
-            block(dao, viewModel)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val entryDao = EntryDao(database.entryQueries)
+            val accountDao = AccountDao(database.accountQueries)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            val fxRateDao = FxRateDao(database.fxRateQueries)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            val viewModel = CategoryListViewModel(
+                categoryDao,
+                entryDao,
+                settingsDao,
+                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+            )
+            block(categoryDao, entryDao, accountDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(CategoryDao, CategoryListViewModel) -> Unit,
+) = withViewModel(defaultCurrency, rates) { categoryDao, _, _, viewModel -> block(categoryDao, viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withViewModel(
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(CategoryListViewModel) -> Unit,
-) = withViewModel { _, viewModel -> block(viewModel) }
+) = withViewModel(defaultCurrency, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(

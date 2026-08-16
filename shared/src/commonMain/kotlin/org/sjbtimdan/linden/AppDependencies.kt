@@ -45,7 +45,7 @@ class AppDependencies(
         SettingsViewModel(settingsDao, IvyImporter(database), initialTheme, initialCurrency)
     }
     val ratesViewModel by lazy { RatesViewModel(settingsDao, fxRatesRepository) }
-    val categoryListViewModel by lazy { CategoryListViewModel(categoryDao) }
+    val categoryListViewModel by lazy { CategoryListViewModel(categoryDao, entryDao, settingsDao, fxRatesRepository) }
     val accountListViewModel by lazy { AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository) }
     val ledgerViewModel by lazy { LedgerViewModel(entryDao, accountDao, categoryDao) }
     val historyViewModel by lazy {

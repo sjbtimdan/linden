@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.categoryColor
 
 private data class CategoryDialogState(
@@ -61,6 +63,8 @@ fun CategoryListScreen(
     onNavigateBack: () -> Unit,
 ) {
     val categories by viewModel.categories.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val totalMinor by viewModel.totalMinor.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
 
     Column(
@@ -81,6 +85,32 @@ fun CategoryListScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        if (categories.isNotEmpty()) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Total",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = totalMinor?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         FilledTonalButton(
             onClick = {
@@ -117,8 +147,8 @@ fun CategoryListScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(categories, key = { it.id }) { category ->
-                    val accent = categoryColor(category.name)
+                items(categories, key = { it.category.id }) { item ->
+                    val accent = categoryColor(item.category.name)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -126,16 +156,18 @@ fun CategoryListScreen(
                             .background(MaterialTheme.colorScheme.surface)
                             .clickable(role = Role.Button) {
                                 dialogState = CategoryDialogState(
-                                    category = category,
-                                    name = category.name,
-                                    type = category.type,
+                                    category = item.category,
+                                    name = item.category.name,
+                                    type = item.category.type,
                                 )
                             }
                             .padding(horizontal = 12.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
@@ -144,7 +176,7 @@ fun CategoryListScreen(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
-                                    text = category.name.firstOrNull()?.uppercase() ?: "?",
+                                    text = item.category.name.firstOrNull()?.uppercase() ?: "?",
                                     style = MaterialTheme.typography.titleMedium,
                                     color = accent,
                                 )
@@ -152,16 +184,21 @@ fun CategoryListScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = category.name,
+                                    text = item.category.name,
                                     style = MaterialTheme.typography.bodyLarge,
                                 )
                                 Text(
-                                    text = category.type.displayName(),
+                                    text = item.category.type.displayName(),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
+                        Text(
+                            text = item.balance?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = null,
