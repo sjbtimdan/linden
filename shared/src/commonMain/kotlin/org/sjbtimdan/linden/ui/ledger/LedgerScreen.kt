@@ -30,23 +30,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import kotlin.time.Clock
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
-import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
-import org.sjbtimdan.linden.predictions.predictDescriptions
-import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.icon
@@ -60,46 +52,19 @@ fun LedgerScreen(
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
-    val allEntries by viewModel.allEntries.collectAsState()
+    val selectedType by viewModel.selectedType.collectAsState()
+    val draft by viewModel.draft.collectAsState()
+    val descriptionSuggestions by viewModel.descriptionSuggestions.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var selectedType by remember { mutableStateOf(EntryType.Expense) }
-    var draft by remember { mutableStateOf<EntryDraft?>(null) }
-
-    // Rebuild the draft when the type changes, carrying over the fields that
-    // are shared across types (amount, description, date & time).
-    LaunchedEffect(selectedType) {
-        val previous = draft
-        val fresh = viewModel.newEntryState(selectedType)
-        draft = if (previous != null && previous.type != selectedType) {
-            fresh.carryOverCommonFields(previous)
-        } else {
-            fresh
-        }
-    }
-
-    val descriptionSuggestions = remember(draft, allEntries) {
-        draft?.let { state ->
-            if (state.editing != null) {
-                emptyList()
-            } else {
-                predictDescriptions(
-                    entries = allEntries,
-                    input = DescriptionPredictionInput(
-                        type = state.type,
-                        categoryId = state.categoryId,
-                        accountId = state.accountId,
-                        amount = state.amount,
-                    ),
-                    now = Clock.System.now(),
-                    timeZone = TimeZone.currentSystemDefault(),
-                    topN = PREDICTION_TOP_N
-                )
-            }
-        } ?: emptyList()
+    // Seeds the draft from the last entry of the selected type on first show.
+    // The ViewModel keeps the draft across configuration changes, so this only
+    // runs when the screen (and thus the draft) is created fresh.
+    LaunchedEffect(Unit) {
+        viewModel.seedDraft()
     }
 
     Column(
@@ -122,7 +87,7 @@ fun LedgerScreen(
             entryTypes.forEachIndexed { index, type ->
                 SegmentedButton(
                     selected = selectedType == type,
-                    onClick = { selectedType = type },
+                    onClick = { viewModel.selectType(type) },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
                     icon = {
                         Icon(
@@ -148,13 +113,13 @@ fun LedgerScreen(
                     state = state,
                     accounts = accounts,
                     categories = categories,
-                    onAmountChange = { draft = state.copy(amountText = it) },
-                    onCategoryChange = { draft = state.copy(categoryId = it) },
-                    onAccountChange = { draft = state.copy(accountId = it) },
-                    onToAccountChange = { draft = state.copy(toAccountId = it) },
-                    onToAmountChange = { draft = state.copy(toAmountText = it) },
-                    onDescriptionChange = { draft = state.copy(description = it) },
-                    onCreatedAtChange = { draft = state.copy(createdAt = it) },
+                    onAmountChange = viewModel::onAmountChange,
+                    onCategoryChange = viewModel::onCategoryChange,
+                    onAccountChange = viewModel::onAccountChange,
+                    onToAccountChange = viewModel::onToAccountChange,
+                    onToAmountChange = viewModel::onToAmountChange,
+                    onDescriptionChange = viewModel::onDescriptionChange,
+                    onCreatedAtChange = viewModel::onCreatedAtChange,
                     onNavigateToSettings = onNavigateToSettings,
                     descriptionSuggestions = descriptionSuggestions,
                 )
@@ -173,12 +138,7 @@ fun LedgerScreen(
         ) {
             Button(
                 onClick = {
-                    val state = draft ?: return@Button
-                    state.toEntry(accounts, categories)?.let { entry ->
-                        viewModel.createEntry(entry)
-                        // Reset to a fresh draft prefilled from the saved entry so
-                        // the next entry of the same type can be entered right away.
-                        draft = EntryDraft.forNew(entry.type, entry)
+                    if (viewModel.saveDraft()) {
                         scope.launch { snackbarHostState.showSnackbar("Added") }
                     }
                 },
@@ -195,9 +155,7 @@ fun LedgerScreen(
             }
 
             OutlinedButton(
-                onClick = {
-                    draft = EntryDraft.forNew(selectedType)
-                },
+                onClick = viewModel::clearDraft,
                 enabled = draft != null,
                 modifier = Modifier.weight(1f),
             ) {

@@ -4,6 +4,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
@@ -308,6 +310,65 @@ class HistoryViewModelTest : StringSpec({
             settingsDao.setDefaultCurrency(Currency.USD)
 
             viewModel.totalMinor.value shouldBe null
+        }
+    }
+
+    "openEditDialog prefills the draft from the entry" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getExpenses().first().first()
+
+            viewModel.openEditDialog(created)
+
+            viewModel.dialogState.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.editing shouldBe created
+                draft.amountText shouldBe "4.50"
+                draft.description shouldBe "Coffee"
+            }
+        }
+    }
+
+    "saveDialog updates the entry and closes the dialog" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getExpenses().first().first()
+            viewModel.openEditDialog(created)
+            viewModel.onAmountChange("5.00")
+
+            viewModel.saveDialog() shouldBe true
+
+            viewModel.dialogState.value.shouldBeNull()
+            entryDao.getExpenses().first().first().amount shouldBe 500
+        }
+    }
+
+    "deleteDialogEntry deletes the entry and closes the dialog" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getExpenses().first().first()
+            viewModel.openEditDialog(created)
+
+            viewModel.deleteDialogEntry()
+
+            viewModel.dialogState.value.shouldBeNull()
+            entryDao.getExpenses().first().shouldBeEmpty()
+        }
+    }
+
+    "dismissDialog closes the dialog" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getExpenses().first().first()
+            viewModel.openEditDialog(created)
+
+            viewModel.dismissDialog()
+
+            viewModel.dialogState.value.shouldBeNull()
         }
     }
 })

@@ -26,9 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,7 +36,6 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.EntryDialog
-import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
@@ -58,7 +55,7 @@ fun HistoryScreen(
     val periodAnchor by viewModel.periodAnchor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
-    var dialogState by remember { mutableStateOf<EntryDraft?>(null) }
+    val dialogState by viewModel.dialogState.collectAsState()
 
     val listItems = remember(entries) {
         historyListItems(entries = entries)
@@ -163,7 +160,7 @@ fun HistoryScreen(
                         is EntryListItem -> item(item.key) {
                             EntryRow(
                                 entry = item.entry,
-                                onClick = { dialogState = EntryDraft.forEdit(item.entry) },
+                                onClick = { viewModel.openEditDialog(item.entry) },
                             )
                         }
                     }
@@ -177,27 +174,17 @@ fun HistoryScreen(
             state = state,
             accounts = accounts,
             categories = categories,
-            onAmountChange = { dialogState = state.copy(amountText = it) },
-            onCategoryChange = { dialogState = state.copy(categoryId = it) },
-            onAccountChange = { dialogState = state.copy(accountId = it) },
-            onToAccountChange = { dialogState = state.copy(toAccountId = it) },
-            onToAmountChange = { dialogState = state.copy(toAmountText = it) },
-            onDescriptionChange = { dialogState = state.copy(description = it) },
-            onCreatedAtChange = { dialogState = state.copy(createdAt = it) },
-            onSave = {
-                state.toEntry(accounts, categories)?.let { entry ->
-                    viewModel.updateEntry(entry)
-                    dialogState = null
-                }
-            },
-            onDelete = state.editing?.let { editing ->
-                {
-                    viewModel.deleteEntry(editing.id)
-                    dialogState = null
-                }
-            },
+            onAmountChange = viewModel::onAmountChange,
+            onCategoryChange = viewModel::onCategoryChange,
+            onAccountChange = viewModel::onAccountChange,
+            onToAccountChange = viewModel::onToAccountChange,
+            onToAmountChange = viewModel::onToAmountChange,
+            onDescriptionChange = viewModel::onDescriptionChange,
+            onCreatedAtChange = viewModel::onCreatedAtChange,
+            onSave = { viewModel.saveDialog() },
+            onDelete = if (state.editing != null) viewModel::deleteDialogEntry else null,
             onNavigateToSettings = onNavigateToSettings,
-            onDismiss = { dialogState = null },
+            onDismiss = viewModel::dismissDialog,
         )
     }
 }

@@ -28,6 +28,7 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -139,6 +140,32 @@ class HistoryViewModel(
 
     fun goToNextPeriod() {
         _periodAnchor.value = _period.value.nextAnchor(_periodAnchor.value)
+    }
+
+    /** Draft currently being edited in the entry dialog, or null when it is closed. */
+    val dialogState: StateFlow<EntryDraft?> get() = draft
+
+    fun openEditDialog(entry: Entry) {
+        _draft.value = EntryDraft.forEdit(entry)
+    }
+
+    /** Saves the dialog draft and closes the dialog. */
+    fun saveDialog(): Boolean {
+        val state = _draft.value ?: return false
+        val entry = state.toEntry(accounts.value, categories.value) ?: return false
+        updateEntry(entry)
+        _draft.value = null
+        return true
+    }
+
+    /** Deletes the entry being edited and closes the dialog. */
+    fun deleteDialogEntry() {
+        _draft.value?.editing?.let { deleteEntry(it.id) }
+        _draft.value = null
+    }
+
+    fun dismissDialog() {
+        _draft.value = null
     }
 }
 
