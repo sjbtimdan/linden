@@ -29,11 +29,7 @@ class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getDefaultCurrency(): Currency {
         val entity = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull()
             ?: return Currency.CHF
-        return try {
-            Currency.fromCode(entity.value_)
-        } catch (_: IllegalStateException) {
-            Currency.CHF
-        }
+        return parseCurrency(entity.value_) ?: Currency.CHF
     }
 
     suspend fun setDefaultCurrency(currency: Currency) {
@@ -46,8 +42,15 @@ class SettingsDao(private val queries: SettingsQueries) {
             .map { rows ->
                 rows.awaitAsList()
                     .firstOrNull { it.key == CURRENCY_KEY }
-                    ?.let { row -> runCatching { Currency.fromCode(row.value_) }.getOrNull() }
+                    ?.let { row -> parseCurrency(row.value_) }
                     ?: Currency.CHF
             }
     }
+
+    private fun parseCurrency(code: String): Currency? =
+        try {
+            Currency.fromCode(code)
+        } catch (_: IllegalStateException) {
+            null
+        }
 }

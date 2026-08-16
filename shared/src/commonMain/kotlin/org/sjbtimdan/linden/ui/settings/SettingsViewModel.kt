@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.InputStream
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +57,8 @@ class SettingsViewModel(
             _importState.value = ImportState.Importing
             _importState.value = try {
                 ImportState.Success(withContext(Dispatchers.IO) { importer.import(input) })
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 ImportState.Error(e.message ?: "Import failed")
             }
