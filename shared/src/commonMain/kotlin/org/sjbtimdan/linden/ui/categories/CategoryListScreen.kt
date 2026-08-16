@@ -301,5 +301,5 @@ private fun CategoryDialog(
 private fun CategoryType.displayName(): String = when (this) {
     CategoryType.Expense -> "Expense"
     CategoryType.Income -> "Income"
-    CategoryType.Both -> "Both"
+    CategoryType.Both -> "As Income/Expense"
 }

@@ -52,9 +52,9 @@ class IvyImporterSpec : StringSpec({
             "Wallet" to "USD",
         )
         database.categoryQueries.selectAll().awaitAsList().map { it.name to it.type } shouldBe listOf(
-            "Food" to CategoryType.Both.name,
+            "Food" to CategoryType.Expense.name,
             "General" to CategoryType.Both.name,
-            "Salary" to CategoryType.Both.name,
+            "Salary" to CategoryType.Income.name,
         )
 
         val entries = EntryDao(database.entryQueries).getAll().first()
@@ -216,8 +216,78 @@ class IvyImporterSpec : StringSpec({
         val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
 
         result.categories shouldBe 2
-        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Food", "Imported Entries")
+        database.categoryQueries.selectAll().awaitAsList().map { it.name to it.type } shouldBe listOf(
+            "Food" to CategoryType.Both.name,
+            "Imported Entries" to CategoryType.Both.name,
+        )
         EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
+    }
+
+    "infers category types from the transactions that use them" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Groceries"},
+                {"id": "c2", "name": "Salary"},
+                {"id": "c3", "name": "Shared"},
+                {"id": "c4", "name": "Unused"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Coffee",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "EXPENSE",
+                  "amount": 15.0,
+                  "accountId": "a1",
+                  "categoryId": "c3",
+                  "title": "Groceries",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t3",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "categoryId": "c2",
+                  "title": "Salary",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t4",
+                  "type": "INCOME",
+                  "amount": 50.0,
+                  "accountId": "a1",
+                  "categoryId": "c3",
+                  "title": "Refund",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.categories shouldBe 4
+        database.categoryQueries.selectAll().awaitAsList().map { it.name to it.type } shouldBe listOf(
+            "Groceries" to CategoryType.Expense.name,
+            "Salary" to CategoryType.Income.name,
+            "Shared" to CategoryType.Both.name,
+            "Unused" to CategoryType.Both.name,
+        )
     }
 
     "does not create a fallback category when only transfers lack a category" {

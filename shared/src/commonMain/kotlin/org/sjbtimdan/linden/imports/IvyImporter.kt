@@ -55,8 +55,9 @@ class IvyImporter(private val database: LindenDatabase) {
             val accounts = backup.accounts.associate { account ->
                 account.id to insertAccount(account)
             }
+            val categoryTypes = inferCategoryTypes(backup.categories, transactions)
             val categories = backup.categories.associate { category ->
-                category.id to insertCategory(category.name)
+                category.id to insertCategory(category.name, categoryTypes.getValue(category.id))
             }
 
             transactions.forEach { transaction ->
@@ -106,9 +107,35 @@ class IvyImporter(private val database: LindenDatabase) {
         return ResolvedAccount(id, currency)
     }
 
-    private suspend fun insertCategory(name: String): Long {
-        database.categoryQueries.insert(name, CategoryType.Both.name)
+    private suspend fun insertCategory(name: String, type: CategoryType): Long {
+        database.categoryQueries.insert(name, type.name)
         return database.importQueries.lastInsertId().awaitAsOne()
+    }
+
+    private fun inferCategoryTypes(
+        backupCategories: List<IvyCategory>,
+        transactions: List<IvyTransaction>,
+    ): Map<String, CategoryType> {
+        val usage = mutableMapOf<String, MutableSet<EntryType>>()
+        for (transaction in transactions) {
+            val categoryId = transaction.categoryId ?: continue
+            val type = when (transaction.type) {
+                "EXPENSE" -> EntryType.Expense
+                "INCOME" -> EntryType.Income
+                else -> continue
+            }
+            usage.getOrPut(categoryId) { mutableSetOf() }.add(type)
+        }
+        return backupCategories.associate { category ->
+            category.id to when (val types = usage[category.id]) {
+                null -> CategoryType.Both
+                else -> when {
+                    EntryType.Expense in types && EntryType.Income in types -> CategoryType.Both
+                    EntryType.Expense in types -> CategoryType.Expense
+                    else -> CategoryType.Income
+                }
+            }
+        }
     }
 
     private suspend fun fallbackAccount(currency: Currency): ResolvedAccount {
@@ -216,7 +243,7 @@ class IvyImporter(private val database: LindenDatabase) {
         fallbackCategoryId?.let { return it }
         val id = resolveBackupCategory(categories, backupCategories) ?: run {
             fallbackCategoryCreated = true
-            insertCategory(FALLBACK_CATEGORY_NAME)
+            insertCategory(FALLBACK_CATEGORY_NAME, CategoryType.Both)
         }
         fallbackCategoryId = id
         return id
