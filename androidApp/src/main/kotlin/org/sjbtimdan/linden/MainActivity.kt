@@ -4,7 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 
 class MainActivity : ComponentActivity() {
@@ -12,12 +13,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        val dependencies = runBlocking {
-            createAppDependencies(DatabaseDriverFactory(this@MainActivity).createDriver())
-        }
-
         setContent {
-            App(dependencies)
+            AppRoot {
+                withContext(Dispatchers.IO) {
+                    createAppDependencies(DatabaseDriverFactory(this@MainActivity).createDriver())
+                }
+            }
         }
     }
 }
