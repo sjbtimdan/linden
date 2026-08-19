@@ -8,7 +8,7 @@ Load the matching reference file from `references/` for the specific topic.
 
 ## Modules
 
-- `:shared` — shared UI and business logic (KMP library, Compose Multiplatform). Targets: `jvm()` + `android`. All UI lives here; `App.kt` handles screen navigation via a sealed `Screen`.
+- `:shared` — shared UI and business logic (KMP library, Compose Multiplatform). Targets: `jvm()` + `android`. All UI lives here; `App.kt` handles screen navigation via a sealed `Screen` class.
 - `:androidApp` — Android entry point (`MainActivity`, appId `org.sjbtimdan.linden`).
 - `:desktopApp` — Desktop/JVM entry point (`Main.kt` → Compose `Window`, main class `org.sjbtimdan.linden.MainKt`).
 
@@ -24,6 +24,7 @@ Load the matching reference file from `references/` for the specific topic.
 ./gradlew :androidApp:assembleDebug         # full Android debug build
 ./gradlew check                             # full check — no CI pipeline (see check.sh)
 ./gradlew :desktopApp:run                   # run Desktop app
+./gradlew dependencyUpdates                 # check for newer dependency versions (report in build/)
 ```
 
 The `:shared` Android target compiles via `compileAndroidMain`, **not** `compileDebugKotlin`
