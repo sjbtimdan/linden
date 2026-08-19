@@ -385,6 +385,90 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("No accounts yet.").assertIsDisplayed()
         }
     }
+
+    "categories chip switches to the categories view and back" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Coffee").assertIsDisplayed()
+
+            onNodeWithText("Categories").performClick()
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithText("Search").assertIsDisplayed()
+            onNodeWithText("Expense").assertIsDisplayed()
+
+            onNodeWithText("Categories").performClick()
+
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithText("1 entry").assertDoesNotExist()
+        }
+    }
+
+    "categories view shows the empty state when there are no entries" {
+        withHistoryViewModel { viewModel ->
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Categories").performClick()
+
+            onNodeWithText("No categories yet.").assertIsDisplayed()
+        }
+    }
+
+    "search filters categories by name in the categories view" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Categories").performClick()
+            onNodeWithText("Search").performTextInput("salary")
+
+            onNodeWithText("Salary").assertIsDisplayed()
+            onNodeWithText("Groceries").assertDoesNotExist()
+        }
+    }
+
+    "categories view shows totals at the end of the selected period" {
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Categories").performClick()
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            // September window: only Sep entry
+            onAllNodesWithText("− 3.00 CHF").assertCountEquals(2)
+
+            onNodeWithContentDescription("Previous period").performClick()
+
+            // August window: only Aug entry (Jul 31 is before Aug 1)
+            onAllNodesWithText("− 2.00 CHF").assertCountEquals(2)
+            onNodeWithText("− 3.00 CHF").assertDoesNotExist()
+        }
+    }
 })
 
 private suspend fun seed(

@@ -61,6 +61,8 @@ fun HistoryScreen(
     val viewMode by viewModel.viewMode.collectAsState()
     val accountBalances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
     val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
+    val categoryTotals by viewModel.categoryTotals.collectAsState()
+    val categoryTotal by viewModel.categoryTotal.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
 
     val listItems = remember(entries) {
@@ -131,6 +133,19 @@ fun HistoryScreen(
                 },
                 label = { Text("Accounts", style = MaterialTheme.typography.labelMedium) },
             )
+            FilterChip(
+                selected = viewMode == HistoryViewMode.Categories,
+                onClick = {
+                    viewModel.setViewMode(
+                        if (viewMode == HistoryViewMode.Categories) {
+                            HistoryViewMode.Entries
+                        } else {
+                            HistoryViewMode.Categories
+                        },
+                    )
+                },
+                label = { Text("Categories", style = MaterialTheme.typography.labelMedium) },
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -152,7 +167,11 @@ fun HistoryScreen(
                 )
             }
             TotalLabel(
-                total = if (viewMode == HistoryViewMode.Accounts) accountTotal else totalMinor,
+                total = when (viewMode) {
+                    HistoryViewMode.Accounts -> accountTotal
+                    HistoryViewMode.Categories -> categoryTotal
+                    HistoryViewMode.Entries -> totalMinor
+                },
                 currency = defaultCurrency,
             )
         }
@@ -169,6 +188,25 @@ fun HistoryScreen(
                 balances = shownBalances,
                 emptyMessage =
                     if (accountFilter.isEmpty() || accountBalances.isEmpty()) "No accounts yet." else "No accounts match.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+        } else if (viewMode == HistoryViewMode.Categories) {
+            val categoryFilter = searchQuery.trim()
+            val shownCategories =
+                if (categoryFilter.isEmpty()) {
+                    categoryTotals
+                } else {
+                    categoryTotals.filter {
+                        it.category?.name?.contains(categoryFilter, ignoreCase = true) == true
+                    }
+                }
+            CategoryTotalsList(
+                categories = shownCategories,
+                currency = defaultCurrency,
+                emptyMessage =
+                    if (categoryFilter.isEmpty() || categoryTotals.isEmpty()) "No categories yet." else "No categories match.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.history
 
+import kotlin.math.abs
 import androidx.lifecycle.viewModelScope
 import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +26,7 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
@@ -177,6 +179,41 @@ class HistoryViewModel(
         initialValue = null,
     )
 
+    /** Net total per category in the default currency derived from the filtered entries. */
+    val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
+        entries,
+        defaultCurrency,
+        rates,
+    ) { entries, currency, rates ->
+        entries
+            .filter { it.type != EntryType.Transfer }
+            .groupBy { it.category }
+            .mapNotNull { (category, catEntries) ->
+                val groups = catEntries.groupBy { it.account.currency }
+                    .map { (c, e) -> c to e.sumOf { if (it.type == EntryType.Income) it.amount else -it.amount } }
+                val total = sumInDefaultMinor(groups, currency, rates) ?: return@mapNotNull null
+                CategoryWithTotal(category, total, catEntries.size)
+            }
+            .sortedByDescending { abs(it.total) }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList(),
+    )
+
+    /** Net total of all categories in the default currency; null when a rate is missing. */
+    val categoryTotal: StateFlow<Long?> = combine(
+        entries,
+        defaultCurrency,
+        rates,
+    ) { entries, currency, rates ->
+        periodTotalMinor(entries, currency, rates)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = null,
+    )
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
@@ -265,8 +302,16 @@ private fun LocalDate.sqlLowerBound(): Long =
 private fun LocalDate.sqlUpperBound(): Long =
     plus(2, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 
-/** What the history screen shows: the entry list or the period-end account balances. */
+/** What the history screen shows: the entry list, period-end account balances, or category totals. */
 enum class HistoryViewMode {
     Entries,
     Accounts,
+    Categories,
 }
+
+/** A category paired with its net total in the default currency (minor units) and entry count. */
+data class CategoryWithTotal(
+    val category: Category?,
+    val total: Long,
+    val count: Int,
+)

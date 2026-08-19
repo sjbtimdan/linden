@@ -382,6 +382,12 @@ class HistoryViewModelTest : StringSpec({
 
             viewModel.setViewMode(HistoryViewMode.Entries)
             viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+
+            viewModel.setViewMode(HistoryViewMode.Categories)
+            viewModel.viewMode.value shouldBe HistoryViewMode.Categories
+
+            viewModel.setViewMode(HistoryViewMode.Entries)
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
         }
     }
 
@@ -458,6 +464,116 @@ class HistoryViewModelTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
 
             viewModel.accountTotalAtPeriodEnd.value shouldBe null
+        }
+    }
+
+    "category totals show net per category" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+
+            viewModel.categoryTotals.value shouldHaveSize(2)
+            val cats = viewModel.categoryTotals.value.associateBy { it.category?.name }
+            cats["Groceries"]!!.total shouldBe -1_650L
+            cats["Groceries"]!!.count shouldBe 2
+            cats["Salary"]!!.total shouldBe 5_000L
+            cats["Salary"]!!.count shouldBe 1
+        }
+    }
+
+    "category total is the sum of category totals" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.categoryTotal.value shouldBe 1_550L
+        }
+    }
+
+    "category totals follow the period" {
+        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+
+            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.categoryTotals.value.shouldHaveSize(1)
+            viewModel.categoryTotals.value.first().total shouldBe -300L
+
+            viewModel.goToPreviousPeriod()
+            viewModel.categoryTotals.value.first().total shouldBe -200L
+        }
+    }
+
+    "category totals follow search filter" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.categoryTotals.value shouldHaveSize(2)
+
+            viewModel.setSearchQuery("salary")
+            viewModel.categoryTotals.value shouldHaveSize(1)
+            viewModel.categoryTotals.value.first().category?.name shouldBe "Salary"
+        }
+    }
+
+    "category totals follow type filter" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.setTypeFilter(EntryType.Income)
+            viewModel.categoryTotals.value shouldHaveSize(1)
+            viewModel.categoryTotals.value.first().category?.name shouldBe "Salary"
+
+            viewModel.setTypeFilter(null)
+            viewModel.categoryTotals.value shouldHaveSize(2)
+        }
+    }
+
+    "category totals convert foreign currency entries via stored rates" {
+        withHistoryViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (_, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.categoryTotals.value shouldHaveSize(1)
+            // 200 USD / 2.0 = 100 CHF
+            viewModel.categoryTotals.value.first().total shouldBe -100L
+        }
+    }
+
+    "category total is null when a foreign rate is missing" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (_, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.categoryTotal.value shouldBe null
         }
     }
 })
