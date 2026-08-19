@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -84,6 +86,9 @@ fun HistoryScreen(
                     contentDescription = null,
                 )
             },
+            trailingIcon = if (searchQuery.isNotEmpty()) {
+                { IconButton(onClick = { viewModel.setSearchQuery("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+            } else null,
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier.fillMaxWidth(),
         )

@@ -24,11 +24,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -259,6 +261,9 @@ private fun AccountDialog(
                     onValueChange = onNameChange,
                     label = { Text("Name") },
                     singleLine = true,
+                    trailingIcon = if (name.isNotEmpty()) {
+                        { IconButton(onClick = { onNameChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                    } else null,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -268,6 +273,9 @@ private fun AccountDialog(
                     label = { Text("Initial balance") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    trailingIcon = if (initialBalanceText.isNotEmpty()) {
+                        { IconButton(onClick = { onInitialBalanceChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                    } else null,
                     suffix = { Text(currency.symbol) },
                     modifier = Modifier.fillMaxWidth(),
                 )

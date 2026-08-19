@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -17,6 +20,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -89,6 +94,9 @@ fun EntryForm(
             label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            trailingIcon = if (state.amountText.isNotEmpty()) {
+                { IconButton(onClick = { onAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+            } else null,
             suffix = fromAccount?.let { account ->
                 { Text(account.currency.symbol) }
             },
@@ -140,6 +148,9 @@ fun EntryForm(
                     label = { Text("Amount (received)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    trailingIcon = if (state.toAmountText.isNotEmpty()) {
+                        { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                    } else null,
                     suffix = toAccount.let { account ->
                         { Text(account.currency.symbol) }
                     },
@@ -201,8 +212,15 @@ fun EntryForm(
                 label = { Text("Description (optional)") },
                 singleLine = true,
                 trailingIcon = {
-                    if (descriptionSuggestions.isNotEmpty()) {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    Row {
+                        if (state.description.isNotEmpty()) {
+                            IconButton(onClick = { onDescriptionChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
+                        if (descriptionSuggestions.isNotEmpty()) {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        }
                     }
                 },
                 modifier = Modifier
