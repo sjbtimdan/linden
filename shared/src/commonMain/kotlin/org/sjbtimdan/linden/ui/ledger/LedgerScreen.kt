@@ -30,8 +30,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
@@ -66,6 +68,8 @@ fun LedgerScreen(
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
     }
+
+    var descriptionFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -121,45 +125,50 @@ fun LedgerScreen(
                     onDescriptionChange = viewModel::onDescriptionChange,
                     onCreatedAtChange = viewModel::onCreatedAtChange,
                     onNavigateToSettings = onNavigateToSettings,
+                    // The form collapses to description + chips while focused; hide the
+                    // action buttons too so everything fits above the keyboard.
+                    onDescriptionFocusChange = { descriptionFocused = it },
                     descriptionSuggestions = descriptionSuggestions,
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        if (!descriptionFocused) {
+            Spacer(modifier = Modifier.height(8.dp))
 
-        SnackbarHost(hostState = snackbarHostState)
+            SnackbarHost(hostState = snackbarHostState)
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = {
-                    if (viewModel.saveDraft()) {
-                        scope.launch { snackbarHostState.showSnackbar("Added") }
-                    }
-                },
-                enabled = draft?.isValid(accounts) == true,
-                modifier = Modifier.weight(1f),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Add")
-            }
+                Button(
+                    onClick = {
+                        if (viewModel.saveDraft()) {
+                            scope.launch { snackbarHostState.showSnackbar("Added") }
+                        }
+                    },
+                    enabled = draft?.isValid(accounts) == true,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Add")
+                }
 
-            OutlinedButton(
-                onClick = viewModel::clearDraft,
-                enabled = draft != null,
-                modifier = Modifier.weight(1f),
-            ) {
-                Text("Clear")
+                OutlinedButton(
+                    onClick = viewModel::clearDraft,
+                    enabled = draft != null,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("Clear")
+                }
             }
         }
     }

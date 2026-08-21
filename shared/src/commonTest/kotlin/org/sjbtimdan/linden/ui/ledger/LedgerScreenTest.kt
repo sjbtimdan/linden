@@ -75,6 +75,9 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("Description (optional)").performTextInput("Coffee")
+            // typing the description collapses the form; tapping the already-selected
+            // type drops focus and brings the buttons back
+            onNodeWithText("Expense").performClick()
             onNodeWithText("Add").performClick()
 
             onNodeWithText("Added").assertIsDisplayed()
@@ -101,6 +104,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Amount").performTextInput("12.50")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Description (optional)").performTextInput("Lunch")
+            onNodeWithText("Expense").performClick()
             onNodeWithText("Add").assertIsEnabled()
 
             onNodeWithText("Clear").performClick()
@@ -343,10 +347,10 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            // clear the prefilled description so suggestions can be verified independently
-            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Description (optional)").performClick()
+            // clear the prefilled description so suggestions can be verified independently;
+            // clearing focuses the field, which collapses the rest of the form
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
 
             waitForText("Coffee")
         }
@@ -363,14 +367,15 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Description (optional)").performClick()
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             waitForText("Coffee")
 
             onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            // the chip row is dismissed once a suggestion is picked
+            onAllNodesWithText("Coffee").assertCountEquals(1)
         }
     }
 
@@ -385,20 +390,18 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Description (optional)").performClick()
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             waitForText("Coffee")
 
             onNodeWithText("Description (optional)").assertIsFocused()
 
-            // tapping another field drops focus from description and closes its suggestions
-            onNodeWithText("Amount").performTouchInput { click() }
+            // focusing the description collapses the rest of the form; tapping the type
+            // selector drops focus and brings the fields back
+            onNodeWithText("Expense").performClick()
 
             onNodeWithText("Description (optional)").assertIsNotFocused()
             onNodeWithText("Coffee").assertDoesNotExist()
-            // the tapped field takes focus and stays typeable
-            onNodeWithText("Amount").assertIsFocused()
             onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
         }
     }
@@ -415,9 +418,8 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Cocoa")
-            onNode(hasSetTextAction() and hasText("Cocoa")).performTextClearance()
             onNodeWithText("Amount").performTextInput("4.50")
-            onNodeWithText("Description (optional)").performClick()
+            onNode(hasSetTextAction() and hasText("Cocoa")).performTextClearance()
             waitForText("Coffee")
 
             onNodeWithText("Description (optional)").performTextInput("cof")

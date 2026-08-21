@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -15,11 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,6 +66,7 @@ fun EntryForm(
     onDescriptionChange: (String) -> Unit,
     onCreatedAtChange: (Instant) -> Unit,
     onNavigateToSettings: () -> Unit,
+    onDescriptionFocusChange: (Boolean) -> Unit = {},
     descriptionSuggestions: List<String> = emptyList(),
 ) {
     val visibleCategories = when (state.type) {
@@ -87,184 +83,170 @@ fun EntryForm(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
+    // While the description field is focused the rest of the form collapses so the
+    // field and its suggestion chips get the whole area above the keyboard.
+    var descriptionFocused by remember { mutableStateOf(false) }
+
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        OutlinedTextField(
-            value = state.amountText,
-            onValueChange = onAmountChange,
-            label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            trailingIcon = if (state.amountText.isNotEmpty()) {
-                { IconButton(onClick = { onAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-            } else null,
-            suffix = fromAccount?.let { account ->
-                { Text(account.currency.symbol) }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        if (state.type == EntryType.Transfer) {
-            Spacer(modifier = Modifier.height(16.dp))
-            if (accounts.isEmpty()) {
-                MissingFieldLink(
-                    label = "From account",
-                    text = "Please enter account",
-                    onClick = onNavigateToSettings,
-                )
-            } else {
-                DropdownField(
-                    label = "From account",
-                    selected = accounts.firstOrNull { it.id == state.accountId },
-                    options = accounts,
-                    optionLabel = { it.name },
-                    onSelect = { onAccountChange(it.id) },
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            if (accounts.size < 2) {
-                MissingFieldLink(
-                    label = "To account",
-                    text = if (accounts.isEmpty()) {
-                        "Please enter account"
-                    } else {
-                        "Please add a second account"
-                    },
-                    onClick = onNavigateToSettings,
-                )
-            } else {
-                DropdownField(
-                    label = "To account",
-                    selected = accounts.firstOrNull { it.id == state.toAccountId },
-                    options = accounts.filter { it.id != state.accountId },
-                    optionLabel = { it.name },
-                    onSelect = { onToAccountChange(it.id) },
-                )
-            }
-            if (showReceivedAmount) {
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = state.toAmountText,
-                    onValueChange = onToAmountChange,
-                    label = { Text("Amount (received)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    trailingIcon = if (state.toAmountText.isNotEmpty()) {
-                        { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                    } else null,
-                    suffix = toAccount.let { account ->
-                        { Text(account.currency.symbol) }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        } else {
-            Spacer(modifier = Modifier.height(16.dp))
-            if (visibleCategories.isEmpty()) {
-                MissingFieldLink(
-                    label = "Category",
-                    text = "Please enter category",
-                    onClick = onNavigateToSettings,
-                )
-            } else {
-                DropdownField(
-                    label = "Category",
-                    selected = visibleCategories.firstOrNull { it.id == state.categoryId },
-                    options = visibleCategories,
-                    optionLabel = { it.name },
-                    onSelect = { onCategoryChange(it.id) },
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            if (accounts.isEmpty()) {
-                MissingFieldLink(
-                    label = "Account",
-                    text = "Please enter account",
-                    onClick = onNavigateToSettings,
-                )
-            } else {
-                DropdownField(
-                    label = "Account",
-                    selected = accounts.firstOrNull { it.id == state.accountId },
-                    options = accounts,
-                    optionLabel = { it.name },
-                    onSelect = { onAccountChange(it.id) },
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        var descriptionExpanded by remember { mutableStateOf(false) }
-        val keyboardController = LocalSoftwareKeyboardController.current
-        val focusManager = LocalFocusManager.current
-        val visibleSuggestions = state.description.trim().let { query ->
-            if (query.isEmpty()) descriptionSuggestions
-            else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
-        }
-        val expanded = descriptionExpanded && visibleSuggestions.isNotEmpty()
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { descriptionExpanded = it },
-        ) {
+        if (!descriptionFocused) {
             OutlinedTextField(
-                value = state.description,
-                onValueChange = onDescriptionChange,
-                label = { Text("Description (optional)") },
+                value = state.amountText,
+                onValueChange = onAmountChange,
+                label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
                 singleLine = true,
-                trailingIcon = {
-                    Row {
-                        if (state.description.isNotEmpty()) {
-                            IconButton(onClick = { onDescriptionChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear")
-                            }
-                        }
-                        if (descriptionSuggestions.isNotEmpty()) {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        }
-                    }
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                trailingIcon = if (state.amountText.isNotEmpty()) {
+                    { IconButton(onClick = { onAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                } else null,
+                suffix = fromAccount?.let { account ->
+                    { Text(account.currency.symbol) }
                 },
-                modifier = Modifier
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                    .onFocusChanged { descriptionExpanded = it.isFocused }
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
             )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = {
-                    descriptionExpanded = false
-                    // Outside taps land here (the popup is touch-modal on Android),
-                    // so this is where focus and the keyboard are actually dismissed.
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                },
-            ) {
-                visibleSuggestions.forEach { suggestion ->
-                    DropdownMenuItem(
-                        text = { Text(suggestion) },
-                        onClick = {
-                            onDescriptionChange(suggestion)
-                            descriptionExpanded = false
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
+
+            if (state.type == EntryType.Transfer) {
+                Spacer(modifier = Modifier.height(16.dp))
+                if (accounts.isEmpty()) {
+                    MissingFieldLink(
+                        label = "From account",
+                        text = "Please enter account",
+                        onClick = onNavigateToSettings,
+                    )
+                } else {
+                    DropdownField(
+                        label = "From account",
+                        selected = accounts.firstOrNull { it.id == state.accountId },
+                        options = accounts,
+                        optionLabel = { it.name },
+                        onSelect = { onAccountChange(it.id) },
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                if (accounts.size < 2) {
+                    MissingFieldLink(
+                        label = "To account",
+                        text = if (accounts.isEmpty()) {
+                            "Please enter account"
+                        } else {
+                            "Please add a second account"
                         },
+                        onClick = onNavigateToSettings,
+                    )
+                } else {
+                    DropdownField(
+                        label = "To account",
+                        selected = accounts.firstOrNull { it.id == state.toAccountId },
+                        options = accounts.filter { it.id != state.accountId },
+                        optionLabel = { it.name },
+                        onSelect = { onToAccountChange(it.id) },
+                    )
+                }
+                if (showReceivedAmount) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = state.toAmountText,
+                        onValueChange = onToAmountChange,
+                        label = { Text("Amount (received)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        trailingIcon = if (state.toAmountText.isNotEmpty()) {
+                            { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                        } else null,
+                        suffix = toAccount.let { account ->
+                            { Text(account.currency.symbol) }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+                if (visibleCategories.isEmpty()) {
+                    MissingFieldLink(
+                        label = "Category",
+                        text = "Please enter category",
+                        onClick = onNavigateToSettings,
+                    )
+                } else {
+                    DropdownField(
+                        label = "Category",
+                        selected = visibleCategories.firstOrNull { it.id == state.categoryId },
+                        options = visibleCategories,
+                        optionLabel = { it.name },
+                        onSelect = { onCategoryChange(it.id) },
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                if (accounts.isEmpty()) {
+                    MissingFieldLink(
+                        label = "Account",
+                        text = "Please enter account",
+                        onClick = onNavigateToSettings,
+                    )
+                } else {
+                    DropdownField(
+                        label = "Account",
+                        selected = accounts.firstOrNull { it.id == state.accountId },
+                        options = accounts,
+                        optionLabel = { it.name },
+                        onSelect = { onAccountChange(it.id) },
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Date & time",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(bottom = 8.dp),
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusManager = LocalFocusManager.current
+        val visibleSuggestions = state.description.trim().let { query ->
+            val matches = if (query.isEmpty()) descriptionSuggestions
+            else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+            matches.filterNot { it.equals(query, ignoreCase = true) }
+        }
+        OutlinedTextField(
+            value = state.description,
+            onValueChange = onDescriptionChange,
+            label = { Text("Description (optional)") },
+            singleLine = true,
+            trailingIcon = if (state.description.isNotEmpty()) {
+                { IconButton(onClick = { onDescriptionChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+            } else null,
+            modifier = Modifier
+                .onFocusChanged {
+                    descriptionFocused = it.isFocused
+                    onDescriptionFocusChange(it.isFocused)
+                }
+                .fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { showDatePicker = true }) {
-                Text(formatDate(state.createdAt, state.createdZone))
-            }
-            OutlinedButton(onClick = { showTimePicker = true }) {
-                Text(formatTime(state.createdAt, state.createdZone))
+        // Chips live in the layout instead of a popup so the keyboard can never cover them;
+        // they narrow as you type and disappear when focus moves elsewhere.
+        if (descriptionFocused && visibleSuggestions.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            DescriptionSuggestionChips(
+                suggestions = visibleSuggestions,
+                onSelect = { suggestion ->
+                    onDescriptionChange(suggestion)
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                },
+            )
+        }
+
+        if (!descriptionFocused) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Date & time",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { showDatePicker = true }) {
+                    Text(formatDate(state.createdAt, state.createdZone))
+                }
+                OutlinedButton(onClick = { showTimePicker = true }) {
+                    Text(formatTime(state.createdAt, state.createdZone))
+                }
             }
         }
     }
