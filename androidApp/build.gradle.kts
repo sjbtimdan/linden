@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.detekt)
 }
 
 kotlin {
@@ -17,6 +18,16 @@ dependencies {
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    detektPlugins(libs.detekt.ktlint.wrapper)
+}
+
+detekt {
+    toolVersion = "2.0.0-alpha.6"
+    config.setFrom("$rootDir/detekt.yml")
+    buildUponDefaultConfig = true
+    // Scope: formatting only (ktlint-wrapper ruleset from detektPlugins).
+    disableDefaultRuleSets = true
 }
 
 android {

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.sqldelight)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.kover)
+    alias(libs.plugins.detekt)
 }
 
 kotlin {
@@ -91,6 +92,24 @@ sqldelight {
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+    detektPlugins(libs.detekt.ktlint.wrapper)
+}
+
+detekt {
+    toolVersion = "2.0.0-alpha.6"
+    config.setFrom("$rootDir/detekt.yml")
+    buildUponDefaultConfig = true
+    // Scope: formatting only (ktlint-wrapper ruleset from detektPlugins).
+    disableDefaultRuleSets = true
+    // The plain `detekt` task has no sources by default in KMP; wire up the
+    // source-set dirs so `./gradlew detekt [--auto-correct]` covers everything.
+    source.setFrom(
+        "src/commonMain/kotlin",
+        "src/commonTest/kotlin",
+        "src/jvmMain/kotlin",
+        "src/jvmTest/kotlin",
+        "src/androidMain/kotlin",
+    )
 }
 
 kover {

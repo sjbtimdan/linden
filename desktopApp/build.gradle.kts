@@ -5,6 +5,7 @@ plugins {
     kotlin("jvm")
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.detekt)
 }
 
 kotlin {
@@ -22,6 +23,15 @@ dependencies {
     implementation(project(":shared"))
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.components.resources)
+    detektPlugins(libs.detekt.ktlint.wrapper)
+}
+
+detekt {
+    toolVersion = "2.0.0-alpha.6"
+    config.setFrom("$rootDir/detekt.yml")
+    buildUponDefaultConfig = true
+    // Scope: formatting only (ktlint-wrapper ruleset from detektPlugins).
+    disableDefaultRuleSets = true
 }
 
 compose.resources {
