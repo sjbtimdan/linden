@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.history
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -54,7 +55,7 @@ class HistoryScreenTest : StringSpec({
         }
     }
 
-    "type filter chip narrows the list" {
+    "type filter narrows the list" {
         withHistoryViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -67,6 +68,7 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Coffee").assertIsDisplayed()
             onNodeWithText("Refund").assertIsDisplayed()
 
+            onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
@@ -277,7 +279,7 @@ class HistoryScreenTest : StringSpec({
         }
     }
 
-    "accounts chip switches to the accounts view and back" {
+    "view dropdown switches to the accounts view and back" {
         withHistoryViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
@@ -288,25 +290,27 @@ class HistoryScreenTest : StringSpec({
 
             onNodeWithText("Refund").assertIsDisplayed()
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Accounts").performClick()
 
             // Accounts view: the balance row replaces the entries, but the search
-            // field and the type chips stay, like the other filters.
+            // field stays; the type filter is disabled because it does not apply.
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertIsDisplayed()
             onNodeWithText("+ 20.00 CHF").assertIsDisplayed()
             onNodeWithText("Refund").assertDoesNotExist()
             onNodeWithText("Search").assertIsDisplayed()
-            onNodeWithText("Expense").assertIsDisplayed()
+            onNodeWithTag("typeFilterDropdown").assertIsNotEnabled()
 
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Entries").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertDoesNotExist()
         }
     }
 
-    "type chips in the accounts view switch back to filtered entries" {
+    "type filter is disabled in the accounts view and preserved across switches" {
         withHistoryViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -316,12 +320,24 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
-            onNodeWithText("20.00 CHF").assertDoesNotExist()
+
+            // The type filter does not apply to balances, so its dropdown is disabled.
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithTag("typeFilterDropdown").assertIsNotEnabled()
+
+            // Switching back keeps the filter.
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Entries").performClick()
+
+            onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
         }
     }
 
@@ -340,6 +356,7 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Accounts").performClick()
             onNodeWithText("Search").performTextInput("usd")
 
@@ -359,6 +376,7 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Accounts").performClick()
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
@@ -380,13 +398,14 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Accounts").performClick()
 
             onNodeWithText("No accounts yet.").assertIsDisplayed()
         }
     }
 
-    "categories chip switches to the categories view and back" {
+    "view dropdown switches to the categories view and back" {
         withHistoryViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -397,15 +416,17 @@ class HistoryScreenTest : StringSpec({
 
             onNodeWithText("Coffee").assertIsDisplayed()
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Categories").performClick()
 
             onNodeWithText("Groceries").assertIsDisplayed()
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
             onNodeWithText("Coffee").assertDoesNotExist()
             onNodeWithText("Search").assertIsDisplayed()
-            onNodeWithText("Expense").assertIsDisplayed()
+            onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
 
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Entries").performClick()
 
             onNodeWithText("Coffee").assertIsDisplayed()
             onNodeWithText("1 entry").assertDoesNotExist()
@@ -418,6 +439,7 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Categories").performClick()
 
             onNodeWithText("No categories yet.").assertIsDisplayed()
@@ -436,6 +458,7 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Categories").performClick()
             onNodeWithText("Search").performTextInput("salary")
 
@@ -455,6 +478,7 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
+            onNodeWithTag("viewModeDropdown").performClick()
             onNodeWithText("Categories").performClick()
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()

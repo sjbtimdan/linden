@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.ui.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
@@ -102,54 +101,26 @@ fun HistoryScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        FlowRow(
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            FilterChip(
-                selected = viewMode == HistoryViewMode.Entries && typeFilter == null,
-                onClick = {
-                    viewModel.setViewMode(HistoryViewMode.Entries)
-                    viewModel.setTypeFilter(null)
-                },
-                label = { Text("All", style = MaterialTheme.typography.labelMedium) },
+            // The type filter only applies to entries and category totals, so it
+            // is disabled while the accounts view is showing period-end balances.
+            ChipDropdown(
+                selected = typeFilter,
+                options = typeFilterOptions,
+                optionLabel = { it?.displayName() ?: "All" },
+                onSelect = viewModel::setTypeFilter,
+                modifier = Modifier.testTag("typeFilterDropdown"),
+                enabled = viewMode != HistoryViewMode.Accounts,
             )
-            EntryType.entries.forEach { type ->
-                FilterChip(
-                    selected = viewMode == HistoryViewMode.Entries && typeFilter == type,
-                    onClick = {
-                        viewModel.setViewMode(HistoryViewMode.Entries)
-                        viewModel.setTypeFilter(type)
-                    },
-                    label = { Text(type.displayName(), style = MaterialTheme.typography.labelMedium) },
-                )
-            }
-            FilterChip(
-                selected = viewMode == HistoryViewMode.Accounts,
-                onClick = {
-                    viewModel.setViewMode(
-                        if (viewMode == HistoryViewMode.Accounts) {
-                            HistoryViewMode.Entries
-                        } else {
-                            HistoryViewMode.Accounts
-                        },
-                    )
-                },
-                label = { Text("Accounts", style = MaterialTheme.typography.labelMedium) },
-            )
-            FilterChip(
-                selected = viewMode == HistoryViewMode.Categories,
-                onClick = {
-                    viewModel.setViewMode(
-                        if (viewMode == HistoryViewMode.Categories) {
-                            HistoryViewMode.Entries
-                        } else {
-                            HistoryViewMode.Categories
-                        },
-                    )
-                },
-                label = { Text("Categories", style = MaterialTheme.typography.labelMedium) },
+            ChipDropdown(
+                selected = viewMode,
+                options = HistoryViewMode.entries,
+                optionLabel = { it.displayName() },
+                onSelect = viewModel::setViewMode,
+                modifier = Modifier.testTag("viewModeDropdown"),
             )
         }
 
@@ -303,6 +274,15 @@ internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> =
             add(EntryListItem(entry))
         }
     }
+
+/** All options of the type filter dropdown: the "All" (no filter) state plus every entry type. */
+private val typeFilterOptions: List<EntryType?> = listOf(null) + EntryType.entries
+
+private fun HistoryViewMode.displayName(): String = when (this) {
+    HistoryViewMode.Entries -> "Entries"
+    HistoryViewMode.Accounts -> "Accounts"
+    HistoryViewMode.Categories -> "Categories"
+}
 
 @Composable
 private fun TotalLabel(
