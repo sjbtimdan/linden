@@ -46,3 +46,35 @@ fun parseAmount(input: String): Long? {
     val minor = if (separatorIsGrouping) 0L else fractionPart.padEnd(2, '0').toLongOrNull() ?: return null
     return major * 100 + minor
 }
+
+private const val MILLION_MINOR = 100_000_000L // 1,000,000.00 in minor units
+private const val BILLION_MINOR = 100_000_000_000L // 1,000,000,000.00 in minor units
+
+/**
+ * Formats [amount] (minor units) compactly when it is at least one million, e.g.
+ * 100_000_000 == "1m", 125_000_000 == "1.25m", 1_836_523_700 == "18.365m",
+ * 123_456_789_000 == "1.235b". Trailing zeros are trimmed and the decimal
+ * separator is always '.'. Smaller amounts fall back to [formatAmount].
+ * Display-only: the result is not parseable by [parseAmount], so never use it
+ * to pre-fill edit fields.
+ */
+fun formatAmountCompact(amount: Long): String {
+    val negative = amount < 0
+    val absolute = if (negative) -amount else amount
+    val text = when {
+        absolute >= BILLION_MINOR -> compact(absolute, BILLION_MINOR, "b")
+        absolute >= MILLION_MINOR -> compact(absolute, MILLION_MINOR, "m")
+        else -> return formatAmount(amount)
+    }
+    return if (negative) "-$text" else text
+}
+
+private fun compact(absolute: Long, unitMinor: Long, suffix: String): String {
+    var whole = absolute / unitMinor
+    var decimals = (absolute % unitMinor * 1000 + unitMinor / 2) / unitMinor
+    if (decimals == 1000L) {
+        whole++
+        decimals = 0
+    }
+    return if (decimals == 0L) "$whole$suffix" else "$whole.${decimals.toString().trimEnd('0')}$suffix"
+}

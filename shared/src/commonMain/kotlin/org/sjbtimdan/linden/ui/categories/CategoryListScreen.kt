@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.theme.categoryColor
 
 private data class CategoryDialogState(
@@ -107,7 +107,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = totalMinor?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                        text = totalMinor?.let { "${formatAmountCompact(it)} ${defaultCurrency.symbol}" } ?: "–",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -199,7 +199,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                             }
                         }
                         Text(
-                            text = item.balance?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                            text = item.balance?.let { "${formatAmountCompact(it)} ${defaultCurrency.symbol}" } ?: "–",
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Spacer(modifier = Modifier.width(8.dp))

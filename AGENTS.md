@@ -56,7 +56,9 @@ coverage is only enforced there because the Android target runs device tests onl
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. All currencies
   (CHF/EUR/GBP/HKD/JPY/SGD/USD) use a 2-decimal minor unit. `formatAmount` in `ui/entry/MoneyFormat.kt` is an
   `expect`/`actual` using the platform locale (`java.text.NumberFormat`, thousands grouping); `parseAmount` is pure
-  common code that accepts grouped input ("1,000", "1.000", "1 000"). `amount` columns in `.sq` files are `INTEGER`.
+  common code that accepts grouped input ("1,000", "1.000", "1 000"). `formatAmountCompact` (pure common code) shortens
+  read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b" (fixed '.', trimmed zeros, half-up rounding);
+  never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
 - `Entry` is a sealed interface (`ExpenseEntry` / `IncomeEntry` / `TransferEntry`) in `model/Entry.kt`, carrying
   `createdAt: Instant` and `createdZone: TimeZone`. Entries carry no currency — it's defined by `account.currency`
   (`toAccount.currency` for transfers). Transfers carry `toAccount`/`toAmount` (`toAmount` is null when both accounts

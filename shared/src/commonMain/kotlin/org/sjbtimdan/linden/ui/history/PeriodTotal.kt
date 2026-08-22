@@ -4,7 +4,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
-import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -73,5 +73,5 @@ fun formatTotal(minor: Long, currency: Currency): String {
         minor > 0 -> "+ "
         else -> ""
     }
-    return "$sign${formatAmount(abs(minor))} ${currency.symbol}"
+    return "$sign${formatAmountCompact(abs(minor))} ${currency.symbol}"
 }

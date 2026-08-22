@@ -52,6 +52,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.parseAmount
 
 private data class AccountDialogState(
@@ -109,7 +110,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = totalMinor?.let { "${formatAmount(it)} ${defaultCurrency.symbol}" } ?: "–",
+                        text = totalMinor?.let { "${formatAmountCompact(it)} ${defaultCurrency.symbol}" } ?: "–",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -197,7 +198,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                             )
                         }
                         Text(
-                            text = "${formatAmount(item.balance)} ${account.currency.symbol}",
+                            text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

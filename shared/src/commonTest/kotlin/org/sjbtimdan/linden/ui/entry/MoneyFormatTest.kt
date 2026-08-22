@@ -44,4 +44,16 @@ class MoneyFormatTest : StringSpec({
             parseAmount(formatAmount(amount)) shouldBe amount
         }
     }
+
+    "formatAmountCompact shortens millions and billions" {
+        formatAmountCompact(0) shouldBe "0.00"
+        formatAmountCompact(99_999_999) shouldBe "999,999.99"
+        formatAmountCompact(100_000_000) shouldBe "1m"
+        formatAmountCompact(125_000_000) shouldBe "1.25m"
+        formatAmountCompact(1_836_523_700) shouldBe "18.365m"
+        formatAmountCompact(199_999_999) shouldBe "2m"
+        formatAmountCompact(-1_836_523_700) shouldBe "-18.365m"
+        formatAmountCompact(123_456_789_000L) shouldBe "1.235b"
+        formatAmountCompact(-1_234_567_890_000L) shouldBe "-12.346b"
+    }
 })

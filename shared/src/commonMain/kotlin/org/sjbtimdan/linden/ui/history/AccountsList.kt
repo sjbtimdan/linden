@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
-import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 
 /** The account balances at the end of the selected period, or the empty state. */
 @Composable
@@ -65,7 +65,7 @@ fun AccountsList(
                         )
                     }
                     Text(
-                        text = "${formatAmount(item.balance)} ${account.currency.symbol}",
+                        text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
