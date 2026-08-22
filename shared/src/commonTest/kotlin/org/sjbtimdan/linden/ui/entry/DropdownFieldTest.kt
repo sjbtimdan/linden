@@ -8,6 +8,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -187,11 +188,11 @@ class DropdownFieldTest : StringSpec({
     "search query resets when the menu is reopened" {
         onTestMain {
             runComposeUiTest {
-                var selected: String? = null
                 setContent {
+                    var selected by remember { mutableStateOf<String?>(null) }
                     DropdownField(
                         label = "Account",
-                        selected = null,
+                        selected = selected,
                         options = accountOptions,
                         optionLabel = { it },
                         onSelect = { selected = it },
@@ -202,8 +203,9 @@ class DropdownFieldTest : StringSpec({
                 onNode(hasSetTextAction()).performTextInput("sav")
                 onNodeWithText("Savings").performClick()
 
-                selected shouldBe "Savings"
-                onNodeWithText("Account").performClick()
+                // The label floats onto the border once the field holds text, so
+                // click the field itself to reopen.
+                onNode(hasSetTextAction() and hasText("Savings")).performClick()
 
                 accountOptions.forEach { option ->
                     onNodeWithText(option).assertIsDisplayed()

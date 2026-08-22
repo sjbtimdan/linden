@@ -69,7 +69,7 @@ fun LedgerScreen(
         viewModel.seedDraft()
     }
 
-    var descriptionFocused by remember { mutableStateOf(false) }
+    var fieldFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -125,15 +125,15 @@ fun LedgerScreen(
                     onDescriptionChange = viewModel::onDescriptionChange,
                     onCreatedAtChange = viewModel::onCreatedAtChange,
                     onNavigateToSettings = onNavigateToSettings,
-                    // The form collapses to description + chips while focused; hide the
+                    // The form collapses to the focused field + its options; hide the
                     // action buttons too so everything fits above the keyboard.
-                    onDescriptionFocusChange = { descriptionFocused = it },
+                    onFieldFocusChange = { fieldFocused = it },
                     descriptionSuggestions = descriptionSuggestions,
                 )
             }
         }
 
-        if (!descriptionFocused) {
+        if (!fieldFocused) {
             Spacer(modifier = Modifier.height(8.dp))
 
             SnackbarHost(hostState = snackbarHostState)

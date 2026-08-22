@@ -27,6 +27,7 @@ import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,7 +67,7 @@ fun EntryForm(
     onDescriptionChange: (String) -> Unit,
     onCreatedAtChange: (Instant) -> Unit,
     onNavigateToSettings: () -> Unit,
-    onDescriptionFocusChange: (Boolean) -> Unit = {},
+    onFieldFocusChange: (Boolean) -> Unit = {},
     descriptionSuggestions: List<String> = emptyList(),
 ) {
     val visibleCategories = when (state.type) {
@@ -83,12 +84,20 @@ fun EntryForm(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // While the description field is focused the rest of the form collapses so the
-    // field and its suggestion chips get the whole area above the keyboard.
+    // While a field with inline options (description, category, accounts) is focused
+    // the rest of the form collapses so that field and its options get the whole
+    // area above the keyboard. The focused field itself must stay mounted —
+    // unmounting it would drop focus — so each section only hides while a
+    // *different* one is active.
     var descriptionFocused by remember { mutableStateOf(false) }
+    var focusedDropdown by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(descriptionFocused, focusedDropdown) {
+        onFieldFocusChange(descriptionFocused || focusedDropdown != null)
+    }
+    val editing = descriptionFocused || focusedDropdown != null
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-        if (!descriptionFocused) {
+        if (!editing) {
             OutlinedTextField(
                 value = state.amountText,
                 onValueChange = onAmountChange,
@@ -103,8 +112,10 @@ fun EntryForm(
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
 
-            if (state.type == EntryType.Transfer) {
+        if (state.type == EntryType.Transfer) {
+            if (!editing || focusedDropdown == "from") {
                 Spacer(modifier = Modifier.height(16.dp))
                 if (accounts.isEmpty()) {
                     MissingFieldLink(
@@ -119,8 +130,11 @@ fun EntryForm(
                         options = accounts,
                         optionLabel = { it.name },
                         onSelect = { onAccountChange(it.id) },
+                        onFocusChange = { focusedDropdown = if (it) "from" else null },
                     )
                 }
+            }
+            if (!editing || focusedDropdown == "to") {
                 Spacer(modifier = Modifier.height(16.dp))
                 if (accounts.size < 2) {
                     MissingFieldLink(
@@ -139,26 +153,29 @@ fun EntryForm(
                         options = accounts.filter { it.id != state.accountId },
                         optionLabel = { it.name },
                         onSelect = { onToAccountChange(it.id) },
+                        onFocusChange = { focusedDropdown = if (it) "to" else null },
                     )
                 }
-                if (showReceivedAmount) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedTextField(
-                        value = state.toAmountText,
-                        onValueChange = onToAmountChange,
-                        label = { Text("Amount (received)") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        trailingIcon = if (state.toAmountText.isNotEmpty()) {
-                            { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                        } else null,
-                        suffix = toAccount.let { account ->
-                            { Text(account.currency.symbol) }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            } else {
+            }
+            if (!editing && showReceivedAmount) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = state.toAmountText,
+                    onValueChange = onToAmountChange,
+                    label = { Text("Amount (received)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    trailingIcon = if (state.toAmountText.isNotEmpty()) {
+                        { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                    } else null,
+                    suffix = toAccount.let { account ->
+                        { Text(account.currency.symbol) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        } else {
+            if (!editing || focusedDropdown == "category") {
                 Spacer(modifier = Modifier.height(16.dp))
                 if (visibleCategories.isEmpty()) {
                     MissingFieldLink(
@@ -173,8 +190,11 @@ fun EntryForm(
                         options = visibleCategories,
                         optionLabel = { it.name },
                         onSelect = { onCategoryChange(it.id) },
+                        onFocusChange = { focusedDropdown = if (it) "category" else null },
                     )
                 }
+            }
+            if (!editing || focusedDropdown == "account") {
                 Spacer(modifier = Modifier.height(16.dp))
                 if (accounts.isEmpty()) {
                     MissingFieldLink(
@@ -189,10 +209,13 @@ fun EntryForm(
                         options = accounts,
                         optionLabel = { it.name },
                         onSelect = { onAccountChange(it.id) },
+                        onFocusChange = { focusedDropdown = if (it) "account" else null },
                     )
                 }
             }
+        }
 
+        if (!editing) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
@@ -212,10 +235,7 @@ fun EntryForm(
                 { IconButton(onClick = { onDescriptionChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
             } else null,
             modifier = Modifier
-                .onFocusChanged {
-                    descriptionFocused = it.isFocused
-                    onDescriptionFocusChange(it.isFocused)
-                }
+                .onFocusChanged { descriptionFocused = it.isFocused }
                 .fillMaxWidth(),
         )
         // Chips live in the layout instead of a popup so the keyboard can never cover them;
@@ -232,7 +252,7 @@ fun EntryForm(
             )
         }
 
-        if (!descriptionFocused) {
+        if (!editing) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(

@@ -312,7 +312,9 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Main").performClick()
 
             onNodeWithText("To account").performClick()
-            onAllNodesWithText("Main").assertCountEquals(1)
+            // Focusing To account collapses the form, so the From field is gone too;
+            // Main must appear nowhere, i.e. it is never offered as a to-account option.
+            onNodeWithText("Main").assertDoesNotExist()
             onNodeWithText("Savings").assertIsDisplayed()
         }
     }
