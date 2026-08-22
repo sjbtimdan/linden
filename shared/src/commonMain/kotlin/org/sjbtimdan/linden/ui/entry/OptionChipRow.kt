@@ -12,35 +12,41 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DescriptionSuggestionChips(
-    suggestions: List<String>,
-    onSelect: (String) -> Unit,
+fun <T> OptionChipRow(
+    options: List<T>,
+    optionLabel: (T) -> String,
+    onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    isSelected: (T) -> Boolean = { false },
 ) {
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(suggestions, key = { it }) { suggestion ->
+        items(options) { option ->
+            val isSelectedChip = isSelected(option)
             // A bare tap handler instead of a Material chip: focusable chip internals
             // steal focus from the text field on press, which unmounts this row
             // mid-gesture before the click ever completes.
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isSelectedChip) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = if (isSelectedChip) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .semantics(mergeDescendants = true) {}
-                    .pointerInput(suggestion) {
-                        detectTapGestures { onSelect(suggestion) }
+                    .semantics(mergeDescendants = true) {
+                        selected = isSelectedChip
+                    }
+                    .pointerInput(option) {
+                        detectTapGestures { onSelect(option) }
                     },
             ) {
                 Text(
-                    text = suggestion,
+                    text = optionLabel(option),
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )

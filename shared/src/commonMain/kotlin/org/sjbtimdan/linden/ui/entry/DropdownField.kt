@@ -56,7 +56,7 @@ fun <T> DropdownField(
     // Options render in-layout instead of a popup so the keyboard can never cover them.
     if (focused && visibleOptions.isNotEmpty()) {
         Spacer(modifier = Modifier.height(8.dp))
-        DropdownOptionList(
+        OptionChipRow(
             options = visibleOptions,
             optionLabel = optionLabel,
             isSelected = { it == selected },

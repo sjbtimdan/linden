@@ -219,37 +219,42 @@ fun EntryForm(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        val keyboardController = LocalSoftwareKeyboardController.current
-        val focusManager = LocalFocusManager.current
-        val visibleSuggestions = state.description.trim().let { query ->
-            val matches = if (query.isEmpty()) descriptionSuggestions
-            else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
-            matches.filterNot { it.equals(query, ignoreCase = true) }
-        }
-        OutlinedTextField(
-            value = state.description,
-            onValueChange = onDescriptionChange,
-            label = { Text("Description (optional)") },
-            singleLine = true,
-            trailingIcon = if (state.description.isNotEmpty()) {
-                { IconButton(onClick = { onDescriptionChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-            } else null,
-            modifier = Modifier
-                .onFocusChanged { descriptionFocused = it.isFocused }
-                .fillMaxWidth(),
-        )
-        // Chips live in the layout instead of a popup so the keyboard can never cover them;
-        // they narrow as you type and disappear when focus moves elsewhere.
-        if (descriptionFocused && visibleSuggestions.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            DescriptionSuggestionChips(
-                suggestions = visibleSuggestions,
-                onSelect = { suggestion ->
-                    onDescriptionChange(suggestion)
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                },
+        // While an account/category picker is expanded only that picker and its
+        // chips show; the description would just be dead space beneath them.
+        if (focusedDropdown == null) {
+            val keyboardController = LocalSoftwareKeyboardController.current
+            val focusManager = LocalFocusManager.current
+            val visibleSuggestions = state.description.trim().let { query ->
+                val matches = if (query.isEmpty()) descriptionSuggestions
+                else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+                matches.filterNot { it.equals(query, ignoreCase = true) }
+            }
+            OutlinedTextField(
+                value = state.description,
+                onValueChange = onDescriptionChange,
+                label = { Text("Description (optional)") },
+                singleLine = true,
+                trailingIcon = if (state.description.isNotEmpty()) {
+                    { IconButton(onClick = { onDescriptionChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
+                } else null,
+                modifier = Modifier
+                    .onFocusChanged { descriptionFocused = it.isFocused }
+                    .fillMaxWidth(),
             )
+            // Chips live in the layout instead of a popup so the keyboard can never cover them;
+            // they narrow as you type and disappear when focus moves elsewhere.
+            if (descriptionFocused && visibleSuggestions.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OptionChipRow(
+                    options = visibleSuggestions,
+                    optionLabel = { it },
+                    onSelect = { suggestion ->
+                        onDescriptionChange(suggestion)
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    },
+                )
+            }
         }
 
         if (!editing) {
