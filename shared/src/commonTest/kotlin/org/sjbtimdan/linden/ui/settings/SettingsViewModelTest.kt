@@ -78,6 +78,51 @@ class SettingsViewModelTest : StringSpec({
         }
     }
 
+    "importIvy reports splitTransactions when a transaction's currency conflicts with its account" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            val json = """
+                {
+                  "accounts": [
+                    {"id": "a1", "name": "HSBC", "currency": "USD"}
+                  ],
+                  "categories": [
+                    {"id": "c1", "name": "Food"}
+                  ],
+                  "transactions": [
+                    {
+                      "id": "t1",
+                      "type": "EXPENSE",
+                      "amount": 10.0,
+                      "accountId": "a1",
+                      "categoryId": "c1",
+                      "currency": "EUR",
+                      "title": "EUR purchase",
+                      "dateTime": 946684800000
+                    }
+                  ]
+                }
+            """.trimIndent()
+
+            viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
+
+            val state = withTimeout(5_000) {
+                viewModel.importState.first { it is ImportState.Success }
+            }
+
+            val result = (state as ImportState.Success).result
+            result.accounts shouldBe 2
+            result.splitTransactions shouldBe 1
+        }
+    }
+
     "importIvy reports an error for an invalid backup and leaves the database untouched" {
         onTestMain {
             val database = lindenDatabase()

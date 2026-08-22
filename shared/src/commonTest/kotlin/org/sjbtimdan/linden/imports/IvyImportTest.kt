@@ -1095,4 +1095,289 @@ class IvyImporterSpec : StringSpec({
         entry.amount shouldBe 10_000
         entry.description shouldBe "Initial balance"
     }
+
+    "routes a transaction whose currency conflicts with its account's currency to a split account" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "currency": "EUR",
+                  "title": "EUR purchase",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 2
+        result.splitTransactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().map { it.name to it.currency } shouldBe listOf(
+            "HSBC" to "USD",
+            "IVY: HSBC (EUR)" to "EUR",
+        )
+        val entry = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<ExpenseEntry>()
+        entry.amount shouldBe 1_000
+        entry.account.name shouldBe "IVY: HSBC (EUR)"
+        entry.account.currency shouldBe Currency.EUR
+    }
+
+    "reuses a split account for every conflicting transaction from the same account" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "currency": "EUR",
+                  "title": "EUR purchase",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "EXPENSE",
+                  "amount": 20.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "currency": "EUR",
+                  "title": "Another EUR purchase",
+                  "dateTime": 946771200000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 2
+        result.splitTransactions shouldBe 2
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe
+            listOf("HSBC", "IVY: HSBC (EUR)")
+        EntryDao(database.entryQueries).getAll().first().map { it.account.name } shouldBe
+            listOf("IVY: HSBC (EUR)", "IVY: HSBC (EUR)")
+    }
+
+    "routes conflicting transactions to an account that already has the split name" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"},
+                {"id": "a2", "name": "IVY: HSBC (EUR)", "currency": "EUR"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "EXPENSE",
+                  "amount": 10.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "currency": "EUR",
+                  "title": "EUR purchase",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 2
+        result.splitTransactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe
+            listOf("HSBC", "IVY: HSBC (EUR)")
+        val entry = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<ExpenseEntry>()
+        entry.account.name shouldBe "IVY: HSBC (EUR)"
+        entry.account.currency shouldBe Currency.EUR
+    }
+
+    "routes a transfer to a split account when its currency conflicts with the source account's currency" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "toAmount": 500.0,
+                  "currency": "EUR",
+                  "toCurrency": "USD",
+                  "title": "EUR sweep",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 3
+        result.splitTransactions shouldBe 1
+        val transfer = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<TransferEntry>()
+        transfer.account.name shouldBe "IVY: HSBC (EUR)"
+        transfer.account.currency shouldBe Currency.EUR
+        transfer.toAccount.name shouldBe "Savings"
+        transfer.toAccount.currency shouldBe Currency.USD
+        transfer.toAmount shouldBe 50_000
+    }
+
+    "routes a transfer's target to a split account when toCurrency conflicts with the target account's currency" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "GBP"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "toAmount": 500.0,
+                  "currency": "USD",
+                  "toCurrency": "USD",
+                  "title": "USD credit",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 3
+        result.splitTransactions shouldBe 1
+        val transfer = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<TransferEntry>()
+        transfer.account.name shouldBe "HSBC"
+        transfer.toAccount.name shouldBe "IVY: Savings (USD)"
+        transfer.toAccount.currency shouldBe Currency.USD
+        transfer.toAmount shouldBe null
+    }
+
+    "applies a conflicting 'initial balance' entry to the split account" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "currency": "EUR",
+                  "title": "Initial balance",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 0
+        result.accounts shouldBe 2
+        result.splitTransactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().map { it.name to it.initialBalance } shouldBe
+            listOf("HSBC" to 0L, "IVY: HSBC (EUR)" to 100_000L)
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "counts a transfer with conflicting source and target currencies as one routed transaction" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "HSBC", "currency": "USD"},
+                {"id": "a2", "name": "Savings", "currency": "GBP"}
+              ],
+              "categories": [],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "TRANSFER",
+                  "amount": 500.0,
+                  "accountId": "a1",
+                  "toAccountId": "a2",
+                  "toAmount": 500.0,
+                  "currency": "EUR",
+                  "toCurrency": "USD",
+                  "title": "Doubly mismatched sweep",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.accounts shouldBe 4
+        result.splitTransactions shouldBe 1
+        val transfer = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<TransferEntry>()
+        transfer.account.name shouldBe "IVY: HSBC (EUR)"
+        transfer.account.currency shouldBe Currency.EUR
+        transfer.toAccount.name shouldBe "IVY: Savings (USD)"
+        transfer.toAccount.currency shouldBe Currency.USD
+        transfer.toAmount shouldBe 50_000
+    }
 })

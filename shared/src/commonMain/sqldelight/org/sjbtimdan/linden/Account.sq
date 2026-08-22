@@ -24,5 +24,11 @@ SELECT *
 FROM AccountEntity
 ORDER BY name ASC;
 
+selectByName:
+SELECT *
+FROM AccountEntity
+WHERE name = ?
+LIMIT 1;
+
 deleteAll:
 DELETE FROM AccountEntity;

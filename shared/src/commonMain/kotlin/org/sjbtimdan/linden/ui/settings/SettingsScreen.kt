@@ -185,12 +185,21 @@ fun SettingsScreen(
                 )
             }
 
-            is ImportState.Success -> ImportResultRow(
-                text = "Imported ${state.result.accounts} accounts, " +
-                    "${state.result.categories} categories, " +
-                    "${state.result.transactions} transactions",
-                onDismiss = viewModel::clearImportState,
-            )
+            is ImportState.Success -> {
+                val result = state.result
+                val note = if (result.splitTransactions > 0) {
+                    "\nNote: ${result.splitTransactions} transaction(s) were in a different currency " +
+                        "than their account and were imported into new \"IVY: …\" accounts."
+                } else {
+                    ""
+                }
+                ImportResultRow(
+                    text = "Imported ${result.accounts} accounts, " +
+                        "${result.categories} categories, " +
+                        "${result.transactions} transactions" + note,
+                    onDismiss = viewModel::clearImportState,
+                )
+            }
 
             is ImportState.Error -> ImportResultRow(
                 text = "Import failed: ${state.message}",

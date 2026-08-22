@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.imports
 
 import app.cash.sqldelight.async.coroutines.awaitAsOne
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -31,6 +32,7 @@ data class IvyImportResult(
     val accounts: Int,
     val categories: Int,
     val transactions: Int,
+    val splitTransactions: Int = 0,
 )
 
 class IvyImportException(message: String, cause: Throwable? = null) : Exception(message, cause)
@@ -68,9 +70,10 @@ class IvyImporter(private val database: LindenDatabase) {
             }
         }
         return IvyImportResult(
-            accounts = backup.accounts.size + importState.fallbackAccounts.size,
+            accounts = backup.accounts.size + importState.fallbackAccounts.size + importState.splitAccountsCreated,
             categories = backup.categories.size + if (importState.fallbackCategoryCreated) 1 else 0,
             transactions = importedTransactions,
+            splitTransactions = importState.splitTransactions,
         )
     }
 
@@ -103,9 +106,13 @@ class IvyImporter(private val database: LindenDatabase) {
         val currency = parseCurrency(account.currency) {
             "Account \"${account.name}\" has unknown currency \"${account.currency}\""
         }
-        database.accountQueries.insert(account.name, currency.name, 0)
+        return insertAccount(account.name, currency)
+    }
+
+    private suspend fun insertAccount(name: String, currency: Currency): ResolvedAccount {
+        database.accountQueries.insert(name, currency.name, 0)
         val id = database.importQueries.lastInsertId().awaitAsOne()
-        return ResolvedAccount(id, currency)
+        return ResolvedAccount(id, name, currency)
     }
 
     private suspend fun insertCategory(name: String, type: CategoryType): Long {
@@ -141,9 +148,51 @@ class IvyImporter(private val database: LindenDatabase) {
 
     private suspend fun fallbackAccount(importState: ImportState, currency: Currency): ResolvedAccount {
         importState.fallbackAccounts[currency]?.let { return it }
-        database.accountQueries.insert("Imported Account (${currency.name})", currency.name, 0)
-        val id = database.importQueries.lastInsertId().awaitAsOne()
-        return ResolvedAccount(id, currency).also { importState.fallbackAccounts[currency] = it }
+        return insertAccount("Imported Account (${currency.name})", currency)
+            .also { importState.fallbackAccounts[currency] = it }
+    }
+
+    /** Routes a transaction to a currency-specific split of its account ("IVY: <name> (<currency>)")
+     *  when the transaction's currency conflicts with the account's currency. */
+    private suspend fun splitAccount(
+        importState: ImportState,
+        account: ResolvedAccount,
+        currency: Currency,
+    ): ResolvedAccount {
+        val name = "IVY: ${account.name} (${currency.name})"
+        importState.splitAccounts[name]?.let { return it }
+        database.accountQueries.selectByName(name).awaitAsOneOrNull()?.let { existing ->
+            val existingCurrency = parseCurrency(existing.currency) {
+                "Account \"$name\" has unknown currency \"${existing.currency}\""
+            }
+            return ResolvedAccount(existing.id, name, existingCurrency).also {
+                importState.splitAccounts[name] = it
+            }
+        }
+        return insertAccount(name, currency).also {
+            importState.splitAccounts[name] = it
+            importState.splitAccountsCreated++
+        }
+    }
+
+    /** Resolves a transaction's account, falling back to a per-currency account for unknown ids and
+     *  splitting the account when the transaction's currency conflicts with the account's currency. */
+    private suspend fun resolveAccount(
+        importState: ImportState,
+        label: String,
+        what: String,
+        accountId: String,
+        currencyCode: String?,
+        defaultCurrency: Currency,
+        accounts: Map<String, ResolvedAccount>,
+    ): AccountResolution {
+        val currency = currencyCode?.let { code ->
+            parseCurrency(code) { "$what $label has unknown currency \"$code\"" }
+        }
+        val account = accounts[accountId]
+            ?: fallbackAccount(importState, currency ?: defaultCurrency)
+        if (currency == null || currency == account.currency) return AccountResolution(account, false)
+        return AccountResolution(splitAccount(importState, account, currency), true)
     }
 
     private suspend fun insertTransaction(
@@ -161,17 +210,18 @@ class IvyImporter(private val database: LindenDatabase) {
             "TRANSFER" -> EntryType.Transfer
             else -> throw IvyImportException("Transaction $label has unknown type \"${transaction.type}\"")
         }
-        val entryCurrency = transaction.currency?.let { code ->
-            parseCurrency(code) { "Transaction $label has unknown currency \"$code\"" }
-        }
-        val account = accounts[transaction.accountId]
-            ?: fallbackAccount(importState, entryCurrency ?: defaultCurrency)
+        val accountResolution = resolveAccount(
+            importState, label, "Transaction",
+            transaction.accountId, transaction.currency, defaultCurrency, accounts,
+        )
+        val account = accountResolution.account
 
         if (type != EntryType.Transfer &&
             (transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
                 transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true))
         ) {
             if (importState.initialBalanceApplied.add(account.id)) {
+                if (accountResolution.split) importState.splitTransactions++
                 val balance = transaction.amount
                 database.accountQueries.updateInitialBalance(
                     if (type == EntryType.Expense) -balance else balance,
@@ -181,6 +231,7 @@ class IvyImporter(private val database: LindenDatabase) {
             }
         }
 
+        var splitRouted = accountResolution.split
         val categoryId = when (type) {
             EntryType.Expense, EntryType.Income -> categoryId(importState, transaction, categories, backupCategories, required = true)
             EntryType.Transfer -> categoryId(importState, transaction, categories, backupCategories, required = false)
@@ -190,11 +241,12 @@ class IvyImporter(private val database: LindenDatabase) {
             EntryType.Transfer -> {
                 val targetId = transaction.toAccountId
                     ?: throw IvyImportException("Transfer $label has no toAccountId")
-                val toCurrencyOverride = transaction.toCurrency?.let { code ->
-                    parseCurrency(code) { "Transfer $label has unknown currency \"$code\"" }
-                }
-                val target = accounts[targetId]
-                    ?: fallbackAccount(importState, toCurrencyOverride ?: account.currency)
+                val targetResolution = resolveAccount(
+                    importState, label, "Transfer",
+                    targetId, transaction.toCurrency, account.currency, accounts,
+                )
+                splitRouted = splitRouted || targetResolution.split
+                val target = targetResolution.account
                 val targetAmount = if (account.currency == target.currency) {
                     null
                 } else {
@@ -205,6 +257,8 @@ class IvyImporter(private val database: LindenDatabase) {
             }
             EntryType.Expense, EntryType.Income -> null to null
         }
+
+        if (splitRouted) importState.splitTransactions++
 
         database.entryQueries.insert(
             type = type.name,
@@ -257,13 +311,18 @@ class IvyImporter(private val database: LindenDatabase) {
     private inline fun parseCurrency(code: String, message: () -> String): Currency =
         Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
 
-    private data class ResolvedAccount(val id: Long, val currency: Currency)
+    private data class ResolvedAccount(val id: Long, val name: String, val currency: Currency)
+
+    private data class AccountResolution(val account: ResolvedAccount, val split: Boolean)
 
     /** Per-import resolution data; created fresh for every [import] call so concurrent imports never share state. */
     private class ImportState {
         var fallbackCategoryId: Long? = null
         var fallbackCategoryCreated = false
         val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
+        val splitAccounts = mutableMapOf<String, ResolvedAccount>()
+        var splitAccountsCreated = 0
+        var splitTransactions = 0
         val initialBalanceApplied = mutableSetOf<Long>()
     }
 }
