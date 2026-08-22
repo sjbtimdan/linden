@@ -19,6 +19,11 @@ class MoneyFormatTest : StringSpec({
         parseAmount("1.000,00") shouldBe 100_000
         parseAmount("1 000,00") shouldBe 100_000
         parseAmount("1.000,5") shouldBe 100_050
+        parseAmount("1,000") shouldBe 100_000
+        parseAmount("1.000") shouldBe 100_000
+        parseAmount("1 000") shouldBe 100_000
+        parseAmount("12.345") shouldBe 1_234_500
+        parseAmount("1,000,000") shouldBe 100_000_000
     }
 
     "parseAmount rejects invalid input" {
@@ -26,11 +31,12 @@ class MoneyFormatTest : StringSpec({
         parseAmount("  ") shouldBe null
         parseAmount(".") shouldBe null
         parseAmount("abc") shouldBe null
-        parseAmount("12.345") shouldBe null
         parseAmount("12.3.4") shouldBe null
         parseAmount("-42") shouldBe null
         parseAmount("+42") shouldBe null
         parseAmount("1,00,0") shouldBe null
+        parseAmount("1,0000") shouldBe null
+        parseAmount("12,3456") shouldBe null
     }
 
     "parse and format round-trip" {
