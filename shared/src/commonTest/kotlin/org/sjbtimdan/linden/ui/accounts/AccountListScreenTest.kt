@@ -221,5 +221,4 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("150.00 CHF").assertIsDisplayed()
         }
     }
-
 })

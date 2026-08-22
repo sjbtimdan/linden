@@ -8,7 +8,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import java.io.ByteArrayInputStream
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.imports.buildIvyZip
@@ -16,6 +15,7 @@ import org.sjbtimdan.linden.imports.minimalIvyJson
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
+import java.io.ByteArrayInputStream
 
 @OptIn(ExperimentalTestApi::class)
 class SettingsScreenTest : StringSpec({

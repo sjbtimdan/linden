@@ -18,8 +18,7 @@ val CategoryPalette: List<Color> = listOf(
 )
 
 /** Index into [CategoryPalette] for [name]; always non-negative. */
-fun categoryColorIndex(name: String): Int =
-    (name.hashCode() and Int.MAX_VALUE) % CategoryPalette.size
+fun categoryColorIndex(name: String): Int = (name.hashCode() and Int.MAX_VALUE) % CategoryPalette.size
 
 /** Stable accent color for a category name. */
 fun categoryColor(name: String): Color = CategoryPalette[categoryColorIndex(name)]

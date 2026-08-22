@@ -54,10 +54,7 @@ private fun Entry.tintColor(): Color = when (type) {
 }
 
 @Composable
-fun EntryRow(
-    entry: Entry,
-    onClick: () -> Unit,
-) {
+fun EntryRow(entry: Entry, onClick: () -> Unit) {
     val tint = entry.tintColor()
     Row(
         modifier = Modifier

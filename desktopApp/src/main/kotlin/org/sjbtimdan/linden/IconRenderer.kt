@@ -20,8 +20,12 @@ fun main() {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
     g.paint = GradientPaint(
-        0f, 0f, Color(0x4CAF50),
-        size.toFloat(), size.toFloat(), Color(0x1B5E20),
+        0f,
+        0f,
+        Color(0x4CAF50),
+        size.toFloat(),
+        size.toFloat(),
+        Color(0x1B5E20),
     )
     g.fill(RoundRectangle2D.Float(0f, 0f, size.toFloat(), size.toFloat(), 448f, 448f))
 

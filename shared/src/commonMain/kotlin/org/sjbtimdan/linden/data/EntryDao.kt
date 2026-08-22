@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.data
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
@@ -17,6 +16,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import kotlin.time.Instant
 
 class EntryDao(private val queries: EntryQueries) {
     suspend fun create(entry: Entry) {
@@ -54,8 +54,7 @@ class EntryDao(private val queries: EntryQueries) {
         queries.deleteById(id)
     }
 
-    fun getAll(): Flow<List<Entry>> =
-        queries.selectAll(::toEntry).asFlow().map { it.awaitAsList() }
+    fun getAll(): Flow<List<Entry>> = queries.selectAll(::toEntry).asFlow().map { it.awaitAsList() }
 
     fun getSince(epochMs: Long): Flow<List<Entry>> =
         queries.selectSince(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
@@ -63,43 +62,40 @@ class EntryDao(private val queries: EntryQueries) {
     fun getUpTo(epochMs: Long): Flow<List<Entry>> =
         queries.selectUpTo(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
-    suspend fun latest(type: EntryType): Entry? =
-        queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
+    suspend fun latest(type: EntryType): Entry? = queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
     /** Net change per account in the account's own currency (minor units). */
-    fun accountDeltas(): Flow<Map<Long, Long>> =
-        queries.accountDeltas().asFlow().map { rows ->
-            rows.awaitAsList()
-                .mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
-                .toMap()
-        }
+    fun accountDeltas(): Flow<Map<Long, Long>> = queries.accountDeltas().asFlow().map { rows ->
+        rows.awaitAsList()
+            .mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
+            .toMap()
+    }
 
     /** Accounts referenced by at least one entry, as source or transfer target. */
-    fun accountsWithEntries(): Flow<Set<Long>> =
-        queries.accountsWithEntries().asFlow().map { rows ->
-            rows.awaitAsList().toSet()
-        }
+    fun accountsWithEntries(): Flow<Set<Long>> = queries.accountsWithEntries().asFlow().map { rows ->
+        rows.awaitAsList().toSet()
+    }
 
     /** Net total per category and entry currency (minor units). */
-    fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> =
-        queries.categoryTotals().asFlow().map { rows ->
-            rows.awaitAsList()
-                .mapNotNull { row ->
-                    row.categoryId?.let { id -> (id to Currency.fromCode(row.currency)) to row.net }
-                }
-                .toMap()
-        }
+    fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> = queries.categoryTotals().asFlow().map { rows ->
+        rows.awaitAsList()
+            .mapNotNull { row ->
+                row.categoryId?.let { id -> (id to Currency.fromCode(row.currency)) to row.net }
+            }
+            .toMap()
+    }
 
-    private fun Entry.sqlArgs(): SqlArgs =
-        when (this) {
-            is ExpenseEntry -> SqlArgs(category.id, null, null)
-            is IncomeEntry -> SqlArgs(category.id, null, null)
-            is TransferEntry -> SqlArgs(
-                category?.id,
-                toAccount.id,
-                if (account.currency == toAccount.currency) null else toAmount,
-            )
-        }
+    private fun Entry.sqlArgs(): SqlArgs = when (this) {
+        is ExpenseEntry -> SqlArgs(category.id, null, null)
+
+        is IncomeEntry -> SqlArgs(category.id, null, null)
+
+        is TransferEntry -> SqlArgs(
+            category?.id,
+            toAccount.id,
+            if (account.currency == toAccount.currency) null else toAmount,
+        )
+    }
 
     private fun toEntry(
         id: Long,
@@ -156,7 +152,9 @@ class EntryDao(private val queries: EntryQueries) {
                 val toAccount = Account(
                     id = requireNotNull(toAccountId) { "Transfer entry $id has no toAccount" },
                     name = requireNotNull(toAccountName) { "Transfer entry $id has no toAccount name" },
-                    currency = Currency.fromCode(requireNotNull(toAccountCurrency) { "Transfer entry $id has no toAccount currency" }),
+                    currency = Currency.fromCode(
+                        requireNotNull(toAccountCurrency) { "Transfer entry $id has no toAccount currency" },
+                    ),
                 )
                 TransferEntry(
                     id = id,

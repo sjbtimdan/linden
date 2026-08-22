@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import java.io.InputStream
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,10 +11,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.data.SettingsDao
-import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.IvyImportResult
+import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import java.io.InputStream
 
 sealed interface ImportState {
     data object Idle : ImportState

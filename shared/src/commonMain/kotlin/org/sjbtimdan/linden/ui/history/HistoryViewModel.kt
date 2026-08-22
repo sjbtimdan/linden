@@ -1,8 +1,6 @@
 package org.sjbtimdan.linden.ui.history
 
-import kotlin.math.abs
 import androidx.lifecycle.viewModelScope
-import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,6 +34,8 @@ import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
+import kotlin.math.abs
+import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HistoryViewModel(
@@ -242,26 +242,26 @@ class HistoryViewModel(
     val dialogState: StateFlow<EntryDraft?> get() = draft
 
     fun openEditDialog(entry: Entry) {
-        _draft.value = EntryDraft.forEdit(entry)
+        draftState.value = EntryDraft.forEdit(entry)
     }
 
     /** Saves the dialog draft and closes the dialog. */
     fun saveDialog(): Boolean {
-        val state = _draft.value ?: return false
+        val state = draftState.value ?: return false
         val entry = state.toEntry(accounts.value, categories.value) ?: return false
         updateEntry(entry)
-        _draft.value = null
+        draftState.value = null
         return true
     }
 
     /** Deletes the entry being edited and closes the dialog. */
     fun deleteDialogEntry() {
-        _draft.value?.editing?.let { deleteEntry(it.id) }
-        _draft.value = null
+        draftState.value?.editing?.let { deleteEntry(it.id) }
+        draftState.value = null
     }
 
     fun dismissDialog() {
-        _draft.value = null
+        draftState.value = null
     }
 }
 
@@ -272,11 +272,10 @@ private class SearchableEntry(val entry: Entry) {
     private val accountName = entry.account.name.lowercase()
     private val toAccountName = (entry as? TransferEntry)?.toAccount?.name?.lowercase()
 
-    fun matches(query: String): Boolean =
-        description?.contains(query) == true ||
-            categoryName?.contains(query) == true ||
-            accountName.contains(query) ||
-            toAccountName?.contains(query) == true
+    fun matches(query: String): Boolean = description?.contains(query) == true ||
+        categoryName?.contains(query) == true ||
+        accountName.contains(query) ||
+        toAccountName?.contains(query) == true
 }
 
 private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate): Boolean {

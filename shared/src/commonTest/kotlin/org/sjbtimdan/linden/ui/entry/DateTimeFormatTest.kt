@@ -2,8 +2,8 @@ package org.sjbtimdan.linden.ui.entry
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Instant
 
 class DateTimeFormatTest : StringSpec({
     "formats an instant as date and time in the given zone" {

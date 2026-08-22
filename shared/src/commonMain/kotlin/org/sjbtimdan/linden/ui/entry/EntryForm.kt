@@ -38,8 +38,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import org.sjbtimdan.linden.ui.BackHandler
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
@@ -49,6 +47,8 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.ui.BackHandler
+import kotlin.time.Instant
 
 /**
  * The field section of the entry editor, shared between the inline form on the
@@ -110,8 +110,14 @@ fun EntryForm(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 trailingIcon = if (state.amountText.isNotEmpty()) {
-                    { IconButton(onClick = { onAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                } else null,
+                    {
+                        IconButton(
+                            onClick = { onAmountChange("") },
+                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    }
+                } else {
+                    null
+                },
                 suffix = fromAccount?.let { account ->
                     { Text(account.currency.symbol) }
                 },
@@ -171,8 +177,14 @@ fun EntryForm(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     trailingIcon = if (state.toAmountText.isNotEmpty()) {
-                        { IconButton(onClick = { onToAmountChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                    } else null,
+                        {
+                            IconButton(
+                                onClick = { onToAmountChange("") },
+                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                        }
+                    } else {
+                        null
+                    },
                     suffix = toAccount.let { account ->
                         { Text(account.currency.symbol) }
                     },
@@ -230,8 +242,11 @@ fun EntryForm(
             val keyboardController = LocalSoftwareKeyboardController.current
             val focusManager = LocalFocusManager.current
             val visibleSuggestions = state.description.trim().let { query ->
-                val matches = if (query.isEmpty()) descriptionSuggestions
-                else descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+                val matches = if (query.isEmpty()) {
+                    descriptionSuggestions
+                } else {
+                    descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+                }
                 matches.filterNot { it.equals(query, ignoreCase = true) }
             }
             OutlinedTextField(
@@ -240,8 +255,14 @@ fun EntryForm(
                 label = { Text("Description (optional)") },
                 singleLine = true,
                 trailingIcon = if (state.description.isNotEmpty()) {
-                    { IconButton(onClick = { onDescriptionChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                } else null,
+                    {
+                        IconButton(
+                            onClick = { onDescriptionChange("") },
+                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    }
+                } else {
+                    null
+                },
                 modifier = Modifier
                     .onFocusChanged { descriptionFocused = it.isFocused }
                     .fillMaxWidth(),
@@ -324,8 +345,11 @@ fun EntryForm(
             confirmButton = {
                 TextButton(onClick = {
                     val newInstant = LocalDateTime(
-                        local.year, local.month.number, local.day,
-                        timePickerState.hour, timePickerState.minute,
+                        local.year,
+                        local.month.number,
+                        local.day,
+                        timePickerState.hour,
+                        timePickerState.minute,
                     ).toInstant(state.createdZone)
                     onCreatedAtChange(newInstant)
                     showTimePicker = false

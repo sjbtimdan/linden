@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.ui.history
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -12,6 +11,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import kotlin.time.Instant
 
 class AccountBalancesAtEndTest : StringSpec({
     val cutoff = LocalDate(2026, 8, 31)
@@ -41,7 +41,16 @@ class AccountBalancesAtEndTest : StringSpec({
 
     "transfers move money between the source and the target" {
         val entries = listOf(
-            TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = null, createdAt = on("2026-08-20")),
+            TransferEntry(
+                0,
+                null,
+                null,
+                main,
+                10_000,
+                toAccount = savings,
+                toAmount = null,
+                createdAt = on("2026-08-20"),
+            ),
         )
 
         accountBalancesAtEnd(entries, cutoff, listOf(main, savings)) shouldBe
@@ -53,7 +62,16 @@ class AccountBalancesAtEndTest : StringSpec({
 
     "cross-currency transfers credit the received amount to the target" {
         val entries = listOf(
-            TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500, createdAt = on("2026-08-20")),
+            TransferEntry(
+                0,
+                null,
+                null,
+                main,
+                10_000,
+                toAccount = savings,
+                toAmount = 9_500,
+                createdAt = on("2026-08-20"),
+            ),
         )
 
         accountBalancesAtEnd(entries, cutoff, listOf(main, savings)) shouldBe

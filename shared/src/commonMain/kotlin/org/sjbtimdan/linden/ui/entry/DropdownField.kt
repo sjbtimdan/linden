@@ -33,8 +33,11 @@ fun <T> DropdownField(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val visibleOptions = query.trim().let { trimmed ->
-        if (trimmed.isEmpty()) options
-        else options.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
+        if (trimmed.isEmpty()) {
+            options
+        } else {
+            options.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
+        }
     }
     OutlinedTextField(
         // Derived, not synced: while unfocused the field always shows the current

@@ -3,8 +3,6 @@ package org.sjbtimdan.linden.ui.entry
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -15,6 +13,8 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 private val main = Account(1, "Main", Currency.CHF)
 private val savingsEur = Account(2, "Savings", Currency.EUR)

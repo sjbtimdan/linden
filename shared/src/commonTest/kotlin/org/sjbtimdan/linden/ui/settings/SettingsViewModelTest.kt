@@ -4,7 +4,6 @@ import app.cash.sqldelight.async.coroutines.awaitAsList
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import java.io.ByteArrayInputStream
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.data.SettingsDao
@@ -15,6 +14,7 @@ import org.sjbtimdan.linden.imports.minimalIvyJson
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
+import java.io.ByteArrayInputStream
 
 class SettingsViewModelTest : StringSpec({
     "setThemeMode(LIGHT) updates the database" {

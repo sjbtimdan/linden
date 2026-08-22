@@ -5,8 +5,6 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -16,6 +14,8 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 class DescriptionPredictorTest : StringSpec({
     val now = Instant.fromEpochMilliseconds(1_800_000_000_000L)
@@ -31,11 +31,8 @@ class DescriptionPredictorTest : StringSpec({
         amount: Long? = null,
     ) = DescriptionPredictionInput(type, categoryId, accountId, amount)
 
-    fun predict(
-        entries: List<Entry>,
-        predictionInput: DescriptionPredictionInput,
-        topN: Int = PREDICTION_TOP_N,
-    ) = predictDescriptions(entries, predictionInput, now, timeZone, topN)
+    fun predict(entries: List<Entry>, predictionInput: DescriptionPredictionInput, topN: Int = PREDICTION_TOP_N) =
+        predictDescriptions(entries, predictionInput, now, timeZone, topN)
 
     "returns empty when no inputs are given" {
         predict(listOf(expense(1, food, "Coffee", main, 450, now)), input()).shouldBeEmpty()

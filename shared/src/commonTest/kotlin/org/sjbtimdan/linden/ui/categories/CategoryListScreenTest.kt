@@ -89,8 +89,12 @@ class CategoryListScreenTest : StringSpec({
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
             val main = accountDao.getAll().first().first()
 
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000))
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000),
+            )
 
             setContent {
                 CategoryListScreen(
@@ -113,8 +117,12 @@ class CategoryListScreenTest : StringSpec({
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
             val main = accountDao.getAll().first().first()
 
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000))
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000),
+            )
 
             setContent {
                 CategoryListScreen(

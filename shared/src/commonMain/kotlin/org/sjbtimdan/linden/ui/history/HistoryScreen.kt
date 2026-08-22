@@ -45,10 +45,7 @@ import org.sjbtimdan.linden.ui.entry.formatDate
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
-fun HistoryScreen(
-    viewModel: HistoryViewModel,
-    onNavigateToSettings: () -> Unit = {},
-) {
+fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit = {}) {
     val entries by viewModel.entries.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
@@ -79,7 +76,7 @@ fun HistoryScreen(
             .fillMaxSize()
             .imePadding()
             .padding(16.dp)
-            .widthIn(max = 480.dp)
+            .widthIn(max = 480.dp),
     ) {
         OutlinedTextField(
             value = searchQuery,
@@ -93,8 +90,14 @@ fun HistoryScreen(
                 )
             },
             trailingIcon = if (searchQuery.isNotEmpty()) {
-                { IconButton(onClick = { viewModel.setSearchQuery("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-            } else null,
+                {
+                    IconButton(
+                        onClick = { viewModel.setSearchQuery("") },
+                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                }
+            } else {
+                null
+            },
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -163,7 +166,13 @@ fun HistoryScreen(
             AccountsList(
                 balances = shownBalances,
                 emptyMessage =
-                    if (accountFilter.isEmpty() || accountBalances.isEmpty()) "No accounts yet." else "No accounts match.",
+                if (accountFilter.isEmpty() ||
+                    accountBalances.isEmpty()
+                ) {
+                    "No accounts yet."
+                } else {
+                    "No accounts match."
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -182,7 +191,13 @@ fun HistoryScreen(
                 categories = shownCategories,
                 currency = defaultCurrency,
                 emptyMessage =
-                    if (categoryFilter.isEmpty() || categoryTotals.isEmpty()) "No categories yet." else "No categories match.",
+                if (categoryFilter.isEmpty() ||
+                    categoryTotals.isEmpty()
+                ) {
+                    "No categories yet."
+                } else {
+                    "No categories match."
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -216,6 +231,7 @@ fun HistoryScreen(
                         is DayHeaderItem -> stickyHeader(item.key) {
                             DayHeader(label = item.label)
                         }
+
                         is EntryListItem -> item(item.key) {
                             EntryRow(
                                 entry = item.entry,
@@ -262,18 +278,17 @@ internal data class EntryListItem(val entry: Entry) : HistoryListItem {
 }
 
 /** Builds the flat list of headers and entries shown by the history list. */
-internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> =
-    buildList {
-        var previousDay: LocalDate? = null
-        entries.forEach { entry ->
-            val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
-            if (day != previousDay) {
-                add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
-                previousDay = day
-            }
-            add(EntryListItem(entry))
+internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> = buildList {
+    var previousDay: LocalDate? = null
+    entries.forEach { entry ->
+        val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
+        if (day != previousDay) {
+            add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
+            previousDay = day
         }
+        add(EntryListItem(entry))
     }
+}
 
 /** All options of the type filter dropdown: the "All" (no filter) state plus every entry type. */
 private val typeFilterOptions: List<EntryType?> = listOf(null) + EntryType.entries
@@ -285,10 +300,7 @@ private fun HistoryViewMode.displayName(): String = when (this) {
 }
 
 @Composable
-private fun TotalLabel(
-    total: Long?,
-    currency: Currency,
-) {
+private fun TotalLabel(total: Long?, currency: Currency) {
     val colors = lindenColors()
     val tint = when {
         total != null && total < 0 -> colors.expense

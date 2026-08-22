@@ -2,13 +2,6 @@ package org.sjbtimdan.linden.imports
 
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import java.io.BufferedInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.nio.charset.Charset
-import java.util.zip.ZipInputStream
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -27,6 +20,13 @@ import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
+import java.io.BufferedInputStream
+import java.io.IOException
+import java.io.InputStream
+import java.nio.charset.Charset
+import java.util.zip.ZipInputStream
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 data class IvyImportResult(
     val accounts: Int,
@@ -38,8 +38,8 @@ data class IvyImportResult(
 class IvyImportException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
 private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
-    private const val INITIAL_BALANCE_TITLE = "initial balance"
-    private const val ADJUST_BALANCE_TITLE = "adjust balance"
+private const val INITIAL_BALANCE_TITLE = "initial balance"
+private const val ADJUST_BALANCE_TITLE = "adjust balance"
 
 class IvyImporter(private val database: LindenDatabase) {
     private val json = Json { ignoreUnknownKeys = true }
@@ -64,7 +64,15 @@ class IvyImporter(private val database: LindenDatabase) {
             }
 
             transactions.forEach { transaction ->
-                if (insertTransaction(importState, transaction, accounts, categories, backup.categories, defaultCurrency)) {
+                if (insertTransaction(
+                        importState,
+                        transaction,
+                        accounts,
+                        categories,
+                        backup.categories,
+                        defaultCurrency,
+                    )
+                ) {
                     importedTransactions++
                 }
             }
@@ -137,6 +145,7 @@ class IvyImporter(private val database: LindenDatabase) {
         return backupCategories.associate { category ->
             category.id to when (val types = usage[category.id]) {
                 null -> CategoryType.Both
+
                 else -> when {
                     EntryType.Expense in types && EntryType.Income in types -> CategoryType.Both
                     EntryType.Expense in types -> CategoryType.Expense
@@ -211,14 +220,21 @@ class IvyImporter(private val database: LindenDatabase) {
             else -> throw IvyImportException("Transaction $label has unknown type \"${transaction.type}\"")
         }
         val accountResolution = resolveAccount(
-            importState, label, "Transaction",
-            transaction.accountId, transaction.currency, defaultCurrency, accounts,
+            importState,
+            label,
+            "Transaction",
+            transaction.accountId,
+            transaction.currency,
+            defaultCurrency,
+            accounts,
         )
         val account = accountResolution.account
 
         if (type != EntryType.Transfer &&
-            (transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
-                transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true))
+            (
+                transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
+                    transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true)
+                )
         ) {
             if (importState.initialBalanceApplied.add(account.id)) {
                 if (accountResolution.split) importState.splitTransactions++
@@ -233,7 +249,14 @@ class IvyImporter(private val database: LindenDatabase) {
 
         var splitRouted = accountResolution.split
         val categoryId = when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId(importState, transaction, categories, backupCategories, required = true)
+            EntryType.Expense, EntryType.Income -> categoryId(
+                importState,
+                transaction,
+                categories,
+                backupCategories,
+                required = true,
+            )
+
             EntryType.Transfer -> categoryId(importState, transaction, categories, backupCategories, required = false)
         }
 
@@ -242,8 +265,13 @@ class IvyImporter(private val database: LindenDatabase) {
                 val targetId = transaction.toAccountId
                     ?: throw IvyImportException("Transfer $label has no toAccountId")
                 val targetResolution = resolveAccount(
-                    importState, label, "Transfer",
-                    targetId, transaction.toCurrency, account.currency, accounts,
+                    importState,
+                    label,
+                    "Transfer",
+                    targetId,
+                    transaction.toCurrency,
+                    account.currency,
+                    accounts,
                 )
                 splitRouted = splitRouted || targetResolution.split
                 val target = targetResolution.account
@@ -255,6 +283,7 @@ class IvyImporter(private val database: LindenDatabase) {
                 }
                 target to targetAmount
             }
+
             EntryType.Expense, EntryType.Income -> null to null
         }
 
@@ -348,6 +377,7 @@ internal fun parseMinorUnits(text: String): Long {
     val fraction = parts.getOrNull(1).orEmpty()
     val minor = when {
         fraction.length <= 2 -> whole * 100 + fraction.padEnd(2, '0').toLong()
+
         else -> {
             val base = whole * 100 + fraction.take(2).toLong()
             if (fraction[2] >= '5') base + 1 else base

@@ -49,10 +49,7 @@ import org.sjbtimdan.linden.ui.entry.icon
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
 @Composable
-fun LedgerScreen(
-    viewModel: LedgerViewModel,
-    onNavigateToSettings: () -> Unit = {},
-) {
+fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
@@ -90,7 +87,7 @@ fun LedgerScreen(
                     focusManager.clearFocus()
                     keyboardController?.hide()
                 }
-            }
+            },
     ) {
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             entryTypes.forEachIndexed { index, type ->

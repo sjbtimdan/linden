@@ -1,11 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
 /**
- * All supported currencies use a 2-decimal minor unit, so amounts are stored as
- * `Long` in minor units (e.g. 4250 == "42.50").
- */
-
-/**
  * Formats minor units as a locale-aware amount with thousands grouping and two
  * decimal digits (e.g. 1_000_000 == "10,000.00" in en-US, "10.000,00" in de-DE).
  */
@@ -13,7 +8,7 @@ expect fun formatAmount(amount: Long): String
 
 /**
  * Parses a user-typed amount (e.g. "42.50", "42,5", "1,000.00") into minor units.
- * The last `.` or `,` is the decimal separator; other occurrences of `.`/`,` and
+ * The last `.` or `, ` is the decimal separator; other occurrences of `.`/`, ` and
  * spaces in the integer part are treated as grouping separators. A trailing
  * separator followed by exactly 3 digits is a grouping separator (minor units are
  * always 2 digits), so "1,000", "1.000" and "1 000" all parse as 1000.
@@ -36,9 +31,13 @@ fun parseAmount(input: String): Long? {
     if (!separatorIsGrouping && fractionPart.length > 2) return null
 
     val groupingChars =
-        if (separatorIsGrouping || decimalIndex == -1) ". ,\u00A0\u202F"
-        else if (text[decimalIndex] == '.') ", \u00A0\u202F"
-        else ". \u00A0\u202F"
+        if (separatorIsGrouping || decimalIndex == -1) {
+            ". ,\u00A0\u202F"
+        } else if (text[decimalIndex] == '.') {
+            ", \u00A0\u202F"
+        } else {
+            ". \u00A0\u202F"
+        }
     if (!separatorIsGrouping && decimalIndex != -1 && integerPart.contains(text[decimalIndex])) return null
     if (integerPart.any { it !in groupingChars && !it.isDigit() }) return null
 

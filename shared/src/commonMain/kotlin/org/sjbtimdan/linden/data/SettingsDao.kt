@@ -36,21 +36,18 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(CURRENCY_KEY, currency.name)
     }
 
-    fun defaultCurrencyFlow(): Flow<Currency> {
-        return queries.selectAll()
-            .asFlow()
-            .map { rows ->
-                rows.awaitAsList()
-                    .firstOrNull { it.key == CURRENCY_KEY }
-                    ?.let { row -> parseCurrency(row.value_) }
-                    ?: Currency.CHF
-            }
-    }
-
-    private fun parseCurrency(code: String): Currency? =
-        try {
-            Currency.fromCode(code)
-        } catch (_: IllegalStateException) {
-            null
+    fun defaultCurrencyFlow(): Flow<Currency> = queries.selectAll()
+        .asFlow()
+        .map { rows ->
+            rows.awaitAsList()
+                .firstOrNull { it.key == CURRENCY_KEY }
+                ?.let { row -> parseCurrency(row.value_) }
+                ?: Currency.CHF
         }
+
+    private fun parseCurrency(code: String): Currency? = try {
+        Currency.fromCode(code)
+    } catch (_: IllegalStateException) {
+        null
+    }
 }

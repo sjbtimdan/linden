@@ -14,19 +14,17 @@ class CategoryDao(private val queries: CategoryQueries) {
         queries.insert(name, type.name)
     }
 
-    suspend fun update(category: Category): Unit {
+    suspend fun update(category: Category) {
         queries.update(category.name, category.type.name, category.id)
     }
 
-    fun getAll(): Flow<List<Category>> {
-        return queries.selectAll()
-            .asFlow()
-            .map { it.awaitAsList().map { row -> row.toCategory() } }
-    }
+    fun getAll(): Flow<List<Category>> = queries.selectAll()
+        .asFlow()
+        .map { it.awaitAsList().map { row -> row.toCategory() } }
 
     private fun CategoryEntity.toCategory() = Category(
         id = id,
         name = name,
-        type = CategoryType.valueOf(type)
+        type = CategoryType.valueOf(type),
     )
 }

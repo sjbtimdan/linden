@@ -61,7 +61,9 @@ class LedgerViewModelTest : StringSpec({
             val main = accounts.first()
             val savings = accounts.last()
 
-            viewModel.createEntry(TransferEntry(0, null, "Move money", main, 10_000, toAccount = savings, toAmount = 9_500))
+            viewModel.createEntry(
+                TransferEntry(0, null, "Move money", main, 10_000, toAccount = savings, toAmount = 9_500),
+            )
 
             val state = viewModel.newEntryState(EntryType.Transfer)
 
@@ -223,10 +225,7 @@ class LedgerViewModelTest : StringSpec({
     }
 })
 
-private suspend fun seed(
-    accountDao: AccountDao,
-    categoryDao: CategoryDao,
-): Pair<Account, Category> {
+private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
     categoryDao.create("Groceries", CategoryType.Expense)
     val main = accountDao.getAll().first().first()

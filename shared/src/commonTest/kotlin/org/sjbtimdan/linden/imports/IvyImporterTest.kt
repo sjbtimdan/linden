@@ -6,12 +6,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.nio.charset.Charset
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.lindenDatabase
@@ -21,8 +15,14 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+import kotlin.time.Instant
 
-class IvyImporterSpec : StringSpec({
+class IvyImporterTest : StringSpec({
     fun buildIvyZipWithEntryNames(vararg names: String, json: String, charset: Charset = Charsets.UTF_16BE): ByteArray {
         val jsonBytes = charset.encode(json).array()
         val bos = ByteArrayOutputStream()
@@ -285,7 +285,9 @@ class IvyImporterSpec : StringSpec({
             "Food" to CategoryType.Both.name,
             "Imported Entries" to CategoryType.Both.name,
         )
-        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
+        EntryDao(
+            database.entryQueries,
+        ).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
     }
 
     "infers category types from the transactions that use them" {
@@ -462,7 +464,9 @@ class IvyImporterSpec : StringSpec({
 
         result.categories shouldBe 2
         database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Food", "Imported Entries")
-        EntryDao(database.entryQueries).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
+        EntryDao(
+            database.entryQueries,
+        ).getAll().first().map { it.category?.name } shouldBe listOf("Imported Entries", "Imported Entries")
     }
 
     "assigns entries with unknown account ids to per-currency fallback accounts" {

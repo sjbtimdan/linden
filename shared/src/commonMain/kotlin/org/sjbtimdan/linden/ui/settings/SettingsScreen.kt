@@ -70,7 +70,7 @@ fun SettingsScreen(
             .fillMaxSize()
             .padding(16.dp)
             .widthIn(max = 480.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
     ) {
         Text(
             text = "Theme",
@@ -235,10 +235,7 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun ImportResultRow(
-    text: String,
-    onDismiss: () -> Unit,
-) {
+private fun ImportResultRow(text: String, onDismiss: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

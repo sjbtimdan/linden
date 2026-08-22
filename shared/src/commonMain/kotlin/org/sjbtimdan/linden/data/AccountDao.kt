@@ -18,11 +18,9 @@ class AccountDao(private val queries: AccountQueries) {
         queries.update(account.name, account.currency.name, account.initialBalance, account.id)
     }
 
-    fun getAll(): Flow<List<Account>> {
-        return queries.selectAll()
-            .asFlow()
-            .map { it.awaitAsList().map { row -> row.toAccount() } }
-    }
+    fun getAll(): Flow<List<Account>> = queries.selectAll()
+        .asFlow()
+        .map { it.awaitAsList().map { row -> row.toAccount() } }
 
     private fun AccountEntity.toAccount() = Account(
         id = id,

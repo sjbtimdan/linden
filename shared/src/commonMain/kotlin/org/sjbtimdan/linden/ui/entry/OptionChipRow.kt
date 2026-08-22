@@ -35,8 +35,16 @@ fun <T> OptionChipRow(
             // mid-gesture before the click ever completes.
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelectedChip) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = if (isSelectedChip) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (isSelectedChip) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                contentColor = if (isSelectedChip) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
                 modifier = Modifier
                     .semantics(mergeDescendants = true) {
                         selected = isSelectedChip

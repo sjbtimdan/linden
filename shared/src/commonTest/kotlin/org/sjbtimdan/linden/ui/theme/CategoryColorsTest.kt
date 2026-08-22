@@ -1,9 +1,9 @@
 package org.sjbtimdan.linden.ui.theme
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.collections.shouldContain
 
 class CategoryColorsTest : StringSpec({
     "same name maps to the same color and index" {

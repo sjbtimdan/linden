@@ -12,7 +12,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
@@ -25,6 +24,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withHistoryViewModel
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class HistoryScreenTest : StringSpec({
@@ -134,15 +134,23 @@ class HistoryScreenTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(
-                    0, groceries, "Coffee", main, 450,
+                    0,
+                    groceries,
+                    "Coffee",
+                    main,
+                    450,
                     createdAt = Instant.fromEpochMilliseconds(1_000_000_000_000),
-                )
+                ),
             )
             viewModel.createEntry(
                 ExpenseEntry(
-                    0, groceries, "Lunch", main, 1_200,
+                    0,
+                    groceries,
+                    "Lunch",
+                    main,
+                    1_200,
                     createdAt = Instant.fromEpochMilliseconds(1_000_086_400_000),
-                )
+                ),
             )
 
             setContent {
@@ -157,8 +165,12 @@ class HistoryScreenTest : StringSpec({
     "selecting a period narrows the list" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "In Jul", main, 200, createdAt = Instant.parse("2026-07-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "In Jul", main, 200, createdAt = Instant.parse("2026-07-01T12:00:00Z")),
+            )
 
             setContent {
                 HistoryScreen(viewModel = viewModel)
@@ -179,8 +191,12 @@ class HistoryScreenTest : StringSpec({
     "arrows move between periods" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "In Sep", main, 200, createdAt = Instant.parse("2026-09-10T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "In Sep", main, 200, createdAt = Instant.parse("2026-09-10T12:00:00Z")),
+            )
 
             setContent {
                 HistoryScreen(viewModel = viewModel)
@@ -210,7 +226,9 @@ class HistoryScreenTest : StringSpec({
     "period with no entries shows no entries match" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
 
             setContent {
                 HistoryScreen(viewModel = viewModel)
@@ -368,9 +386,15 @@ class HistoryScreenTest : StringSpec({
     "accounts view shows balances at the end of the selected period" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
+            )
 
             setContent {
                 HistoryScreen(viewModel = viewModel)
@@ -470,9 +494,15 @@ class HistoryScreenTest : StringSpec({
     "categories view shows totals at the end of the selected period" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
+            )
 
             setContent {
                 HistoryScreen(viewModel = viewModel)
@@ -495,10 +525,7 @@ class HistoryScreenTest : StringSpec({
     }
 })
 
-private suspend fun seed(
-    accountDao: AccountDao,
-    categoryDao: CategoryDao,
-): Pair<Account, Category> {
+private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
     categoryDao.create("Groceries", CategoryType.Expense)
     val main = accountDao.getAll().first().first()

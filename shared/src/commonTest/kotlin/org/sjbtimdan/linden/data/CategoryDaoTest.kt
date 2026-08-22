@@ -14,11 +14,13 @@ class CategoryDaoTest : StringSpec({
         dao.getAll().first() shouldBe emptyList()
         dao.create("Groceries", CategoryType.Expense)
         val allCreated = dao.getAll().first()
-        allCreated shouldBe listOf(Category(
-            id = allCreated.first().id,
-            name = "Groceries",
-            type = CategoryType.Expense
-        ))
+        allCreated shouldBe listOf(
+            Category(
+                id = allCreated.first().id,
+                name = "Groceries",
+                type = CategoryType.Expense,
+            ),
+        )
         val updated = allCreated.first().copy(name = "Bonus", type = CategoryType.Both)
         dao.update(updated)
         dao.getAll().first() shouldBe listOf(updated)

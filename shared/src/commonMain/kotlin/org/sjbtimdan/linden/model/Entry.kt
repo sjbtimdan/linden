@@ -1,12 +1,12 @@
 package org.sjbtimdan.linden.model
 
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlin.time.Instant
 
 enum class EntryType {
     Income,
     Transfer,
-    Expense
+    Expense,
 }
 
 sealed interface Entry {

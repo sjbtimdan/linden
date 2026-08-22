@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
@@ -13,6 +12,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withViewModel
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalTestApi::class)
 class CategoryListViewModelTest : StringSpec({
@@ -59,8 +59,12 @@ class CategoryListViewModelTest : StringSpec({
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
             val main = accountDao.getAll().first().first()
 
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000))
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000),
+            )
 
             viewModel.categories.value.single { it.category.name == "Groceries" }.balance shouldBe -450
             viewModel.categories.value.single { it.category.name == "Salary" }.balance shouldBe 50_000
@@ -69,13 +73,18 @@ class CategoryListViewModelTest : StringSpec({
 
     "balance converts foreign entries to the default currency" {
         val rate = FxRate(baseCurrency = Currency.CHF, quoteCurrency = Currency.EUR, rate = 1.1, date = "2026-08-16")
-        withViewModel(defaultCurrency = Currency.CHF, rates = listOf(rate)) { categoryDao, entryDao, accountDao, viewModel ->
+        withViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(rate),
+        ) { categoryDao, entryDao, accountDao, viewModel ->
             categoryDao.create("Salary", CategoryType.Income)
             accountDao.create("Euros", Currency.EUR)
             val salary = categoryDao.getAll().first().first()
             val euros = accountDao.getAll().first().first()
 
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000))
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000),
+            )
 
             viewModel.categories.value.single().balance shouldBe (5_000.0 / 1.1).roundToLong()
         }
@@ -88,7 +97,9 @@ class CategoryListViewModelTest : StringSpec({
             val salary = categoryDao.getAll().first().first()
             val euros = accountDao.getAll().first().first()
 
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000))
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000),
+            )
 
             viewModel.categories.value.single().balance shouldBe null
         }
@@ -103,8 +114,12 @@ class CategoryListViewModelTest : StringSpec({
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
             val main = accountDao.getAll().first().first()
 
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000))
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000),
+            )
 
             viewModel.totalMinor.value shouldBe 49_550
         }
@@ -117,7 +132,9 @@ class CategoryListViewModelTest : StringSpec({
             val salary = categoryDao.getAll().first().first()
             val euros = accountDao.getAll().first().first()
 
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000))
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = euros, amount = 5_000),
+            )
 
             viewModel.totalMinor.value shouldBe null
         }

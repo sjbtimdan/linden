@@ -25,7 +25,9 @@ fun entryDeltas(entries: List<Entry>): Map<Long, Long> = buildMap {
     for (entry in entries) {
         when (entry) {
             is IncomeEntry -> merge(entry.account.id, entry.amount, Long::plus)
+
             is ExpenseEntry -> merge(entry.account.id, -entry.amount, Long::plus)
+
             is TransferEntry -> {
                 merge(entry.account.id, -entry.amount, Long::plus)
                 merge(entry.toAccount.id, entry.toAmount ?: entry.amount, Long::plus)
@@ -46,11 +48,7 @@ fun accountBalancesMinor(deltas: Map<Long, Long>, accounts: List<Account>): Map<
  * Returns null when an account in a foreign currency has no stored rate against
  * the default currency, since the total would be incomplete.
  */
-fun accountTotalMinor(
-    accounts: List<AccountWithBalance>,
-    defaultCurrency: Currency,
-    rates: List<FxRate>,
-): Long? {
+fun accountTotalMinor(accounts: List<AccountWithBalance>, defaultCurrency: Currency, rates: List<FxRate>): Long? {
     val ratesByQuote = rates
         .filter { it.baseCurrency == defaultCurrency }
         .associate { it.quoteCurrency to it.rate }

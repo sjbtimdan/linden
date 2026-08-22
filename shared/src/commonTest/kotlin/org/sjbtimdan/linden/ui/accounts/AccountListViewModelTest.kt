@@ -5,7 +5,6 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
@@ -13,6 +12,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.withAccountViewModel
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalTestApi::class)
 class AccountListViewModelTest : StringSpec({
@@ -120,8 +120,12 @@ class AccountListViewModelTest : StringSpec({
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
             val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
 
-            entryDao.create(IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000))
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
+            entryDao.create(
+                IncomeEntry(id = 0, category = salary, description = "Pay", account = main, amount = 50_000),
+            )
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
 
             viewModel.accounts.value.single().balance shouldBe 10_000 + 50_000 - 450
         }
@@ -137,8 +141,12 @@ class AccountListViewModelTest : StringSpec({
             categoryDao.create("Groceries", CategoryType.Expense)
             val groceries = categoryDao.getAll().first().first()
 
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450))
-            entryDao.create(ExpenseEntry(id = 0, category = groceries, description = "Lunch", account = savings, amount = 1_200))
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Coffee", account = main, amount = 450),
+            )
+            entryDao.create(
+                ExpenseEntry(id = 0, category = groceries, description = "Lunch", account = savings, amount = 1_200),
+            )
 
             viewModel.accounts.value.single { it.account.name == "Main" }.balance shouldBe 9_550
             viewModel.accounts.value.single { it.account.name == "Savings" }.balance shouldBe -1_200

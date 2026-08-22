@@ -1,7 +1,5 @@
 package org.sjbtimdan.linden.ui.entry
 
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -10,6 +8,8 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * Mutable draft of an entry being created or edited in the entry dialog.
@@ -37,6 +37,7 @@ data class EntryDraft(
         if (accountId == null) return false
         return when (type) {
             EntryType.Expense, EntryType.Income -> categoryId != null
+
             EntryType.Transfer -> {
                 val toAccountIdValue = toAccountId ?: return false
                 if (toAccountIdValue == accountId) return false
@@ -61,16 +62,26 @@ data class EntryDraft(
             EntryType.Expense -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
                 ExpenseEntry(
-                    id, category, description, account, amountValue,
-                    createdAt = createdAt, createdZone = createdZone,
+                    id,
+                    category,
+                    description,
+                    account,
+                    amountValue,
+                    createdAt = createdAt,
+                    createdZone = createdZone,
                 )
             }
 
             EntryType.Income -> {
                 val category = categories.firstOrNull { it.id == categoryId } ?: return null
                 IncomeEntry(
-                    id, category, description, account, amountValue,
-                    createdAt = createdAt, createdZone = createdZone,
+                    id,
+                    category,
+                    description,
+                    account,
+                    amountValue,
+                    createdAt = createdAt,
+                    createdZone = createdZone,
                 )
             }
 
@@ -98,13 +109,12 @@ data class EntryDraft(
      * date & time) replaced by [previous]'s values. Used when switching the
      * entry type so already-entered common fields are preserved.
      */
-    fun carryOverCommonFields(previous: EntryDraft): EntryDraft =
-        copy(
-            amountText = previous.amountText,
-            description = previous.description,
-            createdAt = previous.createdAt,
-            createdZone = previous.createdZone,
-        )
+    fun carryOverCommonFields(previous: EntryDraft): EntryDraft = copy(
+        amountText = previous.amountText,
+        description = previous.description,
+        createdAt = previous.createdAt,
+        createdZone = previous.createdZone,
+    )
 
     companion object {
         fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDraft {

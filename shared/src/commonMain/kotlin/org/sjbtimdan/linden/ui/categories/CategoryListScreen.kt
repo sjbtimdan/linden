@@ -61,10 +61,7 @@ private data class CategoryDialogState(
 )
 
 @Composable
-fun CategoryListScreen(
-    viewModel: CategoryListViewModel,
-    onNavigateBack: () -> Unit,
-) {
+fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> Unit) {
     val categories by viewModel.categories.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
@@ -79,7 +76,7 @@ fun CategoryListScreen(
             .safeContentPadding()
             .fillMaxSize()
             .padding(16.dp)
-            .widthIn(max = 480.dp)
+            .widthIn(max = 480.dp),
     ) {
         TextButton(onClick = onNavigateBack) {
             Icon(
@@ -231,7 +228,7 @@ fun CategoryListScreen(
                     val existing = state.category
                     if (existing != null) {
                         viewModel.updateCategory(
-                            existing.copy(name = name, type = state.type)
+                            existing.copy(name = name, type = state.type),
                         )
                     } else {
                         viewModel.createCategory(name, state.type)
@@ -267,8 +264,14 @@ private fun CategoryDialog(
                     label = { Text("Name") },
                     singleLine = true,
                     trailingIcon = if (name.isNotEmpty()) {
-                        { IconButton(onClick = { onNameChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                    } else null,
+                        {
+                            IconButton(
+                                onClick = { onNameChange("") },
+                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                        }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))

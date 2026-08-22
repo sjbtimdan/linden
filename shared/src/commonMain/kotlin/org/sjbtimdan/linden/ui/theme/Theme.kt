@@ -94,10 +94,7 @@ private val LindenTypography = Typography(
 )
 
 @Composable
-fun LindenTheme(
-    themeMode: ThemeMode,
-    content: @Composable () -> Unit
-) {
+fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
     val darkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false

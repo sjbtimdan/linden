@@ -1,12 +1,12 @@
 package org.sjbtimdan.linden.ui.history
 
-import kotlin.math.abs
-import kotlin.math.roundToLong
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.ui.entry.formatAmount
+import kotlin.math.abs
+import kotlin.math.roundToLong
 
 /**
  * Net total of [entries] (income minus expenses, transfers excluded) converted to

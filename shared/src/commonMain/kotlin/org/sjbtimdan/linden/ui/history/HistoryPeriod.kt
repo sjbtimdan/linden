@@ -71,8 +71,10 @@ private fun weekLabel(start: LocalDate, end: LocalDate): String {
     return when {
         start.year != end.year ->
             "${start.day} $startMonth ${start.year} – ${end.day} $endMonth ${end.year}"
+
         start.month != end.month ->
             "${start.day} $startMonth – ${end.day} $endMonth ${start.year}"
+
         else -> "${start.day}–${end.day} $startMonth ${start.year}"
     }
 }

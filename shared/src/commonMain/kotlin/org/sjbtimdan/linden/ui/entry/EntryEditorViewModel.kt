@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +16,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import kotlin.time.Instant
 
 abstract class EntryEditorViewModel(
     private val entryDao: EntryDao,
@@ -45,16 +45,16 @@ abstract class EntryEditorViewModel(
         )
 
     /** In-progress entry being created or edited, or null when no editor is shown. */
-    protected val _draft = MutableStateFlow<EntryDraft?>(null)
-    val draft: StateFlow<EntryDraft?> = _draft.asStateFlow()
+    protected val draftState = MutableStateFlow<EntryDraft?>(null)
+    val draft: StateFlow<EntryDraft?> = draftState.asStateFlow()
 
-    fun onAmountChange(text: String) = _draft.update { it?.copy(amountText = text) }
-    fun onCategoryChange(id: Long?) = _draft.update { it?.copy(categoryId = id) }
-    fun onAccountChange(id: Long?) = _draft.update { it?.copy(accountId = id) }
-    fun onToAccountChange(id: Long?) = _draft.update { it?.copy(toAccountId = id) }
-    fun onToAmountChange(text: String) = _draft.update { it?.copy(toAmountText = text) }
-    fun onDescriptionChange(text: String) = _draft.update { it?.copy(description = text) }
-    fun onCreatedAtChange(instant: Instant) = _draft.update { it?.copy(createdAt = instant) }
+    fun onAmountChange(text: String) = draftState.update { it?.copy(amountText = text) }
+    fun onCategoryChange(id: Long?) = draftState.update { it?.copy(categoryId = id) }
+    fun onAccountChange(id: Long?) = draftState.update { it?.copy(accountId = id) }
+    fun onToAccountChange(id: Long?) = draftState.update { it?.copy(toAccountId = id) }
+    fun onToAmountChange(text: String) = draftState.update { it?.copy(toAmountText = text) }
+    fun onDescriptionChange(text: String) = draftState.update { it?.copy(description = text) }
+    fun onCreatedAtChange(instant: Instant) = draftState.update { it?.copy(createdAt = instant) }
 
     fun createEntry(entry: Entry) {
         viewModelScope.launch {
@@ -74,6 +74,5 @@ abstract class EntryEditorViewModel(
         }
     }
 
-    suspend fun newEntryState(type: EntryType): EntryDraft =
-        EntryDraft.forNew(type, entryDao.latest(type))
+    suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(type, entryDao.latest(type))
 }

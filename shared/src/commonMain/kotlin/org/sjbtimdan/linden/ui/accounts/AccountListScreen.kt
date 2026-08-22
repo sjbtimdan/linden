@@ -62,10 +62,7 @@ private data class AccountDialogState(
 )
 
 @Composable
-fun AccountListScreen(
-    viewModel: AccountListViewModel,
-    onNavigateBack: () -> Unit,
-) {
+fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Unit) {
     val accounts by viewModel.accounts.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
@@ -81,7 +78,7 @@ fun AccountListScreen(
             .safeContentPadding()
             .fillMaxSize()
             .padding(16.dp)
-            .widthIn(max = 480.dp)
+            .widthIn(max = 480.dp),
     ) {
         TextButton(onClick = onNavigateBack) {
             Icon(
@@ -231,7 +228,7 @@ fun AccountListScreen(
                                 name = name,
                                 currency = state.currency,
                                 initialBalance = initialBalance,
-                            )
+                            ),
                         )
                     } else {
                         viewModel.createAccount(name, state.currency, initialBalance)
@@ -270,8 +267,14 @@ private fun AccountDialog(
                     label = { Text("Name") },
                     singleLine = true,
                     trailingIcon = if (name.isNotEmpty()) {
-                        { IconButton(onClick = { onNameChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                    } else null,
+                        {
+                            IconButton(
+                                onClick = { onNameChange("") },
+                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                        }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -282,8 +285,14 @@ private fun AccountDialog(
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     trailingIcon = if (initialBalanceText.isNotEmpty()) {
-                        { IconButton(onClick = { onInitialBalanceChange("") }) { Icon(Icons.Default.Close, contentDescription = "Clear") } }
-                    } else null,
+                        {
+                            IconButton(
+                                onClick = { onInitialBalanceChange("") },
+                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                        }
+                    } else {
+                        null
+                    },
                     suffix = { Text(currency.symbol) },
                     modifier = Modifier.fillMaxWidth(),
                 )

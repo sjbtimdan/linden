@@ -10,7 +10,6 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -18,12 +17,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -34,6 +30,8 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenTest : StringSpec({
@@ -179,7 +177,15 @@ class LedgerScreenTest : StringSpec({
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
             viewModel.createEntry(
-                TransferEntry(0, null, "Move money", accounts.first(), 10_000, toAccount = accounts.last(), toAmount = 9_500),
+                TransferEntry(
+                    0,
+                    null,
+                    "Move money",
+                    accounts.first(),
+                    10_000,
+                    toAccount = accounts.last(),
+                    toAmount = 9_500,
+                ),
             )
 
             setContent {
@@ -439,10 +445,7 @@ private fun ComposeUiTest.waitForText(text: String) {
     }
 }
 
-private suspend fun seed(
-    accountDao: AccountDao,
-    categoryDao: CategoryDao,
-): Pair<Account, Category> {
+private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
     categoryDao.create("Groceries", CategoryType.Expense)
     val main = accountDao.getAll().first().first()

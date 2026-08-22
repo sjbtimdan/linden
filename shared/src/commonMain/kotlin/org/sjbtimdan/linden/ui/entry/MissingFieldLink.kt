@@ -17,11 +17,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MissingFieldLink(
-    label: String,
-    text: String,
-    onClick: () -> Unit,
-) {
+fun MissingFieldLink(label: String, text: String, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()

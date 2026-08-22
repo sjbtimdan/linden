@@ -25,9 +25,7 @@ import org.sjbtimdan.linden.ui.StartupError
  * forever.
  */
 @Composable
-fun AppRoot(
-    createDependencies: suspend () -> AppDependencies,
-) {
+fun AppRoot(createDependencies: suspend () -> AppDependencies) {
     var dependencies by remember { mutableStateOf<AppDependencies?>(null) }
     var loadFailed by remember { mutableStateOf(false) }
     var attempt by remember { mutableStateOf(0) }

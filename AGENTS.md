@@ -39,6 +39,8 @@ Formatting is enforced by Detekt (2.0.x, plugin `dev.detekt`) with the ktlint-wr
 `detekt.yml` at the repo root. The pre-commit hook (`.githooks/pre-commit`, active via
 `git config core.hooksPath .githooks`) runs `./gradlew detekt --auto-correct` on commits with staged
 `.kt` files and re-stages the fixes; commit is blocked only when violations can't be auto-corrected.
+Detekt is deliberately **not** wired into `./gradlew check` (each module removes it from `check`'s
+dependencies) — the pre-commit hook is the enforcement point.
 
 The `:shared` Android target compiles via `compileAndroidMain`, **not** `compileDebugKotlin`
 (that task only exists on `:androidApp`). `:shared` uses the AGP 9 `com.android.kotlin.multiplatform.library` plugin

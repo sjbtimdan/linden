@@ -39,10 +39,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToLong
 
 @Composable
-fun RatesScreen(
-    viewModel: RatesViewModel,
-    onNavigateBack: () -> Unit,
-) {
+fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
     val base by viewModel.base.collectAsState()
     val rates by viewModel.rates.collectAsState()
     val ratesRefreshState by viewModel.ratesRefreshState.collectAsState()
@@ -152,7 +149,9 @@ fun RatesScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "1 ${rate.baseCurrency.symbol} = ${formatRate(rate.rate)} ${rate.quoteCurrency.symbol}",
+                            text = "1 ${rate.baseCurrency.symbol} = ${formatRate(
+                                rate.rate,
+                            )} ${rate.quoteCurrency.symbol}",
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -163,10 +162,7 @@ fun RatesScreen(
 }
 
 @Composable
-private fun ErrorRow(
-    text: String,
-    onDismiss: () -> Unit,
-) {
+private fun ErrorRow(text: String, onDismiss: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()

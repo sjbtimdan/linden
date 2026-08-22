@@ -7,12 +7,10 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -24,6 +22,7 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.withHistoryViewModel
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class HistoryViewModelTest : StringSpec({
@@ -154,9 +153,15 @@ class HistoryViewModelTest : StringSpec({
     "month period shows only entries in the window and navigates" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Month)
             viewModel.entries.value.map { it.description } shouldBe listOf("After")
@@ -181,10 +186,18 @@ class HistoryViewModelTest : StringSpec({
     "week period shows only entries in the calendar week" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 16) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "MonInside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "SunInside", main, 300, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "MonAfter", main, 400, createdAt = Instant.parse("2026-08-17T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "MonInside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "SunInside", main, 300, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "MonAfter", main, 400, createdAt = Instant.parse("2026-08-17T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Week)
 
@@ -195,8 +208,12 @@ class HistoryViewModelTest : StringSpec({
     "day period shows only entries on the anchor day and navigates" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "SameDay", main, 200, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Yesterday", main, 100, createdAt = Instant.parse("2026-08-14T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "SameDay", main, 200, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Yesterday", main, 100, createdAt = Instant.parse("2026-08-14T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Day)
             viewModel.entries.value.map { it.description } shouldBe listOf("SameDay")
@@ -212,8 +229,12 @@ class HistoryViewModelTest : StringSpec({
     "future entries are excluded from the history" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
 
             viewModel.entries.value.map { it.description } shouldBe listOf("Today")
         }
@@ -222,8 +243,12 @@ class HistoryViewModelTest : StringSpec({
     "year period shows only entries in the year" {
         withHistoryViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.parse("2025-12-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Current", main, 200, createdAt = Instant.parse("2026-01-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.parse("2025-12-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Current", main, 200, createdAt = Instant.parse("2026-01-01T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Year)
 
@@ -234,7 +259,9 @@ class HistoryViewModelTest : StringSpec({
     "period with no entries shows an empty list" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Year)
             viewModel.goToNextPeriod()
@@ -418,9 +445,15 @@ class HistoryViewModelTest : StringSpec({
     "account balances follow the end of the selected period" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
+            )
 
             // Anchor is today (2026-09-15): the month window is Sep 2026, so the
             // balance includes every entry before and during September.
@@ -438,8 +471,12 @@ class HistoryViewModelTest : StringSpec({
     "account balances exclude future entries" {
         withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
 
             viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -100L))
         }
@@ -501,7 +538,7 @@ class HistoryViewModelTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
 
-            viewModel.categoryTotals.value shouldHaveSize(2)
+            viewModel.categoryTotals.value shouldHaveSize (2)
             val cats = viewModel.categoryTotals.value.associateBy { it.category?.name }
             cats["Groceries"]!!.total shouldBe -1_650L
             cats["Groceries"]!!.count shouldBe 2
@@ -526,9 +563,15 @@ class HistoryViewModelTest : StringSpec({
     "category totals follow the period" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")))
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
+            )
 
             viewModel.setPeriod(HistoryPeriod.Month)
             viewModel.categoryTotals.value.shouldHaveSize(1)
@@ -548,10 +591,10 @@ class HistoryViewModelTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
-            viewModel.categoryTotals.value shouldHaveSize(2)
+            viewModel.categoryTotals.value shouldHaveSize (2)
 
             viewModel.setSearchQuery("salary")
-            viewModel.categoryTotals.value shouldHaveSize(1)
+            viewModel.categoryTotals.value shouldHaveSize (1)
             viewModel.categoryTotals.value.first().category?.name shouldBe "Salary"
         }
     }
@@ -566,11 +609,11 @@ class HistoryViewModelTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.setTypeFilter(EntryType.Income)
-            viewModel.categoryTotals.value shouldHaveSize(1)
+            viewModel.categoryTotals.value shouldHaveSize (1)
             viewModel.categoryTotals.value.first().category?.name shouldBe "Salary"
 
             viewModel.setTypeFilter(null)
-            viewModel.categoryTotals.value shouldHaveSize(2)
+            viewModel.categoryTotals.value shouldHaveSize (2)
         }
     }
 
@@ -584,7 +627,7 @@ class HistoryViewModelTest : StringSpec({
             val usd = accountDao.getAll().first().first { it.name == "USD" }
             viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
-            viewModel.categoryTotals.value shouldHaveSize(1)
+            viewModel.categoryTotals.value shouldHaveSize (1)
             // 200 USD / 2.0 = 100 CHF
             viewModel.categoryTotals.value.first().total shouldBe -100L
         }
@@ -602,10 +645,7 @@ class HistoryViewModelTest : StringSpec({
     }
 })
 
-private suspend fun seed(
-    accountDao: AccountDao,
-    categoryDao: CategoryDao,
-): Pair<Account, Category> {
+private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
     categoryDao.create("Groceries", CategoryType.Expense)
     val main = accountDao.getAll().first().first()

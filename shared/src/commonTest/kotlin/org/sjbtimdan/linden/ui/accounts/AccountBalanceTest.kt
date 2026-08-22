@@ -2,10 +2,10 @@ package org.sjbtimdan.linden.ui.accounts
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.math.roundToLong
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import kotlin.math.roundToLong
 
 class AccountBalanceTest : StringSpec({
     val main = Account(id = 1, name = "Main", currency = Currency.CHF, initialBalance = 10_000)

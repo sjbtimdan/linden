@@ -135,4 +135,6 @@ tasks.withType<Test>().configureEach {
 
 tasks.named("check") {
     dependsOn(tasks.named("koverVerifyJvm"))
+    // detekt is enforced by the pre-commit hook; keep it out of `check` for now.
+    dependsOn.removeIf { it.toString().contains("detekt") }
 }

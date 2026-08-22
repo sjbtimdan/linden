@@ -7,7 +7,6 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import org.sjbtimdan.linden.db.LindenDatabase
 
 actual class DatabaseDriverFactory(private val context: Context) {
-    actual fun createDriver(): SqlDriver {
-        return AndroidSqliteDriver(LindenDatabase.Schema.synchronous(), context, "linden.db")
-    }
+    actual fun createDriver(): SqlDriver =
+        AndroidSqliteDriver(LindenDatabase.Schema.synchronous(), context, "linden.db")
 }

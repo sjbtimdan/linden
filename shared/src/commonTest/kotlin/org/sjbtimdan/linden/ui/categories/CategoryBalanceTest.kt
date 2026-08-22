@@ -2,11 +2,11 @@ package org.sjbtimdan.linden.ui.categories
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.math.roundToLong
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import kotlin.math.roundToLong
 
 class CategoryBalanceTest : StringSpec({
     val groceries = Category(id = 1, name = "Groceries", type = CategoryType.Expense)

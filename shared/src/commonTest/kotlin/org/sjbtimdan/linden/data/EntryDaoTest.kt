@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.data
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.CategoryType
@@ -11,6 +10,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import kotlin.time.Instant
 
 class EntryDaoTest : StringSpec({
     "income, expense, and transfer entries round-trip" {
@@ -107,9 +107,15 @@ class EntryDaoTest : StringSpec({
 
         // mirrored from a backup import: newest entries were inserted first,
         // so a newer date can have a lower id than an older one
-        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Instant.fromEpochMilliseconds(1_000)))
-        entryDao.create(IncomeEntry(0, salary, "Salary", main, 50_000, createdAt = Instant.fromEpochMilliseconds(2_000)))
-        entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200, createdAt = Instant.fromEpochMilliseconds(3_000)))
+        entryDao.create(
+            ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Instant.fromEpochMilliseconds(1_000)),
+        )
+        entryDao.create(
+            IncomeEntry(0, salary, "Salary", main, 50_000, createdAt = Instant.fromEpochMilliseconds(2_000)),
+        )
+        entryDao.create(
+            ExpenseEntry(0, groceries, "Lunch", main, 1_200, createdAt = Instant.fromEpochMilliseconds(3_000)),
+        )
         entryDao.create(ExpenseEntry(0, groceries, "Old", main, 500, createdAt = Instant.fromEpochMilliseconds(500)))
 
         entryDao.latest(EntryType.Expense)!!.description shouldBe "Lunch"

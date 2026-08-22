@@ -3,28 +3,27 @@ package org.sjbtimdan.linden.ui.history
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
+import kotlin.time.Instant
 
 class HistoryDayHeadersTest : StringSpec({
     val account = Account(1, "Main", Currency.CHF)
     val category = Category(1, "Groceries", CategoryType.Expense)
 
-    fun expense(id: Long, epochMillis: Long, zone: TimeZone = TimeZone.UTC): ExpenseEntry =
-        ExpenseEntry(
-            id = id,
-            category = category,
-            description = "Coffee",
-            account = account,
-            amount = 450,
-            createdAt = Instant.fromEpochMilliseconds(epochMillis),
-            createdZone = zone,
-        )
+    fun expense(id: Long, epochMillis: Long, zone: TimeZone = TimeZone.UTC): ExpenseEntry = ExpenseEntry(
+        id = id,
+        category = category,
+        description = "Coffee",
+        account = account,
+        amount = 450,
+        createdAt = Instant.fromEpochMilliseconds(epochMillis),
+        createdZone = zone,
+    )
 
     val day = 86_400_000L
 
@@ -51,9 +50,14 @@ class HistoryDayHeadersTest : StringSpec({
             ),
         )
         items.map { it.key } shouldBe listOf(
-            "day-1970-01-01", 1L, 2L,
-            "day-1970-01-02", 3L, 4L,
-            "day-1970-01-03", 5L,
+            "day-1970-01-01",
+            1L,
+            2L,
+            "day-1970-01-02",
+            3L,
+            4L,
+            "day-1970-01-03",
+            5L,
         )
     }
 
@@ -74,9 +78,12 @@ class HistoryDayHeadersTest : StringSpec({
             listOf(expense(1, day), expense(2, 0), expense(3, 2 * day)),
         )
         items.map { it.key } shouldBe listOf(
-            "day-1970-01-02", 1L,
-            "day-1970-01-01", 2L,
-            "day-1970-01-03", 3L,
+            "day-1970-01-02",
+            1L,
+            "day-1970-01-01",
+            2L,
+            "day-1970-01-03",
+            3L,
         )
     }
 })

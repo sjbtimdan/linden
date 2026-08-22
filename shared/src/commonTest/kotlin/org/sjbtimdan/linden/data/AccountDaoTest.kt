@@ -1,8 +1,8 @@
 package org.sjbtimdan.linden.data
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.assertions.throwables.shouldThrow
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
@@ -15,11 +15,13 @@ class AccountDaoTest : StringSpec({
         dao.getAll().first() shouldBe emptyList()
         dao.create("Main", Currency.CHF)
         val allCreated = dao.getAll().first()
-        allCreated shouldBe listOf(Account(
-            id = allCreated.first().id,
-            name = "Main",
-            currency = Currency.CHF
-        ))
+        allCreated shouldBe listOf(
+            Account(
+                id = allCreated.first().id,
+                name = "Main",
+                currency = Currency.CHF,
+            ),
+        )
         val updated = allCreated.first().copy(name = "Savings", currency = Currency.EUR)
         dao.update(updated)
         dao.getAll().first() shouldBe listOf(updated)

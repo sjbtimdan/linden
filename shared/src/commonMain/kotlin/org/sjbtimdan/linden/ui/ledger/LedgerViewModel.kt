@@ -1,7 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.lifecycle.viewModelScope
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +18,7 @@ import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
+import kotlin.time.Clock
 
 class LedgerViewModel(
     entryDao: EntryDao,
@@ -57,9 +57,9 @@ class LedgerViewModel(
         if (type == _selectedType.value) return
         _selectedType.value = type
         viewModelScope.launch {
-            val previous = _draft.value
+            val previous = draftState.value
             val fresh = newEntryState(type)
-            _draft.value = if (previous != null && previous.type != type) {
+            draftState.value = if (previous != null && previous.type != type) {
                 fresh.carryOverCommonFields(previous)
             } else {
                 fresh
@@ -70,23 +70,23 @@ class LedgerViewModel(
     /** Seeds the draft from the latest entry of the selected type, unless one already exists. */
     fun seedDraft() {
         viewModelScope.launch {
-            if (_draft.value == null) {
-                _draft.value = newEntryState(_selectedType.value)
+            if (draftState.value == null) {
+                draftState.value = newEntryState(_selectedType.value)
             }
         }
     }
 
     /** Resets the form to an empty draft of the selected type. */
     fun clearDraft() {
-        _draft.value = EntryDraft.forNew(_selectedType.value)
+        draftState.value = EntryDraft.forNew(_selectedType.value)
     }
 
     /** Saves the current draft and resets the form prefilled from the saved entry. */
     fun saveDraft(): Boolean {
-        val state = _draft.value ?: return false
+        val state = draftState.value ?: return false
         val entry = state.toEntry(accounts.value, categories.value) ?: return false
         createEntry(entry)
-        _draft.value = EntryDraft.forNew(entry.type, entry)
+        draftState.value = EntryDraft.forNew(entry.type, entry)
         return true
     }
 }

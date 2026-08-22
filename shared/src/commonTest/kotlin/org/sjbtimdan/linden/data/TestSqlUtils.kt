@@ -6,6 +6,4 @@ import org.sjbtimdan.linden.db.LindenDatabase
 @Suppress("KotlinNoActualForExpect")
 expect fun createTestSqlDriver(): SqlDriver
 
-suspend fun lindenDatabase(): LindenDatabase {
-    return createLindenDatabase(createTestSqlDriver())
-}
+suspend fun lindenDatabase(): LindenDatabase = createLindenDatabase(createTestSqlDriver())

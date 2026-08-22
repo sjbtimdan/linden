@@ -10,7 +10,4 @@ import androidx.compose.runtime.Composable
  * [onBack] - callback invoked when the back gesture is performed
  */
 @Composable
-expect fun BackHandler(
-    enabled: Boolean,
-    onBack: () -> Unit,
-)
+expect fun BackHandler(enabled: Boolean, onBack: () -> Unit)

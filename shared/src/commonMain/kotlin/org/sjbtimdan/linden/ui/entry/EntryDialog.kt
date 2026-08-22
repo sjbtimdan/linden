@@ -7,10 +7,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.window.DialogProperties
-import kotlin.time.Instant
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.EntryType
+import kotlin.time.Instant
 
 fun EntryType.displayName(): String = when (this) {
     EntryType.Expense -> "Expense"
