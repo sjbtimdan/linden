@@ -346,6 +346,30 @@ class HistoryViewModelTest : StringSpec({
         }
     }
 
+    "saveDialog keeps a transfer's category" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("General", CategoryType.Both)
+            val accounts = accountDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val savings = accounts.first { it.name == "Savings" }
+            val general = categoryDao.getAll().first().first()
+
+            viewModel.createEntry(TransferEntry(0, general, "Move", main, 500, toAccount = savings, toAmount = null))
+            val created = entryDao.getAll().first().filterIsInstance<TransferEntry>().first()
+            created.category shouldBe general
+
+            viewModel.openEditDialog(created)
+            viewModel.onDescriptionChange("Moved")
+            viewModel.saveDialog() shouldBe true
+
+            val saved = entryDao.getAll().first().filterIsInstance<TransferEntry>().first()
+            saved.description shouldBe "Moved"
+            saved.category shouldBe general
+        }
+    }
+
     "deleteDialogEntry deletes the entry and closes the dialog" {
         withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

@@ -271,6 +271,33 @@ class EntryDaoTest : StringSpec({
         created.toAmount shouldBe null
     }
 
+    "transfers with a category round-trip and keep it on update" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.EUR)
+        categoryDao.create("General", CategoryType.Both)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first()
+        val savings = accounts.last()
+        val general = categoryDao.getAll().first().first()
+
+        entryDao.create(TransferEntry(0, general, "Move", main, 10_000, toAccount = savings, toAmount = 9_500))
+        val created = entryDao.getAll().first().first() as TransferEntry
+        created.category shouldBe general
+
+        val updated = created.copy(amount = 20_000, toAmount = 19_000)
+        entryDao.update(updated)
+
+        val saved = entryDao.getAll().first().first() as TransferEntry
+        saved.amount shouldBe 20_000
+        saved.toAmount shouldBe 19_000
+        saved.category shouldBe general
+    }
+
     "typed read helpers return only their own entries" {
         val database = lindenDatabase()
         val entryDao = EntryDao(database.entryQueries)

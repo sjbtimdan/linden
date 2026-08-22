@@ -80,7 +80,7 @@ data class EntryDraft(
                 val toValue = if (sameCurrency) null else toAmount ?: return null
                 TransferEntry(
                     id = id,
-                    category = null,
+                    category = categories.firstOrNull { it.id == categoryId },
                     description = description,
                     account = account,
                     amount = amountValue,
@@ -141,7 +141,7 @@ data class EntryDraft(
                 editing = entry,
                 type = EntryType.Transfer,
                 amountText = formatAmount(entry.amount),
-                categoryId = null,
+                categoryId = entry.category?.id,
                 accountId = entry.account.id,
                 toAccountId = entry.toAccount.id,
                 toAmountText = formatAmount(entry.toAmount ?: entry.amount),

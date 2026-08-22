@@ -130,7 +130,7 @@ class EntryDraftTest : StringSpec({
     }
 
     "same-currency transfers store a null received amount" {
-        val entry = draft(type = EntryType.Transfer, toAccountId = savingsChf.id)
+        val entry = draft(type = EntryType.Transfer, categoryId = null, toAccountId = savingsChf.id)
             .toEntry(accounts, categories)
         entry shouldBe TransferEntry(
             0, null, null, main, 1_000,
@@ -142,6 +142,7 @@ class EntryDraftTest : StringSpec({
     "cross-currency transfers store the received amount" {
         val entry = draft(
             type = EntryType.Transfer,
+            categoryId = null,
             toAccountId = savingsEur.id,
             toAmountText = "9.50",
         ).toEntry(accounts, categories)
@@ -149,6 +150,19 @@ class EntryDraftTest : StringSpec({
             0, null, null, main, 1_000,
             createdAt = createdAt, createdZone = createdZone,
             toAccount = savingsEur, toAmount = 950,
+        )
+    }
+
+    "transfer drafts keep the draft's category when converting" {
+        val entry = draft(
+            type = EntryType.Transfer,
+            categoryId = groceries.id,
+            toAccountId = savingsChf.id,
+        ).toEntry(accounts, categories)
+        entry shouldBe TransferEntry(
+            0, groceries, null, main, 1_000,
+            createdAt = createdAt, createdZone = createdZone,
+            toAccount = savingsChf, toAmount = null,
         )
     }
 
@@ -226,13 +240,14 @@ class EntryDraftTest : StringSpec({
         state.description shouldBe "Salary"
     }
 
-    "editing a same-currency transfer shows the sent amount as received" {
-        val entry = TransferEntry(9, null, null, main, 10_000, toAccount = savingsChf, toAmount = null)
+    "editing a same-currency transfer shows the sent amount as received and keeps the category" {
+        val entry = TransferEntry(9, groceries, null, main, 10_000, toAccount = savingsChf, toAmount = null)
         val state = EntryDraft.forEdit(entry)
         state.type shouldBe EntryType.Transfer
         state.amountText shouldBe formatAmount(10_000)
         state.toAccountId shouldBe savingsChf.id
         state.toAmountText shouldBe formatAmount(10_000)
+        state.categoryId shouldBe groceries.id
     }
 
     "editing a cross-currency transfer shows the received amount" {
@@ -240,6 +255,12 @@ class EntryDraftTest : StringSpec({
         val state = EntryDraft.forEdit(entry)
         state.toAccountId shouldBe savingsEur.id
         state.toAmountText shouldBe formatAmount(9_500)
+    }
+
+    "editing a transfer with a category round-trips through save" {
+        val original = TransferEntry(9, groceries, "Top up", main, 10_000, toAccount = savingsEur, toAmount = 9_500)
+        val saved = EntryDraft.forEdit(original).toEntry(accounts, categories)
+        saved shouldBe original
     }
 
     // carryOverCommonFields
