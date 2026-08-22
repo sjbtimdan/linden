@@ -438,4 +438,30 @@ class EntryDaoTest : StringSpec({
 
         entryDao.categoryTotals().first() shouldBe mapOf((groceries.id to Currency.CHF) to -450L)
     }
+
+    "accountsWithEntries includes source accounts and transfer targets but not empty accounts" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.EUR)
+        accountDao.create("Empty", Currency.CHF)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        categoryDao.create("Groceries", CategoryType.Expense)
+        categoryDao.create("Salary", CategoryType.Income)
+        val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
+        val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+        // a net-zero account still counts as having entries
+        entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+        entryDao.create(IncomeEntry(0, salary, "Pay", main, 450))
+        // a transfer target counts too
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500))
+
+        entryDao.accountsWithEntries().first() shouldBe setOf(main.id, savings.id)
+    }
 })

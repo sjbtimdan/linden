@@ -17,7 +17,7 @@ import org.sjbtimdan.linden.model.Currency
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
-    entryDao: EntryDao,
+    private val entryDao: EntryDao,
     settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
 ) : ViewModel() {
@@ -36,6 +36,14 @@ class AccountListViewModel(
     )
 
     val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
+
+    /** Accounts referenced by at least one entry; their currency must not be changed. */
+    val accountsWithEntries: StateFlow<Set<Long>> = entryDao.accountsWithEntries()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptySet(),
+        )
 
     /** Net total of all balances in the default currency; null when a rate is missing. */
     val totalMinor: StateFlow<Long?> = combine(
@@ -58,6 +66,11 @@ class AccountListViewModel(
 
     fun updateAccount(account: Account) {
         viewModelScope.launch {
+            val current = accounts.value.firstOrNull { it.account.id == account.id }?.account
+            val currencyChanged = current != null && current.currency != account.currency
+            // Changing the currency of an account with entries would reinterpret
+            // every historical entry in the new currency, so it is refused.
+            if (currencyChanged && account.id in accountsWithEntries.value) return@launch
             accountDao.update(account)
         }
     }

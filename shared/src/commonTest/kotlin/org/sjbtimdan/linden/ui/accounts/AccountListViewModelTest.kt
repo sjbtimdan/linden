@@ -48,6 +48,50 @@ class AccountListViewModelTest : StringSpec({
         }
     }
 
+    "updateAccount ignores a currency change when the account has entries" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+
+            viewModel.updateAccount(main.copy(currency = Currency.EUR))
+
+            viewModel.accounts.value.single().account.currency shouldBe Currency.CHF
+        }
+    }
+
+    "updateAccount allows a currency change when the account has no entries" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            val created = viewModel.accounts.value.first().account
+
+            viewModel.updateAccount(created.copy(currency = Currency.EUR))
+
+            viewModel.accounts.value.single().account.currency shouldBe Currency.EUR
+        }
+    }
+
+    "updateAccount allows renaming an account that has entries" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+
+            viewModel.updateAccount(main.copy(name = "Main Account"))
+
+            viewModel.accounts.value.single().account.name shouldBe "Main Account"
+            viewModel.accounts.value.single().account.currency shouldBe Currency.CHF
+        }
+    }
+
     "direct database writes reflect in the list" {
         withAccountViewModel { dao, viewModel ->
             viewModel.accounts.value.shouldBeEmpty()

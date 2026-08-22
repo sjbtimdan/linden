@@ -68,6 +68,7 @@ fun AccountListScreen(
     val accounts by viewModel.accounts.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
+    val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
     Column(
@@ -210,6 +211,7 @@ fun AccountListScreen(
             currency = state.currency,
             initialBalanceText = state.initialBalanceText,
             isEditing = isEditing,
+            canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
             onNameChange = { dialogState = state.copy(name = it) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
             onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it) },
@@ -243,6 +245,7 @@ private fun AccountDialog(
     currency: Currency,
     initialBalanceText: String,
     isEditing: Boolean,
+    canChangeCurrency: Boolean,
     onNameChange: (String) -> Unit,
     onCurrencyChange: (Currency) -> Unit,
     onInitialBalanceChange: (String) -> Unit,
@@ -285,6 +288,14 @@ private fun AccountDialog(
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
+                if (!canChangeCurrency) {
+                    Text(
+                        text = "Currency cannot be changed: this account has entries.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -293,6 +304,7 @@ private fun AccountDialog(
                     Currency.entries.forEach { entry ->
                         FilterChip(
                             selected = currency == entry,
+                            enabled = canChangeCurrency,
                             onClick = { onCurrencyChange(entry) },
                             label = { Text(entry.name) },
                         )

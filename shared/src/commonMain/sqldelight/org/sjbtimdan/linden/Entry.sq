@@ -134,6 +134,19 @@ WHERE id = :id;
 deleteAll:
 DELETE FROM EntryEntity;
 
+-- Accounts referenced by at least one entry, as source or transfer target.
+-- Their currency must not be changed while entries exist.
+accountsWithEntries:
+SELECT DISTINCT accountId
+FROM (
+    SELECT EntryEntity.account_id AS accountId
+    FROM EntryEntity
+    UNION ALL
+    SELECT EntryEntity.to_account_id AS accountId
+    FROM EntryEntity
+    WHERE EntryEntity.to_account_id IS NOT NULL
+);
+
 -- Net change per account in the account's own currency: income adds, expenses
 -- and transfers subtract from the source; the transfer target gains the received
 -- amount (or the sent amount for same-currency transfers).

@@ -74,6 +74,12 @@ class EntryDao(private val queries: EntryQueries) {
                 .toMap()
         }
 
+    /** Accounts referenced by at least one entry, as source or transfer target. */
+    fun accountsWithEntries(): Flow<Set<Long>> =
+        queries.accountsWithEntries().asFlow().map { rows ->
+            rows.awaitAsList().toSet()
+        }
+
     /** Net total per category and entry currency (minor units). */
     fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> =
         queries.categoryTotals().asFlow().map { rows ->

@@ -2,6 +2,8 @@ package org.sjbtimdan.linden.ui.accounts
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithText
@@ -9,7 +11,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.ui.withAccountViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -94,6 +99,59 @@ class AccountListScreenTest : StringSpec({
             Currency.entries.forEach { currency ->
                 onNodeWithText(currency.name).assertIsDisplayed()
             }
+        }
+    }
+
+    "currency chips are disabled when editing an account with entries" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            onNodeWithText("Currency cannot be changed: this account has entries.").assertIsDisplayed()
+            onNodeWithText("EUR").assertIsNotEnabled()
+        }
+    }
+
+    "currency chips stay enabled when editing an account without entries" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("EUR").assertIsEnabled()
+        }
+    }
+
+    "currency chips stay enabled when creating a new account" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("EUR").assertIsEnabled()
         }
     }
 
