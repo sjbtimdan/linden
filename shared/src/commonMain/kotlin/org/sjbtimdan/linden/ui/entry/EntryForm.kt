@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.ui.BackHandler
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -95,6 +96,10 @@ fun EntryForm(
         onFieldFocusChange(descriptionFocused || focusedDropdown != null)
     }
     val editing = descriptionFocused || focusedDropdown != null
+
+    BackHandler(enabled = focusedDropdown != null) {
+        focusedDropdown = null
+    }
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         if (!editing) {

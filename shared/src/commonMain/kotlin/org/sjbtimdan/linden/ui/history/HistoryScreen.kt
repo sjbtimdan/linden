@@ -38,6 +38,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
@@ -67,6 +68,10 @@ fun HistoryScreen(
 
     val listItems = remember(entries) {
         historyListItems(entries = entries)
+    }
+
+    BackHandler(enabled = dialogState != null) {
+        viewModel.dismissDialog()
     }
 
     Column(

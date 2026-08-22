@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
 
@@ -70,6 +71,10 @@ fun AccountListScreen(
     val totalMinor by viewModel.totalMinor.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
+
+    BackHandler(enabled = dialogState != null) {
+        dialogState = null
+    }
 
     Column(
         modifier = Modifier

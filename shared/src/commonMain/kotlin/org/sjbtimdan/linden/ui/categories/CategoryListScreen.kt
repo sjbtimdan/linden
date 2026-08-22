@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.categoryColor
 
@@ -68,6 +69,10 @@ fun CategoryListScreen(
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
+
+    BackHandler(enabled = dialogState != null) {
+        dialogState = null
+    }
 
     Column(
         modifier = Modifier

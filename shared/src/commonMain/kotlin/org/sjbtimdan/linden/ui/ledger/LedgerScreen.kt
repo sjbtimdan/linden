@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.icon
@@ -67,6 +68,10 @@ fun LedgerScreen(
     // runs when the screen (and thus the draft) is created fresh.
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
+    }
+
+    BackHandler(enabled = draft != null) {
+        viewModel.clearDraft()
     }
 
     var fieldFocused by remember { mutableStateOf(false) }
