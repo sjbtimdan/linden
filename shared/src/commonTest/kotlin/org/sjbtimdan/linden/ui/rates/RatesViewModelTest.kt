@@ -10,85 +10,155 @@ import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.ui.onTestMain
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
 
-class RatesViewModelTest : StringSpec({
-    "refreshRates fetches and exposes cached rates for the default currency" {
-        onTestMain {
-            val database = lindenDatabase()
-            val viewModel = RatesViewModel(
-                settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
-            )
+class RatesViewModelTest :
+    StringSpec({
+        "refreshRates fetches and exposes cached rates for the default currency" {
+            onTestMain {
+                val database = lindenDatabase()
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(
+                        FxRateDao(database.fxRateQueries),
+                        FakeFxRatesSource(),
+                    ),
+                )
 
-            viewModel.refreshRates()
+                viewModel.refreshRates()
 
-            val rates = withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
-            rates.size shouldBe Currency.entries.size - 1
-            rates.all { it.baseCurrency == Currency.CHF } shouldBe true
-            viewModel.ratesRefreshState.value shouldBe RatesRefreshState.Idle
-        }
-    }
-
-    "refreshRates fetches and caches rates for the given currency" {
-        onTestMain {
-            val database = lindenDatabase()
-            val dao = FxRateDao(database.fxRateQueries)
-            val viewModel = RatesViewModel(
-                settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(dao, FakeFxRatesSource()),
-            )
-
-            viewModel.refreshRates(Currency.USD)
-
-            val rates = withTimeout(5_000) { dao.ratesFor(Currency.USD).first() }
-            rates.isNotEmpty() shouldBe true
-            rates.all { it.baseCurrency == Currency.USD } shouldBe true
-        }
-    }
-
-    "refreshRates reports an error when the source fails" {
-        onTestMain {
-            val database = lindenDatabase()
-            val viewModel = RatesViewModel(
-                settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource { error("network") },
-                ),
-            )
-
-            viewModel.refreshRates()
-
-            val state = withTimeout(5_000) {
-                viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+                val rates = withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+                rates.size shouldBe Currency.entries.size - 1
+                rates.all { it.baseCurrency == Currency.CHF } shouldBe true
+                viewModel.ratesRefreshState.value shouldBe RatesRefreshState.Idle
             }
-            (state as RatesRefreshState.Error).message shouldBe "network"
         }
-    }
 
-    "a default currency change refreshes rates for the new base" {
-        onTestMain {
-            val database = lindenDatabase()
-            val settingsDao = SettingsDao(database.settingsQueries)
-            val viewModel = RatesViewModel(
-                settingsDao = settingsDao,
-                fxRatesRepository = FxRatesRepository(
-                    FxRateDao(database.fxRateQueries),
-                    FakeFxRatesSource(),
-                ),
-            )
+        "refreshRates fetches and caches rates for the given currency" {
+            onTestMain {
+                val database = lindenDatabase()
+                val dao = FxRateDao(database.fxRateQueries)
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(dao, FakeFxRatesSource()),
+                )
 
-            settingsDao.setDefaultCurrency(Currency.EUR)
+                viewModel.refreshRates(Currency.USD)
 
-            val rates = withTimeout(5_000) {
-                viewModel.rates.first { it.isNotEmpty() && it.first().baseCurrency == Currency.EUR }
+                val rates = withTimeout(5_000) { dao.ratesFor(Currency.USD).first() }
+                rates.isNotEmpty() shouldBe true
+                rates.all { it.baseCurrency == Currency.USD } shouldBe true
             }
-            rates.size shouldBe Currency.entries.size - 1
-            rates.all { it.baseCurrency == Currency.EUR } shouldBe true
         }
+
+        "refreshRates reports an error when the source fails" {
+            onTestMain {
+                val database = lindenDatabase()
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(
+                        FxRateDao(database.fxRateQueries),
+                        FakeFxRatesSource { error("network") },
+                    ),
+                )
+
+                viewModel.refreshRates()
+
+                val state = withTimeout(5_000) {
+                    viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+                }
+                (state as RatesRefreshState.Error).message shouldBe "network"
+            }
+        }
+
+        "a default currency change refreshes rates for the new base" {
+            onTestMain {
+                val database = lindenDatabase()
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val viewModel = RatesViewModel(
+                    settingsDao = settingsDao,
+                    fxRatesRepository = FxRatesRepository(
+                        FxRateDao(database.fxRateQueries),
+                        FakeFxRatesSource(),
+                    ),
+                )
+
+                settingsDao.setDefaultCurrency(Currency.EUR)
+
+                val rates = withTimeout(5_000) {
+                    viewModel.rates.first { it.isNotEmpty() && it.first().baseCurrency == Currency.EUR }
+                }
+                rates.size shouldBe Currency.entries.size - 1
+                rates.all { it.baseCurrency == Currency.EUR } shouldBe true
+            }
+        }
+
+        "refreshRatesIfStale fetches when no rates are cached" {
+            onTestMain {
+                val database = lindenDatabase()
+                val source = FakeFxRatesSource()
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                )
+
+                viewModel.refreshRatesIfStale()
+
+                val rates = withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+                rates.size shouldBe Currency.entries.size - 1
+                source.fetchCount shouldBe 1
+            }
+        }
+
+        "refreshRatesIfStale fetches when the cached rates are older than 24 hours" {
+            onTestMain {
+                val database = lindenDatabase()
+                val dao = FxRateDao(database.fxRateQueries)
+                dao.replaceRates(seededRates, NOW.minus(25.hours).toEpochMilliseconds())
+                val source = FakeFxRatesSource()
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(dao, source, { NOW }),
+                )
+
+                viewModel.refreshRatesIfStale()
+
+                val refreshed = withTimeout(5_000) {
+                    viewModel.rates.first { it.isNotEmpty() && it.first().rate == 1.0 }
+                }
+                refreshed.size shouldBe Currency.entries.size - 1
+                source.fetchCount shouldBe 1
+            }
+        }
+
+        "refreshRatesIfStale reports an error when the source fails" {
+            onTestMain {
+                val database = lindenDatabase()
+                val viewModel = RatesViewModel(
+                    settingsDao = SettingsDao(database.settingsQueries),
+                    fxRatesRepository = FxRatesRepository(
+                        FxRateDao(database.fxRateQueries),
+                        FakeFxRatesSource { error("network") },
+                        { NOW },
+                    ),
+                )
+
+                viewModel.refreshRatesIfStale()
+
+                val state = withTimeout(5_000) {
+                    viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+                }
+                (state as RatesRefreshState.Error).message shouldBe "network"
+            }
+        }
+    }) {
+    companion object {
+        private val NOW = Instant.parse("2026-08-13T12:00:00Z")
+        private val seededRates = listOf(
+            FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
+        )
     }
-})
+}

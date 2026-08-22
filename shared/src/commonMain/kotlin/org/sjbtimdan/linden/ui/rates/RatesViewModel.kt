@@ -23,10 +23,7 @@ sealed interface RatesRefreshState {
     data class Error(val message: String) : RatesRefreshState
 }
 
-class RatesViewModel(
-    settingsDao: SettingsDao,
-    private val fxRatesRepository: FxRatesRepository,
-) : ViewModel() {
+class RatesViewModel(settingsDao: SettingsDao, private val fxRatesRepository: FxRatesRepository) : ViewModel() {
     val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(
             scope = viewModelScope,
@@ -55,6 +52,18 @@ class RatesViewModel(
 
     fun refreshRates(currency: Currency = base.value) {
         refresh(currency)
+    }
+
+    fun refreshRatesIfStale(currency: Currency = base.value) {
+        viewModelScope.launch {
+            try {
+                fxRatesRepository.refreshIfStale(currency)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _ratesRefreshState.update { RatesRefreshState.Error(e.message ?: "Failed to refresh rates") }
+            }
+        }
     }
 
     fun clearRatesError() {

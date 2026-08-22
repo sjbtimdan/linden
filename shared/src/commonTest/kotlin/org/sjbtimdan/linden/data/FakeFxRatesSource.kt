@@ -12,6 +12,11 @@ class FakeFxRatesSource(
         )
     },
 ) : FxRatesSource {
-    override suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates =
-        rates(base)
+    var fetchCount = 0
+        private set
+
+    override suspend fun fetchLatestRates(base: Currency, symbols: List<Currency>): FxRates {
+        fetchCount++
+        return rates(base)
+    }
 }

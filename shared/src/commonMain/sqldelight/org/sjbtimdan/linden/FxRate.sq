@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS FxRateEntity (
     quoteCurrency TEXT NOT NULL,
     rate REAL NOT NULL,
     date TEXT NOT NULL,
+    fetchedAt INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (baseCurrency, quoteCurrency)
 );
 
@@ -17,8 +18,14 @@ SELECT *
 FROM FxRateEntity;
 
 insertOrReplace:
-INSERT OR REPLACE INTO FxRateEntity (baseCurrency, quoteCurrency, rate, date)
-VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO FxRateEntity (baseCurrency, quoteCurrency, rate, date, fetchedAt)
+VALUES (?, ?, ?, ?, ?);
+
+selectFetchedAtByBase:
+SELECT fetchedAt
+FROM FxRateEntity
+WHERE baseCurrency = ?
+LIMIT 1;
 
 deleteByBase:
 DELETE FROM FxRateEntity

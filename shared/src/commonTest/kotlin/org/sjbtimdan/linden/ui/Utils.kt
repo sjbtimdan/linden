@@ -9,7 +9,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
@@ -33,6 +32,7 @@ import org.sjbtimdan.linden.ui.history.HistoryViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
+import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun onTestMain(block: suspend () -> Unit) {
@@ -77,7 +77,7 @@ fun withViewModel(
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
             val fxRateDao = FxRateDao(database.fxRateQueries)
-            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
             val viewModel = CategoryListViewModel(
                 categoryDao,
                 entryDao,
@@ -118,7 +118,7 @@ fun withAccountViewModel(
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
             val fxRateDao = FxRateDao(database.fxRateQueries)
-            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
             val viewModel = AccountListViewModel(
                 accountDao,
                 entryDao,
@@ -187,14 +187,11 @@ fun withRatesViewModel(
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withRatesViewModel(
-    block: suspend ComposeUiTest.(RatesViewModel) -> Unit,
-) = withRatesViewModel { _, viewModel -> block(viewModel) }
+fun withRatesViewModel(block: suspend ComposeUiTest.(RatesViewModel) -> Unit) =
+    withRatesViewModel { _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
-    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) {
+fun withLedgerViewModel(block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
@@ -208,14 +205,12 @@ fun withLedgerViewModel(
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
-    block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
+fun withLedgerViewModel(block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit) =
+    withLedgerViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
-    block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }
+fun withLedgerViewModel(block: suspend ComposeUiTest.(LedgerViewModel) -> Unit) =
+    withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(
@@ -243,7 +238,7 @@ fun withHistoryViewModel(
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
             val fxRateDao = FxRateDao(database.fxRateQueries)
-            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
             val viewModel = HistoryViewModel(
                 entryDao,
                 accountDao,

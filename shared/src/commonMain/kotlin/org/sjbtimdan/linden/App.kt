@@ -46,9 +46,7 @@ sealed class Screen {
 }
 
 @Composable
-fun App(
-    dependencies: AppDependencies,
-) {
+fun App(dependencies: AppDependencies) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
@@ -60,8 +58,8 @@ fun App(
         onDispose { dependencies.httpClient.close() }
     }
     LaunchedEffect(Unit) {
-        // Refresh rates once at startup; failures surface as an error on the Rates screen.
-        ratesViewModel.refreshRates(dependencies.initialCurrency)
+        // Refresh rates at startup only when the cached rates are more than 24 hours old.
+        ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
 
