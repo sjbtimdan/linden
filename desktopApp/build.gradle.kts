@@ -34,11 +34,6 @@ detekt {
     disableDefaultRuleSets = true
 }
 
-// detekt is enforced by the pre-commit hook; keep it out of `check` for now.
-tasks.named("check") {
-    dependsOn.removeIf { it.toString().contains("detekt") }
-}
-
 compose.resources {
     packageOfResClass = "org.sjbtimdan.linden.generated.resources"
 }
