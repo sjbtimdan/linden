@@ -2,6 +2,8 @@ package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -17,6 +19,8 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerViewModelTest : StringSpec({
@@ -221,6 +225,35 @@ class LedgerViewModelTest : StringSpec({
             viewModel.saveDraft() shouldBe false
 
             viewModel.draft.value.shouldNotBeNull()
+        }
+    }
+
+    "account and category suggestions are empty without a draft" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            viewModel.accountSuggestions.first().shouldBeEmpty()
+            viewModel.categorySuggestions.first().shouldBeEmpty()
+        }
+    }
+
+    "account and category suggestions reflect the draft and history" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Leisure", CategoryType.Expense)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            val leisure = categoryDao.getAll().first().first { it.name == "Leisure" }
+            val now = Clock.System.now()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+            entryDao.create(ExpenseEntry(0, leisure, "Cinema", savings, 2_000, createdAt = now.minus(1.days)))
+
+            viewModel.clearDraft()
+            viewModel.onAmountChange("4.50")
+
+            viewModel.categorySuggestions.first() shouldContainExactly listOf(groceries.id)
+            viewModel.accountSuggestions.first() shouldContainExactly listOf(main.id)
         }
     }
 })

@@ -70,6 +70,8 @@ fun EntryForm(
     onNavigateToSettings: () -> Unit,
     onFieldFocusChange: (Boolean) -> Unit = {},
     descriptionSuggestions: List<String> = emptyList(),
+    accountSuggestions: List<Long> = emptyList(),
+    categorySuggestions: List<Long> = emptyList(),
 ) {
     val visibleCategories = when (state.type) {
         EntryType.Expense -> categories.filter { it.type != CategoryType.Income }
@@ -208,6 +210,9 @@ fun EntryForm(
                         optionLabel = { it.name },
                         onSelect = { onCategoryChange(it.id) },
                         onFocusChange = { focusedDropdown = if (it) "category" else null },
+                        predictedOptions = categorySuggestions
+                            .filterNot { it == state.categoryId }
+                            .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
                     )
                 }
             }
@@ -227,6 +232,9 @@ fun EntryForm(
                         optionLabel = { it.name },
                         onSelect = { onAccountChange(it.id) },
                         onFocusChange = { focusedDropdown = if (it) "account" else null },
+                        predictedOptions = accountSuggestions
+                            .filterNot { it == state.accountId }
+                            .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
                     )
                 }
             }

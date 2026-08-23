@@ -213,4 +213,73 @@ class DropdownFieldTest : StringSpec({
             }
         }
     }
+
+    "shows predicted options instead of all options when provided" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = listOf("Savings", "Checking"),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                onNodeWithText("Savings").assertIsDisplayed()
+                onNodeWithText("Checking").assertIsDisplayed()
+                onNodeWithText("Credit Card").assertDoesNotExist()
+            }
+        }
+    }
+
+    "typing filters the full option list, not just the predicted ones" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = listOf("Savings"),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+                onNode(hasSetTextAction()).performTextInput("cred")
+
+                onNodeWithText("Credit Card").assertIsDisplayed()
+                onNodeWithText("Savings").assertDoesNotExist()
+            }
+        }
+    }
+
+    "falls back to all options when predicted options are empty" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = emptyList(),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                accountOptions.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
+            }
+        }
+    }
 })

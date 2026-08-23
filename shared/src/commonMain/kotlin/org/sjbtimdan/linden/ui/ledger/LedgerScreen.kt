@@ -55,6 +55,8 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val selectedType by viewModel.selectedType.collectAsState()
     val draft by viewModel.draft.collectAsState()
     val descriptionSuggestions by viewModel.descriptionSuggestions.collectAsState()
+    val accountSuggestions by viewModel.accountSuggestions.collectAsState()
+    val categorySuggestions by viewModel.categorySuggestions.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -131,6 +133,8 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     // action buttons too so everything fits above the keyboard.
                     onFieldFocusChange = { fieldFocused = it },
                     descriptionSuggestions = descriptionSuggestions,
+                    accountSuggestions = accountSuggestions,
+                    categorySuggestions = categorySuggestions,
                 )
             }
         }

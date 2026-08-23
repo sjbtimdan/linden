@@ -35,6 +35,8 @@ fun EntryDialog(
     onNavigateToSettings: () -> Unit,
     onDismiss: () -> Unit,
     descriptionSuggestions: List<String> = emptyList(),
+    accountSuggestions: List<Long> = emptyList(),
+    categorySuggestions: List<Long> = emptyList(),
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -64,6 +66,8 @@ fun EntryDialog(
                 onCreatedAtChange = onCreatedAtChange,
                 onNavigateToSettings = onNavigateToSettings,
                 descriptionSuggestions = descriptionSuggestions,
+                accountSuggestions = accountSuggestions,
+                categorySuggestions = categorySuggestions,
             )
         },
         confirmButton = {

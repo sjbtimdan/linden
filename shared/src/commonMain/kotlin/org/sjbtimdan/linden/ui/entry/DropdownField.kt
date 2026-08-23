@@ -27,6 +27,7 @@ fun <T> DropdownField(
     optionLabel: (T) -> String,
     onSelect: (T) -> Unit,
     onFocusChange: (Boolean) -> Unit = {},
+    predictedOptions: List<T>? = null,
 ) {
     var focused by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -34,7 +35,9 @@ fun <T> DropdownField(
     val focusManager = LocalFocusManager.current
     val visibleOptions = query.trim().let { trimmed ->
         if (trimmed.isEmpty()) {
-            options
+            // Predictive input: while the field is empty the most likely options
+            // are offered instead of the full list; typing falls back to search.
+            predictedOptions?.takeIf { it.isNotEmpty() } ?: options
         } else {
             options.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
         }

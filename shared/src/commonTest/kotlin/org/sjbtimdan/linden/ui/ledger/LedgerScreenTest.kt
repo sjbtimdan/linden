@@ -436,6 +436,74 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Cocoa").assertDoesNotExist()
         }
     }
+
+    "shows predicted account and category chips from history" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            categoryDao.create("Leisure", CategoryType.Expense)
+            val accounts = accountDao.getAll().first()
+            val categories = categoryDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val savings = accounts.first { it.name == "Savings" }
+            val groceries = categories.first { it.name == "Groceries" }
+            val leisure = categories.first { it.name == "Leisure" }
+            val now = Clock.System.now()
+            // The pairings prediction must rediscover from history.
+            viewModel.createEntry(ExpenseEntry(0, leisure, "Cinema", savings, 2_000, createdAt = now.minus(5.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Coffee")
+            // Clear the prefilled form so the account/category fields start empty.
+            onNodeWithText("Clear").performClick()
+            onNodeWithText("Amount").performTextInput("4.50")
+
+            // Category: only the predicted chip is offered, not the full list.
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Leisure").assertDoesNotExist()
+
+            // Account: picking the category narrows the prediction to its pairing.
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Savings").assertDoesNotExist()
+        }
+    }
+
+    "prefilled account and category fall back to the full list" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            categoryDao.create("Leisure", CategoryType.Expense)
+            val accounts = accountDao.getAll().first()
+            val categories = categoryDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val groceries = categories.first { it.name == "Groceries" }
+            val now = Clock.System.now()
+            // The latest entry prefills the form with account=Main, category=Groceries.
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Coffee")
+            onNodeWithText("Amount").performTextInput("4.50")
+
+            // The only predicted category is the already-selected one, so it is
+            // excluded and the dropdown falls back to the full list.
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Leisure").assertIsDisplayed()
+        }
+    }
 })
 
 @OptIn(ExperimentalTestApi::class)
