@@ -70,7 +70,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Amount").performTextInput("12.50")
+            enterAmount("12.50")
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Account").performClick()
@@ -102,7 +102,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNodeWithText("Amount").performTextInput("12.50")
+            enterAmount("12.50")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Description (optional)").performTextInput("Lunch")
             onNodeWithText("Expense").performClick()
@@ -128,7 +128,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Amount").performTextInput("12.50")
+            enterAmount("12.50")
             onNodeWithText("Description (optional)").performTextInput("Lunch")
 
             // typing the description collapses the form and hides the buttons
@@ -157,7 +157,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Add").assertIsNotEnabled()
-            onNodeWithText("Amount").performTextInput("12.50")
+            enterAmount("12.50")
             onNodeWithText("Add").assertIsNotEnabled()
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").performClick()
@@ -175,7 +175,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Amount").performTextInput("12.50")
+            enterAmount("12.50")
             onNodeWithText("Description (optional)").performTextInput("Lunch")
             onNodeWithText("Income").performClick()
 
@@ -239,7 +239,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Transfer").performClick()
-            onNodeWithText("Amount (sent)").performTextInput("100")
+            enterAmount("100", label = "Amount (sent)")
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("To account").performClick()
@@ -265,7 +265,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             onNodeWithText("Transfer").performClick()
-            onNodeWithText("Amount (sent)").performTextInput("100")
+            enterAmount("100", label = "Amount (sent)")
             onNodeWithText("From account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("To account").performClick()
@@ -386,7 +386,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
             // clear the prefilled description so suggestions can be verified independently;
             // clearing focuses the field, which collapses the rest of the form
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
@@ -406,7 +406,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             waitForText("Coffee")
 
@@ -429,7 +429,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             waitForText("Coffee")
 
@@ -457,7 +457,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Cocoa")
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
             onNode(hasSetTextAction() and hasText("Cocoa")).performTextClearance()
             waitForText("Coffee")
 
@@ -492,7 +492,7 @@ class LedgerScreenTest : StringSpec({
             waitForText("Coffee")
             // Clear the prefilled form so the account/category fields start empty.
             onNodeWithText("Clear").performClick()
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
 
             // Category: only the predicted chip is offered, not the full list.
             onNodeWithText("Category").performClick()
@@ -526,7 +526,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Coffee")
-            onNodeWithText("Amount").performTextInput("4.50")
+            enterAmount("4.50")
 
             // The only predicted category is the already-selected one, so it is
             // excluded and the dropdown falls back to the full list.
@@ -542,6 +542,18 @@ private fun ComposeUiTest.waitForText(text: String) {
     waitUntil(timeoutMillis = 5_000) {
         onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
     }
+}
+
+/** Enters an amount via the calculator keypad and commits it with Enter. */
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.enterAmount(text: String, label: String = "Amount") {
+    onNodeWithText(label).performClick()
+    waitForIdle()
+    text.forEach { char ->
+        onNodeWithText(char.toString()).performClick()
+    }
+    onNodeWithText("Enter").performClick()
+    waitForIdle()
 }
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

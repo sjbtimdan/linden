@@ -1,0 +1,154 @@
+package org.sjbtimdan.linden.ui.entry
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.v2.runComposeUiTest
+import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
+import kotlinx.datetime.TimeZone
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.ui.onTestMain
+import kotlin.time.Instant
+
+private val main = Account(1, "Main", Currency.CHF)
+private val groceries = Category(1, "Groceries", CategoryType.Expense)
+
+private fun draft(amountText: String): EntryDraft = EntryDraft(
+    editing = null,
+    type = EntryType.Expense,
+    amountText = amountText,
+    categoryId = groceries.id,
+    accountId = main.id,
+    toAccountId = null,
+    toAmountText = "",
+    description = "",
+    createdAt = Instant.parse("2026-08-10T14:30:00Z"),
+    createdZone = TimeZone.UTC,
+)
+
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.showForm(initial: EntryDraft, onAmountChange: (String) -> Unit = {}) {
+    setContent {
+        var state by remember { mutableStateOf(initial) }
+        EntryForm(
+            state = state,
+            accounts = listOf(main),
+            categories = listOf(groceries),
+            onAmountChange = {
+                onAmountChange(it)
+                state = state.copy(amountText = it)
+            },
+            onCategoryChange = {},
+            onAccountChange = {},
+            onToAccountChange = {},
+            onToAmountChange = {},
+            onDescriptionChange = {},
+            onCreatedAtChange = {},
+            onNavigateToSettings = {},
+        )
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.openCalculator() {
+    onNodeWithTag("amountField").performClick()
+    waitForIdle()
+    onNodeWithText("Enter").assertIsDisplayed()
+}
+
+@OptIn(ExperimentalTestApi::class)
+class AmountCalculatorTest : StringSpec({
+
+    "entering a calculation commits the result" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft(""), onAmountChange = { committed = it })
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("÷").performClick()
+                onNodeWithText("3").performClick()
+                onNodeWithText("=").performClick()
+                onNodeWithText("33.33").assertIsDisplayed()
+
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+
+                committed shouldBe "33.33"
+                onNodeWithText("Enter").assertDoesNotExist()
+            }
+        }
+    }
+
+    "Enter evaluates a pending expression before committing" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft(""), onAmountChange = { committed = it })
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("+").performClick()
+                onNodeWithText("3").performClick()
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+
+                committed shouldBe "103.00"
+            }
+        }
+    }
+
+    "Enter with zero closes the calculator and warns" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft(""), onAmountChange = { committed = it })
+                openCalculator()
+
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+
+                committed.shouldBeNull()
+                onNodeWithText("Amount must be greater than zero").assertIsDisplayed()
+                onNodeWithText("Enter").assertDoesNotExist()
+            }
+        }
+    }
+
+    "Cancel closes the calculator without committing" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft("10.00"), onAmountChange = { committed = it })
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("2").performClick()
+                onNodeWithText("Cancel").performClick()
+                waitForIdle()
+
+                committed.shouldBeNull()
+                onNodeWithText("10.00").assertIsDisplayed()
+                onNodeWithText("Enter").assertDoesNotExist()
+            }
+        }
+    }
+})

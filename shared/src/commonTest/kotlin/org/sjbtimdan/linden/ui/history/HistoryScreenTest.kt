@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
 import kotlinx.coroutines.flow.first
@@ -103,8 +102,16 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("Coffee").performClick()
             onNodeWithText("Edit Expense").assertIsDisplayed()
 
-            onNodeWithText("Amount").performTextClearance()
-            onNodeWithText("Amount").performTextInput("5.00")
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+            // The calculator opens prefilled with the current amount; clear and retype.
+            onNodeWithText("C").performClick()
+            onNodeWithText("5").performClick()
+            onNodeWithText(".").performClick()
+            onNodeWithText("0").performClick()
+            onNodeWithText("0").performClick()
+            onNodeWithText("Enter").performClick()
+            waitForIdle()
             onNodeWithText("Save").performClick()
 
             // The edited row and the period total both show the new amount.

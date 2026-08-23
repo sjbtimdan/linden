@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
@@ -87,6 +88,11 @@ fun EntryForm(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
+    // While the calculator is open it replaces the amount field and the rest of
+    // the form collapses, so the keypad gets the whole area above the keyboard.
+    var calculatorMode by remember { mutableStateOf(false) }
+    var amountWarning by remember { mutableStateOf<String?>(null) }
+
     // While a field with inline options (description, category, accounts) is focused
     // the rest of the form collapses so that field and its options get the whole
     // area above the keyboard. The focused field itself must stay mounted —
@@ -94,23 +100,43 @@ fun EntryForm(
     // *different* one is active.
     var descriptionFocused by remember { mutableStateOf(false) }
     var focusedDropdown by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(descriptionFocused, focusedDropdown) {
-        onFieldFocusChange(descriptionFocused || focusedDropdown != null)
+    LaunchedEffect(descriptionFocused, focusedDropdown, calculatorMode) {
+        onFieldFocusChange(descriptionFocused || focusedDropdown != null || calculatorMode)
     }
-    val editing = descriptionFocused || focusedDropdown != null
+    val editing = descriptionFocused || focusedDropdown != null || calculatorMode
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
+    fun openCalculator() {
+        calculatorMode = true
+        amountWarning = null
+        keyboardController?.hide()
+        focusManager.clearFocus()
+    }
 
     BackHandler(enabled = focusedDropdown != null) {
         focusedDropdown = null
+    }
+    BackHandler(enabled = calculatorMode) {
+        calculatorMode = false
     }
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         if (!editing) {
             OutlinedTextField(
                 value = state.amountText,
-                onValueChange = onAmountChange,
+                onValueChange = {
+                    onAmountChange(it)
+                    amountWarning = null
+                },
                 label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                isError = amountWarning != null,
+                supportingText = amountWarning?.let { warning ->
+                    { Text(warning) }
+                },
                 trailingIcon = if (state.amountText.isNotEmpty()) {
                     {
                         IconButton(
@@ -123,7 +149,10 @@ fun EntryForm(
                 suffix = fromAccount?.let { account ->
                     { Text(account.currency.symbol) }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { if (it.isFocused) openCalculator() }
+                    .testTag("amountField")
+                    .fillMaxWidth(),
             )
         }
 
@@ -246,9 +275,8 @@ fun EntryForm(
 
         // While an account/category picker is expanded only that picker and its
         // chips show; the description would just be dead space beneath them.
-        if (focusedDropdown == null) {
-            val keyboardController = LocalSoftwareKeyboardController.current
-            val focusManager = LocalFocusManager.current
+        // Same while the amount calculator replaces the form.
+        if (!calculatorMode && focusedDropdown == null) {
             val visibleSuggestions = state.description.trim().let { query ->
                 val matches = if (query.isEmpty()) {
                     descriptionSuggestions
@@ -308,6 +336,24 @@ fun EntryForm(
                 }
             }
         }
+    }
+
+    // The scrollable column above collapses while the calculator is open, so the
+    // keypad replaces the whole form and gets the available space.
+    if (calculatorMode) {
+        AmountCalculator(
+            initialMinor = state.amount,
+            currencySymbol = fromAccount?.currency?.symbol,
+            onEnter = { value ->
+                onAmountChange(value)
+                calculatorMode = false
+            },
+            onInvalid = {
+                amountWarning = "Amount must be greater than zero"
+                calculatorMode = false
+            },
+            onCancel = { calculatorMode = false },
+        )
     }
 
     if (showDatePicker) {

@@ -1,0 +1,187 @@
+package org.sjbtimdan.linden.ui.entry
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+
+/**
+ * Full calculator keypad for amount entry. Replaces the amount text field while
+ * open: the display line shows the running value, "Enter" commits a valid
+ * positive amount (or reports an invalid one via [onInvalid]), "Cancel" or the
+ * system back discards the edit.
+ */
+@Composable
+fun AmountCalculator(
+    modifier: Modifier = Modifier,
+    initialMinor: Long?,
+    currencySymbol: String?,
+    onEnter: (String) -> Unit,
+    onInvalid: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val model = remember(initialMinor) { CalculatorModel(initialMinor) }
+    var display by remember { mutableStateOf(model.display) }
+
+    fun press(change: () -> Unit) {
+        change()
+        display = model.display
+    }
+
+    fun enter() {
+        press { model.onEquals() }
+        val value = model.commitValue
+        if (value != null) onEnter(value) else onInvalid()
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .heightIn(max = 560.dp)
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (event.key) {
+                    Key.Enter, Key.NumPadEnter -> {
+                        enter()
+                        true
+                    }
+
+                    Key.Escape -> {
+                        onCancel()
+                        true
+                    }
+
+                    else -> false
+                }
+            }
+            .padding(8.dp),
+    ) {
+        TextButton(onClick = onCancel) {
+            Text("Cancel")
+        }
+
+        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = display,
+                    style = MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).testTag("calculatorDisplay"),
+                )
+                currencySymbol?.let { symbol ->
+                    Text(
+                        text = symbol,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            keyRow(Modifier.weight(1f)) {
+                CalculatorKey("7") { press { model.onDigit('7') } }
+                CalculatorKey("8") { press { model.onDigit('8') } }
+                CalculatorKey("9") { press { model.onDigit('9') } }
+                CalculatorKey("÷") { press { model.onOperator(CalculatorOp.Divide) } }
+            }
+            keyRow(Modifier.weight(1f)) {
+                CalculatorKey("4") { press { model.onDigit('4') } }
+                CalculatorKey("5") { press { model.onDigit('5') } }
+                CalculatorKey("6") { press { model.onDigit('6') } }
+                CalculatorKey("×") { press { model.onOperator(CalculatorOp.Multiply) } }
+            }
+            keyRow(Modifier.weight(1f)) {
+                CalculatorKey("1") { press { model.onDigit('1') } }
+                CalculatorKey("2") { press { model.onDigit('2') } }
+                CalculatorKey("3") { press { model.onDigit('3') } }
+                CalculatorKey("−") { press { model.onOperator(CalculatorOp.Subtract) } }
+            }
+            keyRow(Modifier.weight(1f)) {
+                CalculatorKey("C") { press { model.onClear() } }
+                CalculatorKey("0") { press { model.onDigit('0') } }
+                CalculatorKey(".") { press { model.onDot() } }
+                CalculatorKey("+") { press { model.onOperator(CalculatorOp.Add) } }
+            }
+            keyRow(Modifier.weight(1f)) {
+                FilledTonalButton(
+                    onClick = { press { model.onBackspace() } },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .semantics { contentDescription = "Backspace" },
+                ) {
+                    Text("⌫", style = MaterialTheme.typography.titleLarge)
+                }
+                CalculatorKey("=") { press { model.onEquals() } }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { enter() },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+        ) {
+            Text("Enter")
+        }
+    }
+}
+
+@Composable
+private fun keyRow(modifier: Modifier, content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun RowScope.CalculatorKey(label: String, onClick: () -> Unit) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = Modifier.weight(1f).fillMaxHeight(),
+    ) {
+        Text(label, style = MaterialTheme.typography.titleLarge)
+    }
+}
