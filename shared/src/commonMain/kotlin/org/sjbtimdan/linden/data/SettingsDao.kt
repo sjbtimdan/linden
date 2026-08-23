@@ -28,8 +28,11 @@ class SettingsDao(private val queries: SettingsQueries) {
 
     suspend fun getDefaultCurrency(): Currency {
         val entity = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull()
-            ?: return Currency.CHF
-        return parseCurrency(entity.value_) ?: Currency.CHF
+        return if (entity == null) {
+            Currency.CHF
+        } else {
+            parseCurrency(entity.value_) ?: Currency.CHF
+        }
     }
 
     suspend fun setDefaultCurrency(currency: Currency) {

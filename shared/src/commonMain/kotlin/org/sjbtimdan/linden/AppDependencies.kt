@@ -25,8 +25,10 @@ import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
 /**
  * Composition root owning every long-lived dependency of the app.
- * Properties are lazy so the graph is explicit and nothing is constructed
- * until a screen actually uses it.
+ * DAOs, the repository and the ViewModels are created eagerly: construction
+ * is cheap, and [App] touches all of them at first composition anyway. Only
+ * [httpClient] stays lazy — building its engine is the one genuinely expensive
+ * step, and tests injecting a fake FX source never trigger it.
  */
 class AppDependencies(
     val database: LindenDatabase,
@@ -34,10 +36,11 @@ class AppDependencies(
     val initialCurrency: Currency,
     private val fxRatesSource: FxRatesSource? = null,
 ) {
-    val settingsDao by lazy { SettingsDao(database.settingsQueries) }
-    val accountDao by lazy { AccountDao(database.accountQueries) }
-    val categoryDao by lazy { CategoryDao(database.categoryQueries) }
-    val entryDao by lazy { EntryDao(database.entryQueries) }
+    val settingsDao = SettingsDao(database.settingsQueries)
+    val accountDao = AccountDao(database.accountQueries)
+    val categoryDao = CategoryDao(database.categoryQueries)
+    val entryDao = EntryDao(database.entryQueries)
+    val fxRateDao = FxRateDao(database.fxRateQueries)
     val httpClient by lazy {
         HttpClient {
             install(HttpTimeout) {
@@ -48,19 +51,13 @@ class AppDependencies(
             }
         }
     }
-    val fxRatesRepository by lazy {
-        FxRatesRepository(FxRateDao(database.fxRateQueries), fxRatesSource ?: FxRatesFetcher(httpClient))
-    }
-    val settingsViewModel by lazy {
-        SettingsViewModel(settingsDao, IvyImporter(database), initialTheme, initialCurrency)
-    }
-    val ratesViewModel by lazy { RatesViewModel(settingsDao, fxRatesRepository) }
-    val categoryListViewModel by lazy { CategoryListViewModel(categoryDao, entryDao, settingsDao, fxRatesRepository) }
-    val accountListViewModel by lazy { AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository) }
-    val ledgerViewModel by lazy { LedgerViewModel(entryDao, accountDao, categoryDao) }
-    val historyViewModel by lazy {
-        HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
-    }
+    val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
+    val settingsViewModel = SettingsViewModel(settingsDao, IvyImporter(database), initialTheme, initialCurrency)
+    val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
+    val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao, settingsDao, fxRatesRepository)
+    val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository)
+    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao)
+    val historyViewModel = HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
 }
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
