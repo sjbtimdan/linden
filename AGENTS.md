@@ -9,6 +9,11 @@ from `references/` for the topic (e.g. `08-kmp-cmp.md`, `01-architecture.md`, `0
 `context7` and `task-management` skills are installed under `.opencode/skills/`; the OAC context system
 lives in `.opencode/context/` (standards/workflows under `core/`, loaded via ContextScout).
 
+## MCP
+
+Check if IntelliJ MCP is available. Use it for searching files, compiling and testing as it is faster.
+When running tests: if a test configuration is not available (e.g. for jvmTests) then create it.
+
 ## Modules
 
 - `:shared` — shared UI and business logic (KMP library, Compose Multiplatform; targets `jvm()` + `android`).
