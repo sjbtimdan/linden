@@ -4,12 +4,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
@@ -133,7 +137,7 @@ class AmountCalculatorTest : StringSpec({
         }
     }
 
-    "Cancel closes the calculator without committing" {
+    "Escape closes the calculator without committing" {
         onTestMain {
             runComposeUiTest {
                 var committed: String? = null
@@ -142,7 +146,7 @@ class AmountCalculatorTest : StringSpec({
 
                 onNodeWithText("1").performClick()
                 onNodeWithText("2").performClick()
-                onNodeWithText("Cancel").performClick()
+                onRoot().performKeyInput { pressKey(Key.Escape) }
                 waitForIdle()
 
                 committed.shouldBeNull()

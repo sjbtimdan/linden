@@ -70,6 +70,7 @@ fun EntryForm(
     onCreatedAtChange: (Instant) -> Unit,
     onNavigateToSettings: () -> Unit,
     onFieldFocusChange: (Boolean) -> Unit = {},
+    editEpoch: Int = 0,
     descriptionSuggestions: List<String> = emptyList(),
     accountSuggestions: List<Long> = emptyList(),
     categorySuggestions: List<Long> = emptyList(),
@@ -91,7 +92,9 @@ fun EntryForm(
     // While the calculator is open it replaces the amount field and the rest of
     // the form collapses, so the keypad gets the whole area above the keyboard.
     var calculatorMode by remember { mutableStateOf(false) }
+    var toCalculatorMode by remember { mutableStateOf(false) }
     var amountWarning by remember { mutableStateOf<String?>(null) }
+    var toAmountWarning by remember { mutableStateOf<String?>(null) }
 
     // While a field with inline options (description, category, accounts) is focused
     // the rest of the form collapses so that field and its options get the whole
@@ -100,10 +103,17 @@ fun EntryForm(
     // *different* one is active.
     var descriptionFocused by remember { mutableStateOf(false) }
     var focusedDropdown by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(descriptionFocused, focusedDropdown, calculatorMode) {
-        onFieldFocusChange(descriptionFocused || focusedDropdown != null || calculatorMode)
+    LaunchedEffect(descriptionFocused, focusedDropdown, calculatorMode, toCalculatorMode) {
+        onFieldFocusChange(descriptionFocused || focusedDropdown != null || calculatorMode || toCalculatorMode)
     }
-    val editing = descriptionFocused || focusedDropdown != null || calculatorMode
+    val editing = descriptionFocused || focusedDropdown != null || calculatorMode || toCalculatorMode
+
+    // The screen's back arrow bumps this to close the calculators from outside;
+    // the focused-field states are focus-driven and drop with clearFocus instead.
+    LaunchedEffect(editEpoch) {
+        calculatorMode = false
+        toCalculatorMode = false
+    }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -115,11 +125,21 @@ fun EntryForm(
         focusManager.clearFocus()
     }
 
+    fun openToCalculator() {
+        toCalculatorMode = true
+        toAmountWarning = null
+        keyboardController?.hide()
+        focusManager.clearFocus()
+    }
+
     BackHandler(enabled = focusedDropdown != null) {
         focusedDropdown = null
     }
     BackHandler(enabled = calculatorMode) {
         calculatorMode = false
+    }
+    BackHandler(enabled = toCalculatorMode) {
+        toCalculatorMode = false
     }
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -203,10 +223,17 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = state.toAmountText,
-                    onValueChange = onToAmountChange,
+                    onValueChange = {
+                        onToAmountChange(it)
+                        toAmountWarning = null
+                    },
                     label = { Text("Amount (received)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = toAmountWarning != null,
+                    supportingText = toAmountWarning?.let { warning ->
+                        { Text(warning) }
+                    },
                     trailingIcon = if (state.toAmountText.isNotEmpty()) {
                         {
                             IconButton(
@@ -219,7 +246,9 @@ fun EntryForm(
                     suffix = toAccount.let { account ->
                         { Text(account.currency.symbol) }
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .onFocusChanged { if (it.isFocused) openToCalculator() }
+                        .fillMaxWidth(),
                 )
             }
         } else {
@@ -276,7 +305,7 @@ fun EntryForm(
         // While an account/category picker is expanded only that picker and its
         // chips show; the description would just be dead space beneath them.
         // Same while the amount calculator replaces the form.
-        if (!calculatorMode && focusedDropdown == null) {
+        if (!calculatorMode && !toCalculatorMode && focusedDropdown == null) {
             val visibleSuggestions = state.description.trim().let { query ->
                 val matches = if (query.isEmpty()) {
                     descriptionSuggestions
@@ -353,6 +382,22 @@ fun EntryForm(
                 calculatorMode = false
             },
             onCancel = { calculatorMode = false },
+        )
+    }
+
+    if (toCalculatorMode) {
+        AmountCalculator(
+            initialMinor = state.toAmount,
+            currencySymbol = toAccount?.currency?.symbol,
+            onEnter = { value ->
+                onToAmountChange(value)
+                toCalculatorMode = false
+            },
+            onInvalid = {
+                toAmountWarning = "Amount must be greater than zero"
+                toCalculatorMode = false
+            },
+            onCancel = { toCalculatorMode = false },
         )
     }
 

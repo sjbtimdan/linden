@@ -72,20 +72,25 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
         viewModel.seedDraft()
     }
 
-    // Back, or the cancel affordance, cancels the in-progress entry. Focus must
-    // be dropped too, otherwise the collapsed form would stay stuck on the field
-    // that was being edited.
-    val cancelEditing: () -> Unit = {
+    var fieldFocused by remember { mutableStateOf(false) }
+
+    // While a field is focused the form collapses to just that field and its
+    // keyboard. The back arrow exits that state: it drops focus (which closes
+    // text fields and dropdowns) and bumps [editEpoch] so EntryForm closes its
+    // calculators. The draft is preserved — Clear is the full reset.
+    var editEpoch by remember { mutableStateOf(0) }
+    val exitEditing: () -> Unit = {
         focusManager.clearFocus()
         keyboardController?.hide()
-        viewModel.clearDraft()
+        editEpoch++
+    }
+    val cancelEditing: () -> Unit = {
+        if (fieldFocused) exitEditing() else viewModel.clearDraft()
     }
 
     BackHandler(enabled = draft != null) {
         cancelEditing()
     }
-
-    var fieldFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -103,26 +108,27 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 }
             },
     ) {
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            entryTypes.forEachIndexed { index, type ->
-                SegmentedButton(
-                    selected = selectedType == type,
-                    onClick = { viewModel.selectType(type) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
-                    icon = {
-                        Icon(
-                            imageVector = type.icon(),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    },
-                    label = { Text(type.displayName()) },
-                )
+        // While a field is focused the form collapses to just that field and its
+        // keyboard, so the type selector hides too and only a visible cancel remains.
+        if (!fieldFocused) {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                entryTypes.forEachIndexed { index, type ->
+                    SegmentedButton(
+                        selected = selectedType == type,
+                        onClick = { viewModel.selectType(type) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
+                        icon = {
+                            Icon(
+                                imageVector = type.icon(),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                        label = { Text(type.displayName()) },
+                    )
+                }
             }
         }
-
-        // While a field is focused the form collapses and the action buttons
-        // hide, so offer a visible cancel in their place.
         if (fieldFocused) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -131,7 +137,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 IconButton(onClick = cancelEditing) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Cancel entry",
+                        contentDescription = "Back",
                     )
                 }
             }
@@ -160,6 +166,8 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     // The form collapses to the focused field + its options; hide the
                     // action buttons too so everything fits above the keyboard.
                     onFieldFocusChange = { fieldFocused = it },
+                    // Bumped by the back arrow so the form closes its calculators.
+                    editEpoch = editEpoch,
                     descriptionSuggestions = descriptionSuggestions,
                     accountSuggestions = accountSuggestions,
                     categorySuggestions = categorySuggestions,

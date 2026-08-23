@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -11,15 +12,18 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -76,9 +80,10 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("Description (optional)").performTextInput("Coffee")
-            // typing the description collapses the form; tapping the already-selected
-            // type drops focus and brings the buttons back
-            onNodeWithText("Expense").performClick()
+            // typing the description collapses the form and hides the type tabs;
+            // tapping outside drops focus and brings the buttons back
+            onNodeWithText("Expense").assertDoesNotExist()
+            tapOutside()
             onNodeWithText("Add").performClick()
 
             onNodeWithText("Added").assertIsDisplayed()
@@ -105,7 +110,7 @@ class LedgerScreenTest : StringSpec({
             enterAmount("12.50")
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
             onNodeWithText("Description (optional)").performTextInput("Lunch")
-            onNodeWithText("Expense").performClick()
+            tapOutside()
             onNodeWithText("Add").assertIsEnabled()
 
             onNodeWithText("Clear").performClick()
@@ -120,7 +125,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "cancel affordance while editing clears the draft and expands the form" {
+    "back arrow while editing expands the form and keeps the draft" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -136,13 +141,13 @@ class LedgerScreenTest : StringSpec({
 
             // invoke the click action directly; the skiko mouse-click path misses
             // the button when the form is collapsed, so a gesture-level tap here
-            // would be testing the input injection rather than the cancel logic
-            onNodeWithContentDescription("Cancel entry")
+            // would be testing the input injection rather than the back logic
+            onNodeWithContentDescription("Back")
                 .performSemanticsAction(SemanticsActions.OnClick)
 
-            onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
-            onNode(hasSetTextAction() and hasText("Lunch")).assertDoesNotExist()
-            onNodeWithText("Amount").assertIsDisplayed()
+            // the form expands with the draft preserved — Clear is the full reset
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Lunch")).assertIsDisplayed()
             onNodeWithText("Add").assertIsDisplayed()
             entryDao.getAll().first().shouldHaveSize(0)
         }
@@ -177,6 +182,8 @@ class LedgerScreenTest : StringSpec({
 
             enterAmount("12.50")
             onNodeWithText("Description (optional)").performTextInput("Lunch")
+            // the type tabs are hidden while a field is focused; drop focus first
+            tapOutside()
             onNodeWithText("Income").performClick()
 
             onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
@@ -247,7 +254,13 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Amount (received)").assertIsDisplayed()
             onNodeWithText("Add").assertIsNotEnabled()
-            onNodeWithText("Amount (received)").performTextInput("95")
+            // focusing the received amount opens its own calculator
+            onNodeWithText("Amount (received)").performClick()
+            waitForIdle()
+            onNodeWithText("9").performClick()
+            onNodeWithText("5").performClick()
+            onNodeWithText("Enter").performClick()
+            waitForIdle()
             onNodeWithText("Add").performClick()
 
             onNodeWithText("Added").assertIsDisplayed()
@@ -273,6 +286,96 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Amount (received)").assertDoesNotExist()
             onNodeWithText("Add").assertIsEnabled()
+        }
+    }
+
+    "type tabs hide while the amount calculator is open and return on commit" {
+        withLedgerViewModel { viewModel ->
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+
+            // only the calculator keypad remains: no tabs, no form, no actions
+            onNodeWithText("Enter").assertIsDisplayed()
+            onNodeWithText("Expense").assertDoesNotExist()
+            onNodeWithText("Add").assertDoesNotExist()
+
+            onNodeWithText("1").performClick()
+            onNodeWithText("0").performClick()
+            onNodeWithText("Enter").performClick()
+            waitForIdle()
+
+            onNodeWithText("Expense").assertIsDisplayed()
+            onNodeWithText("Add").assertIsDisplayed()
+        }
+    }
+
+    "back arrow closes the amount calculator and keeps the draft" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            enterAmount("12.50")
+
+            // reopen the calculator; the back arrow must close it again
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+            onNodeWithText("Enter").assertIsDisplayed()
+            onNodeWithText("Add").assertDoesNotExist()
+
+            onNodeWithContentDescription("Back")
+                .performSemanticsAction(SemanticsActions.OnClick)
+            waitForIdle()
+
+            // calculator gone, form expanded, committed value untouched
+            onNodeWithText("Enter").assertDoesNotExist()
+            onNodeWithText("Amount").assertIsDisplayed()
+            onNodeWithText("Add").assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+        }
+    }
+
+    "received amount opens its own calculator and collapses the form" {
+        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            enterAmount("100", label = "Amount (sent)")
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+
+            onNodeWithText("Amount (received)").performClick()
+            waitForIdle()
+
+            // the received amount gets its own keypad; the form and tabs collapse
+            onNodeWithText("Enter").assertIsDisplayed()
+            onNodeWithText("Transfer").assertDoesNotExist()
+            onNodeWithText("Add").assertDoesNotExist()
+
+            onNodeWithText("9").performClick()
+            onNodeWithText("5").performClick()
+            onNodeWithText("Enter").performClick()
+            waitForIdle()
+
+            // the committed value comes back formatted by the calculator
+            onNode(hasSetTextAction() and hasText("95.00")).assertIsDisplayed()
+            onNodeWithText("Add").performClick()
+
+            onNodeWithText("Added").assertIsDisplayed()
+            entryDao.getAll().first().filterIsInstance<TransferEntry>().shouldHaveSize(1)
         }
     }
 
@@ -435,9 +538,10 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Description (optional)").assertIsFocused()
 
-            // focusing the description collapses the rest of the form; tapping the type
-            // selector drops focus and brings the fields back
-            onNodeWithText("Expense").performClick()
+            // focusing the description collapses the rest of the form and hides the
+            // type tabs; tapping outside drops focus and brings the fields back
+            onNodeWithText("Expense").assertDoesNotExist()
+            tapOutside()
 
             onNodeWithText("Description (optional)").assertIsNotFocused()
             onNodeWithText("Coffee").assertDoesNotExist()
@@ -541,6 +645,19 @@ class LedgerScreenTest : StringSpec({
 private fun ComposeUiTest.waitForText(text: String) {
     waitUntil(timeoutMillis = 5_000) {
         onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+    }
+}
+
+/**
+ * Taps empty space to drop focus. While a field is focused the form collapses,
+ * so the bottom-left area of the screen is just dead space; the tap reaches the
+ * screen's tap-to-dismiss gesture, which is what real users do to close the
+ * keyboard and bring the full form back.
+ */
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.tapOutside() {
+    onRoot().performTouchInput {
+        click(Offset(centerX * 0.2f, bottom - 40f))
     }
 }
 

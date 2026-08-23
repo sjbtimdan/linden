@@ -15,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,8 +37,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Full calculator keypad for amount entry. Replaces the amount text field while
  * open: the display line shows the running value, "Enter" commits a valid
- * positive amount (or reports an invalid one via [onInvalid]), "Cancel" or the
- * system back discards the edit.
+ * positive amount (or reports an invalid one via [onInvalid]), Escape or the
+ * system back discards the edit. The screen's back arrow is the visible way out.
  */
 @Composable
 fun AmountCalculator(
@@ -87,10 +86,6 @@ fun AmountCalculator(
             }
             .padding(8.dp),
     ) {
-        TextButton(onClick = onCancel) {
-            Text("Cancel")
-        }
-
         Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
