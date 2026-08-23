@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.datetime.LocalDate
 
 @Composable
@@ -48,7 +49,12 @@ fun PeriodNavigator(
                 onClick = { expanded = true },
                 modifier = Modifier.testTag("periodLabel"),
             ) {
-                Text(period.windowLabel(anchor) ?: "All")
+                Text(
+                    text = period.windowLabel(anchor) ?: "All",
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = null,

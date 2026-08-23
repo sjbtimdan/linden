@@ -253,7 +253,6 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Total").assertIsDisplayed()
             onNodeWithText("+ 15.50 CHF").assertIsDisplayed()
         }
     }
@@ -292,7 +291,6 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Total").assertIsDisplayed()
             onNodeWithText("–").assertIsDisplayed()
         }
     }
