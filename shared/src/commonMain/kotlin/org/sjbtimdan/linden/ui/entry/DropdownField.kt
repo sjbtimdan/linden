@@ -17,6 +17,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +38,7 @@ fun <T> DropdownField(
         if (trimmed.isEmpty()) {
             // Predictive input: while the field is empty the most likely options
             // are offered instead of the full list; typing falls back to search.
-            predictedOptions?.takeIf { it.isNotEmpty() } ?: options
+            predictedOptions?.takeIf { it.isNotEmpty() } ?: options.take(PREDICTION_TOP_N)
         } else {
             options.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
         }

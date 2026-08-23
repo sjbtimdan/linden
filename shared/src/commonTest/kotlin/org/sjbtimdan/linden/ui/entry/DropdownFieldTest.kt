@@ -260,7 +260,7 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
-    "falls back to all options when predicted options are empty" {
+    "falls back to options when predicted options are empty" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -279,6 +279,30 @@ class DropdownFieldTest : StringSpec({
                 accountOptions.forEach { option ->
                     onNodeWithText(option).assertIsDisplayed()
                 }
+            }
+        }
+    }
+
+    "caps the fallback option list at the prediction limit" {
+        onTestMain {
+            runComposeUiTest {
+                val manyOptions = (1L..15L).map { "Option $it" }
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = manyOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = emptyList(),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                onNodeWithText("Option 1").assertIsDisplayed()
+                onNodeWithText("Option 10").assertIsDisplayed()
+                onNodeWithText("Option 11").assertDoesNotExist()
             }
         }
     }

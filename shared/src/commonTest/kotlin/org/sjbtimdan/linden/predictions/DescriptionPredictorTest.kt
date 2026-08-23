@@ -146,7 +146,7 @@ class DescriptionPredictorTest : StringSpec({
     }
 
     "caps results at the top N" {
-        val entries = (1L..8L).map { id ->
+        val entries = (1L..12L).map { id ->
             expense(id, food, "Description $id", main, 450, now)
         }
         predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))

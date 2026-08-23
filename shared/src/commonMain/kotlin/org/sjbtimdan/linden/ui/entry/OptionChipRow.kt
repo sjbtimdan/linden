@@ -2,9 +2,8 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,11 +23,12 @@ fun <T> OptionChipRow(
     modifier: Modifier = Modifier,
     isSelected: (T) -> Boolean = { false },
 ) {
-    LazyRow(
+    FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(options) { option ->
+        options.forEach { option ->
             val isSelectedChip = isSelected(option)
             // A bare tap handler instead of a Material chip: focusable chip internals
             // steal focus from the text field on press, which unmounts this row

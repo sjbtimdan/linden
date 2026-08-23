@@ -33,6 +33,27 @@ class OptionChipRowTest : StringSpec({
         }
     }
 
+    "wraps overflowing options onto additional lines instead of hiding them" {
+        onTestMain {
+            runComposeUiTest {
+                val options = (1L..12L).map { "Option number $it with a longer label" }
+                setContent {
+                    OptionChipRow(
+                        options = options,
+                        optionLabel = { it },
+                        onSelect = {},
+                    )
+                }
+
+                // A horizontal scroll row would leave the tail uncomposed; a
+                // wrapping row displays every chip.
+                options.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
+            }
+        }
+    }
+
     "clicking a chip invokes onSelect with that option" {
         onTestMain {
             runComposeUiTest {

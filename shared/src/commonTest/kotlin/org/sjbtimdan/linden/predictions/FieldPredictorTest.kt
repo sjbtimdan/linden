@@ -147,7 +147,7 @@ class FieldPredictorTest : StringSpec({
         }
 
         "caps results at the top N" {
-            val entries = (1L..8L).map { id ->
+            val entries = (1L..12L).map { id ->
                 expense(id, Category(id, "Category $id", CategoryType.Expense), "Description", main, 450, now)
             }
             predictCategories(entries, input(accountId = main.id)).shouldHaveSize(PREDICTION_TOP_N)
@@ -214,7 +214,7 @@ class FieldPredictorTest : StringSpec({
         }
 
         "caps results at the top N" {
-            val entries = (1L..8L).map { id ->
+            val entries = (1L..12L).map { id ->
                 expense(id, food, "Description", Account(id, "Account $id", Currency.CHF), 450, now)
             }
             predictAccounts(entries, input(categoryId = food.id)).shouldHaveSize(PREDICTION_TOP_N)

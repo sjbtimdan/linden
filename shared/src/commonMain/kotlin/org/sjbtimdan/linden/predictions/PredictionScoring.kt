@@ -10,7 +10,7 @@ import kotlin.math.pow
 import kotlin.time.Instant
 
 const val PREDICTION_HORIZON_MONTHS = 6
-const val PREDICTION_TOP_N = 5
+const val PREDICTION_TOP_N = 10
 
 internal const val AMOUNT_EXACT_WEIGHT = 4.0
 internal const val AMOUNT_NEAR_WEIGHT = 2.0
