@@ -19,6 +19,19 @@ INSERT INTO EntryEntity (
 VALUES (:type, :categoryId, :description, :accountId, :amount,
         :toAccountId, :toAmount, :createdAt, :createdZone);
 
+insertWithId:
+INSERT INTO EntryEntity (
+    id, type, category_id, description, account_id, amount,
+    to_account_id, to_amount, created_at, created_zone
+)
+VALUES (:id, :type, :categoryId, :description, :accountId, :amount,
+        :toAccountId, :toAmount, :createdAt, :createdZone);
+
+-- Raw rows only; used to serialize the database into a backup.
+selectAllRows:
+SELECT *
+FROM EntryEntity;
+
 selectAll:
 SELECT EntryEntity.id,
        EntryEntity.type,

@@ -6,7 +6,10 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import org.sjbtimdan.linden.backup.LindenBackupManager
+import org.sjbtimdan.linden.data.CURRENCY_KEY
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.data.THEME_KEY
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.buildIvyZip
@@ -15,6 +18,8 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 
 class SettingsViewModelTest : StringSpec({
     "setThemeMode(LIGHT) updates the database" {
@@ -24,6 +29,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 dao,
                 IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -43,6 +49,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 dao,
                 IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -61,6 +68,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -84,6 +92,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -129,6 +138,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -150,6 +160,7 @@ class SettingsViewModelTest : StringSpec({
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -162,6 +173,177 @@ class SettingsViewModelTest : StringSpec({
             viewModel.clearImportState()
 
             viewModel.importState.value shouldBe ImportState.Idle
+        }
+    }
+
+    "backupTo writes a backup that restores into another database" {
+        onTestMain {
+            val database = lindenDatabase()
+            database.accountQueries.insert("Cash", "CHF", 500)
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            val bytes = ByteArrayOutputStream()
+            viewModel.backupTo(bytes)
+            withTimeout(5_000) {
+                viewModel.backupState.first { it is BackupState.Success }
+            }
+
+            val restored = lindenDatabase()
+            val result = LindenBackupManager(restored).restoreFrom(ByteArrayInputStream(bytes.toByteArray()))
+
+            result.accounts shouldBe 1
+            restored.accountQueries.selectAll().awaitAsList().map { it.name to it.currency }
+                .shouldBe(listOf("Cash" to "CHF"))
+        }
+    }
+
+    "restoreFrom replaces database contents and reloads theme and currency" {
+        onTestMain {
+            val source = lindenDatabase()
+            source.settingsQueries.insertOrReplace(THEME_KEY, ThemeMode.DARK.name)
+            source.settingsQueries.insertOrReplace(CURRENCY_KEY, Currency.EUR.name)
+            source.accountQueries.insert("Cash", "CHF", 0)
+            val bytes = ByteArrayOutputStream().also { LindenBackupManager(source).backupTo(it) }.toByteArray()
+
+            val database = lindenDatabase()
+            database.settingsQueries.insertOrReplace(THEME_KEY, ThemeMode.LIGHT.name)
+            database.accountQueries.insert("Old", "USD", 0)
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.restoreFrom(ByteArrayInputStream(bytes))
+            val state = withTimeout(5_000) {
+                viewModel.restoreState.first { it is BackupState.Success }
+            }
+
+            (state as BackupState.Success).value.accounts shouldBe 1
+            viewModel.themeMode.value shouldBe ThemeMode.DARK
+            viewModel.defaultCurrency.value shouldBe Currency.EUR
+            database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Cash")
+        }
+    }
+
+    "restoreFrom reports an error for an invalid backup and leaves the database untouched" {
+        onTestMain {
+            val database = lindenDatabase()
+            database.accountQueries.insert("Keep", "CHF", 0)
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
+            val state = withTimeout(5_000) {
+                viewModel.restoreState.first { it is BackupState.Error }
+            }
+
+            (state as BackupState.Error).message shouldContain "not a valid Linden backup"
+            database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Keep")
+        }
+    }
+
+    "restoreFrom rejects an empty backup" {
+        onTestMain {
+            val database = lindenDatabase()
+            database.accountQueries.insert("Keep", "CHF", 0)
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.restoreFrom(ByteArrayInputStream("""{"formatVersion": 1}""".encodeToByteArray()))
+            val state = withTimeout(5_000) {
+                viewModel.restoreState.first { it is BackupState.Error }
+            }
+
+            (state as BackupState.Error).message shouldContain "empty"
+            database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Keep")
+        }
+    }
+
+    "clearRestoreState resets the restore state to Idle" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
+            withTimeout(5_000) {
+                viewModel.restoreState.first { it is BackupState.Error }
+            }
+
+            viewModel.clearRestoreState()
+
+            viewModel.restoreState.value shouldBe BackupState.Idle
+        }
+    }
+
+    "clearBackupState resets the backup state to Idle" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.backupTo(ByteArrayOutputStream())
+            withTimeout(5_000) {
+                viewModel.backupState.first { it is BackupState.Success }
+            }
+
+            viewModel.clearBackupState()
+
+            viewModel.backupState.value shouldBe BackupState.Idle
+        }
+    }
+
+    "backupTo reports an error when writing the backup fails" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            val failingStream = object : OutputStream() {
+                override fun write(b: Int) {
+                    error("stream exploded")
+                }
+            }
+            viewModel.backupTo(failingStream)
+            val state = withTimeout(5_000) {
+                viewModel.backupState.first { it is BackupState.Error }
+            }
+
+            (state as BackupState.Error).message shouldContain "stream exploded"
         }
     }
 })

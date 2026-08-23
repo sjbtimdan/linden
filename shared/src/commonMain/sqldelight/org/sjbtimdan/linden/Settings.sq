@@ -11,3 +11,6 @@ SELECT * FROM AppSettingsEntity;
 
 insertOrReplace:
 INSERT OR REPLACE INTO AppSettingsEntity (key, value) VALUES (?, ?);
+
+deleteAll:
+DELETE FROM AppSettingsEntity;

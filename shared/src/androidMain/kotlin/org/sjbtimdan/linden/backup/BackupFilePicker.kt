@@ -1,0 +1,40 @@
+package org.sjbtimdan.linden.backup
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import java.io.InputStream
+import java.io.OutputStream
+
+@Composable
+actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -> Unit {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri == null) {
+            onPicked(null)
+        } else {
+            onPicked(context.contentResolver.openOutputStream(uri))
+        }
+    }
+    return {
+        launcher.launch("linden-backup.json")
+    }
+}
+
+@Composable
+actual fun rememberDatabaseRestorePicker(onPicked: (InputStream?) -> Unit): () -> Unit {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) {
+            onPicked(null)
+        } else {
+            onPicked(context.contentResolver.openInputStream(uri))
+        }
+    }
+    return {
+        launcher.launch(arrayOf("application/json", "application/octet-stream"))
+    }
+}

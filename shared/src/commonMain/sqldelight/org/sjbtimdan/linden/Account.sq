@@ -9,6 +9,10 @@ insert:
 INSERT INTO AccountEntity (name, currency, initialBalance)
 VALUES (?, ?, ?);
 
+insertWithId:
+INSERT INTO AccountEntity (id, name, currency, initialBalance)
+VALUES (?, ?, ?, ?);
+
 update:
 UPDATE AccountEntity
 SET name = ?, currency = ?, initialBalance = ?

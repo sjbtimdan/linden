@@ -8,6 +8,10 @@ insert:
 INSERT INTO CategoryEntity (name, type)
 VALUES (?, ?);
 
+insertWithId:
+INSERT INTO CategoryEntity (id, name, type)
+VALUES (?, ?, ?);
+
 update:
 UPDATE CategoryEntity
 SET name = ?, type = ?

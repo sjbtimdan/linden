@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -44,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.backup.rememberDatabaseBackupPicker
+import org.sjbtimdan.linden.backup.rememberDatabaseRestorePicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -55,14 +59,24 @@ fun SettingsScreen(
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
     pickImportFile: (() -> Unit)? = null,
+    pickBackupFile: (() -> Unit)? = null,
+    pickRestoreFile: (() -> Unit)? = null,
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val importState by viewModel.importState.collectAsState()
+    val backupState by viewModel.backupState.collectAsState()
+    val restoreState by viewModel.restoreState.collectAsState()
     var showImportConfirmation by remember { mutableStateOf(false) }
+    var showRestoreConfirmation by remember { mutableStateOf(false) }
 
     val importFilePicker = pickImportFile
         ?: rememberZipFilePicker { input -> input?.let(viewModel::importIvy) }
+    val backupFilePicker = pickBackupFile
+        ?: rememberDatabaseBackupPicker { output -> output?.let(viewModel::backupTo) }
+    val restoreFilePicker = pickRestoreFile
+        ?: rememberDatabaseRestorePicker { input -> input?.let(viewModel::restoreFrom) }
+    val transferInProgress = backupState is BackupState.Working || restoreState is BackupState.Working
 
     Column(
         modifier = Modifier
@@ -170,20 +184,7 @@ fun SettingsScreen(
         when (val state = importState) {
             ImportState.Idle -> Unit
 
-            ImportState.Importing -> Row(
-                modifier = Modifier.padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                )
-                Text(
-                    text = "Importing…",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+            ImportState.Importing -> WorkingRow(text = "Importing…")
 
             is ImportState.Success -> {
                 val result = state.result
@@ -204,6 +205,81 @@ fun SettingsScreen(
             is ImportState.Error -> ImportResultRow(
                 text = "Import failed: ${state.message}",
                 onDismiss = viewModel::clearImportState,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Backup",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilledTonalButton(
+                onClick = { backupFilePicker() },
+                enabled = !transferInProgress,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Back up database")
+            }
+            OutlinedButton(
+                onClick = { showRestoreConfirmation = true },
+                enabled = !transferInProgress,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Restore from backup")
+            }
+        }
+
+        when (val state = backupState) {
+            BackupState.Idle -> Unit
+
+            BackupState.Working -> WorkingRow(text = "Backing up…")
+
+            is BackupState.Success -> ImportResultRow(
+                text = "Backup saved.",
+                onDismiss = viewModel::clearBackupState,
+            )
+
+            is BackupState.Error -> ImportResultRow(
+                text = "Backup failed: ${state.message}",
+                onDismiss = viewModel::clearBackupState,
+            )
+        }
+
+        when (val state = restoreState) {
+            BackupState.Idle -> Unit
+
+            BackupState.Working -> WorkingRow(text = "Restoring…")
+
+            is BackupState.Success -> ImportResultRow(
+                text = "Restored ${state.value.accounts} accounts, " +
+                    "${state.value.categories} categories, " +
+                    "${state.value.entries} entries",
+                onDismiss = viewModel::clearRestoreState,
+            )
+
+            is BackupState.Error -> ImportResultRow(
+                text = "Restore failed: ${state.message}",
+                onDismiss = viewModel::clearRestoreState,
             )
         }
 
@@ -231,6 +307,53 @@ fun SettingsScreen(
                 },
             )
         }
+
+        if (showRestoreConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showRestoreConfirmation = false },
+                title = { Text("Restore from backup") },
+                text = {
+                    Text(
+                        "This will replace all your current accounts, categories, transactions and settings. Continue?",
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showRestoreConfirmation = false
+                            restoreFilePicker()
+                        },
+                    ) {
+                        Text("Restore")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showRestoreConfirmation = false },
+                    ) {
+                        Text("Cancel")
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkingRow(text: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(16.dp),
+            strokeWidth = 2.dp,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

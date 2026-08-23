@@ -3,6 +3,7 @@ package org.sjbtimdan.linden
 import app.cash.sqldelight.db.SqlDriver
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
+import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -52,7 +53,14 @@ class AppDependencies(
         }
     }
     val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
-    val settingsViewModel = SettingsViewModel(settingsDao, IvyImporter(database), initialTheme, initialCurrency)
+    val backupManager = LindenBackupManager(database)
+    val settingsViewModel = SettingsViewModel(
+        settingsDao,
+        IvyImporter(database),
+        backupManager,
+        initialTheme,
+        initialCurrency,
+    )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao, settingsDao, fxRatesRepository)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository)

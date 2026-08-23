@@ -10,12 +10,15 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import org.sjbtimdan.linden.backup.LindenBackupManager
+import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalTestApi::class)
 class SettingsScreenTest : StringSpec({
@@ -175,6 +178,101 @@ class SettingsScreenTest : StringSpec({
 
             onNodeWithText("Imported 3 accounts, 3 categories, 5 transactions").assertExists()
             onAllNodesWithText("different currency", substring = true).assertCountEquals(0)
+        }
+    }
+
+    "clicking Back up database triggers the backup picker" {
+        withSettingsViewModel { viewModel ->
+            var pickerInvoked = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    pickBackupFile = { pickerInvoked = true },
+                )
+            }
+
+            onNodeWithText("Back up database").performClick()
+
+            pickerInvoked shouldBe true
+        }
+    }
+
+    "clicking Restore in the confirmation dialog triggers the restore picker" {
+        withSettingsViewModel { viewModel ->
+            var pickerInvoked = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    pickRestoreFile = { pickerInvoked = true },
+                )
+            }
+
+            onNodeWithText("Restore from backup").performClick()
+            onNodeWithText(
+                "This will replace all your current accounts, categories, transactions and settings. Continue?",
+            ).assertExists()
+            onNodeWithText("Restore").performClick()
+
+            pickerInvoked shouldBe true
+        }
+    }
+
+    "clicking Cancel in the restore confirmation dialog does not trigger the restore picker" {
+        withSettingsViewModel { viewModel ->
+            var pickerInvoked = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    pickRestoreFile = { pickerInvoked = true },
+                )
+            }
+
+            onNodeWithText("Restore from backup").performClick()
+            onNodeWithText("Cancel").performClick()
+
+            pickerInvoked shouldBe false
+            onAllNodesWithText(
+                "This will replace all your current accounts, categories, transactions and settings. Continue?",
+            ).assertCountEquals(0)
+        }
+    }
+
+    "restore success shows the restored counts" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+
+            val source = lindenDatabase()
+            source.accountQueries.insert("Cash", "CHF", 0)
+            val bytes = ByteArrayOutputStream().also { LindenBackupManager(source).backupTo(it) }.toByteArray()
+            viewModel.restoreFrom(ByteArrayInputStream(bytes))
+            withTimeout(5_000) { viewModel.restoreState.first { it is BackupState.Success } }
+
+            onNodeWithText("Restored 1 accounts, 0 categories, 0 entries").assertExists()
+        }
+    }
+
+    "backup success shows a confirmation row" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+
+            viewModel.backupTo(ByteArrayOutputStream())
+            withTimeout(5_000) { viewModel.backupState.first { it is BackupState.Success } }
+
+            onNodeWithText("Backup saved.").assertExists()
+        }
+    }
+
+    "restore error shows the failure message" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+
+            viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
+            withTimeout(5_000) { viewModel.restoreState.first { it is BackupState.Error } }
+
+            onNodeWithText("Restore failed:", substring = true).assertExists()
         }
     }
 })

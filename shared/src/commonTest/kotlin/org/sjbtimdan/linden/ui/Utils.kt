@@ -13,6 +13,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.AppDependencies
+import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -157,6 +158,7 @@ fun withSettingsViewModel(
             val viewModel = SettingsViewModel(
                 settingsDao = dao,
                 importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
                 initialTheme = initialTheme,
                 initialCurrency = initialCurrency,
             )
