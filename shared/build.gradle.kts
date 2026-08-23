@@ -128,6 +128,10 @@ kover {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    // Run test classes in parallel across forked JVMs: each fork is isolated, so
+    // Compose UI tests keep running sequentially per fork while unrelated
+    // test classes (DAOs, parsers, ViewModels) execute concurrently.
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4)
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
