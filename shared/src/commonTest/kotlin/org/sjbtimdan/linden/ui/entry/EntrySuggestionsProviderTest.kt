@@ -101,6 +101,23 @@ class EntrySuggestionsProviderTest : StringSpec({
             provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
         }
     }
+
+    "suggestions only consider entries of the draft's type" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            draft.value = EntryDraft.forNew(EntryType.Income)
+                .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
+
+            provider.accountSuggestions.first().shouldBeEmpty()
+            provider.categorySuggestions.first().shouldBeEmpty()
+
+            draft.value = draft.value?.copy(type = EntryType.Expense)
+
+            provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
+            provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
+        }
+    }
 })
 
 @OptIn(ExperimentalTestApi::class)
@@ -120,7 +137,12 @@ private fun withSuggestionsProvider(
             val accountDao = AccountDao(database.accountQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
             val draft = MutableStateFlow<EntryDraft?>(null)
-            val provider = EntrySuggestionsProvider(entryDao, draft, CoroutineScope(Dispatchers.Main))
+            val provider = EntrySuggestionsProvider(
+                entryDao,
+                draft,
+                CoroutineScope(Dispatchers.Main),
+                descriptionDebounceMillis = 0,
+            )
             block(entryDao, accountDao, categoryDao, provider, draft)
         }
     }

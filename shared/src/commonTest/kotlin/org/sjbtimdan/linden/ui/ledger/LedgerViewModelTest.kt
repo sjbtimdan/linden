@@ -252,8 +252,8 @@ class LedgerViewModelTest : StringSpec({
             viewModel.clearDraft()
             viewModel.onAmountChange("4.50")
 
-            viewModel.categorySuggestions.first() shouldContainExactly listOf(groceries.id)
-            viewModel.accountSuggestions.first() shouldContainExactly listOf(main.id)
+            viewModel.categorySuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(groceries.id)
+            viewModel.accountSuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(main.id)
         }
     }
 })
