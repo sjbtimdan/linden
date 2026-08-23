@@ -41,10 +41,9 @@ When running tests: if a test configuration is not available (e.g. for jvmTests)
 ```
 
 Formatting is enforced by Detekt (2.0.x, plugin `dev.detekt`) with the ktlint-wrapper ruleset — see
-`detekt.yml` at the repo root. `./gradlew check` runs the detekt tasks; the pre-commit hook
-(`.githooks/pre-commit`, active via `git config core.hooksPath .githooks`) additionally runs
-`./gradlew detekt --auto-correct` on commits with staged `.kt` files and re-stages the fixes;
-commit is blocked only when violations can't be auto-corrected.
+`detekt.yml` at the repo root. `./gradlew check` runs the per-module `detekt` tasks. There is no
+pre-commit hook (`git config core.hooksPath` still points at `.githooks`, but that directory doesn't
+exist), so run `./gradlew detekt --auto-correct` yourself after edits.
 
 The `:shared` Android target compiles via `compileAndroidMain`, **not** `compileDebugKotlin`
 (that task only exists on `:androidApp`). `:shared` uses the AGP 9 `com.android.kotlin.multiplatform.library` plugin
@@ -56,14 +55,19 @@ coverage is only enforced there because the Android target runs device tests onl
 ## Architecture & Gotchas
 
 - Package root `org.sjbtimdan.linden`. Models in `.model`, DAOs in `.data`, screens/ViewModels in `.ui.<feature>`,
-  backup import in `.imports` (`IvyImporter`), description prediction in `.predictions` (`DescriptionPredictor` —
-  heuristic scoring of past entries, pure functions, no DB). Kotlin source files use PascalCase.
+  backup/restore in `.backup` (`LindenBackupManager` — JSON dump of all tables, invoked from Settings),
+  import in `.imports` (`IvyImporter`), entry prediction in `.predictions` (`DescriptionPredictor`,
+  `FieldPredictor` — heuristic scoring of past entries, pure functions, no DB) consumed via
+  `EntrySuggestionsProvider` in `ui/entry`. Kotlin source files use PascalCase.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. All currencies
   (CHF/EUR/GBP/HKD/JPY/SGD/USD) use a 2-decimal minor unit. `formatAmount` in `ui/entry/MoneyFormat.kt` is an
   `expect`/`actual` using the platform locale (`java.text.NumberFormat`, thousands grouping); `parseAmount` is pure
   common code that accepts grouped input ("1,000", "1.000", "1 000"). `formatAmountCompact` (pure common code) shortens
   read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b" (fixed '.', trimmed zeros, half-up rounding);
   never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
+- Amount entry in the entry dialog uses an exact calculator (`CalculatorModel`/`AmountCalculator` in `ui/entry`):
+  arithmetic on reduced fractions (Long numerator/denominator, never floats), evaluated left-to-right with no
+  operator precedence, rounded to two decimals only for display and commit.
 - `Entry` is a sealed interface (`ExpenseEntry` / `IncomeEntry` / `TransferEntry`) in `model/Entry.kt`, carrying
   `createdAt: Instant` and `createdZone: TimeZone`. Entries carry no currency — it's defined by `account.currency`
   (`toAccount.currency` for transfers). Transfers carry `toAccount`/`toAmount` (`toAmount` is null when both accounts
@@ -114,7 +118,8 @@ coverage is only enforced there because the Android target runs device tests onl
   instead of wiring up in-memory DBs per test: `lindenDatabase()` / `createTestSqlDriver()` live in
   `data/TestSqlUtils.kt`; Compose harnesses (`onTestMain`, `withApp`, `withViewModel`, `withAccountViewModel`,
   `withSettingsViewModel`, `withRatesViewModel`, `withLedgerViewModel`, `withHistoryViewModel`) live in `ui/Utils.kt`.
-  JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic.
+  JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic,
+  and run test classes in parallel across up to 4 forked JVMs (`maxParallelForks` in `shared/build.gradle.kts`).
 - Configuration cache + build cache enabled (`gradle.properties`).
 - Each Composable goes in its own file (e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file).
 - Comment minimally: only add comments for obscure code which should be very rare.
