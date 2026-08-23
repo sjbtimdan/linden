@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -34,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
@@ -69,8 +72,17 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
         viewModel.seedDraft()
     }
 
-    BackHandler(enabled = draft != null) {
+    // Back, or the cancel affordance, cancels the in-progress entry. Focus must
+    // be dropped too, otherwise the collapsed form would stay stuck on the field
+    // that was being edited.
+    val cancelEditing: () -> Unit = {
+        focusManager.clearFocus()
+        keyboardController?.hide()
         viewModel.clearDraft()
+    }
+
+    BackHandler(enabled = draft != null) {
+        cancelEditing()
     }
 
     var fieldFocused by remember { mutableStateOf(false) }
@@ -106,6 +118,22 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     },
                     label = { Text(type.displayName()) },
                 )
+            }
+        }
+
+        // While a field is focused the form collapses and the action buttons
+        // hide, so offer a visible cancel in their place.
+        if (fieldFocused) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = cancelEditing) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Cancel entry",
+                    )
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
@@ -13,8 +14,10 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
@@ -114,6 +117,34 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Groceries").assertDoesNotExist()
             onNodeWithText("Main").assertDoesNotExist()
             entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
+        }
+    }
+
+    "cancel affordance while editing clears the draft and expands the form" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Amount").performTextInput("12.50")
+            onNodeWithText("Description (optional)").performTextInput("Lunch")
+
+            // typing the description collapses the form and hides the buttons
+            onNodeWithText("Add").assertDoesNotExist()
+
+            // invoke the click action directly; the skiko mouse-click path misses
+            // the button when the form is collapsed, so a gesture-level tap here
+            // would be testing the input injection rather than the cancel logic
+            onNodeWithContentDescription("Cancel entry")
+                .performSemanticsAction(SemanticsActions.OnClick)
+
+            onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
+            onNode(hasSetTextAction() and hasText("Lunch")).assertDoesNotExist()
+            onNodeWithText("Amount").assertIsDisplayed()
+            onNodeWithText("Add").assertIsDisplayed()
+            entryDao.getAll().first().shouldHaveSize(0)
         }
     }
 
