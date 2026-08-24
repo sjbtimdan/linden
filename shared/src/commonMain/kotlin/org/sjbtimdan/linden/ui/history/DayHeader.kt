@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,8 @@ fun DayHeader(label: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 4.dp),
+            .background(MaterialTheme.colorScheme.background)
+            .padding(bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(

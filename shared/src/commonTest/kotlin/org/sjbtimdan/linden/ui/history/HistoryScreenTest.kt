@@ -4,13 +4,19 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.unit.Dp
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
@@ -166,6 +172,44 @@ class HistoryScreenTest : StringSpec({
 
             onNodeWithText("10 Sep 2001").assertIsDisplayed()
             onNodeWithText("9 Sep 2001").assertIsDisplayed()
+        }
+    }
+
+    "day header sticks flush to the top of the list while scrolling" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            for (day in 8..12) {
+                repeat(4) { hour ->
+                    viewModel.createEntry(
+                        ExpenseEntry(
+                            0,
+                            groceries,
+                            "E$day-$hour",
+                            main,
+                            100,
+                            createdAt = Instant.parse("2001-09-${day.toString().padStart(2, '0')}T12:00:00Z"),
+                        ),
+                    )
+                }
+            }
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            repeat(3) { onNode(hasScrollAction()).performTouchInput { swipeUp() } }
+            waitForIdle()
+
+            val listTop = onNode(hasScrollAction()).getUnclippedBoundsInRoot().top
+            var pinnedTop: Dp? = null
+            for (day in 8..12) {
+                runCatching {
+                    val top = onNodeWithText("$day Sep 2001").getUnclippedBoundsInRoot().top
+                    if (pinnedTop == null || top < pinnedTop!!) pinnedTop = top
+                }
+            }
+            // The pinned date must sit flush at the top of the list, not over the first entry.
+            pinnedTop shouldBe listTop
         }
     }
 
