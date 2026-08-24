@@ -99,4 +99,38 @@ class AccountListViewModelTest : StringSpec({
             viewModel.accounts.value.first().name shouldBe "Wallet"
         }
     }
+
+    "search filters accounts by name, case-insensitively" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+
+            viewModel.setSearchQuery("MAIN")
+
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main")
+        }
+    }
+
+    "search matches substrings and clearing it restores all accounts" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+
+            viewModel.setSearchQuery("ving")
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Savings")
+
+            viewModel.setSearchQuery("")
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main", "Savings")
+        }
+    }
+
+    "search with no matches yields an empty list" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            viewModel.setSearchQuery("nonexistent")
+
+            viewModel.accounts.value.shouldBeEmpty()
+        }
+    }
 })

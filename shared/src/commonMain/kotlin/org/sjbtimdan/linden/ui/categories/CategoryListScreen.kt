@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -61,6 +62,7 @@ private data class CategoryDialogState(
 @Composable
 fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> Unit) {
     val categories by viewModel.categories.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
 
     BackHandler(enabled = dialogState != null) {
@@ -83,6 +85,31 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             Spacer(modifier = Modifier.width(4.dp))
             Text("< Settings")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::setSearchQuery,
+            label = { Text("Search") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                )
+            },
+            trailingIcon = if (searchQuery.isNotEmpty()) {
+                {
+                    IconButton(
+                        onClick = { viewModel.setSearchQuery("") },
+                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                }
+            } else {
+                null
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -111,7 +138,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No categories yet.",
+                    text = if (searchQuery.isBlank()) "No categories yet." else "No matching categories.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

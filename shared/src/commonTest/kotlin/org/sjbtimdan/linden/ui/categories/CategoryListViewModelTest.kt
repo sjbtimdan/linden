@@ -43,4 +43,38 @@ class CategoryListViewModelTest : StringSpec({
             viewModel.categories.value.first().name shouldBe "Salary"
         }
     }
+
+    "search filters categories by name, case-insensitively" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+
+            viewModel.setSearchQuery("GRO")
+
+            viewModel.categories.value.map { it.name } shouldBe listOf("Groceries")
+        }
+    }
+
+    "search matches substrings and clearing it restores all categories" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+
+            viewModel.setSearchQuery("ary")
+            viewModel.categories.value.map { it.name } shouldBe listOf("Salary")
+
+            viewModel.setSearchQuery("")
+            viewModel.categories.value.map { it.name } shouldBe listOf("Groceries", "Salary")
+        }
+    }
+
+    "search with no matches yields an empty list" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+
+            viewModel.setSearchQuery("nonexistent")
+
+            viewModel.categories.value.shouldBeEmpty()
+        }
+    }
 })

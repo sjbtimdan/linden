@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
@@ -64,6 +65,7 @@ private data class AccountDialogState(
 @Composable
 fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Unit) {
     val accounts by viewModel.accounts.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
@@ -87,6 +89,31 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             Spacer(modifier = Modifier.width(4.dp))
             Text("< Settings")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::setSearchQuery,
+            label = { Text("Search") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                )
+            },
+            trailingIcon = if (searchQuery.isNotEmpty()) {
+                {
+                    IconButton(
+                        onClick = { viewModel.setSearchQuery("") },
+                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                }
+            } else {
+                null
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -115,7 +142,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No accounts yet.",
+                    text = if (searchQuery.isBlank()) "No accounts yet." else "No matching accounts.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

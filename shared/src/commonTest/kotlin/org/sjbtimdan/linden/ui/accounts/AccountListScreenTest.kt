@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -47,7 +48,7 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("+ New Account").performClick()
             onNodeWithText("New Account").assertIsDisplayed()
 
-            onAllNodes(hasSetTextAction())[0].performTextInput("Main")
+            onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onNodeWithText("USD").performClick()
             onNodeWithText("Save").performClick()
 
@@ -66,8 +67,8 @@ class AccountListScreenTest : StringSpec({
             }
 
             onNodeWithText("+ New Account").performClick()
-            onAllNodes(hasSetTextAction())[0].performTextInput("Main")
-            onAllNodes(hasSetTextAction())[1].performTextInput("1500.50")
+            onAllNodes(hasSetTextAction())[1].performTextInput("Main")
+            onAllNodes(hasSetTextAction())[2].performTextInput("1500.50")
             onNodeWithText("Save").performClick()
 
             viewModel.accounts.value.single().initialBalance shouldBe 150_050
@@ -186,7 +187,7 @@ class AccountListScreenTest : StringSpec({
 
             onNodeWithText("Savings").performClick()
             onNodeWithText("Edit Account").assertIsDisplayed()
-            onAllNodes(hasSetTextAction())[1].assertTextContains("50.00")
+            onAllNodes(hasSetTextAction())[2].assertTextContains("50.00")
         }
     }
 
@@ -205,6 +206,46 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("1,500.50 CHF").assertIsDisplayed()
             onNodeWithText("123.45 $").assertIsDisplayed()
             onAllNodes(hasText("Initial")).assertCountEquals(2)
+        }
+    }
+
+    "search filters the account list and clears on the clear button" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onAllNodes(hasSetTextAction())[0].performTextInput("main")
+
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Savings").assertDoesNotExist()
+
+            onNodeWithContentDescription("Clear").performClick()
+
+            onNodeWithText("Savings").assertIsDisplayed()
+        }
+    }
+
+    "search with no matches shows the no-matches message" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onAllNodes(hasSetTextAction())[0].performTextInput("nonexistent")
+
+            onNodeWithText("No matching accounts.").assertIsDisplayed()
         }
     }
 })

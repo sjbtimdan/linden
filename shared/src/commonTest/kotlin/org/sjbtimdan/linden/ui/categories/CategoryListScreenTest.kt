@@ -2,8 +2,11 @@ package org.sjbtimdan.linden.ui.categories
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.model.CategoryType
@@ -71,6 +74,46 @@ class CategoryListScreenTest : StringSpec({
 
             onNodeWithText("Transport").performClick()
             onNodeWithText("Edit Category").assertIsDisplayed()
+        }
+    }
+
+    "search filters the category list and clears on the clear button" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+
+            setContent {
+                CategoryListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onAllNodes(hasSetTextAction())[0].performTextInput("gro")
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Salary").assertDoesNotExist()
+
+            onNodeWithContentDescription("Clear").performClick()
+
+            onNodeWithText("Salary").assertIsDisplayed()
+        }
+    }
+
+    "search with no matches shows the no-matches message" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+
+            setContent {
+                CategoryListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onAllNodes(hasSetTextAction())[0].performTextInput("nonexistent")
+
+            onNodeWithText("No matching categories.").assertIsDisplayed()
         }
     }
 })

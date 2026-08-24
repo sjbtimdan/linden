@@ -2,8 +2,11 @@ package org.sjbtimdan.linden.ui.accounts
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
@@ -15,7 +18,21 @@ class AccountListViewModel(
     private val accountDao: AccountDao,
     private val entryDao: EntryDao,
 ) : ViewModel() {
-    val accounts: StateFlow<List<Account>> = accountDao.getAll().stateIn(
+    private val _searchQuery = MutableStateFlow("")
+
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val accounts: StateFlow<List<Account>> = combine(
+        accountDao.getAll(),
+        _searchQuery,
+    ) { accounts, query ->
+        val normalized = query.trim().lowercase()
+        if (normalized.isEmpty()) {
+            accounts
+        } else {
+            accounts.filter { it.name.lowercase().contains(normalized) }
+        }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = emptyList(),
@@ -28,6 +45,10 @@ class AccountListViewModel(
             started = SharingStarted.Eagerly,
             initialValue = emptySet(),
         )
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
 
     fun createAccount(name: String, currency: Currency, initialBalance: Long = 0) {
         viewModelScope.launch {
