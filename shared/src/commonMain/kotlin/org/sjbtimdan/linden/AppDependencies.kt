@@ -62,7 +62,7 @@ class AppDependencies(
         initialCurrency,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
-    val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao, settingsDao, fxRatesRepository)
+    val categoryListViewModel = CategoryListViewModel(categoryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, fxRatesRepository)
     val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao)
     val historyViewModel = HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
