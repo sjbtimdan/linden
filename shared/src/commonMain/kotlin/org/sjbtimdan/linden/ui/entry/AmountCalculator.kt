@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -63,11 +64,9 @@ fun AmountCalculator(
         if (value != null) onEnter(value) else onInvalid()
     }
 
-    Column(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .fillMaxHeight()
-            .heightIn(max = 560.dp)
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
@@ -86,58 +85,70 @@ fun AmountCalculator(
             }
             .padding(8.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = display,
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f).testTag("calculatorDisplay"),
-                )
-                currencySymbol?.let { symbol ->
+        // Keys cap out at [keyHeight] so they never stretch; the keypad fills
+        // the available height and hugs the bottom of the screen for one-handed
+        // use. When the height is unbounded the keypad gets a fixed height
+        // instead, so it can't grow without limit.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (constraints.hasBoundedHeight) {
+                        Modifier.fillMaxHeight()
+                    } else {
+                        Modifier.height(560.dp)
+                    },
+                ),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
+        ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        text = symbol,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 8.dp),
+                        text = display,
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).testTag("calculatorDisplay"),
                     )
+                    currencySymbol?.let { symbol ->
+                        Text(
+                            text = symbol,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            keyRow(Modifier.weight(1f)) {
+            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                 CalculatorKey("7") { press { model.onDigit('7') } }
                 CalculatorKey("8") { press { model.onDigit('8') } }
                 CalculatorKey("9") { press { model.onDigit('9') } }
                 CalculatorKey("÷") { press { model.onOperator(CalculatorOp.Divide) } }
             }
-            keyRow(Modifier.weight(1f)) {
+            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                 CalculatorKey("4") { press { model.onDigit('4') } }
                 CalculatorKey("5") { press { model.onDigit('5') } }
                 CalculatorKey("6") { press { model.onDigit('6') } }
                 CalculatorKey("×") { press { model.onOperator(CalculatorOp.Multiply) } }
             }
-            keyRow(Modifier.weight(1f)) {
+            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                 CalculatorKey("1") { press { model.onDigit('1') } }
                 CalculatorKey("2") { press { model.onDigit('2') } }
                 CalculatorKey("3") { press { model.onDigit('3') } }
                 CalculatorKey("−") { press { model.onOperator(CalculatorOp.Subtract) } }
             }
-            keyRow(Modifier.weight(1f)) {
+            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                 CalculatorKey("C") { press { model.onClear() } }
                 CalculatorKey("0") { press { model.onDigit('0') } }
                 CalculatorKey(".") { press { model.onDot() } }
                 CalculatorKey("+") { press { model.onOperator(CalculatorOp.Add) } }
             }
-            keyRow(Modifier.weight(1f)) {
+            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                 FilledTonalButton(
                     onClick = { press { model.onBackspace() } },
                     modifier = Modifier
@@ -149,18 +160,21 @@ fun AmountCalculator(
                 }
                 CalculatorKey("=") { press { model.onEquals() } }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Button(
-            onClick = { enter() },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-        ) {
-            Text("Enter")
+            Button(
+                onClick = { enter() },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+            ) {
+                Text("Enter")
+            }
         }
     }
 }
+
+/** Tallest a key row may grow before the keypad hugs the bottom of the screen. */
+private val keyHeight = 56.dp
 
 @Composable
 private fun keyRow(modifier: Modifier, content: @Composable RowScope.() -> Unit) {

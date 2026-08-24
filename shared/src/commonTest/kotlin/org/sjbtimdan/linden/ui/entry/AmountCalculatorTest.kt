@@ -8,6 +8,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -15,7 +16,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
@@ -152,6 +157,25 @@ class AmountCalculatorTest : StringSpec({
                 committed.shouldBeNull()
                 onNodeWithText("10.00").assertIsDisplayed()
                 onNodeWithText("Enter").assertDoesNotExist()
+            }
+        }
+    }
+
+    "keypad hugs the bottom of the available space without stretching the keys" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                val rootBounds = onRoot().getBoundsInRoot()
+                val enterBounds = onNodeWithText("Enter").getBoundsInRoot()
+                val keyBounds = onNodeWithText("7").getBoundsInRoot()
+
+                // The Enter button sits at the bottom of the available space,
+                // with only the keypad's 8.dp outer padding below it.
+                (rootBounds.bottom - enterBounds.bottom) shouldBeLessThan 24.dp
+                // Keys cap out at 56.dp instead of stretching to fill the space.
+                keyBounds.height shouldBeLessThanOrEqualTo 57.dp
             }
         }
     }
