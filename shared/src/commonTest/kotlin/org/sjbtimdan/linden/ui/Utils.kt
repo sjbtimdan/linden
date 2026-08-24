@@ -81,8 +81,6 @@ fun withViewModel(block: suspend ComposeUiTest.(CategoryListViewModel) -> Unit) 
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(
-    defaultCurrency: Currency = Currency.CHF,
-    rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, EntryDao, CategoryDao, AccountListViewModel) -> Unit,
 ) {
     onTestMain {
@@ -91,34 +89,19 @@ fun withAccountViewModel(
             val accountDao = AccountDao(database.accountQueries)
             val entryDao = EntryDao(database.entryQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val settingsDao = SettingsDao(database.settingsQueries)
-            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
-            val fxRateDao = FxRateDao(database.fxRateQueries)
-            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
-            val viewModel = AccountListViewModel(
-                accountDao,
-                entryDao,
-                settingsDao,
-                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
-            )
+            val viewModel = AccountListViewModel(accountDao, entryDao)
             block(accountDao, entryDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withAccountViewModel(
-    defaultCurrency: Currency = Currency.CHF,
-    rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(AccountDao, AccountListViewModel) -> Unit,
-) = withAccountViewModel(defaultCurrency, rates) { accountDao, _, _, viewModel -> block(accountDao, viewModel) }
+fun withAccountViewModel(block: suspend ComposeUiTest.(AccountDao, AccountListViewModel) -> Unit) =
+    withAccountViewModel { accountDao, _, _, viewModel -> block(accountDao, viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withAccountViewModel(
-    defaultCurrency: Currency = Currency.CHF,
-    rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(AccountListViewModel) -> Unit,
-) = withAccountViewModel(defaultCurrency, rates) { _, _, _, viewModel -> block(viewModel) }
+fun withAccountViewModel(block: suspend ComposeUiTest.(AccountListViewModel) -> Unit) =
+    withAccountViewModel { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withSettingsViewModel(

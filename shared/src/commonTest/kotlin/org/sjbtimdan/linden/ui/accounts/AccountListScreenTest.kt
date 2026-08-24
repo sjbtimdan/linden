@@ -1,11 +1,13 @@
 package org.sjbtimdan.linden.ui.accounts
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -68,7 +70,7 @@ class AccountListScreenTest : StringSpec({
             onAllNodes(hasSetTextAction())[1].performTextInput("1500.50")
             onNodeWithText("Save").performClick()
 
-            viewModel.accounts.value.single().account.initialBalance shouldBe 150_050
+            viewModel.accounts.value.single().initialBalance shouldBe 150_050
         }
     }
 
@@ -188,7 +190,7 @@ class AccountListScreenTest : StringSpec({
         }
     }
 
-    "displays the current balance with its currency on each account" {
+    "displays the initial balance with its currency and an Initial label on each account" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF, initialBalance = 150_050)
             viewModel.createAccount("Savings", Currency.USD, initialBalance = 12_345)
@@ -202,23 +204,7 @@ class AccountListScreenTest : StringSpec({
 
             onNodeWithText("1,500.50 CHF").assertIsDisplayed()
             onNodeWithText("123.45 $").assertIsDisplayed()
-        }
-    }
-
-    "displays the total in the default currency at the top" {
-        withAccountViewModel { viewModel ->
-            viewModel.createAccount("Main", Currency.CHF, initialBalance = 10_000)
-            viewModel.createAccount("Savings", Currency.CHF, initialBalance = 5_000)
-
-            setContent {
-                AccountListScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = {},
-                )
-            }
-
-            onNodeWithText("Total").assertIsDisplayed()
-            onNodeWithText("150.00 CHF").assertIsDisplayed()
+            onAllNodes(hasText("Initial")).assertCountEquals(2)
         }
     }
 })

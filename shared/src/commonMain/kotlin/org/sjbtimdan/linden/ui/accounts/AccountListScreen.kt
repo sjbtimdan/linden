@@ -33,7 +33,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -65,8 +64,6 @@ private data class AccountDialogState(
 @Composable
 fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Unit) {
     val accounts by viewModel.accounts.collectAsState()
-    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val totalMinor by viewModel.totalMinor.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
@@ -92,32 +89,6 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        if (accounts.isNotEmpty()) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Total",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(
-                        text = totalMinor?.let { "${formatAmountCompact(it)} ${defaultCurrency.symbol}" } ?: "–",
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
 
         FilledTonalButton(
             onClick = {
@@ -154,8 +125,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(accounts, key = { it.account.id }) { item ->
-                    val account = item.account
+                items(accounts, key = { it.id }) { account ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -197,10 +167,17 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        Text(
-                            text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "${formatAmountCompact(account.initialBalance)} ${account.currency.symbol}",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = "Initial",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }
