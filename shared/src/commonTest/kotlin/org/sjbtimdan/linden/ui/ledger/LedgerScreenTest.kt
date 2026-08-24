@@ -516,8 +516,9 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
-            // the chip row is dismissed once a suggestion is picked
-            onAllNodesWithText("Coffee").assertCountEquals(1)
+            // the suggestion row is dismissed, leaving the field and the
+            // quick-entry chip (which also shows "Coffee")
+            onAllNodesWithText("Coffee").assertCountEquals(2)
         }
     }
 
@@ -544,7 +545,10 @@ class LedgerScreenTest : StringSpec({
             tapOutside()
 
             onNodeWithText("Description (optional)").assertIsNotFocused()
-            onNodeWithText("Coffee").assertDoesNotExist()
+            // no suggestion was applied to the field; the persistent quick-entry
+            // chip still shows the description
+            onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
+            onNodeWithText("Quick entry").assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
         }
     }
@@ -637,6 +641,63 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Leisure").assertIsDisplayed()
+        }
+    }
+
+    "shows quick entry chips for the current type" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Quick entry")
+            onNodeWithText("Quick entry").assertIsDisplayed()
+            // the chip duplicates the prefilled description field
+            onAllNodesWithText("Coffee").assertCountEquals(2)
+        }
+    }
+
+    "selecting a quick entry fills the form" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val now = Clock.System.now()
+            // The latest entry prefills the form; the older one only exists as a chip.
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Quick entry")
+            // prefill comes from the latest entry, so "Coffee" is only the chip
+            onNode(hasSetTextAction() and hasText("Train")).assertIsDisplayed()
+            onNodeWithText("Coffee").performClick()
+            waitForIdle()
+
+            onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            onNodeWithText("Add").assertIsEnabled()
+        }
+    }
+
+    "quick entry chips hide for a type without matching history" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            waitForText("Quick entry")
+            onNodeWithText("Income").performClick()
+            waitUntil(timeoutMillis = 5_000) {
+                onAllNodesWithText("Quick entry").fetchSemanticsNodes().isEmpty()
+            }
         }
     }
 })

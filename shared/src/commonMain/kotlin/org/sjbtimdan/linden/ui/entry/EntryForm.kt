@@ -47,6 +47,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import kotlin.time.Instant
@@ -74,6 +75,8 @@ fun EntryForm(
     descriptionSuggestions: List<String> = emptyList(),
     accountSuggestions: List<Long> = emptyList(),
     categorySuggestions: List<Long> = emptyList(),
+    quickEntries: List<Entry> = emptyList(),
+    onQuickEntry: (Entry) -> Unit = {},
 ) {
     val visibleCategories = when (state.type) {
         EntryType.Expense -> categories.filter { it.type != CategoryType.Income }
@@ -363,6 +366,22 @@ fun EntryForm(
                 OutlinedButton(onClick = { showTimePicker = true }) {
                     Text(formatTime(state.createdAt, state.createdZone))
                 }
+            }
+
+            // Chips for whole entries likely to be repeated now; picking one fills
+            // the form, keeping the current date and time.
+            if (quickEntries.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Quick entry",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+                OptionChipRow(
+                    options = quickEntries,
+                    optionLabel = ::quickEntryLabel,
+                    onSelect = onQuickEntry,
+                )
             }
         }
     }

@@ -39,6 +39,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             provider.accountSuggestions.first().shouldBeEmpty()
             provider.categorySuggestions.first().shouldBeEmpty()
             provider.descriptionSuggestions.first().shouldBeEmpty()
+            provider.quickEntries.first().shouldBeEmpty()
         }
     }
 
@@ -51,6 +52,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             provider.accountSuggestions.first().shouldBeEmpty()
             provider.categorySuggestions.first().shouldBeEmpty()
             provider.descriptionSuggestions.first().shouldBeEmpty()
+            provider.quickEntries.first().shouldBeEmpty()
         }
     }
 
@@ -116,6 +118,42 @@ class EntrySuggestionsProviderTest : StringSpec({
 
             provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
             provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
+        }
+    }
+
+    "quick entries include entries beyond the prediction horizon" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val monthsAgo = Clock.System.now()
+                .minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
+            draft.value = EntryDraft.forNew(EntryType.Expense)
+
+            provider.quickEntries.awaitNotEmpty().map { it.description } shouldContainExactly listOf("Coffee")
+        }
+    }
+
+    "quick entries only consider entries of the draft's type" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            draft.value = EntryDraft.forNew(EntryType.Income)
+
+            provider.quickEntries.first().shouldBeEmpty()
+
+            draft.value = draft.value?.copy(type = EntryType.Expense)
+
+            provider.quickEntries.awaitNotEmpty().map { it.description } shouldContainExactly listOf("Coffee")
+        }
+    }
+
+    "quick entries ignore entries without a description" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            entryDao.create(ExpenseEntry(0, groceries, null, main, 450, createdAt = Clock.System.now()))
+            draft.value = EntryDraft.forNew(EntryType.Expense)
+
+            provider.quickEntries.first().shouldBeEmpty()
         }
     }
 })

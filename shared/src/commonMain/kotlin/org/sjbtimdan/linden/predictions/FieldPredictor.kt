@@ -1,10 +1,8 @@
 package org.sjbtimdan.linden.predictions
 
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import kotlin.math.abs
 import kotlin.time.Instant
 
 data class FieldPredictionInput(
@@ -14,14 +12,6 @@ data class FieldPredictionInput(
     val amount: Long?,
     val description: String?,
 )
-
-private const val DESCRIPTION_EXACT_WEIGHT = 3.0
-private const val DESCRIPTION_PARTIAL_WEIGHT = 1.5
-private const val TIME_OF_DAY_WEIGHT = 1.5
-private const val TIME_OF_DAY_TOLERANCE_HOURS = 2
-private const val TIME_OF_DAY_NEAR_WEIGHT = 0.75
-private const val WEEKDAY_WEIGHT = 1.0
-private const val MONTH_WEIGHT = 0.5
 
 /**
  * Returns the most likely account ids for a new expense/income entry, given the
@@ -92,34 +82,3 @@ private data class ScoredId(
     val id: Long,
     val score: Double,
 )
-
-private fun descriptionScore(entryDescription: String?, inputDescription: String?): Double {
-    val input = inputDescription?.trim().orEmpty()
-    if (input.isEmpty()) return 0.0
-    val candidate = entryDescription?.trim().orEmpty()
-    if (candidate.isEmpty()) return 0.0
-    return when {
-        candidate.equals(input, ignoreCase = true) -> DESCRIPTION_EXACT_WEIGHT
-
-        candidate.contains(input, ignoreCase = true) || input.contains(candidate, ignoreCase = true) ->
-            DESCRIPTION_PARTIAL_WEIGHT
-
-        else -> 0.0
-    }
-}
-
-/** Bonus for entries created close to [now] in hour of day, weekday and month. */
-private fun timeAffinityScore(createdAt: Instant, now: Instant, timeZone: TimeZone): Double {
-    val created = createdAt.toLocalDateTime(timeZone)
-    val current = now.toLocalDateTime(timeZone)
-    var score = 0.0
-    val hourDiff = abs(created.hour - current.hour)
-    score += when {
-        hourDiff == 0 -> TIME_OF_DAY_WEIGHT
-        hourDiff <= TIME_OF_DAY_TOLERANCE_HOURS -> TIME_OF_DAY_NEAR_WEIGHT
-        else -> 0.0
-    }
-    if (created.dayOfWeek == current.dayOfWeek) score += WEEKDAY_WEIGHT
-    if (created.monthNumber == current.monthNumber) score += MONTH_WEIGHT
-    return score
-}

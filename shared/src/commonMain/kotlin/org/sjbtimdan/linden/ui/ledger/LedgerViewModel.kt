@@ -4,14 +4,20 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import org.sjbtimdan.linden.ui.entry.EntrySuggestionsProvider
+import org.sjbtimdan.linden.ui.entry.formatAmount
 
 class LedgerViewModel(
     entryDao: EntryDao,
@@ -28,6 +34,48 @@ class LedgerViewModel(
 
     /** Most likely descriptions for the current draft; only for new entries. */
     val descriptionSuggestions: StateFlow<List<String>> get() = suggestions.descriptionSuggestions
+
+    /** Whole entries the user is likely to repeat right now, ranked time first. */
+    val quickEntries: StateFlow<List<Entry>> get() = suggestions.quickEntries
+
+    /** Fills the draft from a quick-entry chip, keeping the current date and time. */
+    fun applyQuickEntry(entry: Entry) = draftState.update { state ->
+        if (state == null) {
+            null
+        } else {
+            when (entry) {
+                is TransferEntry -> state.copy(
+                    type = EntryType.Transfer,
+                    amountText = formatAmount(entry.amount),
+                    categoryId = entry.category?.id,
+                    accountId = entry.account.id,
+                    toAccountId = entry.toAccount.id,
+                    toAmountText = formatAmount(entry.toAmount ?: entry.amount),
+                    description = entry.description.orEmpty(),
+                )
+
+                is ExpenseEntry -> state.copy(
+                    type = EntryType.Expense,
+                    amountText = formatAmount(entry.amount),
+                    categoryId = entry.category.id,
+                    accountId = entry.account.id,
+                    toAccountId = null,
+                    toAmountText = "",
+                    description = entry.description.orEmpty(),
+                )
+
+                is IncomeEntry -> state.copy(
+                    type = EntryType.Income,
+                    amountText = formatAmount(entry.amount),
+                    categoryId = entry.category.id,
+                    accountId = entry.account.id,
+                    toAccountId = null,
+                    toAmountText = "",
+                    description = entry.description.orEmpty(),
+                )
+            }
+        }
+    }
 
     private val _selectedType = MutableStateFlow(EntryType.Expense)
     val selectedType: StateFlow<EntryType> = _selectedType.asStateFlow()

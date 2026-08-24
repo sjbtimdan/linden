@@ -62,6 +62,10 @@ class EntryDao(private val queries: EntryQueries) {
     fun getSinceByType(type: EntryType, epochMs: Long): Flow<List<Entry>> =
         queries.selectSinceByType(type.name, epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
+    /** All entries of [type], without a date cutoff; used by quick entry. */
+    fun getAllByType(type: EntryType): Flow<List<Entry>> =
+        queries.selectAllByType(type.name, ::toEntry).asFlow().map { it.awaitAsList() }
+
     fun getUpTo(epochMs: Long): Flow<List<Entry>> =
         queries.selectUpTo(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
