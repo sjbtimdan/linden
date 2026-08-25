@@ -56,4 +56,13 @@ class MoneyFormatTest : StringSpec({
         formatAmountCompact(123_456_789_000L) shouldBe "1.235b"
         formatAmountCompact(-1_234_567_890_000L) shouldBe "-12.346b"
     }
+
+    "formatAmountCompact keeps leading zeros of the fractional digits" {
+        // 1,059,299.14 must not render as "1.59m".
+        formatAmountCompact(105_929_914) shouldBe "1.059m"
+        formatAmountCompact(105_000_000) shouldBe "1.05m"
+        formatAmountCompact(100_500_000) shouldBe "1.005m"
+        formatAmountCompact(100_050_000) shouldBe "1.001m"
+        formatAmountCompact(-105_929_914) shouldBe "-1.059m"
+    }
 })

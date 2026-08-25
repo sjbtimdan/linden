@@ -76,5 +76,7 @@ private fun compact(absolute: Long, unitMinor: Long, suffix: String): String {
         whole++
         decimals = 0
     }
-    return if (decimals == 0L) "$whole$suffix" else "$whole.${decimals.toString().trimEnd('0')}$suffix"
+    // Left-pad the fractional digits to three so "1.059m" cannot render as "1.59m",
+    // then trim trailing zeros ("1.250m" -> "1.25m").
+    return if (decimals == 0L) "$whole$suffix" else "$whole.${decimals.toString().padStart(3, '0').trimEnd('0')}$suffix"
 }
