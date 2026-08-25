@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.ui.history
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -54,11 +56,17 @@ class HistoryViewModel(
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
 
-    private val _period = MutableStateFlow(HistoryPeriod.All)
-    val period: StateFlow<HistoryPeriod> = _period.asStateFlow()
+    private val _periodSelection = MutableStateFlow(PeriodSelection(HistoryPeriod.All, today()))
+    val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
 
-    private val _periodAnchor = MutableStateFlow(today())
-    val periodAnchor: StateFlow<LocalDate> = _periodAnchor.asStateFlow()
+    /** Start/end of the selected period's window, derived once and reused by every period flow. */
+    private val periodWindow: StateFlow<PeriodWindow?> = _periodSelection
+        .map { selection ->
+            val start = selection.period.windowStart(selection.anchor) ?: return@map null
+            val end = selection.period.windowEnd(selection.anchor) ?: return@map null
+            PeriodWindow(start, end)
+        }
+        .stateFlow(null)
 
     private val _viewMode = MutableStateFlow(HistoryViewMode.Entries)
     val viewMode: StateFlow<HistoryViewMode> = _viewMode.asStateFlow()
@@ -71,30 +79,21 @@ class HistoryViewModel(
     private val _accountFilter = MutableStateFlow<Long?>(null)
     val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
 
-    private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
-        _period,
-        _periodAnchor,
-    ) { period, anchor -> period to anchor }
-        .flatMapLatest { (period, anchor) ->
-            val start = period.windowStart(anchor)
-            val end = period.windowEnd(anchor)
+    private val periodEntries: StateFlow<List<SearchableEntry>> = periodWindow
+        .flatMapLatest { window ->
             // Only rows at or after a safe lower bound are fetched from the database.
             // The exact window and the "nothing in the future" rule are still enforced
             // here at emission time so a stale "today" never hides new entries.
-            val source = start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: entryDao.getAll()
+            val source = window?.start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: entryDao.getAll()
             source.map { rows ->
                 val now = today()
                 rows
-                    .filter { entry -> entry.isInWindow(start, end, now) }
+                    .filter { entry -> entry.isInWindow(window?.start, window?.end, now) }
                     .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
                     .map(::SearchableEntry)
             }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
+        .stateFlow(emptyList())
 
     val entries: StateFlow<List<Entry>> = combine(
         periodEntries,
@@ -107,11 +106,7 @@ class HistoryViewModel(
             .filter { searchable -> normalized.isEmpty() || searchable.matches(normalized) }
             .map { it.entry }
             .toList()
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList(),
-    )
+    }.stateFlow(emptyList())
 
     val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
 
@@ -139,11 +134,7 @@ class HistoryViewModel(
                 matchesCategory && matchesAccount
             }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList(),
-    )
+    }.stateFlow(emptyList())
 
     /** Net total of the displayed entries in the default currency; null when a rate is missing. */
     val totalMinor: StateFlow<Long?> = combine(
@@ -152,23 +143,12 @@ class HistoryViewModel(
         rates,
     ) { entries, currency, rates ->
         periodTotalMinor(entries, currency, rates)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = 0L,
-    )
+    }.stateFlow(0L)
 
     /** Last day of the selected period (inclusive); null for [HistoryPeriod.All]. */
-    private val periodEnd: StateFlow<LocalDate?> = combine(
-        _period,
-        _periodAnchor,
-    ) { period, anchor -> period to anchor }
-        .map { (period, anchor) -> period.windowEnd(anchor) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = null,
-        )
+    private val periodEnd: StateFlow<LocalDate?> = periodWindow
+        .map { it?.end }
+        .stateFlow(null)
 
     /** All entries created at or before the end of the selected period (safety margin included). */
     private val entriesUpToPeriodEnd: StateFlow<List<Entry>> = periodEnd
@@ -176,11 +156,7 @@ class HistoryViewModel(
             val source = end?.let { entryDao.getUpTo(it.sqlUpperBound()) } ?: entryDao.getAll()
             source
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
+        .stateFlow(emptyList())
 
     /**
      * Balance of each account at the end of the selected period in the account's own
@@ -196,11 +172,7 @@ class HistoryViewModel(
         val now = today()
         val cutoff = end?.let { minOf(it, now) } ?: now
         accountBalancesAtEnd(entries, cutoff, accounts)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList(),
-    )
+    }.stateFlow(emptyList())
 
     /** Net total of all period-end balances in the default currency; null when a rate is missing. */
     val accountTotalAtPeriodEnd: StateFlow<Long?> = combine(
@@ -209,11 +181,7 @@ class HistoryViewModel(
         rates,
     ) { balances, currency, rates ->
         accountTotalMinor(balances, currency, rates)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = null,
-    )
+    }.stateFlow(null)
 
     /** Net total per category in the default currency derived from the filtered entries. */
     val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
@@ -229,11 +197,7 @@ class HistoryViewModel(
                 CategoryWithTotal(category, total, catEntries.size)
             }
             .sortedByDescending { abs(it.total) }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyList(),
-    )
+    }.stateFlow(emptyList())
 
     /** Net total of all categories in the default currency; null when a rate is missing. */
     val categoryTotal: StateFlow<Long?> = combine(
@@ -242,11 +206,7 @@ class HistoryViewModel(
         rates,
     ) { entries, currency, rates ->
         periodTotalMinor(entries, currency, rates)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = null,
-    )
+    }.stateFlow(null)
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
@@ -257,7 +217,7 @@ class HistoryViewModel(
     }
 
     fun setPeriod(period: HistoryPeriod) {
-        _period.value = period
+        _periodSelection.update { it.copy(period = period) }
     }
 
     fun setViewMode(mode: HistoryViewMode) {
@@ -297,11 +257,11 @@ class HistoryViewModel(
     }
 
     fun goToPreviousPeriod() {
-        _periodAnchor.value = _period.value.previousAnchor(_periodAnchor.value)
+        _periodSelection.update { it.copy(anchor = it.period.previousAnchor(it.anchor)) }
     }
 
     fun goToNextPeriod() {
-        _periodAnchor.value = _period.value.nextAnchor(_periodAnchor.value)
+        _periodSelection.update { it.copy(anchor = it.period.nextAnchor(it.anchor)) }
     }
 
     /** Draft currently being edited in the entry dialog, or null when it is closed. */
@@ -329,6 +289,13 @@ class HistoryViewModel(
     fun dismissDialog() {
         draftState.value = null
     }
+
+    /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
+    private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = initial,
+    )
 }
 
 /** An entry with its searchable fields pre-lowercased, so filtering on a keystroke does not re-lowercase every field. */
@@ -373,6 +340,18 @@ enum class HistoryViewMode {
     Accounts,
     Categories,
 }
+
+/** The selected [HistoryPeriod] together with the anchor date its window is centered on. */
+data class PeriodSelection(
+    val period: HistoryPeriod,
+    val anchor: LocalDate,
+)
+
+/** First and last day of the calendar window of a period selection; null for [HistoryPeriod.All]. */
+private data class PeriodWindow(
+    val start: LocalDate,
+    val end: LocalDate,
+)
 
 /** A category paired with its net total in the default currency (minor units) and entry count. */
 data class CategoryWithTotal(

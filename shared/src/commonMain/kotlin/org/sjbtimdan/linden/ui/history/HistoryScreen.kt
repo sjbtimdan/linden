@@ -50,8 +50,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
-    val period by viewModel.period.collectAsState()
-    val periodAnchor by viewModel.periodAnchor.collectAsState()
+    val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
@@ -174,8 +173,8 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 contentAlignment = Alignment.Center,
             ) {
                 PeriodNavigator(
-                    period = period,
-                    anchor = periodAnchor,
+                    period = periodSelection.period,
+                    anchor = periodSelection.anchor,
                     onPeriodChange = viewModel::setPeriod,
                     onPrevious = viewModel::goToPreviousPeriod,
                     onNext = viewModel::goToNextPeriod,
@@ -276,9 +275,10 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                         (categoryFilter != null || accountFilter != null) &&
                             searchQuery.isBlank() &&
                             typeFilter == null &&
-                            period == HistoryPeriod.All -> "No entries match this filter."
+                            periodSelection.period == HistoryPeriod.All -> "No entries match this filter."
 
-                        searchQuery.isBlank() && typeFilter == null && period == HistoryPeriod.All -> "No entries yet."
+                        searchQuery.isBlank() && typeFilter == null && periodSelection.period == HistoryPeriod.All ->
+                            "No entries yet."
 
                         else -> "No entries match."
                     },
