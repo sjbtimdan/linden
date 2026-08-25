@@ -560,6 +560,39 @@ class HistoryViewModelTest : StringSpec({
         }
     }
 
+    "category totals reconcile with the total chip and with income plus expenses" {
+        withHistoryViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 0.8, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", usd, 2))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", usd, 1))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+
+            // Per sign: 2 USD -> 3 CHF and -1 USD -> -1 CHF, so Groceries nets 2 CHF.
+            // A net-per-currency-group conversion would round (2 - 1) / 0.8 = 1.25 to 1
+            // and make the category rows disagree with the total chip.
+            viewModel.categoryTotal.value shouldBe 5_002L
+            viewModel.categoryTotals.value.sumOf { it.total } shouldBe viewModel.categoryTotal.value
+            val byName = viewModel.categoryTotals.value.associateBy { it.category?.name }
+            byName["Groceries"]!!.total shouldBe 2L
+            byName["Salary"]!!.total shouldBe 5_000L
+
+            // The same reconciliation holds under the type filters: the "All" total of a
+            // category equals its income total plus its expense total.
+            viewModel.setTypeFilter(EntryType.Income)
+            viewModel.categoryTotals.value.sumOf { it.total } shouldBe viewModel.categoryTotal.value
+            viewModel.setTypeFilter(EntryType.Expense)
+            viewModel.categoryTotals.value.sumOf { it.total } shouldBe viewModel.categoryTotal.value
+        }
+    }
+
     "category totals follow the period" {
         withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

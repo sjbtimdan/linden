@@ -225,9 +225,7 @@ class HistoryViewModel(
             .filter { it.type != EntryType.Transfer }
             .groupBy { it.category }
             .mapNotNull { (category, catEntries) ->
-                val groups = catEntries.groupBy { it.account.currency }
-                    .map { (c, e) -> c to e.sumOf { if (it.type == EntryType.Income) it.amount else -it.amount } }
-                val total = sumInDefaultMinor(groups, currency, rates) ?: return@mapNotNull null
+                val total = entriesNetInDefaultMinor(catEntries, currency, rates) ?: return@mapNotNull null
                 CategoryWithTotal(category, total, catEntries.size)
             }
             .sortedByDescending { abs(it.total) }

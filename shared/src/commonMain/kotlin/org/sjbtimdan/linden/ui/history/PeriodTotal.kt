@@ -10,22 +10,32 @@ import kotlin.math.roundToLong
 
 /**
  * Net total of [entries] (income minus expenses, transfers excluded) converted to
- * [defaultCurrency] minor units. Returns null when an entry in a foreign currency has
- * no stored rate against the default currency, since the total would be incomplete.
+ * [defaultCurrency] minor units. Returns null when a foreign currency has no stored
+ * rate against the default currency, since the total would be incomplete.
  */
-fun periodTotalMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? {
-    val ratesByQuote = rates
-        .filter { it.baseCurrency == defaultCurrency }
-        .associate { it.quoteCurrency to it.rate }
-    var total = 0L
-    for (entry in entries) {
-        if (entry.type == EntryType.Transfer) continue
-        val signed = if (entry.type == EntryType.Income) entry.amount else -entry.amount
-        val converted = toDefaultMinor(signed, entry.account.currency, defaultCurrency, ratesByQuote)
-            ?: return null
-        total += converted
-    }
-    return total
+fun periodTotalMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? =
+    entriesNetInDefaultMinor(entries.filter { it.type != EntryType.Transfer }, defaultCurrency, rates)
+
+/**
+ * Net of [entries] (transfers already excluded) in [defaultCurrency] minor units.
+ * Income and expense amounts are summed per currency and converted separately, so the
+ * net is exactly the income total plus the expense total, whatever the rounding: the
+ * period total, the category totals and the sum of income and expense totals all
+ * reconcile. Returns null when a foreign currency has no stored rate against the
+ * default currency, since the total would be incomplete.
+ */
+internal fun entriesNetInDefaultMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? {
+    val (income, expenses) = entries.partition { it.type == EntryType.Income }
+    fun groupsOf(entries: List<Entry>) = entries
+        .groupBy { it.account.currency }
+        .map { (currency, group) -> currency to group.sumOf { it.amount } }
+    val incomeTotal = sumInDefaultMinor(groupsOf(income), defaultCurrency, rates) ?: return null
+    val expenseTotal = sumInDefaultMinor(
+        groupsOf(expenses).map { (currency, amount) -> currency to -amount },
+        defaultCurrency,
+        rates,
+    ) ?: return null
+    return incomeTotal + expenseTotal
 }
 
 /**

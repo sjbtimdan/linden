@@ -6,6 +6,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
@@ -88,6 +89,33 @@ class PeriodTotalTest : StringSpec({
             Currency.CHF,
             emptyList(),
         ) shouldBe -450L
+    }
+
+    "net converts income and expense per currency group, not entry by entry" {
+        val entries = listOf(
+            IncomeEntry(0, groceries, null, usd, 2),
+            ExpenseEntry(0, groceries, null, usd, 1),
+        )
+        // Per sign: 2 USD -> 3 CHF and -1 USD -> -1 CHF, net 2 CHF.
+        // Converting the net (2 - 1) / 0.8 = 1.25 would round to 1 CHF and break
+        // the reconciliation with the income and expense totals.
+        periodTotalMinor(entries, Currency.CHF, chfUsdRate) shouldBe 2L
+    }
+
+    "net equals the income total plus the expense total" {
+        val all = listOf(
+            IncomeEntry(0, groceries, null, usd, 2),
+            ExpenseEntry(0, groceries, null, usd, 1),
+            IncomeEntry(0, groceries, null, chf, 5),
+        )
+        val incomeOnly = all.filter { it.type == EntryType.Income }
+        val expenseOnly = all.filter { it.type == EntryType.Expense }
+
+        val net = periodTotalMinor(all, Currency.CHF, chfUsdRate)
+        val incomeTotal = periodTotalMinor(incomeOnly, Currency.CHF, chfUsdRate)
+        val expenseTotal = periodTotalMinor(expenseOnly, Currency.CHF, chfUsdRate)
+
+        net shouldBe incomeTotal!! + expenseTotal!!
     }
 
     "sumInDefaultMinor totals same-currency groups without rates" {
