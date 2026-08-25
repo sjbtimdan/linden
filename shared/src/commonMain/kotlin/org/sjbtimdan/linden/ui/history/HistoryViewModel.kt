@@ -63,6 +63,14 @@ class HistoryViewModel(
     private val _viewMode = MutableStateFlow(HistoryViewMode.Entries)
     val viewMode: StateFlow<HistoryViewMode> = _viewMode.asStateFlow()
 
+    /** Id of the category the entries view is narrowed to, or null for all entries. 0 means "Uncategorized". */
+    private val _categoryFilter = MutableStateFlow<Long?>(null)
+    val categoryFilter: StateFlow<Long?> = _categoryFilter.asStateFlow()
+
+    /** Id of the account the entries view is narrowed to, or null for all accounts. */
+    private val _accountFilter = MutableStateFlow<Long?>(null)
+    val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
+
     private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
         _period,
         _periodAnchor,
@@ -109,9 +117,37 @@ class HistoryViewModel(
 
     private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
 
+    /**
+     * Entries shown by the entries view: the period/search/type filtered entries,
+     * narrowed to a single category and/or account while those filters are set.
+     * Transfers never contribute to category totals, so they are excluded from a
+     * category-filtered view to keep the list consistent with the category total
+     * it drills into. The account filter keeps transfers of that account.
+     */
+    val displayedEntries: StateFlow<List<Entry>> = combine(
+        entries,
+        _categoryFilter,
+        _accountFilter,
+    ) { entries, categoryId, accountId ->
+        if (categoryId == null && accountId == null) {
+            entries
+        } else {
+            entries.filter { entry ->
+                val matchesCategory = categoryId == null ||
+                    (entry.type != EntryType.Transfer && (entry.category?.id ?: 0L) == categoryId)
+                val matchesAccount = accountId == null || entry.account.id == accountId
+                matchesCategory && matchesAccount
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyList(),
+    )
+
     /** Net total of the displayed entries in the default currency; null when a rate is missing. */
     val totalMinor: StateFlow<Long?> = combine(
-        entries,
+        displayedEntries,
         defaultCurrency,
         rates,
     ) { entries, currency, rates ->
@@ -227,7 +263,39 @@ class HistoryViewModel(
     }
 
     fun setViewMode(mode: HistoryViewMode) {
+        // The entry filters only apply to the entries view; leaving it clears
+        // them so no stale chip can sit over the categories or accounts list.
+        if (mode != HistoryViewMode.Entries) {
+            _categoryFilter.value = null
+            _accountFilter.value = null
+        }
         _viewMode.value = mode
+    }
+
+    /** Drills into a category from the categories view: narrows the entries to it and switches to the entries view. */
+    fun openCategory(categoryId: Long) {
+        setCategoryFilter(categoryId)
+        _viewMode.value = HistoryViewMode.Entries
+    }
+
+    /** Narrows the entries view to a single category; null restores all entries. */
+    fun setCategoryFilter(categoryId: Long?) {
+        _categoryFilter.value = categoryId
+    }
+
+    /** Removes the category filter, restoring the full entries list. */
+    fun clearCategoryFilter() {
+        _categoryFilter.value = null
+    }
+
+    /** Narrows the entries view to a single account; null restores all entries. */
+    fun setAccountFilter(accountId: Long?) {
+        _accountFilter.value = accountId
+    }
+
+    /** Removes the account filter, restoring the full entries list. */
+    fun clearAccountFilter() {
+        _accountFilter.value = null
     }
 
     fun goToPreviousPeriod() {

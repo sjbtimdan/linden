@@ -572,6 +572,96 @@ class HistoryScreenTest : StringSpec({
             onNodeWithText("− 3.00 CHF").assertDoesNotExist()
         }
     }
+
+    "tapping a category drills into its entries with a filter chip" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Categories").performClick()
+            onNodeWithText("Groceries").performClick()
+
+            // The entries view is narrowed to Groceries and the chip is visible.
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithText("Lunch").assertIsDisplayed()
+            onNodeWithText("Pay").assertDoesNotExist()
+            onNodeWithTag("categoryFilterChip").assertIsDisplayed()
+            onNodeWithText("− 16.50 CHF").assertIsDisplayed()
+        }
+    }
+
+    "removing the category filter restores the full entries list" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Categories").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Pay").assertDoesNotExist()
+
+            onNodeWithTag("categoryFilterChip").performClick()
+
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithTag("categoryFilterChip").assertDoesNotExist()
+        }
+    }
+
+    "category dropdown filters the entries and shows the chip" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("categoryFilterDropdown").performClick()
+            onNodeWithText("Category: Salary").performClick()
+
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("categoryFilterChip").assertIsDisplayed()
+        }
+    }
+
+    "account dropdown filters the entries and shows the chip" {
+        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                HistoryScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("accountFilterDropdown").performClick()
+            onNodeWithText("Account: Savings").performClick()
+
+            onNodeWithText("No entries match this filter.").assertIsDisplayed()
+            onNodeWithTag("accountFilterChip").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

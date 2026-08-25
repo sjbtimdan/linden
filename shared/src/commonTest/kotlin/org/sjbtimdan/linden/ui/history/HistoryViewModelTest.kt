@@ -643,6 +643,185 @@ class HistoryViewModelTest : StringSpec({
             viewModel.categoryTotal.value shouldBe null
         }
     }
+
+    "openCategory filters the entries to the category and switches to the entries view" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+
+            viewModel.setViewMode(HistoryViewMode.Categories)
+            viewModel.openCategory(groceries.id)
+
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.categoryFilter.value shouldBe groceries.id
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Lunch", "Coffee")
+            viewModel.totalMinor.value shouldBe -1_650L
+        }
+    }
+
+    "category filter excludes transfers from the drill-down" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(
+                TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
+            )
+
+            viewModel.openCategory(groceries.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Coffee")
+            viewModel.totalMinor.value shouldBe -450L
+        }
+    }
+
+    "category filter follows the type filter" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.setTypeFilter(EntryType.Income)
+            viewModel.openCategory(salary.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Pay")
+        }
+    }
+
+    "clearCategoryFilter restores the full entries list" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.openCategory(groceries.id)
+            viewModel.displayedEntries.value.shouldHaveSize(1)
+
+            viewModel.clearCategoryFilter()
+
+            viewModel.categoryFilter.value.shouldBeNull()
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.displayedEntries.value.shouldHaveSize(2)
+            viewModel.totalMinor.value shouldBe 1_550L
+        }
+    }
+
+    "switching the view mode away from entries clears the entry filters" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            viewModel.openCategory(groceries.id)
+            viewModel.setAccountFilter(main.id)
+            viewModel.categoryFilter.value shouldBe groceries.id
+            viewModel.accountFilter.value shouldBe main.id
+
+            viewModel.setViewMode(HistoryViewMode.Categories)
+
+            viewModel.categoryFilter.value.shouldBeNull()
+            viewModel.accountFilter.value.shouldBeNull()
+        }
+    }
+
+    "setCategoryFilter narrows the entries without switching the view mode" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.setCategoryFilter(salary.id)
+
+            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Pay")
+        }
+    }
+
+    "account filter narrows the entries to the account" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+
+            viewModel.setAccountFilter(usd.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Foreign")
+
+            viewModel.clearAccountFilter()
+            viewModel.displayedEntries.value.shouldHaveSize(2)
+        }
+    }
+
+    "account filter keeps transfers of the source account" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(
+                TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
+            )
+
+            viewModel.setAccountFilter(main.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Move", "Coffee")
+        }
+    }
+
+    "category and account filters combine" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.setCategoryFilter(groceries.id)
+            viewModel.setAccountFilter(main.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Coffee")
+        }
+    }
+
+    "category totals ignore the category filter" {
+        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            viewModel.openCategory(groceries.id)
+            viewModel.displayedEntries.value.shouldHaveSize(1)
+
+            viewModel.categoryTotals.value.shouldHaveSize(2)
+            viewModel.categoryTotal.value shouldBe 1_550L
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

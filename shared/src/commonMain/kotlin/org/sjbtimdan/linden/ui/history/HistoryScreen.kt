@@ -41,11 +41,11 @@ import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
+import org.sjbtimdan.linden.ui.theme.categoryColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
 fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit = {}) {
-    val entries by viewModel.entries.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -59,10 +59,18 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
     val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
     val categoryTotals by viewModel.categoryTotals.collectAsState()
     val categoryTotal by viewModel.categoryTotal.collectAsState()
+    val categoryFilter by viewModel.categoryFilter.collectAsState()
+    val accountFilter by viewModel.accountFilter.collectAsState()
+    val displayedEntries by viewModel.displayedEntries.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
 
-    val listItems = remember(entries) {
-        historyListItems(entries = entries)
+    val listItems = remember(displayedEntries) {
+        historyListItems(entries = displayedEntries)
+    }
+
+    BackHandler(enabled = dialogState == null && (categoryFilter != null || accountFilter != null)) {
+        viewModel.clearCategoryFilter()
+        viewModel.clearAccountFilter()
     }
 
     BackHandler(enabled = dialogState != null) {
@@ -126,6 +134,37 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
             )
         }
 
+        if (viewMode == HistoryViewMode.Entries) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                ChipDropdown(
+                    selected = categoryFilter,
+                    options = listOf(null) + categories.map { it.id },
+                    optionLabel = { id ->
+                        "Category: ${id?.let { cid ->
+                            categories.firstOrNull { it.id == cid }?.name
+                        } ?: "All"}"
+                    },
+                    onSelect = viewModel::setCategoryFilter,
+                    modifier = Modifier.testTag("categoryFilterDropdown"),
+                )
+                ChipDropdown(
+                    selected = accountFilter,
+                    options = listOf(null) + accounts.map { it.id },
+                    optionLabel = { id ->
+                        "Account: ${id?.let { aid ->
+                            accounts.firstOrNull { it.id == aid }?.name
+                        } ?: "All"}"
+                    },
+                    onSelect = viewModel::setAccountFilter,
+                    modifier = Modifier.testTag("accountFilterDropdown"),
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
 
         Row(
@@ -152,6 +191,31 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 },
                 currency = defaultCurrency,
             )
+        }
+
+        if (viewMode == HistoryViewMode.Entries && (categoryFilter != null || accountFilter != null)) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                categoryFilter?.let { id ->
+                    val name = categories.firstOrNull { it.id == id }?.name ?: "Uncategorized"
+                    EntryFilterChip(
+                        name = name,
+                        onClick = viewModel::clearCategoryFilter,
+                        leadingColor = categoryColor(name),
+                        modifier = Modifier.testTag("categoryFilterChip"),
+                    )
+                }
+                accountFilter?.let { id ->
+                    EntryFilterChip(
+                        name = accounts.firstOrNull { it.id == id }?.name ?: "Unknown account",
+                        onClick = viewModel::clearAccountFilter,
+                        modifier = Modifier.testTag("accountFilterChip"),
+                    )
+                }
+            }
         }
 
         if (viewMode == HistoryViewMode.Accounts) {
@@ -197,11 +261,12 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 } else {
                     "No categories match."
                 },
+                onCategoryClick = { viewModel.openCategory(it.category?.id ?: 0L) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
             )
-        } else if (entries.isEmpty()) {
+        } else if (displayedEntries.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -209,10 +274,15 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (searchQuery.isBlank() && typeFilter == null && period == HistoryPeriod.All) {
-                        "No entries yet."
-                    } else {
-                        "No entries match."
+                    text = when {
+                        (categoryFilter != null || accountFilter != null) &&
+                            searchQuery.isBlank() &&
+                            typeFilter == null &&
+                            period == HistoryPeriod.All -> "No entries match this filter."
+
+                        searchQuery.isBlank() && typeFilter == null && period == HistoryPeriod.All -> "No entries yet."
+
+                        else -> "No entries match."
                     },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
