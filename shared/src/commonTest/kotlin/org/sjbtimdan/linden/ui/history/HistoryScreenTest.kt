@@ -636,7 +636,7 @@ class HistoryScreenTest : StringSpec({
             }
 
             onNodeWithTag("categoryFilterDropdown").performClick()
-            onNodeWithText("Category: Salary").performClick()
+            onNodeWithText("Salary").performClick()
 
             onNodeWithText("Pay").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
@@ -655,7 +655,7 @@ class HistoryScreenTest : StringSpec({
             }
 
             onNodeWithTag("accountFilterDropdown").performClick()
-            onNodeWithText("Account: Savings").performClick()
+            onNodeWithText("Savings").performClick()
 
             onNodeWithText("No entries match this filter.").assertIsDisplayed()
             onNodeWithTag("accountFilterChip").assertIsDisplayed()

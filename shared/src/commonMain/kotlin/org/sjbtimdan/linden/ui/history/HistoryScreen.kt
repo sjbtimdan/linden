@@ -144,9 +144,8 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                     selected = categoryFilter,
                     options = listOf(null) + categories.map { it.id },
                     optionLabel = { id ->
-                        "Category: ${id?.let { cid ->
-                            categories.firstOrNull { it.id == cid }?.name
-                        } ?: "All"}"
+                        id?.let { cid -> categories.firstOrNull { it.id == cid }?.name }
+                            ?: "Category: All"
                     },
                     onSelect = viewModel::setCategoryFilter,
                     modifier = Modifier.testTag("categoryFilterDropdown"),
@@ -155,9 +154,8 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                     selected = accountFilter,
                     options = listOf(null) + accounts.map { it.id },
                     optionLabel = { id ->
-                        "Account: ${id?.let { aid ->
-                            accounts.firstOrNull { it.id == aid }?.name
-                        } ?: "All"}"
+                        id?.let { aid -> accounts.firstOrNull { it.id == aid }?.name }
+                            ?: "Account: All"
                     },
                     onSelect = viewModel::setAccountFilter,
                     modifier = Modifier.testTag("accountFilterDropdown"),
