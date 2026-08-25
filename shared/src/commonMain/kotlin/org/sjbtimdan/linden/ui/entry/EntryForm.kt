@@ -1,31 +1,19 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerDialog
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,13 +25,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.number
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -52,11 +34,13 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import kotlin.time.Instant
 
+/** Which field is expanded right now; while one is, the rest of the form collapses. */
+private enum class ActiveField { Description, From, To, Category, Account, Amount, ToAmount }
+
 /**
  * The field section of the entry editor, shared between the inline form on the
  * ledger screen and the edit dialog on the history screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryForm(
     state: EntryDraft,
@@ -89,215 +73,140 @@ fun EntryForm(
         fromAccount != null && toAccount != null &&
         fromAccount.currency != toAccount.currency
 
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-
-    // While the calculator is open it replaces the amount field and the rest of
-    // the form collapses, so the keypad gets the whole area above the keyboard.
-    var calculatorMode by remember { mutableStateOf(false) }
-    var toCalculatorMode by remember { mutableStateOf(false) }
+    // While a field is focused the rest of the form collapses so that field and
+    // its options get the whole area above the keyboard. The focused field itself
+    // must stay mounted — unmounting it would drop focus — so each section only
+    // hides while a *different* field is active.
+    var activeField by remember { mutableStateOf<ActiveField?>(null) }
     var amountWarning by remember { mutableStateOf<String?>(null) }
     var toAmountWarning by remember { mutableStateOf<String?>(null) }
-
-    // While a field with inline options (description, category, accounts) is focused
-    // the rest of the form collapses so that field and its options get the whole
-    // area above the keyboard. The focused field itself must stay mounted —
-    // unmounting it would drop focus — so each section only hides while a
-    // *different* one is active.
-    var descriptionFocused by remember { mutableStateOf(false) }
-    var focusedDropdown by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(descriptionFocused, focusedDropdown, calculatorMode, toCalculatorMode) {
-        onFieldFocusChange(descriptionFocused || focusedDropdown != null || calculatorMode || toCalculatorMode)
+    LaunchedEffect(activeField) {
+        onFieldFocusChange(activeField != null)
     }
-    val editing = descriptionFocused || focusedDropdown != null || calculatorMode || toCalculatorMode
+    val editing = activeField != null
 
     // The screen's back arrow bumps this to close the calculators from outside;
     // the focused-field states are focus-driven and drop with clearFocus instead.
     LaunchedEffect(editEpoch) {
-        calculatorMode = false
-        toCalculatorMode = false
+        if (activeField == ActiveField.Amount || activeField == ActiveField.ToAmount) activeField = null
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
     fun openCalculator() {
-        calculatorMode = true
+        activeField = ActiveField.Amount
         amountWarning = null
         keyboardController?.hide()
         focusManager.clearFocus()
     }
 
     fun openToCalculator() {
-        toCalculatorMode = true
+        activeField = ActiveField.ToAmount
         toAmountWarning = null
         keyboardController?.hide()
         focusManager.clearFocus()
     }
 
-    BackHandler(enabled = focusedDropdown != null) {
-        focusedDropdown = null
-    }
-    BackHandler(enabled = calculatorMode) {
-        calculatorMode = false
-    }
-    BackHandler(enabled = toCalculatorMode) {
-        toCalculatorMode = false
+    // The back key closes an expanded dropdown or calculator. The description
+    // field is focus-driven instead: back drops focus, which closes it.
+    BackHandler(enabled = activeField != null && activeField != ActiveField.Description) {
+        activeField = null
     }
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         if (!editing) {
-            OutlinedTextField(
+            AmountField(
                 value = state.amountText,
+                label = if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount",
+                suffix = fromAccount?.currency?.symbol,
+                warning = amountWarning,
                 onValueChange = {
                     onAmountChange(it)
                     amountWarning = null
                 },
-                label = { Text(if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                isError = amountWarning != null,
-                supportingText = amountWarning?.let { warning ->
-                    { Text(warning) }
-                },
-                trailingIcon = if (state.amountText.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = { onAmountChange("") },
-                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
-                    }
-                } else {
-                    null
-                },
-                suffix = fromAccount?.let { account ->
-                    { Text(account.currency.symbol) }
-                },
-                modifier = Modifier
-                    .onFocusChanged { if (it.isFocused) openCalculator() }
-                    .testTag("amountField")
-                    .fillMaxWidth(),
+                onFocus = ::openCalculator,
+                modifier = Modifier.testTag("amountField"),
             )
         }
 
         if (state.type == EntryType.Transfer) {
-            if (!editing || focusedDropdown == "from") {
+            if (!editing || activeField == ActiveField.From) {
                 Spacer(modifier = Modifier.height(16.dp))
-                if (accounts.isEmpty()) {
-                    MissingFieldLink(
-                        label = "From account",
-                        text = "Please enter account",
-                        onClick = onNavigateToSettings,
-                    )
-                } else {
-                    DropdownField(
-                        label = "From account",
-                        selected = accounts.firstOrNull { it.id == state.accountId },
-                        options = accounts,
-                        optionLabel = { it.name },
-                        onSelect = { onAccountChange(it.id) },
-                        onFocusChange = { focusedDropdown = if (it) "from" else null },
-                    )
-                }
+                FieldDropdown(
+                    label = "From account",
+                    selected = accounts.firstOrNull { it.id == state.accountId },
+                    options = accounts,
+                    optionLabel = { it.name },
+                    onSelect = { onAccountChange(it.id) },
+                    onFocusChange = { activeField = if (it) ActiveField.From else null },
+                    missing = if (accounts.isEmpty()) "Please enter account" else null,
+                    onNavigateToSettings = onNavigateToSettings,
+                )
             }
-            if (!editing || focusedDropdown == "to") {
+            if (!editing || activeField == ActiveField.To) {
                 Spacer(modifier = Modifier.height(16.dp))
-                if (accounts.size < 2) {
-                    MissingFieldLink(
-                        label = "To account",
-                        text = if (accounts.isEmpty()) {
-                            "Please enter account"
-                        } else {
-                            "Please add a second account"
-                        },
-                        onClick = onNavigateToSettings,
-                    )
-                } else {
-                    DropdownField(
-                        label = "To account",
-                        selected = accounts.firstOrNull { it.id == state.toAccountId },
-                        options = accounts.filter { it.id != state.accountId },
-                        optionLabel = { it.name },
-                        onSelect = { onToAccountChange(it.id) },
-                        onFocusChange = { focusedDropdown = if (it) "to" else null },
-                    )
-                }
+                FieldDropdown(
+                    label = "To account",
+                    selected = accounts.firstOrNull { it.id == state.toAccountId },
+                    options = accounts.filter { it.id != state.accountId },
+                    optionLabel = { it.name },
+                    onSelect = { onToAccountChange(it.id) },
+                    onFocusChange = { activeField = if (it) ActiveField.To else null },
+                    missing = if (accounts.size < 2) {
+                        if (accounts.isEmpty()) "Please enter account" else "Please add a second account"
+                    } else {
+                        null
+                    },
+                    onNavigateToSettings = onNavigateToSettings,
+                )
             }
             if (!editing && showReceivedAmount) {
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
+                AmountField(
                     value = state.toAmountText,
+                    label = "Amount (received)",
+                    suffix = toAccount.currency.symbol,
+                    warning = toAmountWarning,
                     onValueChange = {
                         onToAmountChange(it)
                         toAmountWarning = null
                     },
-                    label = { Text("Amount (received)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = toAmountWarning != null,
-                    supportingText = toAmountWarning?.let { warning ->
-                        { Text(warning) }
-                    },
-                    trailingIcon = if (state.toAmountText.isNotEmpty()) {
-                        {
-                            IconButton(
-                                onClick = { onToAmountChange("") },
-                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
-                        }
-                    } else {
-                        null
-                    },
-                    suffix = toAccount.let { account ->
-                        { Text(account.currency.symbol) }
-                    },
-                    modifier = Modifier
-                        .onFocusChanged { if (it.isFocused) openToCalculator() }
-                        .fillMaxWidth(),
+                    onFocus = ::openToCalculator,
                 )
             }
         } else {
-            if (!editing || focusedDropdown == "category") {
+            if (!editing || activeField == ActiveField.Category) {
                 Spacer(modifier = Modifier.height(16.dp))
-                if (visibleCategories.isEmpty()) {
-                    MissingFieldLink(
-                        label = "Category",
-                        text = "Please enter category",
-                        onClick = onNavigateToSettings,
-                    )
-                } else {
-                    DropdownField(
-                        label = "Category",
-                        selected = visibleCategories.firstOrNull { it.id == state.categoryId },
-                        options = visibleCategories,
-                        optionLabel = { it.name },
-                        onSelect = { onCategoryChange(it.id) },
-                        onFocusChange = { focusedDropdown = if (it) "category" else null },
-                        predictedOptions = categorySuggestions
-                            .filterNot { it == state.categoryId }
-                            .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
-                    )
-                }
+                FieldDropdown(
+                    label = "Category",
+                    selected = visibleCategories.firstOrNull { it.id == state.categoryId },
+                    options = visibleCategories,
+                    optionLabel = { it.name },
+                    onSelect = { onCategoryChange(it.id) },
+                    onFocusChange = { activeField = if (it) ActiveField.Category else null },
+                    predicted = categorySuggestions
+                        .filterNot { it == state.categoryId }
+                        .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
+                    missing = if (visibleCategories.isEmpty()) "Please enter category" else null,
+                    onNavigateToSettings = onNavigateToSettings,
+                )
             }
-            if (!editing || focusedDropdown == "account") {
+            if (!editing || activeField == ActiveField.Account) {
                 Spacer(modifier = Modifier.height(16.dp))
-                if (accounts.isEmpty()) {
-                    MissingFieldLink(
-                        label = "Account",
-                        text = "Please enter account",
-                        onClick = onNavigateToSettings,
-                    )
-                } else {
-                    DropdownField(
-                        label = "Account",
-                        selected = accounts.firstOrNull { it.id == state.accountId },
-                        options = accounts,
-                        optionLabel = { it.name },
-                        onSelect = { onAccountChange(it.id) },
-                        onFocusChange = { focusedDropdown = if (it) "account" else null },
-                        predictedOptions = accountSuggestions
-                            .filterNot { it == state.accountId }
-                            .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
-                    )
-                }
+                FieldDropdown(
+                    label = "Account",
+                    selected = accounts.firstOrNull { it.id == state.accountId },
+                    options = accounts,
+                    optionLabel = { it.name },
+                    onSelect = { onAccountChange(it.id) },
+                    onFocusChange = { activeField = if (it) ActiveField.Account else null },
+                    predicted = accountSuggestions
+                        .filterNot { it == state.accountId }
+                        .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
+                    missing = if (accounts.isEmpty()) "Please enter account" else null,
+                    onNavigateToSettings = onNavigateToSettings,
+                )
             }
         }
 
@@ -305,10 +214,9 @@ fun EntryForm(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // While an account/category picker is expanded only that picker and its
-        // chips show; the description would just be dead space beneath them.
-        // Same while the amount calculator replaces the form.
-        if (!calculatorMode && !toCalculatorMode && focusedDropdown == null) {
+        // While a dropdown or calculator is open only that field and its chips
+        // show; the description would just be dead space beneath them.
+        if (activeField == null || activeField == ActiveField.Description) {
             val visibleSuggestions = state.description.trim().let { query ->
                 val matches = if (query.isEmpty()) {
                     descriptionSuggestions
@@ -332,12 +240,12 @@ fun EntryForm(
                     null
                 },
                 modifier = Modifier
-                    .onFocusChanged { descriptionFocused = it.isFocused }
+                    .onFocusChanged { activeField = if (it.isFocused) ActiveField.Description else null }
                     .fillMaxWidth(),
             )
             // Chips live in the layout instead of a popup so the keyboard can never cover them;
             // they narrow as you type and disappear when focus moves elsewhere.
-            if (descriptionFocused && visibleSuggestions.isNotEmpty()) {
+            if (activeField == ActiveField.Description && visibleSuggestions.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 OptionChipRow(
                     options = visibleSuggestions,
@@ -353,20 +261,11 @@ fun EntryForm(
 
         if (!editing) {
             Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Date & time",
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(bottom = 8.dp),
+            DateAndTimeButtons(
+                createdAt = state.createdAt,
+                createdZone = state.createdZone,
+                onChange = onCreatedAtChange,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { showDatePicker = true }) {
-                    Text(formatDate(state.createdAt, state.createdZone))
-                }
-                OutlinedButton(onClick = { showTimePicker = true }) {
-                    Text(formatTime(state.createdAt, state.createdZone))
-                }
-            }
 
             // Chips for whole entries likely to be repeated now; picking one fills
             // the form, keeping the current date and time.
@@ -388,103 +287,35 @@ fun EntryForm(
 
     // The scrollable column above collapses while the calculator is open, so the
     // keypad replaces the whole form and gets the available space.
-    if (calculatorMode) {
+    if (activeField == ActiveField.Amount) {
         AmountCalculator(
             initialMinor = state.amount,
             currencySymbol = fromAccount?.currency?.symbol,
             onEnter = { value ->
                 onAmountChange(value)
-                calculatorMode = false
+                activeField = null
             },
             onInvalid = {
                 amountWarning = "Amount must be greater than zero"
-                calculatorMode = false
+                activeField = null
             },
-            onCancel = { calculatorMode = false },
+            onCancel = { activeField = null },
         )
     }
 
-    if (toCalculatorMode) {
+    if (activeField == ActiveField.ToAmount) {
         AmountCalculator(
             initialMinor = state.toAmount,
             currencySymbol = toAccount?.currency?.symbol,
             onEnter = { value ->
                 onToAmountChange(value)
-                toCalculatorMode = false
+                activeField = null
             },
             onInvalid = {
                 toAmountWarning = "Amount must be greater than zero"
-                toCalculatorMode = false
+                activeField = null
             },
-            onCancel = { toCalculatorMode = false },
+            onCancel = { activeField = null },
         )
-    }
-
-    if (showDatePicker) {
-        val local = state.createdAt.toLocalDateTime(state.createdZone)
-        val initialUtcMillis = LocalDateTime(local.year, local.month.number, local.day, 0, 0)
-            .toInstant(TimeZone.UTC)
-            .toEpochMilliseconds()
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialUtcMillis)
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    val utcMillis = datePickerState.selectedDateMillis
-                    if (utcMillis != null) {
-                        onCreatedAtChange(
-                            combineDateAndTime(utcMillis, local.hour, local.minute, state.createdZone),
-                        )
-                    }
-                    showDatePicker = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            },
-        ) {
-            DatePicker(state = datePickerState)
-        }
-    }
-
-    if (showTimePicker) {
-        val local = state.createdAt.toLocalDateTime(state.createdZone)
-        val timePickerState = rememberTimePickerState(
-            initialHour = local.hour,
-            initialMinute = local.minute,
-            is24Hour = true,
-        )
-        TimePickerDialog(
-            onDismissRequest = { showTimePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    val newInstant = LocalDateTime(
-                        local.year,
-                        local.month.number,
-                        local.day,
-                        timePickerState.hour,
-                        timePickerState.minute,
-                    ).toInstant(state.createdZone)
-                    onCreatedAtChange(newInstant)
-                    showTimePicker = false
-                }) {
-                    Text("OK")
-                }
-            },
-            title = {
-                Text("Select time")
-            },
-            dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text("Cancel")
-                }
-            },
-        ) {
-            TimePicker(state = timePickerState)
-        }
     }
 }
