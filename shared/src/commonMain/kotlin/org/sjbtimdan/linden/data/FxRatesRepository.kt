@@ -1,6 +1,9 @@
 package org.sjbtimdan.linden.data
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.FxRates
@@ -13,11 +16,25 @@ class FxRatesRepository(
     private val dao: FxRateDao,
     private val source: FxRatesSource,
     private val clock: () -> Instant = { Clock.System.now() },
+    private val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) {
     suspend fun refreshRates(base: Currency): FxRates {
         val fetched = source.fetchLatestRates(base, Currency.entries.filter { it != base })
         dao.replaceRates(fetched.toFxRates(), clock().toEpochMilliseconds())
         return fetched
+    }
+
+    suspend fun setRate(base: Currency, quote: Currency, rate: Double) {
+        val now = clock()
+        dao.setRate(
+            rate = FxRate(
+                baseCurrency = base,
+                quoteCurrency = quote,
+                rate = rate,
+                date = today().toString(),
+            ),
+            fetchedAt = now.toEpochMilliseconds(),
+        )
     }
 
     suspend fun refreshIfStale(base: Currency) {

@@ -12,6 +12,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 const val THEME_KEY = "theme"
 const val CURRENCY_KEY = "currency"
 const val HIDE_LEDGER_TOTAL_KEY = "hideLedgerTotal"
+const val AUTO_UPDATE_RATES_KEY = "autoUpdateRates"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {
@@ -65,6 +66,24 @@ class SettingsDao(private val queries: SettingsQueries) {
                 .firstOrNull { it.key == HIDE_LEDGER_TOTAL_KEY }
                 ?.let { row -> row.value_.toBoolean() }
                 ?: false
+        }
+
+    suspend fun getAutoUpdateRates(): Boolean {
+        val entity = queries.selectByKey(AUTO_UPDATE_RATES_KEY).awaitAsOneOrNull()
+        return entity?.value_?.toBoolean() ?: true
+    }
+
+    suspend fun setAutoUpdateRates(enabled: Boolean) {
+        queries.insertOrReplace(AUTO_UPDATE_RATES_KEY, enabled.toString())
+    }
+
+    fun autoUpdateRatesFlow(): Flow<Boolean> = queries.selectAll()
+        .asFlow()
+        .map { rows ->
+            rows.awaitAsList()
+                .firstOrNull { it.key == AUTO_UPDATE_RATES_KEY }
+                ?.let { row -> row.value_.toBoolean() }
+                ?: true
         }
 
     private fun parseCurrency(code: String): Currency? = try {

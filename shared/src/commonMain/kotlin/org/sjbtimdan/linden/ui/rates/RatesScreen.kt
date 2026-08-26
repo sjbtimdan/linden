@@ -20,31 +20,40 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
-import kotlin.math.roundToLong
 
 @Composable
 fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
     val base by viewModel.base.collectAsState()
     val rates by viewModel.rates.collectAsState()
     val ratesRefreshState by viewModel.ratesRefreshState.collectAsState()
+    val autoUpdateRates by viewModel.autoUpdateRates.collectAsState()
+    var editingQuote by remember { mutableStateOf<Currency?>(null) }
+    val rateByQuote = rates.associateBy { it.quoteCurrency }
 
     Column(
         modifier = Modifier
@@ -116,49 +125,95 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             )
         }
 
-        if (rates.isEmpty() && ratesRefreshState !is RatesRefreshState.Refreshing) {
-            Text(
-                text = "No rates loaded yet.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 16.dp),
-            )
-        } else {
-            rates.sortedBy { it.quoteCurrency.name }.forEach { rate ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.tertiaryContainer),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = rate.quoteCurrency.symbol,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "1 ${rate.baseCurrency.symbol} = ${formatRate(
-                                rate.rate,
-                            )} ${rate.quoteCurrency.symbol}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text(
+                    text = "Update automatically",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = "Downloads fresh rates when the cached ones are more than a day old. " +
+                        "Turn off to keep manually entered rates.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+            Switch(
+                checked = autoUpdateRates,
+                onCheckedChange = viewModel::setAutoUpdateRates,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Currency.entries.filter { it != base }.sortedBy { it.name }.forEach { quote ->
+            RateRow(
+                base = base,
+                quote = quote,
+                rate = rateByQuote[quote]?.rate,
+                onEdit = { editingQuote = quote },
+            )
+        }
+    }
+
+    editingQuote?.let { quote ->
+        RateEditorDialog(
+            quoteCurrency = quote,
+            currentRate = rateByQuote[quote]?.rate,
+            onSave = { rate ->
+                viewModel.setRate(quote, rate)
+                editingQuote = null
+            },
+            onDismiss = { editingQuote = null },
+        )
+    }
+}
+
+@Composable
+private fun RateRow(base: Currency, quote: Currency, rate: Double?, onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = quote.symbol,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = rateRowLabel(base, quote, rate),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        IconButton(
+            onClick = onEdit,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Edit,
+                contentDescription = "Edit ${quote.name} rate",
+            )
         }
     }
 }
@@ -186,9 +241,4 @@ private fun ErrorRow(text: String, onDismiss: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
         )
     }
-}
-
-internal fun formatRate(rate: Double): String {
-    val rounded = (rate * 10_000).roundToLong() / 10_000.0
-    return if (rounded % 1.0 == 0.0) rounded.toLong().toString() else rounded.toString()
 }

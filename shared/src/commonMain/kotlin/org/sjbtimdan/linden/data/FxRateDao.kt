@@ -23,6 +23,16 @@ class FxRateDao(private val queries: FxRateQueries) {
         }
     }
 
+    suspend fun setRate(rate: FxRate, fetchedAt: Long) {
+        queries.insertOrReplace(
+            baseCurrency = rate.baseCurrency.name,
+            quoteCurrency = rate.quoteCurrency.name,
+            rate = rate.rate,
+            date = rate.date,
+            fetchedAt = fetchedAt,
+        )
+    }
+
     suspend fun lastFetchedAt(base: Currency): Long? = queries.selectFetchedAtByBase(base.name).awaitAsOneOrNull()
 
     fun ratesFor(base: Currency): Flow<List<FxRate>> = queries.selectByBase(base.name)

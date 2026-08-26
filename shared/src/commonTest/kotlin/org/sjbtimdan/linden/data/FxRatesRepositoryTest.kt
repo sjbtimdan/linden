@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import kotlin.time.Duration.Companion.hours
@@ -99,10 +100,47 @@ class FxRatesRepositoryTest : StringSpec({
 
         repository.isStale(Currency.CHF) shouldBe true
     }
+
+    "setRate stores a manually entered rate stamped with today and now" {
+        val database = lindenDatabase()
+        val dao = FxRateDao(database.fxRateQueries)
+        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock, today = { TODAY })
+
+        repository.setRate(Currency.CHF, Currency.EUR, 1.5)
+
+        repository.ratesFor(Currency.CHF).first() shouldBe
+            listOf(FxRate(Currency.CHF, Currency.EUR, 1.5, TODAY.toString()))
+        dao.lastFetchedAt(Currency.CHF) shouldBe now.toEpochMilliseconds()
+        repository.isStale(Currency.CHF) shouldBe false
+    }
+
+    "a manually entered rate suppresses a stale refresh" {
+        val database = lindenDatabase()
+        val dao = FxRateDao(database.fxRateQueries)
+        val source = FakeFxRatesSource()
+        val repository = FxRatesRepository(dao, source, clock, today = { TODAY })
+
+        repository.setRate(Currency.CHF, Currency.EUR, 1.5)
+        repository.refreshIfStale(Currency.CHF)
+
+        source.fetchCount shouldBe 0
+    }
+
+    "refreshRates overwrites a manually entered rate" {
+        val database = lindenDatabase()
+        val dao = FxRateDao(database.fxRateQueries)
+        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock, today = { TODAY })
+
+        repository.setRate(Currency.CHF, Currency.EUR, 1.5)
+        repository.refreshRates(Currency.CHF)
+
+        repository.ratesFor(Currency.CHF).first().first { it.quoteCurrency == Currency.EUR }.rate shouldBe 1.0
+    }
 }) {
     companion object {
         private val now = Instant.parse("2026-08-13T12:00:00Z")
         private val clock: () -> Instant = { now }
+        private val TODAY = LocalDate(2026, 8, 13)
         private val existingRates = listOf(
             FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
             FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-12"),

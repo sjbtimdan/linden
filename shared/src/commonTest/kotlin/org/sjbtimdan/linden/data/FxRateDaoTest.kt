@@ -60,6 +60,26 @@ class FxRateDaoTest : StringSpec({
 
         dao.lastFetchedAt(Currency.CHF) shouldBe null
     }
+
+    "setRate stores a single rate and ratesFor returns it" {
+        val database = lindenDatabase()
+        val dao = FxRateDao(database.fxRateQueries)
+
+        dao.setRate(FxRate(Currency.CHF, Currency.EUR, 1.5, "2026-08-13"), FETCHED_AT)
+        dao.ratesFor(Currency.CHF).first() shouldBe
+            listOf(FxRate(Currency.CHF, Currency.EUR, 1.5, "2026-08-13"))
+    }
+
+    "setRate replaces an existing rate for the same pair and updates fetchedAt" {
+        val database = lindenDatabase()
+        val dao = FxRateDao(database.fxRateQueries)
+
+        dao.setRate(FxRate(Currency.CHF, Currency.EUR, 1.5, "2026-08-13"), FETCHED_AT)
+        dao.setRate(FxRate(Currency.CHF, Currency.EUR, 1.6, "2026-08-14"), FETCHED_AT + 1)
+        dao.ratesFor(Currency.CHF).first() shouldBe
+            listOf(FxRate(Currency.CHF, Currency.EUR, 1.6, "2026-08-14"))
+        dao.lastFetchedAt(Currency.CHF) shouldBe FETCHED_AT + 1
+    }
 }) {
     companion object {
         private const val FETCHED_AT = 1_800_000_000_000L

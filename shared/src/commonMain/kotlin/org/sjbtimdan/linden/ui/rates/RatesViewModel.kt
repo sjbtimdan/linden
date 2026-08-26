@@ -23,12 +23,22 @@ sealed interface RatesRefreshState {
     data class Error(val message: String) : RatesRefreshState
 }
 
-class RatesViewModel(settingsDao: SettingsDao, private val fxRatesRepository: FxRatesRepository) : ViewModel() {
+class RatesViewModel(
+    private val settingsDao: SettingsDao,
+    private val fxRatesRepository: FxRatesRepository,
+) : ViewModel() {
     val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = Currency.CHF,
+        )
+
+    val autoUpdateRates: StateFlow<Boolean> = settingsDao.autoUpdateRatesFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = true,
         )
 
     private val _rates = MutableStateFlow<List<FxRate>>(emptyList())
@@ -45,7 +55,7 @@ class RatesViewModel(settingsDao: SettingsDao, private val fxRatesRepository: Fx
         }
         viewModelScope.launch {
             base.drop(1).collectLatest { currency ->
-                refresh(currency)
+                if (autoUpdateRates.value) refresh(currency)
             }
         }
     }
@@ -56,6 +66,7 @@ class RatesViewModel(settingsDao: SettingsDao, private val fxRatesRepository: Fx
 
     fun refreshRatesIfStale(currency: Currency = base.value) {
         viewModelScope.launch {
+            if (!autoUpdateRates.value) return@launch
             try {
                 fxRatesRepository.refreshIfStale(currency)
             } catch (e: CancellationException) {
@@ -64,6 +75,14 @@ class RatesViewModel(settingsDao: SettingsDao, private val fxRatesRepository: Fx
                 _ratesRefreshState.update { RatesRefreshState.Error(e.message ?: "Failed to refresh rates") }
             }
         }
+    }
+
+    fun setAutoUpdateRates(enabled: Boolean) {
+        viewModelScope.launch { settingsDao.setAutoUpdateRates(enabled) }
+    }
+
+    fun setRate(quote: Currency, rate: Double) {
+        viewModelScope.launch { fxRatesRepository.setRate(base.value, quote, rate) }
     }
 
     fun clearRatesError() {

@@ -153,6 +153,108 @@ class RatesViewModelTest : StringSpec({
             (state as RatesRefreshState.Error).message shouldBe "network"
         }
     }
+
+    "setRate exposes the manually edited rate for the base currency" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource(),
+                ),
+            )
+
+            viewModel.setRate(Currency.EUR, 1.5)
+
+            val rate = withTimeout(5_000) {
+                viewModel.rates.first { it.any { r -> r.quoteCurrency == Currency.EUR } }
+                    .first { it.quoteCurrency == Currency.EUR }
+            }
+            rate.baseCurrency shouldBe Currency.CHF
+            rate.rate shouldBe 1.5
+        }
+    }
+
+    "refreshRatesIfStale does not fetch when automatic updates are disabled" {
+        onTestMain {
+            val database = lindenDatabase()
+            val source = FakeFxRatesSource()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+            )
+
+            viewModel.setAutoUpdateRates(false)
+            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+
+            viewModel.refreshRatesIfStale()
+
+            source.fetchCount shouldBe 0
+        }
+    }
+
+    "refreshRatesIfStale fetches again after automatic updates are re-enabled" {
+        onTestMain {
+            val database = lindenDatabase()
+            val source = FakeFxRatesSource()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+            )
+
+            viewModel.setAutoUpdateRates(false)
+            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+            viewModel.refreshRatesIfStale()
+            source.fetchCount shouldBe 0
+
+            viewModel.setAutoUpdateRates(true)
+            withTimeout(5_000) { viewModel.autoUpdateRates.first { it } }
+            viewModel.refreshRatesIfStale()
+
+            withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            source.fetchCount shouldBe 1
+        }
+    }
+
+    "a default currency change does not refresh when automatic updates are disabled" {
+        onTestMain {
+            val database = lindenDatabase()
+            val settingsDao = SettingsDao(database.settingsQueries)
+            val source = FakeFxRatesSource()
+            val viewModel = RatesViewModel(
+                settingsDao = settingsDao,
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+            )
+
+            viewModel.setAutoUpdateRates(false)
+            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+
+            settingsDao.setDefaultCurrency(Currency.EUR)
+            withTimeout(5_000) { viewModel.base.first { it == Currency.EUR } }
+
+            source.fetchCount shouldBe 0
+        }
+    }
+
+    "a manual refresh still works when automatic updates are disabled" {
+        onTestMain {
+            val database = lindenDatabase()
+            val source = FakeFxRatesSource()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+            )
+
+            viewModel.setAutoUpdateRates(false)
+            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+
+            viewModel.refreshRates()
+
+            withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            source.fetchCount shouldBe 1
+        }
+    }
 }) {
     companion object {
         private val NOW = Instant.parse("2026-08-13T12:00:00Z")

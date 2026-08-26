@@ -47,4 +47,25 @@ class SettingsDaoTest : StringSpec({
         dao.setDefaultCurrency(Currency.USD)
         dao.defaultCurrencyFlow().first() shouldBe Currency.USD
     }
+
+    "getAutoUpdateRates returns true when no setting exists" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.getAutoUpdateRates() shouldBe true
+    }
+
+    "setAutoUpdateRates then getAutoUpdateRates round-trips correctly" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.setAutoUpdateRates(false)
+        dao.getAutoUpdateRates() shouldBe false
+    }
+
+    "autoUpdateRatesFlow emits true by default and follows updates" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.autoUpdateRatesFlow().first() shouldBe true
+        dao.setAutoUpdateRates(false)
+        dao.autoUpdateRatesFlow().first() shouldBe false
+    }
 })
