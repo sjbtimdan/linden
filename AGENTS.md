@@ -110,9 +110,9 @@ coverage is only enforced there because the Android target runs device tests onl
 
 - Conventional commits
 - Version catalog at `gradle/libs.versions.toml`
-- Kotlin 2.4.10, Compose Multiplatform 1.11.1 (material3 pinned separately at `1.11.0-alpha07`), AGP 9.3.1,
-  SQLDelight 2.3.2, Ktor 3.5.2, Kotest 6.2.4, Kover 0.9.9 (Gradle wrapper 9.7.1; compileSdk/targetSdk 37, minSdk 24,
-  JVM target 11)
+- Kotlin 2.4.10, Compose Multiplatform 1.12.0 (material3 pinned separately at `1.12.0-alpha03`), AGP 9.3.2,
+  SQLDelight 2.3.2, Ktor 3.5.2, Kotest 6.2.4, Kover 0.9.9, Detekt 2.0.0-alpha.6 (Gradle wrapper 9.7.1;
+  compileSdk/targetSdk 37, minSdk 24, JVM target 11)
 - Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform, Compose UI tests via `runComposeUiTest` (v2 API).
   `createTestSqlDriver()` has a JVM-only actual, so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers
   instead of wiring up in-memory DBs per test: `lindenDatabase()` / `createTestSqlDriver()` live in
