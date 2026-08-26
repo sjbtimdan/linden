@@ -15,7 +15,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
+
+/** How many predicted options are offered first (and highlighted) ahead of the full list. */
+private const val PREDICTED_OPTION_LIMIT = 5
 
 @Composable
 fun <T> DropdownField(
@@ -31,13 +33,20 @@ fun <T> DropdownField(
     var query by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    // The most likely options lead the list, highlighted, and every other option
+    // follows alphabetically so nothing is hidden behind the predictions.
+    val predicted = predictedOptions.orEmpty()
+        .distinct()
+        .filter { it in options }
+        .take(PREDICTED_OPTION_LIMIT)
+    val orderedOptions = predicted + options
+        .filterNot { it in predicted }
+        .sortedBy { optionLabel(it).lowercase() }
     val visibleOptions = query.trim().let { trimmed ->
         if (trimmed.isEmpty()) {
-            // Predictive input: while the field is empty the most likely options
-            // are offered instead of the full list; typing falls back to search.
-            predictedOptions?.takeIf { it.isNotEmpty() } ?: options.take(PREDICTION_TOP_N)
+            orderedOptions
         } else {
-            options.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
+            orderedOptions.filter { optionLabel(it).contains(trimmed, ignoreCase = true) }
         }
     }
     OutlinedTextField(
@@ -63,6 +72,7 @@ fun <T> DropdownField(
             options = visibleOptions,
             optionLabel = optionLabel,
             isSelected = { it == selected },
+            isPredicted = { it in predicted },
             onSelect = { option ->
                 onSelect(option)
                 keyboardController?.hide()

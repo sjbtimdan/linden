@@ -13,6 +13,7 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -602,16 +603,17 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Clear").performClick()
             enterAmount("4.50")
 
-            // Category: only the predicted chip is offered, not the full list.
+            // Category: the predicted chip leads the full list, highlighted.
             onNodeWithText("Category").performClick()
-            onNodeWithText("Groceries").assertIsDisplayed()
-            onNodeWithText("Leisure").assertDoesNotExist()
+            onNode(hasText("Groceries") and hasContentDescription("Recommended")).assertIsDisplayed()
+            onNodeWithText("Leisure").assertIsDisplayed()
+            onNode(hasText("Leisure") and hasContentDescription("Recommended")).assertDoesNotExist()
 
             // Account: picking the category narrows the prediction to its pairing.
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Account").performClick()
-            onNodeWithText("Main").assertIsDisplayed()
-            onNodeWithText("Savings").assertDoesNotExist()
+            onNode(hasText("Main") and hasContentDescription("Recommended")).assertIsDisplayed()
+            onNodeWithText("Savings").assertIsDisplayed()
         }
     }
 
@@ -637,10 +639,11 @@ class LedgerScreenTest : StringSpec({
             enterAmount("4.50")
 
             // The only predicted category is the already-selected one, so it is
-            // excluded and the dropdown falls back to the full list.
+            // excluded from the predictions and the full list is shown instead.
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Leisure").assertIsDisplayed()
+            onNode(hasText("Groceries") and hasContentDescription("Recommended")).assertDoesNotExist()
         }
     }
 

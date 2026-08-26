@@ -2,7 +2,9 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -60,7 +62,7 @@ class FieldDropdownTest : StringSpec({
         }
     }
 
-    "shows the predicted options while the field is focused" {
+    "shows all options with the predicted ones while the field is focused" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -77,9 +79,10 @@ class FieldDropdownTest : StringSpec({
 
                 onNodeWithText("Account").performClick()
 
-                onNodeWithText("Savings").assertIsDisplayed()
-                onNodeWithText("Checking").assertIsDisplayed()
-                onNodeWithText("Credit Card").assertDoesNotExist()
+                accountOptions.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
+                onNode(hasText("Savings") and hasContentDescription("Recommended")).assertIsDisplayed()
             }
         }
     }

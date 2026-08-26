@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ fun <T> OptionChipRow(
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     isSelected: (T) -> Boolean = { false },
+    isPredicted: (T) -> Boolean = { false },
 ) {
     FlowRow(
         modifier = modifier,
@@ -30,24 +32,28 @@ fun <T> OptionChipRow(
     ) {
         options.forEach { option ->
             val isSelectedChip = isSelected(option)
+            val isPredictedChip = !isSelectedChip && isPredicted(option)
             // A bare tap handler instead of a Material chip: focusable chip internals
             // steal focus from the text field on press, which unmounts this row
             // mid-gesture before the click ever completes.
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelectedChip) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
+                color = when {
+                    isSelectedChip -> MaterialTheme.colorScheme.secondaryContainer
+                    isPredictedChip -> MaterialTheme.colorScheme.primaryContainer
+                    else -> MaterialTheme.colorScheme.surfaceVariant
                 },
-                contentColor = if (isSelectedChip) {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                contentColor = when {
+                    isSelectedChip -> MaterialTheme.colorScheme.onSecondaryContainer
+                    isPredictedChip -> MaterialTheme.colorScheme.onPrimaryContainer
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
                 },
                 modifier = Modifier
                     .semantics(mergeDescendants = true) {
                         selected = isSelectedChip
+                        if (isPredictedChip) {
+                            contentDescription = "Recommended"
+                        }
                     }
                     .pointerInput(option) {
                         detectTapGestures { onSelect(option) }

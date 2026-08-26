@@ -7,6 +7,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
@@ -214,7 +216,7 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
-    "shows predicted options instead of all options when provided" {
+    "shows all options with the predicted ones first and highlighted" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -230,9 +232,19 @@ class DropdownFieldTest : StringSpec({
 
                 onNodeWithText("Account").performClick()
 
-                onNodeWithText("Savings").assertIsDisplayed()
-                onNodeWithText("Checking").assertIsDisplayed()
-                onNodeWithText("Credit Card").assertDoesNotExist()
+                accountOptions.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
+                // Predicted options are highlighted and lead the list in
+                // prediction order; the rest follows alphabetically.
+                onNode(hasText("Savings") and hasContentDescription("Recommended")).assertIsDisplayed()
+                onNode(hasText("Checking") and hasContentDescription("Recommended")).assertIsDisplayed()
+                onNode(hasText("Credit Card") and hasContentDescription("Recommended")).assertDoesNotExist()
+                val savingsLeft = onNodeWithText("Savings").getUnclippedBoundsInRoot().left
+                val checkingLeft = onNodeWithText("Checking").getUnclippedBoundsInRoot().left
+                val creditCardLeft = onNodeWithText("Credit Card").getUnclippedBoundsInRoot().left
+                (savingsLeft < checkingLeft) shouldBe true
+                (checkingLeft < creditCardLeft) shouldBe true
             }
         }
     }
@@ -260,6 +272,32 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
+    "typing keeps predicted matches first and highlighted" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = listOf("Checking", "Savings", "Savings Account"),
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = listOf("Savings"),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+                onNode(hasSetTextAction()).performTextInput("sav")
+
+                onNode(hasText("Savings") and hasContentDescription("Recommended")).assertIsDisplayed()
+                onNode(hasText("Savings Account") and hasContentDescription("Recommended")).assertDoesNotExist()
+                val savingsLeft = onNodeWithText("Savings").getUnclippedBoundsInRoot().left
+                val savingsAccountLeft = onNodeWithText("Savings Account").getUnclippedBoundsInRoot().left
+                (savingsLeft < savingsAccountLeft) shouldBe true
+            }
+        }
+    }
+
     "falls back to options when predicted options are empty" {
         onTestMain {
             runComposeUiTest {
@@ -283,7 +321,7 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
-    "caps the fallback option list at the prediction limit" {
+    "shows every option regardless of list size" {
         onTestMain {
             runComposeUiTest {
                 val manyOptions = (1L..15L).map { "Option $it" }
@@ -300,9 +338,33 @@ class DropdownFieldTest : StringSpec({
 
                 onNodeWithText("Account").performClick()
 
-                onNodeWithText("Option 1").assertIsDisplayed()
-                onNodeWithText("Option 10").assertIsDisplayed()
-                onNodeWithText("Option 11").assertDoesNotExist()
+                manyOptions.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
+            }
+        }
+    }
+
+    "ignores predicted options that are not in the list" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        predictedOptions = listOf("Ghost"),
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                onNodeWithText("Ghost").assertDoesNotExist()
+                accountOptions.forEach { option ->
+                    onNodeWithText(option).assertIsDisplayed()
+                }
             }
         }
     }
