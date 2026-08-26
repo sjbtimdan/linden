@@ -38,8 +38,9 @@ class LedgerViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
-    settingsDao: SettingsDao,
+    private val settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
+    initialHideLedgerTotal: Boolean = false,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
@@ -48,6 +49,21 @@ class LedgerViewModel(
     val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
 
     private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
+
+    /**
+     * Whether the hero card masks the total across all accounts. Seeded from the
+     * stored setting (never flashes the amount at startup) and kept in sync with
+     * the settings screen via the database flow.
+     */
+    val hideLedgerTotal: StateFlow<Boolean> = settingsDao.hideLedgerTotalFlow()
+        .stateFlow(initialHideLedgerTotal)
+
+    /** Persists the hero-card visibility; the database flow propagates it back. */
+    fun setHideLedgerTotal(hidden: Boolean) {
+        viewModelScope.launch {
+            settingsDao.setHideLedgerTotal(hidden)
+        }
+    }
 
     /**
      * Total across all accounts in the default currency: initial balances plus

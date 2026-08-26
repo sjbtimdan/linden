@@ -2,7 +2,10 @@ package org.sjbtimdan.linden.ui.settings
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -41,6 +44,17 @@ class SettingsScreenTest : StringSpec({
             onNodeWithText("EUR").assertIsSelected()
 
             viewModel.defaultCurrency.value shouldBe Currency.EUR
+        }
+    }
+
+    "toggling the hide ledger total switch updates the setting" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNode(isToggleable()).assertIsOff()
+            onNode(isToggleable()).performClick()
+            onNode(isToggleable()).assertIsOn()
+
+            viewModel.hideLedgerTotal.value shouldBe true
         }
     }
 

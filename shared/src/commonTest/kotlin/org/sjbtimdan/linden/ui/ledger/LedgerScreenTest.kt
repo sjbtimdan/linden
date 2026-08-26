@@ -68,6 +68,46 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "hero card masks the total when hiding is enabled" {
+        withLedgerViewModel(hideLedgerTotal = true) { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Total balance").assertIsDisplayed()
+            onNodeWithText("••••••").assertIsDisplayed()
+            onNodeWithText("123.45").assertDoesNotExist()
+            onNodeWithContentDescription("Show total").assertIsDisplayed()
+        }
+    }
+
+    "tapping the eye hides and restores the hero card total" {
+        withLedgerViewModel { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("123.45").assertIsDisplayed()
+            onNodeWithContentDescription("Hide total").performClick()
+            waitForIdle()
+
+            onNodeWithText("••••••").assertIsDisplayed()
+            onNodeWithText("123.45").assertDoesNotExist()
+            viewModel.hideLedgerTotal.value shouldBe true
+
+            onNodeWithContentDescription("Show total").performClick()
+            waitForIdle()
+
+            onNodeWithText("123.45").assertIsDisplayed()
+            onNodeWithText("••••••").assertDoesNotExist()
+            viewModel.hideLedgerTotal.value shouldBe false
+        }
+    }
+
     "expense is the default selected type" {
         withLedgerViewModel { viewModel ->
             setContent {

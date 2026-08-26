@@ -70,6 +70,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val quickEntries by viewModel.quickEntries.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val hideLedgerTotal by viewModel.hideLedgerTotal.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -144,6 +145,8 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             TotalBalanceCard(
                 total = totalMinor,
                 currency = defaultCurrency,
+                hidden = hideLedgerTotal,
+                onToggleHidden = { viewModel.setHideLedgerTotal(!hideLedgerTotal) },
             )
         }
         if (fieldFocused) {
@@ -237,22 +240,33 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
 
 /** Total across all accounts in the default currency; null while a rate is missing. */
 @Composable
-private fun TotalBalanceCard(total: Long?, currency: Currency) {
+private fun TotalBalanceCard(total: Long?, currency: Currency, hidden: Boolean, onToggleHidden: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Text(
-                text = "Total balance",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Total balance",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onToggleHidden) {
+                    Icon(
+                        imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
+                        contentDescription = if (hidden) "Show total" else "Hide total",
+                    )
+                }
+            }
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = total?.let(::formatAmountCompact) ?: "–",
+                    text = if (hidden) "••••••" else total?.let(::formatAmountCompact) ?: "–",
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     maxLines = 1,

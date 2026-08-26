@@ -154,6 +154,7 @@ fun withRatesViewModel(block: suspend ComposeUiTest.(RatesViewModel) -> Unit) =
 fun withLedgerViewModel(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
+    hideLedgerTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
 ) {
@@ -165,6 +166,7 @@ fun withLedgerViewModel(
             val categoryDao = CategoryDao(database.categoryQueries)
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            if (hideLedgerTotal) settingsDao.setHideLedgerTotal(true)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
             val viewModel = LedgerViewModel(
@@ -173,7 +175,8 @@ fun withLedgerViewModel(
                 categoryDao,
                 settingsDao,
                 FxRatesRepository(fxRateDao, FakeFxRatesSource()),
-                today,
+                initialHideLedgerTotal = hideLedgerTotal,
+                today = today,
             )
             block(entryDao, accountDao, categoryDao, viewModel)
         }
@@ -184,9 +187,10 @@ fun withLedgerViewModel(
 fun withLedgerViewModel(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
+    hideLedgerTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, rates) { _, accountDao, categoryDao, viewModel ->
+) = withLedgerViewModel(today, defaultCurrency, hideLedgerTotal, rates) { _, accountDao, categoryDao, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
@@ -194,9 +198,10 @@ fun withLedgerViewModel(
 fun withLedgerViewModel(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
+    hideLedgerTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, rates) { _, _, _, viewModel -> block(viewModel) }
+) = withLedgerViewModel(today, defaultCurrency, hideLedgerTotal, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(

@@ -35,6 +35,7 @@ class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
+    val initialHideLedgerTotal: Boolean = false,
     private val fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
@@ -60,11 +61,19 @@ class AppDependencies(
         backupManager,
         initialTheme,
         initialCurrency,
+        initialHideLedgerTotal,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao)
-    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
+    val ledgerViewModel = LedgerViewModel(
+        entryDao,
+        accountDao,
+        categoryDao,
+        settingsDao,
+        fxRatesRepository,
+        initialHideLedgerTotal,
+    )
     val historyViewModel = HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
 }
 
@@ -73,5 +82,6 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val settingsDao = SettingsDao(database.settingsQueries)
     val initialTheme = settingsDao.getTheme()
     val initialCurrency = settingsDao.getDefaultCurrency()
-    return AppDependencies(database, initialTheme, initialCurrency)
+    val initialHideLedgerTotal = settingsDao.getHideLedgerTotal()
+    return AppDependencies(database, initialTheme, initialCurrency, initialHideLedgerTotal)
 }

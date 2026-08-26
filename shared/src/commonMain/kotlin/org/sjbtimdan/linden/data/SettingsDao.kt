@@ -11,6 +11,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 
 const val THEME_KEY = "theme"
 const val CURRENCY_KEY = "currency"
+const val HIDE_LEDGER_TOTAL_KEY = "hideLedgerTotal"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {
@@ -46,6 +47,24 @@ class SettingsDao(private val queries: SettingsQueries) {
                 .firstOrNull { it.key == CURRENCY_KEY }
                 ?.let { row -> parseCurrency(row.value_) }
                 ?: Currency.CHF
+        }
+
+    suspend fun getHideLedgerTotal(): Boolean {
+        val entity = queries.selectByKey(HIDE_LEDGER_TOTAL_KEY).awaitAsOneOrNull()
+        return entity?.value_?.toBoolean() == true
+    }
+
+    suspend fun setHideLedgerTotal(hidden: Boolean) {
+        queries.insertOrReplace(HIDE_LEDGER_TOTAL_KEY, hidden.toString())
+    }
+
+    fun hideLedgerTotalFlow(): Flow<Boolean> = queries.selectAll()
+        .asFlow()
+        .map { rows ->
+            rows.awaitAsList()
+                .firstOrNull { it.key == HIDE_LEDGER_TOTAL_KEY }
+                ?.let { row -> row.value_.toBoolean() }
+                ?: false
         }
 
     private fun parseCurrency(code: String): Currency? = try {

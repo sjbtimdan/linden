@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.CURRENCY_KEY
+import org.sjbtimdan.linden.data.HIDE_LEDGER_TOTAL_KEY
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.THEME_KEY
 import org.sjbtimdan.linden.data.lindenDatabase
@@ -59,6 +60,26 @@ class SettingsViewModelTest : StringSpec({
             viewModel.setDefaultCurrency(Currency.EUR)
 
             dao.getDefaultCurrency() shouldBe Currency.EUR
+        }
+    }
+
+    "setHideLedgerTotal(true) updates the database" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = SettingsDao(database.settingsQueries)
+            val viewModel = SettingsViewModel(
+                dao,
+                IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.hideLedgerTotal.value shouldBe false
+
+            viewModel.setHideLedgerTotal(true)
+
+            dao.getHideLedgerTotal() shouldBe true
         }
     }
 
@@ -203,11 +224,12 @@ class SettingsViewModelTest : StringSpec({
         }
     }
 
-    "restoreFrom replaces database contents and reloads theme and currency" {
+    "restoreFrom replaces database contents and reloads theme, currency and ledger-total visibility" {
         onTestMain {
             val source = lindenDatabase()
             source.settingsQueries.insertOrReplace(THEME_KEY, ThemeMode.DARK.name)
             source.settingsQueries.insertOrReplace(CURRENCY_KEY, Currency.EUR.name)
+            source.settingsQueries.insertOrReplace(HIDE_LEDGER_TOTAL_KEY, "true")
             source.accountQueries.insert("Cash", "CHF", 0)
             val bytes = ByteArrayOutputStream().also { LindenBackupManager(source).backupTo(it) }.toByteArray()
 
@@ -230,6 +252,7 @@ class SettingsViewModelTest : StringSpec({
             (state as BackupState.Success).value.accounts shouldBe 1
             viewModel.themeMode.value shouldBe ThemeMode.DARK
             viewModel.defaultCurrency.value shouldBe Currency.EUR
+            viewModel.hideLedgerTotal.value shouldBe true
             database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Cash")
         }
     }

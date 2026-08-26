@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -68,6 +69,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val hideLedgerTotal by viewModel.hideLedgerTotal.collectAsState()
     val importState by viewModel.importState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
@@ -133,6 +135,27 @@ fun SettingsScreen(
                     label = { Text(entry.name) },
                 )
             }
+        }
+
+        Text(
+            text = "Privacy",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Hide ledger total",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Switch(
+                checked = hideLedgerTotal,
+                onCheckedChange = viewModel::setHideLedgerTotal,
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))

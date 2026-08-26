@@ -41,12 +41,16 @@ class SettingsViewModel(
     private val backupManager: LindenBackupManager,
     initialTheme: ThemeMode,
     initialCurrency: Currency,
+    initialHideLedgerTotal: Boolean = false,
 ) : ViewModel() {
     private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     private val _defaultCurrency = MutableStateFlow(initialCurrency)
     val defaultCurrency: StateFlow<Currency> = _defaultCurrency.asStateFlow()
+
+    private val _hideLedgerTotal = MutableStateFlow(initialHideLedgerTotal)
+    val hideLedgerTotal: StateFlow<Boolean> = _hideLedgerTotal.asStateFlow()
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState: StateFlow<ImportState> = _importState.asStateFlow()
@@ -68,6 +72,13 @@ class SettingsViewModel(
         _defaultCurrency.value = currency
         viewModelScope.launch {
             settingsDao.setDefaultCurrency(currency)
+        }
+    }
+
+    fun setHideLedgerTotal(hidden: Boolean) {
+        _hideLedgerTotal.value = hidden
+        viewModelScope.launch {
+            settingsDao.setHideLedgerTotal(hidden)
         }
     }
 
@@ -122,10 +133,11 @@ class SettingsViewModel(
         }
     }
 
-    /** Re-reads theme and currency so the UI reflects a restored backup. */
+    /** Re-reads theme, currency and the ledger-total visibility so the UI reflects a restored backup. */
     private suspend fun reloadSettings() {
         _themeMode.value = settingsDao.getTheme()
         _defaultCurrency.value = settingsDao.getDefaultCurrency()
+        _hideLedgerTotal.value = settingsDao.getHideLedgerTotal()
     }
 
     fun clearBackupState() {
