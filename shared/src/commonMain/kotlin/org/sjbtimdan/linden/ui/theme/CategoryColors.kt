@@ -41,6 +41,6 @@ fun categoryColorIndex(name: String): Int = (name.hashCode() and Int.MAX_VALUE) 
 /** Light-theme accent color for a category name. */
 fun categoryColor(name: String): Color = CategoryPalette[categoryColorIndex(name)]
 
-/** Theme-aware accent color for a category name. Only valid inside [LindenTheme]. */
+/** Theme-aware accent color for a stable name (categories, accounts). Only valid inside [LindenTheme]. */
 @Composable
-fun categoryAccent(name: String): Color = LocalCategoryPalette.current[categoryColorIndex(name)]
+fun accentColor(name: String): Color = LocalCategoryPalette.current[categoryColorIndex(name)]

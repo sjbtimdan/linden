@@ -56,6 +56,7 @@ import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenInsets
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.DialogShape
+import org.sjbtimdan.linden.ui.theme.accentColor
 
 private data class AccountDialogState(
     val account: Account?,
@@ -155,6 +156,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(accounts, key = { it.id }) { account ->
+                    val accent = accentColor(account.name)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -175,13 +177,13 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                .background(accent.copy(alpha = 0.22f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
                                 text = account.name.firstOrNull()?.uppercase() ?: "?",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                color = accent,
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))

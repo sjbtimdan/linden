@@ -53,7 +53,7 @@ import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.DialogShape
-import org.sjbtimdan.linden.ui.theme.categoryAccent
+import org.sjbtimdan.linden.ui.theme.accentColor
 
 private data class CategoryDialogState(
     val category: Category?,
@@ -151,7 +151,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(categories, key = { it.id }) { category ->
-                    val accent = categoryAccent(category.name)
+                    val accent = accentColor(category.name)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
