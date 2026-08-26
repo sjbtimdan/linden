@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.theme.categoryColor
+import org.sjbtimdan.linden.ui.theme.categoryAccent
 
 private data class CategoryDialogState(
     val category: Category?,
@@ -113,7 +112,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        FilledTonalButton(
+        Button(
             onClick = {
                 dialogState = CategoryDialogState(null, "", CategoryType.Expense)
             },
@@ -149,7 +148,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(categories, key = { it.id }) { category ->
-                    val accent = categoryColor(category.name)
+                    val accent = categoryAccent(category.name)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -169,7 +168,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(accent.copy(alpha = 0.18f)),
+                                .background(accent.copy(alpha = 0.22f)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(

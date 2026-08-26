@@ -41,7 +41,7 @@ import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
-import org.sjbtimdan.linden.ui.theme.categoryColor
+import org.sjbtimdan.linden.ui.theme.categoryAccent
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
@@ -201,7 +201,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                     EntryFilterChip(
                         name = name,
                         onClick = viewModel::clearCategoryFilter,
-                        leadingColor = categoryColor(name),
+                        leadingColor = categoryAccent(name),
                         modifier = Modifier.testTag("categoryFilterChip"),
                     )
                 }

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -140,7 +141,7 @@ fun SettingsScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedButton(onClick = onNavigateToCategories) {
+            Button(onClick = onNavigateToCategories) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = null,
@@ -149,7 +150,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Categories")
             }
-            OutlinedButton(onClick = onNavigateToAccounts) {
+            Button(onClick = onNavigateToAccounts) {
                 Icon(
                     imageVector = Icons.Filled.Person,
                     contentDescription = null,
@@ -158,7 +159,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Accounts")
             }
-            OutlinedButton(onClick = onNavigateToRates) {
+            Button(onClick = onNavigateToRates) {
                 Icon(
                     imageVector = Icons.Filled.DateRange,
                     contentDescription = null,

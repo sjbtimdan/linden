@@ -18,21 +18,21 @@ data class LindenColors(
 )
 
 val LightLindenColors = LindenColors(
-    expense = Color(0xFFC8462F),
-    expenseContainer = Color(0xFFFFDAD3),
-    income = Color(0xFF3F8C2E),
-    incomeContainer = Color(0xFFD9F0C8),
-    transfer = Color(0xFF4C7296),
-    transferContainer = Color(0xFFD9E8F5),
+    expense = Color(0xFFD64535),
+    expenseContainer = Color(0xFFFFE0DA),
+    income = Color(0xFF27A059),
+    incomeContainer = Color(0xFFC9F2D6),
+    transfer = Color(0xFF3E7CB8),
+    transferContainer = Color(0xFFD9EAFB),
 )
 
 val DarkLindenColors = LindenColors(
-    expense = Color(0xFFFF8B7E),
-    expenseContainer = Color(0xFF7A2A1E),
-    income = Color(0xFFA4E07E),
-    incomeContainer = Color(0xFF2C4A1E),
-    transfer = Color(0xFFA9C5E8),
-    transferContainer = Color(0xFF2C4058),
+    expense = Color(0xFFFF9E92),
+    expenseContainer = Color(0xFF8A3225),
+    income = Color(0xFFA3E887),
+    incomeContainer = Color(0xFF315A28),
+    transfer = Color(0xFFB8D4F5),
+    transferContainer = Color(0xFF33506F),
 )
 
 val LocalLindenColors = compositionLocalOf { LightLindenColors }

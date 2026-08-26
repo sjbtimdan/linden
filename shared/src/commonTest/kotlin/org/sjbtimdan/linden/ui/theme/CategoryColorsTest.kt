@@ -22,6 +22,11 @@ class CategoryColorsTest : StringSpec({
         CategoryPalette.size shouldBe 8
     }
 
+    "dark palette mirrors the light palette" {
+        DarkCategoryPalette.size shouldBe CategoryPalette.size
+        DarkCategoryPalette.distinct().size shouldBe DarkCategoryPalette.size
+    }
+
     "different category names get different accents" {
         categoryColorIndex("Groceries") shouldNotBe categoryColorIndex("Transport")
         categoryColorIndex("Transport") shouldNotBe categoryColorIndex("Salary")

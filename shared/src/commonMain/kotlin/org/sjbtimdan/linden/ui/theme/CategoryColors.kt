@@ -1,24 +1,46 @@
 package org.sjbtimdan.linden.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+
+private const val CATEGORY_PALETTE_SIZE = 8
 
 /**
  * Deterministic accents for categories. The same name always maps to the same
- * color, across restarts and platforms (String.hashCode is specified).
+ * palette index, across restarts and platforms (String.hashCode is specified).
  */
 val CategoryPalette: List<Color> = listOf(
-    Color(0xFF5B8C5A), // sage
-    Color(0xFFC77D46), // amber
-    Color(0xFF4E7BA8), // steel blue
-    Color(0xFFA05E7E), // mauve
-    Color(0xFF7A8A3F), // olive
-    Color(0xFFB0623F), // rust
-    Color(0xFF5E7D96), // slate
-    Color(0xFF9A7B3E), // ochre
+    Color(0xFF2B6FA6), // blue
+    Color(0xFFC05B1E), // vermillion
+    Color(0xFF1F8A70), // teal
+    Color(0xFFA67C0A), // ochre
+    Color(0xFFA84E86), // mauve
+    Color(0xFF7C8F33), // olive
+    Color(0xFF6E5CB8), // violet
+    Color(0xFFD0608F), // pink
 )
 
-/** Index into [CategoryPalette] for [name]; always non-negative. */
-fun categoryColorIndex(name: String): Int = (name.hashCode() and Int.MAX_VALUE) % CategoryPalette.size
+/** Same hues as [CategoryPalette], lightened for dark surfaces. */
+val DarkCategoryPalette: List<Color> = listOf(
+    Color(0xFF6FA8DC),
+    Color(0xFFE8925A),
+    Color(0xFF5CC9AE),
+    Color(0xFFD9B654),
+    Color(0xFFE28FC2),
+    Color(0xFFB3C75A),
+    Color(0xFFA699E8),
+    Color(0xFFF0A3C9),
+)
 
-/** Stable accent color for a category name. */
+val LocalCategoryPalette = compositionLocalOf { CategoryPalette }
+
+/** Index into the category palettes for [name]; always non-negative. */
+fun categoryColorIndex(name: String): Int = (name.hashCode() and Int.MAX_VALUE) % CATEGORY_PALETTE_SIZE
+
+/** Light-theme accent color for a category name. */
 fun categoryColor(name: String): Color = CategoryPalette[categoryColorIndex(name)]
+
+/** Theme-aware accent color for a category name. Only valid inside [LindenTheme]. */
+@Composable
+fun categoryAccent(name: String): Color = LocalCategoryPalette.current[categoryColorIndex(name)]

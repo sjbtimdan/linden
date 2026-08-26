@@ -68,7 +68,7 @@ fun EntryRow(entry: Entry, onClick: () -> Unit) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(tint.copy(alpha = 0.16f)),
+                .background(tint.copy(alpha = 0.22f)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
