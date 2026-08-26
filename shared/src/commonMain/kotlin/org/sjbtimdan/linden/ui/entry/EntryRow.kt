@@ -60,8 +60,9 @@ fun EntryRow(entry: Entry, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
