@@ -9,6 +9,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Account
@@ -17,10 +19,13 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerViewModelTest : StringSpec({
@@ -254,6 +259,71 @@ class LedgerViewModelTest : StringSpec({
 
             viewModel.categorySuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(groceries.id)
             viewModel.accountSuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(main.id)
+        }
+    }
+
+    "total balance is the initial balance plus income minus expenses" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            categoryDao.create("Salary", CategoryType.Income)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Rent", main, 5_000))
+            viewModel.createEntry(IncomeEntry(0, salary, "Salary", main, 2_000))
+
+            viewModel.totalMinor.first() shouldBe 10_000 - 450 - 5_000 + 2_000
+        }
+    }
+
+    "transfers move money between accounts without changing the total" {
+        withLedgerViewModel { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            accountDao.create("Savings", Currency.CHF)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(TransferEntry(0, null, "Move", main, 3_000, toAccount = savings, toAmount = null))
+
+            viewModel.totalMinor.first() shouldBe 10_000
+        }
+    }
+
+    "foreign balances are converted with the stored rates" {
+        withLedgerViewModel(
+            rates = listOf(FxRate(Currency.CHF, Currency.EUR, 0.9, "2026-01-01")),
+        ) { accountDao, _, viewModel ->
+            accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
+
+            // 100.00 EUR / 0.9 CHF-per-EUR = 111.11 CHF.
+            viewModel.totalMinor.first() shouldBe 11_111
+        }
+    }
+
+    "total is null while a foreign currency has no stored rate" {
+        withLedgerViewModel { accountDao, _, viewModel ->
+            accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
+
+            viewModel.totalMinor.first().shouldBeNull()
+        }
+    }
+
+    "entries dated after today do not count toward the total" {
+        withLedgerViewModel(today = { LocalDate(2026, 1, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            val future = Instant.fromEpochMilliseconds(1_768_867_200_000) // 2026-01-20 00:00 UTC
+
+            entryDao.create(
+                ExpenseEntry(0, groceries, "Future", main, 450, createdAt = future, createdZone = TimeZone.UTC),
+            )
+
+            viewModel.totalMinor.first() shouldBe 10_000
         }
     }
 })

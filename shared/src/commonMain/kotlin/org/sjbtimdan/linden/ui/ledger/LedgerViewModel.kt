@@ -1,30 +1,67 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.RatesFlowProvider
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import org.sjbtimdan.linden.ui.entry.EntrySuggestionsProvider
 import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.history.accountBalancesAtEnd
+import kotlin.time.Clock
 
 class LedgerViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
+    settingsDao: SettingsDao,
+    fxRatesRepository: FxRatesRepository,
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
+    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
+
+    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
+
+    private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
+
+    /**
+     * Total across all accounts in the default currency: initial balances plus
+     * the net of all entries dated on or before today (entries in the future
+     * never count). Null while a foreign currency has no stored rate.
+     */
+    val totalMinor: StateFlow<Long?> = combine(
+        entryDao.getAll(),
+        accounts,
+        defaultCurrency,
+        rates,
+    ) { entries, accounts, currency, rates ->
+        accountTotalMinor(accountBalancesAtEnd(entries, today(), accounts), currency, rates)
+    }.stateFlow(null)
 
     /** Most likely account ids for the current draft; only for new entries. */
     val accountSuggestions: StateFlow<List<Long>> get() = suggestions.accountSuggestions
@@ -117,4 +154,11 @@ class LedgerViewModel(
         draftState.value = EntryDraft.forNew(entry.type, entry)
         return true
     }
+
+    /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
+    private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = initial,
+    )
 }

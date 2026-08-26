@@ -151,26 +151,52 @@ fun withRatesViewModel(block: suspend ComposeUiTest.(RatesViewModel) -> Unit) =
     withRatesViewModel { _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit) {
+fun withLedgerViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
+) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val entryDao = EntryDao(database.entryQueries)
             val accountDao = AccountDao(database.accountQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = LedgerViewModel(entryDao, accountDao, categoryDao)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            val fxRateDao = FxRateDao(database.fxRateQueries)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
+            val viewModel = LedgerViewModel(
+                entryDao,
+                accountDao,
+                categoryDao,
+                settingsDao,
+                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                today,
+            )
             block(entryDao, accountDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit) =
-    withLedgerViewModel { _, accountDao, categoryDao, model -> block(accountDao, categoryDao, model) }
+fun withLedgerViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
+) = withLedgerViewModel(today, defaultCurrency, rates) { _, accountDao, categoryDao, viewModel ->
+    block(accountDao, categoryDao, viewModel)
+}
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(block: suspend ComposeUiTest.(LedgerViewModel) -> Unit) =
-    withLedgerViewModel { _, _, _, viewModel -> block(viewModel) }
+fun withLedgerViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
+) = withLedgerViewModel(today, defaultCurrency, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(

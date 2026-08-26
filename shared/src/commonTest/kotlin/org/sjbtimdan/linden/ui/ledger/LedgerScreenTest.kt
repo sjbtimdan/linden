@@ -55,6 +55,19 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "hero card shows the total balance across accounts" {
+        withLedgerViewModel { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Total balance").assertIsDisplayed()
+            onNodeWithText("123.45").assertIsDisplayed()
+        }
+    }
+
     "expense is the default selected type" {
         withLedgerViewModel { viewModel ->
             setContent {
