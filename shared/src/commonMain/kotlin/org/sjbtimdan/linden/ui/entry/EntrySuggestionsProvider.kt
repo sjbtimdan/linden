@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -19,6 +20,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Entry
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
 import org.sjbtimdan.linden.predictions.FieldPredictionInput
 import org.sjbtimdan.linden.predictions.PREDICTION_HORIZON_MONTHS
@@ -47,39 +49,34 @@ private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class EntrySuggestionsProvider(
-    entryDao: EntryDao,
-    draft: StateFlow<EntryDraft?>,
-    scope: CoroutineScope,
+    private val entryDao: EntryDao,
+    private val draft: StateFlow<EntryDraft?>,
+    private val scope: CoroutineScope,
     descriptionDebounceMillis: Long = DESCRIPTION_DEBOUNCE_MILLIS,
 ) {
     /** Entries of the draft's type from the last [PREDICTION_HORIZON_MONTHS] months. */
-    private val predictionEntries: StateFlow<List<Entry>> = draft
-        .map { it?.type }
-        .distinctUntilChanged()
-        .flatMapLatest { type ->
-            if (type == null) {
-                flowOf(emptyList())
-            } else {
-                entryDao.getSinceByType(type, horizonCutoffMillis())
-            }
-        }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+    private val predictionEntries: StateFlow<List<Entry>> = typeEntries { type ->
+        entryDao.getSinceByType(type, horizonCutoffMillis())
+    }
 
     /**
      * All entries of the draft's type, no date cutoff: quick entry ranks by
      * time of day, so entries outside the prediction horizon must be candidates.
      */
-    private val allTypeEntries: StateFlow<List<Entry>> = draft
-        .map { it?.type }
+    private val allTypeEntries: StateFlow<List<Entry>> = typeEntries(entryDao::getAllByType)
+
+    /** The draft's description, trailing the field by the debounce while it is enabled. */
+    private val debouncedDescription: Flow<String> = draft
+        .map { it?.description.orEmpty() }
         .distinctUntilChanged()
-        .flatMapLatest { type ->
-            if (type == null) {
-                flowOf(emptyList())
+        .let { descriptions ->
+            if (descriptionDebounceMillis <= 0) {
+                descriptions
             } else {
-                entryDao.getAllByType(type)
+                descriptions.debounce(descriptionDebounceMillis)
             }
         }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = draft.value?.description.orEmpty())
 
     /**
      * The draft with its description trailing the field by
@@ -89,91 +86,81 @@ class EntrySuggestionsProvider(
      */
     private val debouncedDraft: StateFlow<EntryDraft?> = combine(
         draft,
-        draft.map { it?.description.orEmpty() }
-            .distinctUntilChanged()
-            .let { descriptions ->
-                if (descriptionDebounceMillis <= 0) {
-                    descriptions
-                } else {
-                    descriptions.debounce(descriptionDebounceMillis)
-                }
-            }
-            .stateIn(
-                scope = scope,
-                started = SharingStarted.Eagerly,
-                initialValue = draft.value?.description.orEmpty(),
-            ),
+        debouncedDescription,
     ) { state, description -> state?.copy(description = description) }
         .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = null)
 
     /** Most likely account ids for the current draft. */
-    val accountSuggestions: StateFlow<List<Long>> = combine(debouncedDraft, predictionEntries) { state, entries ->
-        if (state == null || state.editing != null) {
-            emptyList()
-        } else {
-            predictAccounts(
-                entries = entries,
-                input = state.fieldInput(),
-                now = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                topN = PREDICTION_TOP_N,
-            )
-        }
+    val accountSuggestions: StateFlow<List<Long>> = suggestion(predictionEntries) { state, entries ->
+        predictAccounts(
+            entries = entries,
+            input = state.fieldInput(),
+            now = Clock.System.now(),
+            timeZone = TimeZone.currentSystemDefault(),
+            topN = PREDICTION_TOP_N,
+        )
     }
-        .flowOn(Dispatchers.Default)
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     /** Most likely category ids for the current draft. */
-    val categorySuggestions: StateFlow<List<Long>> = combine(debouncedDraft, predictionEntries) { state, entries ->
-        if (state == null || state.editing != null) {
-            emptyList()
-        } else {
-            predictCategories(
-                entries = entries,
-                input = state.fieldInput(),
-                now = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                topN = PREDICTION_TOP_N,
-            )
-        }
+    val categorySuggestions: StateFlow<List<Long>> = suggestion(predictionEntries) { state, entries ->
+        predictCategories(
+            entries = entries,
+            input = state.fieldInput(),
+            now = Clock.System.now(),
+            timeZone = TimeZone.currentSystemDefault(),
+            topN = PREDICTION_TOP_N,
+        )
     }
-        .flowOn(Dispatchers.Default)
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     /** Most likely descriptions for the current draft. */
-    val descriptionSuggestions: StateFlow<List<String>> = combine(debouncedDraft, predictionEntries) { state, entries ->
-        if (state == null || state.editing != null) {
-            emptyList()
-        } else {
-            predictDescriptions(
-                entries = entries,
-                input = DescriptionPredictionInput(
-                    type = state.type,
-                    categoryId = state.categoryId,
-                    accountId = state.accountId,
-                    amount = state.amount,
-                ),
-                now = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                topN = PREDICTION_TOP_N,
-            )
-        }
+    val descriptionSuggestions: StateFlow<List<String>> = suggestion(predictionEntries) { state, entries ->
+        predictDescriptions(
+            entries = entries,
+            input = DescriptionPredictionInput(
+                type = state.type,
+                categoryId = state.categoryId,
+                accountId = state.accountId,
+                amount = state.amount,
+            ),
+            now = Clock.System.now(),
+            timeZone = TimeZone.currentSystemDefault(),
+            topN = PREDICTION_TOP_N,
+        )
     }
-        .flowOn(Dispatchers.Default)
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     /** Whole entries the user is likely to repeat right now, ranked time first. */
-    val quickEntries: StateFlow<List<Entry>> = combine(allTypeEntries, debouncedDraft) { entries, state ->
+    val quickEntries: StateFlow<List<Entry>> = suggestion(allTypeEntries) { state, entries ->
+        predictQuickEntries(
+            entries = entries,
+            input = state.fieldInput(),
+            now = Clock.System.now(),
+            timeZone = TimeZone.currentSystemDefault(),
+            topN = QUICK_ENTRY_TOP_N,
+        )
+    }
+
+    /** Entries of the draft's type, loaded via [load] whenever the type changes. */
+    private fun typeEntries(load: (EntryType) -> Flow<List<Entry>>): StateFlow<List<Entry>> = draft
+        .map { it?.type }
+        .distinctUntilChanged()
+        .flatMapLatest { type ->
+            if (type == null) {
+                flowOf(emptyList())
+            } else {
+                load(type)
+            }
+        }
+        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+
+    /** Suggestion list for the current draft, recomputed when it or [entries] change; empty while editing. */
+    private fun <T> suggestion(
+        entries: StateFlow<List<Entry>>,
+        compute: (EntryDraft, List<Entry>) -> List<T>,
+    ): StateFlow<List<T>> = combine(debouncedDraft, entries) { state, history ->
         if (state == null || state.editing != null) {
             emptyList()
         } else {
-            predictQuickEntries(
-                entries = entries,
-                input = state.fieldInput(),
-                now = Clock.System.now(),
-                timeZone = TimeZone.currentSystemDefault(),
-                topN = QUICK_ENTRY_TOP_N,
-            )
+            compute(state, history)
         }
     }
         .flowOn(Dispatchers.Default)
