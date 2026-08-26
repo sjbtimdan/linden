@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
@@ -11,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.ThemeMode
 
@@ -73,6 +75,12 @@ private val DarkColors = darkColorScheme(
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
 )
+
+/** Corner radius of dialogs across the app. */
+val DialogShape = RoundedCornerShape(28.dp)
+
+/** Corner radius of list rows/cards across the app. */
+val CardShape = RoundedCornerShape(20.dp)
 
 private val LindenTypography = Typography(
     titleLarge = TextStyle(

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -55,6 +54,8 @@ import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.theme.DialogShape
 
 private data class AccountDialogState(
     val account: Account?,
@@ -157,7 +158,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(CardShape)
                             .background(MaterialTheme.colorScheme.surface)
                             .clickable(role = Role.Button) {
                                 dialogState = AccountDialogState(
@@ -262,6 +263,7 @@ private fun AccountDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = DialogShape,
         title = {
             Text(if (isEditing) "Edit Account" else "New Account")
         },

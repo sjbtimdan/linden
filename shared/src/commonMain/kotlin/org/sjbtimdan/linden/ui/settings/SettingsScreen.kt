@@ -54,6 +54,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.theme.DialogShape
 
 @Composable
 fun SettingsScreen(
@@ -289,6 +290,7 @@ fun SettingsScreen(
         if (showImportConfirmation) {
             AlertDialog(
                 onDismissRequest = { showImportConfirmation = false },
+                shape = DialogShape,
                 title = { Text("Import from Ivy") },
                 text = { Text("This will replace all your current accounts, categories and transactions. Continue?") },
                 confirmButton = {
@@ -314,6 +316,7 @@ fun SettingsScreen(
         if (showRestoreConfirmation) {
             AlertDialog(
                 onDismissRequest = { showRestoreConfirmation = false },
+                shape = DialogShape,
                 title = { Text("Restore from backup") },
                 text = {
                     Text(

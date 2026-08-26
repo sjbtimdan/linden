@@ -10,6 +10,7 @@ import androidx.compose.ui.window.DialogProperties
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.ui.theme.DialogShape
 import kotlin.time.Instant
 
 fun EntryType.displayName(): String = when (this) {
@@ -40,6 +41,7 @@ fun EntryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = DialogShape,
         // Only Cancel (or the Android back button) closes the dialog; stray taps on
         // the scrim must not discard an in-progress entry.
         properties = DialogProperties(dismissOnClickOutside = false),

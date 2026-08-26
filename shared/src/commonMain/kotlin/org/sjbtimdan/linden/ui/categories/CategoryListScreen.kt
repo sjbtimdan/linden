@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -52,6 +51,8 @@ import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.categoryAccent
 
 private data class CategoryDialogState(
@@ -154,7 +155,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
+                            .clip(CardShape)
                             .background(MaterialTheme.colorScheme.surface)
                             .clickable(role = Role.Button) {
                                 dialogState = CategoryDialogState(
@@ -242,6 +243,7 @@ private fun CategoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = DialogShape,
         title = {
             Text(if (isEditing) "Edit Category" else "New Category")
         },
