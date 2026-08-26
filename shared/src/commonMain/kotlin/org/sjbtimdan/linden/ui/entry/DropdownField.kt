@@ -3,8 +3,6 @@ package org.sjbtimdan.linden.ui.entry
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +17,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> DropdownField(
     label: String,
@@ -51,7 +48,6 @@ fun <T> DropdownField(
         onValueChange = { query = it },
         label = { Text(label) },
         singleLine = true,
-        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = focused) },
         modifier = Modifier
             .onFocusChanged {
                 focused = it.isFocused
