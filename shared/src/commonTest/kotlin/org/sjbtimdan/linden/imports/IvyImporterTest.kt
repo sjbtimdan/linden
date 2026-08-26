@@ -1100,6 +1100,86 @@ class IvyImporterTest : StringSpec({
         entry.description shouldBe "Initial balance"
     }
 
+    "imports a transaction with an 'Initial Balance' category as the account's initial balance" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Initial Balance"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Opening",
+                  "dateTime": 946684800000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 0
+        result.categories shouldBe 0
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 100_000
+        EntryDao(database.entryQueries).getAll().first() shouldBe emptyList()
+    }
+
+    "treats subsequent 'Initial Balance' category entries as normal entries" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database)
+
+        val json = """
+            {
+              "accounts": [
+                {"id": "a1", "name": "Wallet", "currency": "USD"}
+              ],
+              "categories": [
+                {"id": "c1", "name": "Initial Balance"},
+                {"id": "c2", "name": "Food"}
+              ],
+              "transactions": [
+                {
+                  "id": "t1",
+                  "type": "INCOME",
+                  "amount": 1000.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Opening",
+                  "dateTime": 946684800000
+                },
+                {
+                  "id": "t2",
+                  "type": "INCOME",
+                  "amount": 50.0,
+                  "accountId": "a1",
+                  "categoryId": "c1",
+                  "title": "Second opening",
+                  "dateTime": 946771200000
+                }
+              ]
+            }
+        """.trimIndent()
+
+        val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
+
+        result.transactions shouldBe 1
+        database.accountQueries.selectAll().awaitAsList().single().initialBalance shouldBe 100_000
+        val entry = EntryDao(database.entryQueries).getAll().first().single()
+            .shouldBeInstanceOf<IncomeEntry>()
+        entry.amount shouldBe 5_000
+        entry.description shouldBe "Second opening"
+    }
+
     "routes a transaction whose currency conflicts with its account's currency to a split account" {
         val database = lindenDatabase()
         val importer = IvyImporter(database)

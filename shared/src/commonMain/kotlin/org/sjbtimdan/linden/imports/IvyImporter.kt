@@ -50,6 +50,7 @@ class IvyImporter(private val database: LindenDatabase) {
         val transactions = backup.transactions.filter { it.dateTime != null }
         val importState = ImportState()
         var importedTransactions = 0
+        var createdCategories = 0
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -59,9 +60,12 @@ class IvyImporter(private val database: LindenDatabase) {
                 account.id to insertAccount(account)
             }
             val categoryTypes = inferCategoryTypes(backup.categories, transactions)
-            val categories = backup.categories.associate { category ->
+            val categories = backup.categories.filter {
+                !it.name.equals(INITIAL_BALANCE_TITLE, ignoreCase = true)
+            }.associate { category ->
                 category.id to insertCategory(category.name, categoryTypes.getValue(category.id))
             }
+            createdCategories = categories.size
 
             transactions.forEach { transaction ->
                 if (insertTransaction(
@@ -79,7 +83,7 @@ class IvyImporter(private val database: LindenDatabase) {
         }
         return IvyImportResult(
             accounts = backup.accounts.size + importState.fallbackAccounts.size + importState.splitAccountsCreated,
-            categories = backup.categories.size + if (importState.fallbackCategoryCreated) 1 else 0,
+            categories = createdCategories + if (importState.fallbackCategoryCreated) 1 else 0,
             transactions = importedTransactions,
             splitTransactions = importState.splitTransactions,
         )
@@ -230,12 +234,15 @@ class IvyImporter(private val database: LindenDatabase) {
         )
         val account = accountResolution.account
 
-        if (type != EntryType.Transfer &&
-            (
-                transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
-                    transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true)
-                )
-        ) {
+        val categoryName = transaction.categoryId?.let { id ->
+            backupCategories.firstOrNull { it.id == id }?.name
+        }
+        val isBalanceEntry = type != EntryType.Transfer && (
+            transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
+                transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true) ||
+                categoryName.equals(INITIAL_BALANCE_TITLE, ignoreCase = true)
+            )
+        if (isBalanceEntry) {
             if (importState.initialBalanceApplied.add(account.id)) {
                 if (accountResolution.split) importState.splitTransactions++
                 val balance = transaction.amount
