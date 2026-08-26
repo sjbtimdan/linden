@@ -88,22 +88,24 @@ class QuickEntryPredictorTest : StringSpec({
                 .shouldContainExactly("Coffee", "Train", "Cinema")
         }
 
-        "does not rank by recency" {
-            // The older same-weekday entry outranks the more recent one.
+        "ranks recent entries above old ones" {
+            // Recency decay means the newer entry outranks the older one even if the older
+            // one matches the weekday better.
             val entries = listOf(
-                expense(1, "Coffee", now.minus(7.days)),
+                expense(1, "Coffee", now.minus(60.days)),
                 expense(2, "Train", now.minus(3.days)),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Coffee", "Train")
+            predict(entries).map { it.description }.shouldContainExactly("Train", "Coffee")
         }
 
-        "considers entries beyond the prediction horizon" {
-            // 210 days is ~7 months and a Tuesday, so the old entry still wins.
+        "considers entries beyond the prediction horizon but recency still matters" {
+            // 210 days is ~7 months: old entry is still a candidate but ranks below the
+            // recent one thanks to recency decay.
             val entries = listOf(
                 expense(1, "Coffee", now.minus(210.days)),
                 expense(2, "Train", now.minus(4.days)),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Coffee", "Train")
+            predict(entries).map { it.description }.shouldContainExactly("Train", "Coffee")
         }
 
         "prefers field matches within the same time tier" {

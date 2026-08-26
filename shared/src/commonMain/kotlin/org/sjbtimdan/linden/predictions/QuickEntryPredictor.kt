@@ -10,12 +10,11 @@ const val QUICK_ENTRY_TOP_N = 5
 /**
  * Returns the whole entries a new entry is most likely to repeat right now.
  *
- * Candidates are ranked by time of day first — hour, weekday, month — since a
- * repeated entry is usually re-entered at the same clock time; the draft's
- * entered fields only break ties within a time tier. Dates never matter: an
- * entry from long ago at this time of day ranks just as well as a recent one,
- * so all entries of the draft's type are considered, not just the recent
- * window of the field predictors.
+ * Candidates are ranked by time of day — hour, weekday, month — multiplied by
+ * a recency decay so that recent entries dominate over old ones. The draft's
+ * entered fields break ties within a time tier. All entries of the draft's
+ * type are considered (not just the recent window of the field predictors) so
+ * that periodic entries outside the prediction horizon can still surface.
  *
  * Entries without a description are ignored: a chip shows the description, so
  * auto-generated entries without one can't be picked. Recurring entries are
@@ -33,10 +32,11 @@ fun predictQuickEntries(
     .filter { it.type == input.type }
     .filter { !it.description.isNullOrBlank() }
     .map { entry ->
+        val weight = recencyWeight(entry.createdAt, now)
         ScoredEntry(
             entry = entry,
-            timeScore = timeAffinityScore(entry.createdAt, now, timeZone),
-            fieldScore = fieldMatchScore(entry, input),
+            timeScore = timeAffinityScore(entry.createdAt, now, timeZone) * weight,
+            fieldScore = fieldMatchScore(entry, input) * weight,
         )
     }
     .sortedWith(
