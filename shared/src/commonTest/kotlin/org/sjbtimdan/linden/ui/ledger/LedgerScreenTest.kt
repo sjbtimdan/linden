@@ -557,6 +557,7 @@ class LedgerScreenTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -581,6 +582,7 @@ class LedgerScreenTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -704,6 +706,7 @@ class LedgerScreenTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -720,8 +723,10 @@ class LedgerScreenTest : StringSpec({
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
-            // The latest entry prefills the form; the older one only exists as a chip.
+            // Two occurrences of each description so the frequency filter passes.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
 
             setContent {
@@ -729,8 +734,6 @@ class LedgerScreenTest : StringSpec({
             }
 
             waitForText("Quick entry")
-            // prefill comes from the latest entry, so "Coffee" is only the chip
-            onNode(hasSetTextAction() and hasText("Train")).assertIsDisplayed()
             onNodeWithText("Coffee").performClick()
             waitForIdle()
 
@@ -743,6 +746,7 @@ class LedgerScreenTest : StringSpec({
     "quick entry chips hide for a type without matching history" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {

@@ -127,6 +127,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             val monthsAgo = Clock.System.now()
                 .minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
             draft.value = EntryDraft.forNew(EntryType.Expense)
 
             provider.quickEntries.awaitNotEmpty().map { it.description } shouldContainExactly listOf("Coffee")
@@ -136,6 +137,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "quick entries only consider entries of the draft's type" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
             draft.value = EntryDraft.forNew(EntryType.Income)
 

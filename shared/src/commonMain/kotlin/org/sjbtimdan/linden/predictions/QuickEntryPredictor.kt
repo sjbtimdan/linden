@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.predictions
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
+import kotlin.math.ln
 import kotlin.time.Instant
 
 const val QUICK_ENTRY_TOP_N = 5
@@ -11,10 +12,12 @@ const val QUICK_ENTRY_TOP_N = 5
  * Returns the whole entries a new entry is most likely to repeat right now.
  *
  * Candidates are ranked by time of day — hour, weekday, month — multiplied by
- * a recency decay so that recent entries dominate over old ones. The draft's
- * entered fields break ties within a time tier. All entries of the draft's
- * type are considered (not just the recent window of the field predictors) so
- * that periodic entries outside the prediction horizon can still surface.
+ * recency decay and a logarithmic frequency weight so that recent,
+ * frequently-entered entries dominate. Entries that appear only once are
+ * filtered out. The draft's entered fields break ties within a time tier. All
+ * entries of the draft's type are considered (not just the recent window of
+ * the field predictors) so that periodic entries outside the prediction
+ * horizon can still surface.
  *
  * Entries without a description are ignored: a chip shows the description, so
  * auto-generated entries without one can't be picked. Recurring entries are
@@ -28,26 +31,35 @@ fun predictQuickEntries(
     now: Instant,
     timeZone: TimeZone,
     topN: Int,
-): List<Entry> = entries.asSequence()
-    .filter { it.type == input.type }
-    .filter { !it.description.isNullOrBlank() }
-    .map { entry ->
-        val weight = recencyWeight(entry.createdAt, now)
-        ScoredEntry(
-            entry = entry,
-            timeScore = timeAffinityScore(entry.createdAt, now, timeZone) * weight,
-            fieldScore = fieldMatchScore(entry, input) * weight,
+): List<Entry> {
+    val frequency = entries
+        .filter { it.type == input.type && !it.description.isNullOrBlank() }
+        .groupingBy { it.description!!.lowercase() }
+        .eachCount()
+
+    return entries.asSequence()
+        .filter { it.type == input.type }
+        .filter { !it.description.isNullOrBlank() }
+        .filter { (frequency[it.description!!.lowercase()] ?: 0) >= 2 }
+        .map { entry ->
+            val weight = recencyWeight(entry.createdAt, now) *
+                ln(1.0 + (frequency[entry.description!!.lowercase()] ?: 0))
+            ScoredEntry(
+                entry = entry,
+                timeScore = timeAffinityScore(entry.createdAt, now, timeZone) * weight,
+                fieldScore = fieldMatchScore(entry, input) * weight,
+            )
+        }
+        .sortedWith(
+            compareByDescending<ScoredEntry> { it.timeScore }
+                .thenByDescending { it.fieldScore }
+                .thenBy { it.entry.id },
         )
-    }
-    .sortedWith(
-        compareByDescending<ScoredEntry> { it.timeScore }
-            .thenByDescending { it.fieldScore }
-            .thenBy { it.entry.id },
-    )
-    .distinctBy { it.entry.quickEntryKey(timeZone) }
-    .take(topN)
-    .map { it.entry }
-    .toList()
+        .distinctBy { it.entry.quickEntryKey(timeZone) }
+        .take(topN)
+        .map { it.entry }
+        .toList()
+}
 
 private data class ScoredEntry(
     val entry: Entry,
