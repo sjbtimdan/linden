@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -50,9 +49,12 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenMaxWidth
+import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.parseAmount
+import org.sjbtimdan.linden.ui.screenInsets
 
 private data class AccountDialogState(
     val account: Account?,
@@ -74,10 +76,10 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
 
     Column(
         modifier = Modifier
-            .safeContentPadding()
+            .screenInsets()
             .fillMaxSize()
-            .padding(16.dp)
-            .widthIn(max = 480.dp),
+            .padding(ScreenPadding)
+            .widthIn(max = ScreenMaxWidth),
     ) {
         TextButton(onClick = onNavigateBack) {
             Icon(

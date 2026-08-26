@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,10 +36,13 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenMaxWidth
+import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatDate
+import org.sjbtimdan.linden.ui.screenInsets
 import org.sjbtimdan.linden.ui.theme.categoryAccent
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
@@ -78,11 +80,11 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
 
     Column(
         modifier = Modifier
-            .safeContentPadding()
+            .screenInsets()
             .fillMaxSize()
             .imePadding()
-            .padding(16.dp)
-            .widthIn(max = 480.dp),
+            .padding(ScreenPadding)
+            .widthIn(max = ScreenMaxWidth),
     ) {
         OutlinedTextField(
             value = searchQuery,

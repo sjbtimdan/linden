@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -36,6 +35,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.ui.ScreenMaxWidth
+import org.sjbtimdan.linden.ui.ScreenPadding
+import org.sjbtimdan.linden.ui.screenInsets
 import kotlin.math.roundToLong
 
 @Composable
@@ -46,10 +48,10 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
 
     Column(
         modifier = Modifier
-            .safeContentPadding()
+            .screenInsets()
             .fillMaxSize()
-            .padding(16.dp)
-            .widthIn(max = 480.dp)
+            .padding(ScreenPadding)
+            .widthIn(max = ScreenMaxWidth)
             .verticalScroll(rememberScrollState()),
     ) {
         TextButton(onClick = onNavigateBack) {

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -45,9 +44,12 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenMaxWidth
+import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.icon
+import org.sjbtimdan.linden.ui.screenInsets
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
@@ -95,11 +97,11 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
 
     Column(
         modifier = Modifier
-            .safeContentPadding()
+            .screenInsets()
             .fillMaxSize()
             .imePadding()
-            .padding(16.dp)
-            .widthIn(max = 480.dp)
+            .padding(ScreenPadding)
+            .widthIn(max = ScreenMaxWidth)
             // Tapping anywhere outside a field dismisses the keyboard. Focus loss
             // alone doesn't always close the IME on Android, so hide explicitly.
             .pointerInput(Unit) {
