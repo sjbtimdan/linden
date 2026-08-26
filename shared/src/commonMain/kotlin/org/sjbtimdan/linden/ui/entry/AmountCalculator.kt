@@ -124,41 +124,16 @@ fun AmountCalculator(
                 }
             }
 
-            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
-                CalculatorKey("7") { press { model.onDigit('7') } }
-                CalculatorKey("8") { press { model.onDigit('8') } }
-                CalculatorKey("9") { press { model.onDigit('9') } }
-                CalculatorKey("÷") { press { model.onOperator(CalculatorOp.Divide) } }
-            }
-            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
-                CalculatorKey("4") { press { model.onDigit('4') } }
-                CalculatorKey("5") { press { model.onDigit('5') } }
-                CalculatorKey("6") { press { model.onDigit('6') } }
-                CalculatorKey("×") { press { model.onOperator(CalculatorOp.Multiply) } }
-            }
-            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
-                CalculatorKey("1") { press { model.onDigit('1') } }
-                CalculatorKey("2") { press { model.onDigit('2') } }
-                CalculatorKey("3") { press { model.onDigit('3') } }
-                CalculatorKey("−") { press { model.onOperator(CalculatorOp.Subtract) } }
-            }
-            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
-                CalculatorKey("C") { press { model.onClear() } }
-                CalculatorKey("0") { press { model.onDigit('0') } }
-                CalculatorKey(".") { press { model.onDot() } }
-                CalculatorKey("+") { press { model.onOperator(CalculatorOp.Add) } }
-            }
-            keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
-                FilledTonalButton(
-                    onClick = { press { model.onBackspace() } },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .semantics { contentDescription = "Backspace" },
-                ) {
-                    Text("⌫", style = MaterialTheme.typography.titleLarge)
+            keypad.forEach { row ->
+                keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
+                    row.forEach { key ->
+                        CalculatorKey(
+                            label = key.label,
+                            description = key.contentDescription,
+                            onClick = { press { key.onPress(model) } },
+                        )
+                    }
                 }
-                CalculatorKey("=") { press { model.onEquals() } }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -176,6 +151,46 @@ fun AmountCalculator(
 /** Tallest a key row may grow before the keypad hugs the bottom of the screen. */
 private val keyHeight = 56.dp
 
+private class KeySpec(
+    val label: String,
+    val contentDescription: String? = null,
+    val onPress: CalculatorModel.() -> Unit,
+)
+
+private fun digit(ch: Char) = KeySpec(label = ch.toString()) { onDigit(ch) }
+
+/** The keypad layout, top to bottom. */
+private val keypad = listOf(
+    listOf(
+        digit('7'),
+        digit('8'),
+        digit('9'),
+        KeySpec("÷") { onOperator(CalculatorOp.Divide) },
+    ),
+    listOf(
+        digit('4'),
+        digit('5'),
+        digit('6'),
+        KeySpec("×") { onOperator(CalculatorOp.Multiply) },
+    ),
+    listOf(
+        digit('1'),
+        digit('2'),
+        digit('3'),
+        KeySpec("−") { onOperator(CalculatorOp.Subtract) },
+    ),
+    listOf(
+        KeySpec("C") { onClear() },
+        digit('0'),
+        KeySpec(".") { onDot() },
+        KeySpec("+") { onOperator(CalculatorOp.Add) },
+    ),
+    listOf(
+        KeySpec("⌫", contentDescription = "Backspace") { onBackspace() },
+        KeySpec("=") { onEquals() },
+    ),
+)
+
 @Composable
 private fun keyRow(modifier: Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
@@ -186,10 +201,15 @@ private fun keyRow(modifier: Modifier, content: @Composable RowScope.() -> Unit)
 }
 
 @Composable
-private fun RowScope.CalculatorKey(label: String, onClick: () -> Unit) {
+private fun RowScope.CalculatorKey(label: String, onClick: () -> Unit, description: String? = null) {
+    val modifier = if (description != null) {
+        Modifier.weight(1f).fillMaxHeight().semantics { contentDescription = description }
+    } else {
+        Modifier.weight(1f).fillMaxHeight()
+    }
     FilledTonalButton(
         onClick = onClick,
-        modifier = Modifier.weight(1f).fillMaxHeight(),
+        modifier = modifier,
     ) {
         Text(label, style = MaterialTheme.typography.titleLarge)
     }
