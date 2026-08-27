@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,8 +51,8 @@ class SettingsViewModel(
     private val _defaultCurrency = MutableStateFlow(initialCurrency)
     val defaultCurrency: StateFlow<Currency> = _defaultCurrency.asStateFlow()
 
-    private val _hideLedgerTotal = MutableStateFlow(initialHideLedgerTotal)
-    val hideLedgerTotal: StateFlow<Boolean> = _hideLedgerTotal.asStateFlow()
+    val hideLedgerTotal: StateFlow<Boolean> = settingsDao.hideLedgerTotalFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, initialHideLedgerTotal)
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState: StateFlow<ImportState> = _importState.asStateFlow()
@@ -76,7 +78,6 @@ class SettingsViewModel(
     }
 
     fun setHideLedgerTotal(hidden: Boolean) {
-        _hideLedgerTotal.value = hidden
         viewModelScope.launch {
             settingsDao.setHideLedgerTotal(hidden)
         }
@@ -133,11 +134,10 @@ class SettingsViewModel(
         }
     }
 
-    /** Re-reads theme, currency and the ledger-total visibility so the UI reflects a restored backup. */
+    /** Re-reads theme and currency so the UI reflects a restored backup. */
     private suspend fun reloadSettings() {
         _themeMode.value = settingsDao.getTheme()
         _defaultCurrency.value = settingsDao.getDefaultCurrency()
-        _hideLedgerTotal.value = settingsDao.getHideLedgerTotal()
     }
 
     fun clearBackupState() {
