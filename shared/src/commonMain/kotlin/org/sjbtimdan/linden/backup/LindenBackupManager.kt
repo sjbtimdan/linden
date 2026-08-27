@@ -33,7 +33,7 @@ data class LindenBackup(
 data class BackupAccount(val id: Long, val name: String, val currency: String, val initialBalance: Long)
 
 @Serializable
-data class BackupCategory(val id: Long, val name: String, val type: String)
+data class BackupCategory(val id: Long, val name: String, val type: String, val icon: String? = null)
 
 @Serializable
 data class BackupEntry(
@@ -94,7 +94,7 @@ class LindenBackupManager(private val database: LindenDatabase) {
                 database.accountQueries.insertWithId(account.id, account.name, account.currency, account.initialBalance)
             }
             backup.categories.forEach { category ->
-                database.categoryQueries.insertWithId(category.id, category.name, category.type)
+                database.categoryQueries.insertWithId(category.id, category.name, category.type, category.icon)
             }
             backup.entries.forEach { entry ->
                 database.entryQueries.insertWithId(
@@ -150,7 +150,7 @@ class LindenBackupManager(private val database: LindenDatabase) {
             BackupAccount(account.id, account.name, account.currency, account.initialBalance)
         },
         categories = database.categoryQueries.selectAll().awaitAsList().map { category ->
-            BackupCategory(category.id, category.name, category.type)
+            BackupCategory(category.id, category.name, category.type, category.icon)
         },
         entries = database.entryQueries.selectAllRows().awaitAsList().map { entry ->
             BackupEntry(

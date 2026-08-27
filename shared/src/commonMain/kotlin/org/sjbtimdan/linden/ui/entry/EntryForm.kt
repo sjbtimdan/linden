@@ -193,6 +193,7 @@ fun EntryForm(
                         .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
                     missing = if (visibleCategories.isEmpty()) "Please enter category" else null,
                     onNavigateToSettings = onNavigateToSettings,
+                    optionIcon = { it.icon?.imageVector() },
                 )
             }
             if (!editing || activeField == ActiveField.Account) {

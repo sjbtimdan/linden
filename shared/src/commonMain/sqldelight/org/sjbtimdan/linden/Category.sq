@@ -1,20 +1,21 @@
 CREATE TABLE IF NOT EXISTS CategoryEntity (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    type TEXT NOT NULL
+    type TEXT NOT NULL,
+    icon TEXT
 );
 
 insert:
-INSERT INTO CategoryEntity (name, type)
-VALUES (?, ?);
+INSERT INTO CategoryEntity (name, type, icon)
+VALUES (?, ?, ?);
 
 insertWithId:
-INSERT INTO CategoryEntity (id, name, type)
-VALUES (?, ?, ?);
+INSERT INTO CategoryEntity (id, name, type, icon)
+VALUES (?, ?, ?, ?);
 
 update:
 UPDATE CategoryEntity
-SET name = ?, type = ?
+SET name = ?, type = ?, icon = ?
 WHERE id = ?;
 
 selectAll:

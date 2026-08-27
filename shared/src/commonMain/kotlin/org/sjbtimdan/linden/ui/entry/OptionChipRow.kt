@@ -4,12 +4,15 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -24,6 +27,7 @@ fun <T> OptionChipRow(
     modifier: Modifier = Modifier,
     isSelected: (T) -> Boolean = { false },
     isPredicted: (T) -> Boolean = { false },
+    optionIcon: ((T) -> ImageVector?)? = null,
 ) {
     FlowRow(
         modifier = modifier,
@@ -59,11 +63,30 @@ fun <T> OptionChipRow(
                         detectTapGestures { onSelect(option) }
                     },
             ) {
-                Text(
-                    text = optionLabel(option),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
+                androidx.compose.foundation.layout.Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    val icon = optionIcon?.invoke(option)
+                    if (icon != null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .size(16.dp),
+                        )
+                    }
+                    Text(
+                        text = optionLabel(option),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(
+                            start = if (icon != null) 4.dp else 12.dp,
+                            end = 12.dp,
+                            top = 6.dp,
+                            bottom = 6.dp,
+                        ),
+                    )
+                }
             }
         }
     }

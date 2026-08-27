@@ -17,6 +17,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -63,7 +64,8 @@ class IvyImporter(private val database: LindenDatabase) {
             val categories = backup.categories.filter {
                 !it.name.equals(INITIAL_BALANCE_TITLE, ignoreCase = true)
             }.associate { category ->
-                category.id to insertCategory(category.name, categoryTypes.getValue(category.id))
+                val icon = guessIcon(category.name)
+                category.id to insertCategory(category.name, categoryTypes.getValue(category.id), icon)
             }
             createdCategories = categories.size
 
@@ -127,9 +129,14 @@ class IvyImporter(private val database: LindenDatabase) {
         return ResolvedAccount(id, name, currency)
     }
 
-    private suspend fun insertCategory(name: String, type: CategoryType): Long {
-        database.categoryQueries.insert(name, type.name)
+    private suspend fun insertCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Long {
+        database.categoryQueries.insert(name, type.name, icon?.name)
         return database.importQueries.lastInsertId().awaitAsOne()
+    }
+
+    private fun guessIcon(name: String): CategoryIcon? {
+        val lower = name.lowercase()
+        return GUESS_ICON_RULES.firstOrNull { (keywords, _) -> keywords.any { lower.contains(it) } }?.second
     }
 
     private fun inferCategoryTypes(
@@ -362,6 +369,35 @@ class IvyImporter(private val database: LindenDatabase) {
         val initialBalanceApplied = mutableSetOf<Long>()
     }
 }
+
+/** Keyword-to-icon mapping for Ivy category name guessing. First match wins. */
+private val GUESS_ICON_RULES: List<Pair<List<String>, CategoryIcon>> = listOf(
+    listOf("food", "dining", "restaurant", "meal", "lunch", "dinner", "breakfast", "cafe", "coffee") to
+        CategoryIcon.Restaurant,
+    listOf("entertainment", "movie", "cinema", "game", "gaming", "fun", "hobby") to CategoryIcon.Movie,
+    listOf("grocer", "supermarket", "market", "produce") to CategoryIcon.ShoppingCart,
+    listOf("bank", "finance", "interest", "fee", "charge", "credit") to CategoryIcon.AccountBalance,
+    listOf("salary", "wage", "income", "earning", "dividend", "invest") to CategoryIcon.Savings,
+    listOf("shop", "retail", "store", "purchase", "clothes", "clothing", "fashion") to CategoryIcon.ShoppingBag,
+    listOf("home", "rent", "mortgage", "utility", "utilities", "electric", "water", "internet", "house") to
+        CategoryIcon.Home,
+    listOf(
+        "health",
+        "medical",
+        "doctor",
+        "hospital",
+        "pharmacy",
+        "medicine",
+        "dental",
+        "insurance",
+    ) to CategoryIcon.LocalHospital,
+    listOf("gift", "donation", "charity", "present") to CategoryIcon.FavoriteBorder,
+    listOf("pet", "dog", "cat", "animal", "vet") to CategoryIcon.Pets,
+    listOf("education", "school", "university", "tuition", "book", "course", "training") to CategoryIcon.School,
+    listOf("travel", "flight", "hotel", "vacation", "trip", "holiday", "airbnb", "airline") to CategoryIcon.Flight,
+    listOf("gym", "fitness", "sport", "exercise", "health club", "yoga") to CategoryIcon.Spa,
+    listOf("personal", "care", "beauty", "salon", "spa", "haircut") to CategoryIcon.Spa,
+)
 
 /**
  * Parses a decimal amount such as "45.50", "3200.0" or "-5.75" into minor units

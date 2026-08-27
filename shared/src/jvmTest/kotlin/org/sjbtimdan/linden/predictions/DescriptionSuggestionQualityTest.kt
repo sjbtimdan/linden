@@ -8,7 +8,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.db.LindenDatabase
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import java.io.File
 import kotlin.random.Random
@@ -170,7 +169,11 @@ class DescriptionSuggestionQualityTest : StringSpec({
                         val typeSample = sample.filter { it.type == type }
                         if (typeSample.isEmpty()) continue
 
-                        var t1 = 0; var t3 = 0; var t5 = 0; var t10 = 0; var noPred = 0
+                        var t1 = 0;
+                        var t3 = 0;
+                        var t5 = 0;
+                        var t10 = 0;
+                        var noPred = 0
                         for (e in typeSample) {
                             val trainingData = allEntries.filter { it.id != e.id }
                             val input = DescriptionPredictionInput(
@@ -235,5 +238,4 @@ class DescriptionSuggestionQualityTest : StringSpec({
     }
 })
 
-private fun hitPct(hits: Int, total: Int): String =
-    if (total == 0) "  N/A" else "${hits * 100 / total}%"
+private fun hitPct(hits: Int, total: Int): String = if (total == 0) "  N/A" else "${hits * 100 / total}%"

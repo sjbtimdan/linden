@@ -21,7 +21,7 @@ class LindenBackupManagerTest : StringSpec({
         val cashId = importQueries.lastInsertId().awaitAsOne()
         accountQueries.insert("Savings", "EUR", 0)
         val savingsId = importQueries.lastInsertId().awaitAsOne()
-        categoryQueries.insert("Food", CategoryType.Expense.name)
+        categoryQueries.insert("Food", CategoryType.Expense.name, null)
         val categoryId = importQueries.lastInsertId().awaitAsOne()
         entryQueries.insert(
             type = "Expense",
@@ -113,7 +113,7 @@ class LindenBackupManagerTest : StringSpec({
         val bytes = ByteArrayOutputStream().also { LindenBackupManager(seedDatabase()).backupTo(it) }.toByteArray()
         val target = lindenDatabase().apply {
             accountQueries.insert("Old", "USD", 0)
-            categoryQueries.insert("Old category", CategoryType.Income.name)
+            categoryQueries.insert("Old category", CategoryType.Income.name, null)
             settingsQueries.insertOrReplace(THEME_KEY, ThemeMode.LIGHT.name)
         }
 

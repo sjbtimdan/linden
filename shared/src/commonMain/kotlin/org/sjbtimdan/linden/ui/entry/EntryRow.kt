@@ -73,7 +73,7 @@ fun EntryRow(entry: Entry, onClick: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = entry.type.icon(),
+                imageVector = entry.category?.icon?.imageVector() ?: entry.type.icon(),
                 contentDescription = null,
                 tint = tint,
                 modifier = Modifier.size(20.dp),

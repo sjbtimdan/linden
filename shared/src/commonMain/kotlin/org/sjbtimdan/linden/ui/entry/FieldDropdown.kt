@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 
 /** A labeled dropdown, or a [MissingFieldLink] when the field cannot be satisfied yet. */
 @Composable
@@ -14,6 +15,7 @@ fun <T> FieldDropdown(
     missing: String? = null,
     onNavigateToSettings: () -> Unit = {},
     predicted: List<T> = emptyList(),
+    optionIcon: ((T) -> ImageVector?)? = null,
 ) {
     if (missing != null) {
         MissingFieldLink(label = label, text = missing, onClick = onNavigateToSettings)
@@ -26,6 +28,7 @@ fun <T> FieldDropdown(
             onSelect = onSelect,
             onFocusChange = onFocusChange,
             predictedOptions = predicted,
+            optionIcon = optionIcon,
         )
     }
 }

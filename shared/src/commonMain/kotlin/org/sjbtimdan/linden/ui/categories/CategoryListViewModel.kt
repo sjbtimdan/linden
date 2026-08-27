@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 
 class CategoryListViewModel(
@@ -40,9 +41,9 @@ class CategoryListViewModel(
         _searchQuery.value = query
     }
 
-    fun createCategory(name: String, type: CategoryType) {
+    fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null) {
         viewModelScope.launch {
-            categoryDao.create(name, type)
+            categoryDao.create(name, type, icon)
         }
     }
 

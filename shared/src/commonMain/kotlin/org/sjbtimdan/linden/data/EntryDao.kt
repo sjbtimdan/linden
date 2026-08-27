@@ -9,6 +9,7 @@ import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -119,6 +120,7 @@ class EntryDao(private val queries: EntryQueries) {
         accountCurrency: String,
         categoryName: String?,
         categoryType: String?,
+        categoryIcon: String?,
         toAccountName: String?,
         toAccountCurrency: String?,
     ): Entry {
@@ -132,6 +134,7 @@ class EntryDao(private val queries: EntryQueries) {
                 id = it,
                 name = requireNotNull(categoryName) { "Missing name for category $it" },
                 type = CategoryType.valueOf(requireNotNull(categoryType) { "Missing type for category $it" }),
+                icon = categoryIcon?.let { icon -> CategoryIcon.valueOf(icon) },
             )
         }
         return when (EntryType.valueOf(type)) {

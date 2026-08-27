@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,7 @@ fun <T> DropdownField(
     onSelect: (T) -> Unit,
     onFocusChange: (Boolean) -> Unit = {},
     predictedOptions: List<T>? = null,
+    optionIcon: ((T) -> ImageVector?)? = null,
 ) {
     var focused by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -73,6 +75,7 @@ fun <T> DropdownField(
             optionLabel = optionLabel,
             isSelected = { it == selected },
             isPredicted = { it in predicted },
+            optionIcon = optionIcon,
             onSelect = { option ->
                 onSelect(option)
                 keyboardController?.hide()
