@@ -1,7 +1,6 @@
 package org.sjbtimdan.linden.predictions
 
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import kotlinx.datetime.TimeZone
@@ -42,16 +41,54 @@ class FieldPredictorTest : StringSpec({
         predictCategories(entries, predictionInput, now, timeZone, topN)
 
     context("predictCategories") {
-        "returns empty when no signals are given" {
-            // a category id is the field being predicted, not a signal
-            predictCategories(listOf(expense(1, food, "Coffee", main, 450, now)), input(categoryId = food.id))
-                .shouldBeEmpty()
+        "ranks by frequency when no signals are given" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, food, "Lunch", main, 450, now),
+                expense(3, transport, "Train", main, 300, now),
+            )
+            predictCategories(entries, input()).shouldContainExactly(food.id, transport.id)
+        }
+
+        "frequency ranking favours recent entries" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now.minus(150.days)),
+                expense(2, transport, "Train", main, 300, now.minus(5.days)),
+            )
+            predictCategories(entries, input()).shouldContainExactly(transport.id, food.id)
+        }
+
+        "frequency ranking only considers entries of the same type" {
+            val income = IncomeEntry(1, food, "Salary", main, 450, createdAt = now, createdZone = TimeZone.UTC)
+            val entries = listOf(
+                expense(2, transport, "Train", main, 300, now),
+                income,
+            )
+            predictCategories(entries, input(type = EntryType.Income)).shouldContainExactly(food.id)
+        }
+
+        "frequency ranking excludes entries older than six months" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, transport, "Train", main, 300, now.minus(200.days)),
+            )
+            predictCategories(entries, input()).shouldContainExactly(food.id)
+        }
+
+        "frequency ranking caps results at top N" {
+            val entries = (1L..12L).map { id ->
+                expense(id, Category(id, "Category $id", CategoryType.Expense), "Desc", main, 450, now)
+            }
+            predictCategories(entries, input()).shouldHaveSize(PREDICTION_TOP_N)
         }
 
         "treats a blank description as no signal" {
-            val entries = listOf(expense(1, food, "Coffee", main, 450, now))
-            predictCategories(entries, input(description = "   ")).shouldBeEmpty()
-            predictAccounts(entries, input(description = "   ")).shouldBeEmpty()
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, transport, "Train", main, 300, now),
+            )
+            predictCategories(entries, input(description = "   ")).shouldContainExactly(food.id, transport.id)
+            predictAccounts(entries, input(description = "   ")).shouldContainExactly(main.id)
         }
 
         "predicts the category used with the given account" {
@@ -155,10 +192,45 @@ class FieldPredictorTest : StringSpec({
     }
 
     context("predictAccounts") {
-        "returns empty when no signals are given" {
-            // an account id is the field being predicted, not a signal
-            predictAccounts(listOf(expense(1, food, "Coffee", main, 450, now)), input(accountId = main.id))
-                .shouldBeEmpty()
+        "ranks by frequency when no signals are given" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, food, "Lunch", main, 450, now),
+                expense(3, food, "Dinner", savings, 450, now),
+            )
+            predictAccounts(entries, input()).shouldContainExactly(main.id, savings.id)
+        }
+
+        "frequency ranking favours recent entries" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now.minus(150.days)),
+                expense(2, food, "Lunch", savings, 450, now.minus(5.days)),
+            )
+            predictAccounts(entries, input()).shouldContainExactly(savings.id, main.id)
+        }
+
+        "frequency ranking only considers entries of the same type" {
+            val income = IncomeEntry(1, food, "Salary", savings, 450, createdAt = now, createdZone = TimeZone.UTC)
+            val entries = listOf(
+                expense(2, food, "Coffee", main, 450, now),
+                income,
+            )
+            predictAccounts(entries, input(type = EntryType.Income)).shouldContainExactly(savings.id)
+        }
+
+        "frequency ranking excludes entries older than six months" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, food, "Lunch", savings, 450, now.minus(200.days)),
+            )
+            predictAccounts(entries, input()).shouldContainExactly(main.id)
+        }
+
+        "frequency ranking caps results at top N" {
+            val entries = (1L..12L).map { id ->
+                expense(id, food, "Desc", Account(id, "Account $id", Currency.CHF), 450, now)
+            }
+            predictAccounts(entries, input()).shouldHaveSize(PREDICTION_TOP_N)
         }
 
         "predicts the account used with the given category and amount" {

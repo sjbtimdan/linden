@@ -18,9 +18,10 @@ data class FieldPredictionInput(
  * category, amount and description entered so far ([input]) and the last
  * [PREDICTION_HORIZON_MONTHS] months of [entries] of the same type.
  *
- * Candidates must match at least one entered signal; entries closer in time
- * (recency, hour of day, weekday, month) rank higher. No attempt is made when
- * category, amount and description are all absent.
+ * When at least one signal (category, amount or description) is present,
+ * candidates must match that signal; entries closer in time rank higher.
+ * When no signals are present, results are ranked by usage frequency weighted
+ * by recency so the most commonly used options appear first.
  */
 fun predictAccounts(
     entries: List<Entry>,
@@ -29,7 +30,8 @@ fun predictAccounts(
     timeZone: TimeZone,
     topN: Int,
 ): List<Long> {
-    if (input.categoryId == null && input.amount == null && input.description.isNullOrBlank()) return emptyList()
+    val hasSignal = input.categoryId != null || input.amount != null || !input.description.isNullOrBlank()
+    if (!hasSignal) return frequencyRankIds(entries, input.type, now, timeZone, topN) { it.account.id }
     return predictField(entries, input.copy(accountId = null), now, timeZone, topN) { it.account.id }
 }
 
@@ -38,9 +40,10 @@ fun predictAccounts(
  * account, amount and description entered so far ([input]) and the last
  * [PREDICTION_HORIZON_MONTHS] months of [entries] of the same type.
  *
- * Candidates must match at least one entered signal; entries closer in time
- * (recency, hour of day, weekday, month) rank higher. No attempt is made when
- * account, amount and description are all absent.
+ * When at least one signal (account, amount or description) is present,
+ * candidates must match that signal; entries closer in time rank higher.
+ * When no signals are present, results are ranked by usage frequency weighted
+ * by recency so the most commonly used options appear first.
  */
 fun predictCategories(
     entries: List<Entry>,
@@ -49,7 +52,8 @@ fun predictCategories(
     timeZone: TimeZone,
     topN: Int,
 ): List<Long> {
-    if (input.accountId == null && input.amount == null && input.description.isNullOrBlank()) return emptyList()
+    val hasSignal = input.accountId != null || input.amount != null || !input.description.isNullOrBlank()
+    if (!hasSignal) return frequencyRankIds(entries, input.type, now, timeZone, topN) { it.category?.id }
     return predictField(entries, input.copy(categoryId = null), now, timeZone, topN) { it.category?.id }
 }
 
@@ -71,6 +75,30 @@ private fun predictField(
         val score = (match + description + timeAffinityScore(candidate.createdAt, now, timeZone)) *
             recencyWeight(candidate.createdAt, now)
         ScoredId(id, score)
+    }
+    .groupBy { it.id }
+    .map { (id, group) -> ScoredId(id, group.sumOf { it.score }) }
+    .sortedWith(compareByDescending<ScoredId> { it.score }.thenBy { it.id })
+    .take(topN)
+    .map { it.id }
+
+/**
+ * Ranks all ids of [type] by usage frequency in [entries], weighted by recency.
+ * Used as a fallback when the draft has no context (no category/amount/description
+ * entered yet) so that the most commonly used options appear first instead of
+ * an empty suggestion list.
+ */
+private fun frequencyRankIds(
+    entries: List<Entry>,
+    type: EntryType,
+    now: Instant,
+    timeZone: TimeZone,
+    topN: Int,
+    idOf: (Entry) -> Long?,
+): List<Long> = candidateEntries(entries, type, now, timeZone)
+    .mapNotNull { entry ->
+        val id = idOf(entry) ?: return@mapNotNull null
+        ScoredId(id, recencyWeight(entry.createdAt, now))
     }
     .groupBy { it.id }
     .map { (id, group) -> ScoredId(id, group.sumOf { it.score }) }
