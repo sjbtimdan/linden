@@ -127,7 +127,7 @@ class RatesScreenTest : StringSpec({
                     onNavigateBack = { navigatedBack = true },
                 )
             }
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             navigatedBack shouldBe true
         }
     }

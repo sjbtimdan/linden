@@ -56,7 +56,7 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             navigatedBack shouldBe true
         }
     }

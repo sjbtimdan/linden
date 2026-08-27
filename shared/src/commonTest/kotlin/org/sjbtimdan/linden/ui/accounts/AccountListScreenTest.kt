@@ -169,7 +169,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             navigatedBack shouldBe true
         }
     }

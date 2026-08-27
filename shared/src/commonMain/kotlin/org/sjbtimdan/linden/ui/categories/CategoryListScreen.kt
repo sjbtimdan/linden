@@ -78,14 +78,11 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             .padding(ScreenPadding)
             .widthIn(max = ScreenMaxWidth),
     ) {
-        TextButton(onClick = onNavigateBack) {
+        IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                contentDescription = "Back",
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("< Settings")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

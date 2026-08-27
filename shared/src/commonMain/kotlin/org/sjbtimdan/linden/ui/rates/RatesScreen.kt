@@ -29,7 +29,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,14 +62,11 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             .widthIn(max = ScreenMaxWidth)
             .verticalScroll(rememberScrollState()),
     ) {
-        TextButton(onClick = onNavigateBack) {
+        IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                contentDescription = "Back",
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("< Settings")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

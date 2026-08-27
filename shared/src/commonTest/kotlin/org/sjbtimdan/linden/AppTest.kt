@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
@@ -38,7 +39,7 @@ class AppTest : StringSpec({
             onNodeWithText("Categories").performClick()
             onNodeWithText("No categories yet.").assertExists()
 
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             onNodeWithText("Import from Ivy").assertExists()
         }
     }
@@ -51,7 +52,7 @@ class AppTest : StringSpec({
             onNodeWithText("Accounts").performClick()
             onNodeWithText("+ New Account").assertExists()
 
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             onNodeWithText("Import from Ivy").assertExists()
         }
     }
@@ -64,7 +65,7 @@ class AppTest : StringSpec({
             onNodeWithText("Currency rates").performClick()
             onNodeWithText("Refresh").assertExists()
 
-            onNodeWithText("< Settings").performClick()
+            onNodeWithContentDescription("Back").performClick()
             onNodeWithText("Import from Ivy").assertExists()
         }
     }
