@@ -270,4 +270,16 @@ class EntryDialogTest : StringSpec({
             }
         }
     }
+
+    "Add button appears when description field is focused" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft())
+                onNodeWithText("Add").assertDoesNotExist()
+                onNodeWithText("Description (optional)").performClick()
+                waitForIdle()
+                onNodeWithText("Add").assertIsDisplayed()
+            }
+        }
+    }
 })
