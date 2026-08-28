@@ -6,6 +6,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlinx.datetime.LocalDateTime
 import org.sjbtimdan.linden.data.THEME_KEY
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.CategoryType
@@ -203,5 +204,13 @@ class LindenBackupManagerTest : StringSpec({
         database.entryQueries.selectAllRows().awaitAsList().size shouldBe 3
         database.settingsQueries.selectAll().awaitAsList().size shouldBe 1
         database.fxRateQueries.selectAll().awaitAsList().size shouldBe 1
+    }
+
+    "backupFileName includes a zero-padded local date-time in the name" {
+        backupFileName(LocalDateTime(2026, 8, 28, 15, 30, 45)) shouldBe "linden-backup-2026-08-28-153045.json"
+    }
+
+    "backupFileName zero-pads single-digit date and time parts" {
+        backupFileName(LocalDateTime(2026, 1, 3, 9, 5, 7)) shouldBe "linden-backup-2026-01-03-090507.json"
     }
 })

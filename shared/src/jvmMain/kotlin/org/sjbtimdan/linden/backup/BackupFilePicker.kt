@@ -1,6 +1,9 @@
 package org.sjbtimdan.linden.backup
 
 import androidx.compose.runtime.Composable
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
@@ -13,6 +16,7 @@ import java.io.OutputStream
 actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -> Unit = {
     val owner = Frame.getFrames().firstOrNull { it.isShowing }
     val dialog = FileDialog(owner, "Back up database", FileDialog.SAVE)
+    dialog.file = backupFileName(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()))
     dialog.isVisible = true
     val directory = dialog.directory
     val file = dialog.file

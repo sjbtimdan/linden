@@ -4,6 +4,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -20,7 +23,7 @@ actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -
         }
     }
     return {
-        launcher.launch("linden-backup.json")
+        launcher.launch(backupFileName(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
     }
 }
 
