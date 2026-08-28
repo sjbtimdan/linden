@@ -169,10 +169,10 @@ class DescriptionSuggestionQualityTest : StringSpec({
                         val typeSample = sample.filter { it.type == type }
                         if (typeSample.isEmpty()) continue
 
-                        var t1 = 0;
-                        var t3 = 0;
-                        var t5 = 0;
-                        var t10 = 0;
+                        var t1 = 0
+                        var t3 = 0
+                        var t5 = 0
+                        var t10 = 0
                         var noPred = 0
                         for (e in typeSample) {
                             val trainingData = allEntries.filter { it.id != e.id }
