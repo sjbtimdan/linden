@@ -29,13 +29,38 @@ class DescriptionPredictorTest : StringSpec({
         categoryId: Long? = null,
         accountId: Long? = null,
         amount: Long? = null,
-    ) = DescriptionPredictionInput(type, categoryId, accountId, amount)
+        description: String? = null,
+    ) = DescriptionPredictionInput(type, categoryId, accountId, amount, description)
 
     fun predict(entries: List<Entry>, predictionInput: DescriptionPredictionInput, topN: Int = PREDICTION_TOP_N) =
         predictDescriptions(entries, predictionInput, now, timeZone, topN)
 
     "returns empty when no inputs are given" {
         predict(listOf(expense(1, food, "Coffee", main, 450, now)), input()).shouldBeEmpty()
+    }
+
+    "returns descriptions matching the typed text when no fields are set" {
+        val entries = listOf(
+            expense(1, food, "Italian Supermercato", main, 450, now),
+            expense(2, food, "Coffee", main, 300, now),
+        )
+        predict(entries, input(description = "Italian"))
+            .shouldContainExactly("Italian Supermercato")
+    }
+
+    "surfaces a rare description when the typed text matches it" {
+        val entries = listOf(
+            expense(1, food, "Fusion", main, 450, now),
+            expense(2, food, "Fusion", main, 450, now),
+            expense(3, food, "Fusion", main, 450, now),
+            expense(4, food, "Italian Supermercato", main, 450, now),
+        )
+        // Without a query the frequent description dominates the top N...
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450), topN = 1)
+            .shouldContainExactly("Fusion")
+        // ...but typing narrows the candidates to matching descriptions.
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450, description = "Italian"))
+            .shouldContainExactly("Italian Supermercato")
     }
 
     "returns empty when no candidate matches any input" {

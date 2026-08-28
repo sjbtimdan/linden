@@ -10,6 +10,7 @@ data class DescriptionPredictionInput(
     val categoryId: Long?,
     val accountId: Long?,
     val amount: Long?,
+    val description: String?,
 )
 
 /**
@@ -17,7 +18,9 @@ data class DescriptionPredictionInput(
  * [PREDICTION_HORIZON_MONTHS] months of [entries] of the same type as [input.type].
  *
  * Missing inputs are skipped (best effort); no attempt is made when category,
- * account and amount are all absent. Recent entries are weighted higher.
+ * account, amount and description are all absent. A typed description narrows
+ * the candidates to descriptions matching it, so rare descriptions surface as
+ * soon as their text is entered. Recent entries are weighted higher.
  */
 fun predictDescriptions(
     entries: List<Entry>,
@@ -26,13 +29,23 @@ fun predictDescriptions(
     timeZone: TimeZone,
     topN: Int,
 ): List<String> {
-    if (input.categoryId == null && input.accountId == null && input.amount == null) return emptyList()
+    val query = input.description?.trim().orEmpty()
+    if (input.categoryId == null && input.accountId == null && input.amount == null && query.isEmpty()) {
+        return emptyList()
+    }
     return candidateEntries(entries, input.type, now, timeZone)
         .mapNotNull { candidate ->
             val description = candidate.description?.trim().orEmpty().ifEmpty { return@mapNotNull null }
-            val match = baseMatchScore(candidate, input.categoryId, input.accountId, input.amount)
-                ?: return@mapNotNull null
-            ScoredDescription(description, match * recencyWeight(candidate.createdAt, now))
+            val match = baseMatchScore(candidate, input.categoryId, input.accountId, input.amount) ?: 0.0
+            val descriptionMatch = descriptionScore(description, input.description)
+            // A typed description narrows candidates to matching descriptions;
+            // otherwise at least one entered field must match.
+            if (query.isNotEmpty()) {
+                if (descriptionMatch == 0.0) return@mapNotNull null
+            } else if (match == 0.0) {
+                return@mapNotNull null
+            }
+            ScoredDescription(description, (match + descriptionMatch) * recencyWeight(candidate.createdAt, now))
         }
         .groupBy { it.description.lowercase() }
         .map { (_, group) ->

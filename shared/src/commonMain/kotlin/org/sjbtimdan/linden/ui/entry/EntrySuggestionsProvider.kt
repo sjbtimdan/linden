@@ -121,6 +121,7 @@ class EntrySuggestionsProvider(
                 categoryId = state.categoryId,
                 accountId = state.accountId,
                 amount = state.amount,
+                description = state.description,
             ),
             now = Clock.System.now(),
             timeZone = TimeZone.currentSystemDefault(),

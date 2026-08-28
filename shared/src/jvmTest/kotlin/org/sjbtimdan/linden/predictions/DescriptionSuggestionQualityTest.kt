@@ -84,6 +84,7 @@ class DescriptionSuggestionQualityTest : StringSpec({
                                 categoryId = entry.category?.id,
                                 accountId = entry.account.id,
                                 amount = entry.amount,
+                                description = null,
                             )
 
                             val predictions = predictDescriptions(
@@ -181,6 +182,7 @@ class DescriptionSuggestionQualityTest : StringSpec({
                                 categoryId = e.category?.id,
                                 accountId = e.account.id,
                                 amount = e.amount,
+                                description = null,
                             )
                             val preds = predictDescriptions(
                                 entries = trainingData,
