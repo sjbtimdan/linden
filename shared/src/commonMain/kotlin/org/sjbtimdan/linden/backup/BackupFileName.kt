@@ -16,5 +16,4 @@ private val BACKUP_FILE_NAME_FORMAT = LocalDateTime.Format {
 }
 
 /** Default file name for a database backup, e.g. "linden-backup-2026-08-28-153045.json". */
-fun backupFileName(now: LocalDateTime): String =
-    "linden-backup-" + BACKUP_FILE_NAME_FORMAT.format(now) + ".json"
+fun backupFileName(now: LocalDateTime): String = "linden-backup-" + BACKUP_FILE_NAME_FORMAT.format(now) + ".json"

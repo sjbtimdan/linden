@@ -11,8 +11,14 @@ lives in `.opencode/context/` (standards/workflows under `core/`, loaded via Con
 
 ## MCP
 
-Check if IntelliJ MCP is available. Use it for searching files, compiling and testing as it is faster.
+Check if IntelliJ MCP is available.
+Use it for searching files, compiling and testing as it is faster.
 When running tests: if a test configuration is not available (e.g. for jvmTests) then create it.
+
+## Tests
+
+Always run tests at the end of each change. Use ./check.sh as that runs everything.
+When developing, it's quicker to use IntelliJ MCP to run tests.
 
 ## Modules
 
