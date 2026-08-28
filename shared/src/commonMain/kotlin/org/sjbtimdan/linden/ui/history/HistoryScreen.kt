@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.history
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -113,7 +115,9 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             // The type filter only applies to entries and category totals, so it
@@ -133,14 +137,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 onSelect = viewModel::setViewMode,
                 modifier = Modifier.testTag("viewModeDropdown"),
             )
-        }
-
-        if (viewMode == HistoryViewMode.Entries) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+            if (viewMode == HistoryViewMode.Entries) {
                 ChipDropdown(
                     selected = categoryFilter,
                     options = listOf(null) + categories.map { it.id },
@@ -292,7 +289,8 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .testTag("entryList"),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 listItems.forEach { item ->

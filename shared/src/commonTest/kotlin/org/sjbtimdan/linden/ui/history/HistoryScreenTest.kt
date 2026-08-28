@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -197,10 +196,10 @@ class HistoryScreenTest : StringSpec({
                 HistoryScreen(viewModel = viewModel)
             }
 
-            repeat(3) { onNode(hasScrollAction()).performTouchInput { swipeUp() } }
+            repeat(3) { onNodeWithTag("entryList").performTouchInput { swipeUp() } }
             waitForIdle()
 
-            val listTop = onNode(hasScrollAction()).getUnclippedBoundsInRoot().top
+            val listTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
             var pinnedTop: Dp? = null
             for (day in 8..12) {
                 runCatching {
