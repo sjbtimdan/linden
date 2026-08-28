@@ -16,6 +16,10 @@ import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 sealed interface RatesRefreshState {
     data object Idle : RatesRefreshState
@@ -23,9 +27,15 @@ sealed interface RatesRefreshState {
     data class Error(val message: String) : RatesRefreshState
 }
 
+sealed interface RatesWarning {
+    data object Missing : RatesWarning
+    data object Outdated : RatesWarning
+}
+
 class RatesViewModel(
     private val settingsDao: SettingsDao,
     private val fxRatesRepository: FxRatesRepository,
+    private val clock: () -> Instant = { Clock.System.now() },
 ) : ViewModel() {
     val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(
@@ -46,6 +56,9 @@ class RatesViewModel(
 
     private val _ratesRefreshState = MutableStateFlow<RatesRefreshState>(RatesRefreshState.Idle)
     val ratesRefreshState: StateFlow<RatesRefreshState> = _ratesRefreshState.asStateFlow()
+
+    private val _ratesWarning = MutableStateFlow<RatesWarning?>(null)
+    val ratesWarning: StateFlow<RatesWarning?> = _ratesWarning.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -72,6 +85,7 @@ class RatesViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                evaluateRatesWarning(currency)
                 _ratesRefreshState.update { RatesRefreshState.Error(e.message ?: "Failed to refresh rates") }
             }
         }
@@ -82,7 +96,10 @@ class RatesViewModel(
     }
 
     fun setRate(quote: Currency, rate: Double) {
-        viewModelScope.launch { fxRatesRepository.setRate(base.value, quote, rate) }
+        viewModelScope.launch {
+            fxRatesRepository.setRate(base.value, quote, rate)
+            _ratesWarning.value = null
+        }
     }
 
     fun clearRatesError() {
@@ -102,6 +119,26 @@ class RatesViewModel(
                     RatesRefreshState.Error(e.message ?: "Failed to refresh rates")
                 }
             }
+            if (_ratesRefreshState.value is RatesRefreshState.Idle) {
+                _ratesWarning.value = null
+            }
         }
+    }
+
+    /**
+     * After a failed startup refresh, warns when rates are unusable: no rates
+     * cached at all, or cached rates fetched more than a week ago.
+     */
+    private suspend fun evaluateRatesWarning(currency: Currency) {
+        val fetchedAt = fxRatesRepository.lastFetchedAt(currency)
+        _ratesWarning.value = when {
+            fetchedAt == null -> RatesWarning.Missing
+            clock() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_WARNING_STALE_AFTER -> RatesWarning.Outdated
+            else -> null
+        }
+    }
+
+    private companion object {
+        val RATES_WARNING_STALE_AFTER: Duration = 7.days
     }
 }

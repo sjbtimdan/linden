@@ -47,6 +47,8 @@ class FxRatesRepository(
         return clock() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_STALE_AFTER
     }
 
+    suspend fun lastFetchedAt(base: Currency): Long? = dao.lastFetchedAt(base)
+
     fun ratesFor(base: Currency): Flow<List<FxRate>> = dao.ratesFor(base)
 
     private fun FxRates.toFxRates() = rates.map { (quote, rate) ->

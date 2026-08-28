@@ -62,6 +62,7 @@ fun App(dependencies: AppDependencies) {
         ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
+    val ratesWarning by ratesViewModel.ratesWarning.collectAsState()
 
     LindenTheme(themeMode = themeMode) {
         Scaffold(
@@ -121,6 +122,8 @@ fun App(dependencies: AppDependencies) {
                         Screen.Ledger -> LedgerScreen(
                             viewModel = ledgerViewModel,
                             onNavigateToSettings = { currentScreen = Screen.Settings },
+                            onNavigateToRates = { currentScreen = Screen.Rates },
+                            ratesWarning = ratesWarning,
                         )
 
                         Screen.History -> HistoryScreen(

@@ -11,7 +11,9 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.model.FxRates
 import org.sjbtimdan.linden.ui.onTestMain
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
@@ -151,6 +153,122 @@ class RatesViewModelTest : StringSpec({
                 viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
             }
             (state as RatesRefreshState.Error).message shouldBe "network"
+        }
+    }
+
+    "a failed startup refresh warns when no rates are cached" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource { error("network") },
+                    { NOW },
+                ),
+            )
+
+            viewModel.refreshRatesIfStale()
+
+            val warning = withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            warning shouldBe RatesWarning.Missing
+        }
+    }
+
+    "a failed startup refresh warns when cached rates are over a week old" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = FxRateDao(database.fxRateQueries)
+            dao.replaceRates(seededRates, NOW.minus(8.days).toEpochMilliseconds())
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    dao,
+                    FakeFxRatesSource { error("network") },
+                    { NOW },
+                ),
+                clock = { NOW },
+            )
+
+            viewModel.refreshRatesIfStale()
+
+            val warning = withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            warning shouldBe RatesWarning.Outdated
+        }
+    }
+
+    "a failed startup refresh does not warn when cached rates are recent" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = FxRateDao(database.fxRateQueries)
+            dao.replaceRates(seededRates, NOW.minus(2.days).toEpochMilliseconds())
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    dao,
+                    FakeFxRatesSource { error("network") },
+                    { NOW },
+                ),
+                clock = { NOW },
+            )
+
+            viewModel.refreshRatesIfStale()
+
+            withTimeout(5_000) {
+                viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+            }
+            viewModel.ratesWarning.value shouldBe null
+        }
+    }
+
+    "a successful refresh clears the rates warning" {
+        onTestMain {
+            val database = lindenDatabase()
+            var fail = true
+            val source = FakeFxRatesSource { base ->
+                if (fail) {
+                    error("network")
+                } else {
+                    FxRates(
+                        base = base,
+                        date = "2026-08-13",
+                        rates = Currency.entries.filter { it != base }.associateWith { 1.0 },
+                    )
+                }
+            }
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+            )
+
+            viewModel.refreshRatesIfStale()
+            withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+
+            fail = false
+            viewModel.refreshRates()
+            withTimeout(5_000) { viewModel.ratesWarning.first { it == null } }
+            viewModel.ratesWarning.value shouldBe null
+        }
+    }
+
+    "setting a rate manually clears the rates warning" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource { error("network") },
+                    { NOW },
+                ),
+            )
+
+            viewModel.refreshRatesIfStale()
+            withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+
+            viewModel.setRate(Currency.EUR, 1.5)
+            withTimeout(5_000) { viewModel.ratesWarning.first { it == null } }
+            viewModel.ratesWarning.value shouldBe null
         }
     }
 

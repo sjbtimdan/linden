@@ -128,7 +128,9 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     text = "Update automatically",
                     style = MaterialTheme.typography.bodyLarge,

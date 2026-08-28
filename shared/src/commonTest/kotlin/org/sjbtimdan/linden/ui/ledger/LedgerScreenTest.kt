@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -37,6 +38,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -191,7 +193,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Description (optional)").performTextInput("Lunch")
 
             // typing the description collapses the form and hides the buttons
-            onNodeWithText("Add").assertDoesNotExist()
+            onNodeWithTag("saveEntry").assertDoesNotExist()
 
             // invoke the click action directly; the skiko mouse-click path misses
             // the button when the form is collapsed, so a gesture-level tap here
@@ -202,7 +204,7 @@ class LedgerScreenTest : StringSpec({
             // the form expands with the draft preserved — Clear is the full reset
             onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("Lunch")).assertIsDisplayed()
-            onNodeWithText("Add").assertIsDisplayed()
+            onNodeWithTag("saveEntry").assertIsDisplayed()
             entryDao.getAll().first().shouldHaveSize(0)
         }
     }
@@ -758,6 +760,42 @@ class LedgerScreenTest : StringSpec({
             waitUntil(timeoutMillis = 5_000) {
                 onAllNodesWithText("Quick entry").fetchSemanticsNodes().isEmpty()
             }
+        }
+    }
+
+    "shows a banner when rates are missing" {
+        withLedgerViewModel { viewModel ->
+            setContent {
+                LedgerScreen(viewModel = viewModel, ratesWarning = RatesWarning.Missing)
+            }
+
+            onNodeWithText("No exchange rates available. You can set them manually.").assertIsDisplayed()
+        }
+    }
+
+    "shows a banner when rates are over a week old" {
+        withLedgerViewModel { viewModel ->
+            setContent {
+                LedgerScreen(viewModel = viewModel, ratesWarning = RatesWarning.Outdated)
+            }
+
+            onNodeWithText("Exchange rates are over a week old. You can set them manually.").assertIsDisplayed()
+        }
+    }
+
+    "the rates banner navigates to the rates screen" {
+        withLedgerViewModel { viewModel ->
+            var navigatedToRates = false
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    ratesWarning = RatesWarning.Missing,
+                    onNavigateToRates = { navigatedToRates = true },
+                )
+            }
+
+            onNodeWithText("Set rates").performClick()
+            navigatedToRates shouldBe true
         }
     }
 })

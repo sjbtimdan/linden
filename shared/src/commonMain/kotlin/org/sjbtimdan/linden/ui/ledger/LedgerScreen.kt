@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.model.Currency
@@ -54,12 +55,19 @@ import org.sjbtimdan.linden.ui.entry.EntryForm
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.icon
+import org.sjbtimdan.linden.ui.rates.RatesWarning
+import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenInsets
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
 @Composable
-fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
+fun LedgerScreen(
+    viewModel: LedgerViewModel,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToRates: () -> Unit = {},
+    ratesWarning: RatesWarning? = null,
+) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
@@ -148,6 +156,15 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 hidden = hideLedgerTotal,
                 onToggleHidden = { viewModel.setHideLedgerTotal(!hideLedgerTotal) },
             )
+
+            ratesWarning?.let { warning ->
+                Spacer(modifier = Modifier.height(12.dp))
+
+                RatesWarningBanner(
+                    warning = warning,
+                    onSetRates = onNavigateToRates,
+                )
+            }
         }
         if (fieldFocused) {
             Row(
@@ -215,7 +232,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                         }
                     },
                     enabled = draft?.isValid(accounts) == true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("saveEntry"),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Add,

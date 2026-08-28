@@ -1,10 +1,12 @@
 package org.sjbtimdan.linden
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
+import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.ui.withApp
 
 @OptIn(ExperimentalTestApi::class)
@@ -67,6 +69,20 @@ class AppTest : StringSpec({
 
             onNodeWithContentDescription("Back").performClick()
             onNodeWithText("Import from Ivy").assertExists()
+        }
+    }
+
+    "startup shows a rates warning and navigates to rates when the fetch fails with no cached rates" {
+        withApp(fxRatesSource = FakeFxRatesSource { error("network") }) { dependencies ->
+            setContent { App(dependencies) }
+
+            waitUntil(timeoutMillis = 5_000) {
+                onAllNodesWithText("No exchange rates available. You can set them manually.")
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+
+            onNodeWithText("Set rates").performClick()
+            onNodeWithText("Refresh").assertExists()
         }
     }
 })
