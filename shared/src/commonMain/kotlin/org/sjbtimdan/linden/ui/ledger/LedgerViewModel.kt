@@ -56,6 +56,10 @@ class LedgerViewModel(
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
 
+    /** Amount filter applied to the entries view, or null for no amount filter. */
+    private val _amountFilter = MutableStateFlow<AmountFilter?>(null)
+    val amountFilter: StateFlow<AmountFilter?> = _amountFilter.asStateFlow()
+
     /** Whether future-dated entries are shown in the ledger (all view modes). */
     private val _showFuture = MutableStateFlow(false)
     val showFuture: StateFlow<Boolean> = _showFuture.asStateFlow()
@@ -106,10 +110,12 @@ class LedgerViewModel(
         periodEntries,
         _searchQuery,
         _typeFilter,
-    ) { periodEntries, query, type ->
+        _amountFilter,
+    ) { periodEntries, query, type, amountFilter ->
         val normalized = query.trim().lowercase()
         periodEntries.asSequence()
             .filter { searchable -> type == null || searchable.entry.type == type }
+            .filter { searchable -> amountFilter == null || searchable.matchesAmount(amountFilter) }
             .filter { searchable -> normalized.isEmpty() || searchable.matches(normalized) }
             .map { it.entry }
             .toList()
@@ -245,6 +251,16 @@ class LedgerViewModel(
         _typeFilter.value = type
     }
 
+    /** Sets the amount filter on the entries view; null clears it. */
+    fun setAmountFilter(filter: AmountFilter?) {
+        _amountFilter.value = filter
+    }
+
+    /** Removes the amount filter, restoring all amounts. */
+    fun clearAmountFilter() {
+        _amountFilter.value = null
+    }
+
     fun setShowFuture(show: Boolean) {
         _showFuture.value = show
     }
@@ -342,6 +358,29 @@ private class SearchableEntry(val entry: Entry) {
         categoryName?.contains(query) == true ||
         accountName.contains(query) ||
         toAccountName?.contains(query) == true
+
+    /** Whether the entry's amount (or, for transfers, its to-amount) satisfies [filter]. */
+    fun matchesAmount(filter: AmountFilter): Boolean =
+        filter.matches(entry.amount) || (entry as? TransferEntry)?.toAmount?.let(filter::matches) == true
+}
+
+/** How an amount filter compares an entry's amount against a target value. */
+enum class AmountOperator {
+    GreaterThan,
+    LessThan,
+    Approximately,
+}
+
+/** A filter on entry amounts: [operator] applied to [minor] (minor units). */
+data class AmountFilter(
+    val operator: AmountOperator,
+    val minor: Long,
+) {
+    fun matches(amount: Long): Boolean = when (operator) {
+        AmountOperator.GreaterThan -> amount > minor
+        AmountOperator.LessThan -> amount < minor
+        AmountOperator.Approximately -> abs(amount - minor) <= (minor * 5 + 50) / 100
+    }
 }
 
 private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate, showFuture: Boolean): Boolean {

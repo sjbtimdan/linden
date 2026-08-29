@@ -76,6 +76,101 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "amount filter greater-than keeps only larger amounts" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Lunch")
+        }
+    }
+
+    "amount filter less-than keeps only smaller amounts" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.LessThan, 500))
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Coffee")
+        }
+    }
+
+    "amount filter approximately keeps amounts within 5%" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Low", main, 1_900))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Mid", main, 2_000))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "High", main, 2_100))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "TooLow", main, 1_899))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "TooHigh", main, 2_101))
+
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.Approximately, 2_000))
+
+            viewModel.entries.value.map { it.description }.filterNotNull().sorted() shouldBe listOf(
+                "High",
+                "Low",
+                "Mid",
+            )
+        }
+    }
+
+    "amount filter matches a transfer's to-amount" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(
+                TransferEntry(
+                    id = 0,
+                    category = null,
+                    description = "Move",
+                    account = main,
+                    amount = 500,
+                    toAccount = savings,
+                    toAmount = 480,
+                ),
+            )
+
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 470))
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Move")
+        }
+    }
+
+    "amount filter composes with text search" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 1_200))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            viewModel.setSearchQuery("coffee")
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Coffee")
+        }
+    }
+
+    "clearing the amount filter restores all amounts" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+
+            viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
+            viewModel.entries.value.shouldHaveSize(1)
+
+            viewModel.clearAmountFilter()
+            viewModel.entries.value.shouldHaveSize(2)
+        }
+    }
+
     "type filter keeps only matching entries" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

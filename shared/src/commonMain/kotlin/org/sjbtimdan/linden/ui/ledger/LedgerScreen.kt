@@ -58,6 +58,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
+    val amountFilter by viewModel.amountFilter.collectAsState()
     val showFuture by viewModel.showFuture.collectAsState()
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
@@ -185,6 +186,11 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     },
                     onSelect = viewModel::setAccountFilter,
                     modifier = Modifier.testTag("accountFilterDropdown"),
+                )
+                AmountFilterChip(
+                    filter = amountFilter,
+                    onApply = viewModel::setAmountFilter,
+                    onClear = viewModel::clearAmountFilter,
                 )
             }
         }
