@@ -12,8 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Dialpad
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +41,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
- * Full calculator keypad for amount entry. Replaces the amount text field while
+ * Amount entry keypad with two modes: a simple numeric keypad (the default) and
+ * a full calculator. The toggle button in the display row switches between them
+ * and the typed value carries across. Replaces the amount text field while
  * open: the display line shows the running value, "Enter" commits a valid
  * positive amount (or reports an invalid one via [onInvalid]), Escape or the
  * system back discards the edit. The screen's back arrow is the visible way out.
@@ -52,6 +59,7 @@ fun AmountCalculator(
 ) {
     val model = remember(initialMinor) { CalculatorModel(initialMinor) }
     var display by remember { mutableStateOf(model.display) }
+    var calculatorMode by remember { mutableStateOf(false) }
 
     fun press(change: () -> Unit) {
         change()
@@ -106,6 +114,15 @@ fun AmountCalculator(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    IconButton(
+                        onClick = { calculatorMode = !calculatorMode },
+                        modifier = Modifier.testTag("calculatorModeToggle"),
+                    ) {
+                        Icon(
+                            imageVector = if (calculatorMode) Icons.Filled.Dialpad else Icons.Filled.Calculate,
+                            contentDescription = if (calculatorMode) "Simple keypad" else "Calculator",
+                        )
+                    }
                     Text(
                         text = display,
                         style = MaterialTheme.typography.headlineMedium,
@@ -124,7 +141,8 @@ fun AmountCalculator(
                 }
             }
 
-            keypad.forEach { row ->
+            val keys = if (calculatorMode) keypad else simpleKeypad
+            keys.forEach { row ->
                 keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                     row.forEach { key ->
                         CalculatorKey(
@@ -188,6 +206,19 @@ private val keypad = listOf(
     listOf(
         KeySpec("⌫", contentDescription = "Backspace") { onBackspace() },
         KeySpec("=") { onEquals() },
+    ),
+)
+
+/** The simple numeric keypad, top to bottom. */
+private val simpleKeypad = listOf(
+    listOf(digit('1'), digit('2'), digit('3')),
+    listOf(digit('4'), digit('5'), digit('6')),
+    listOf(digit('7'), digit('8'), digit('9')),
+    listOf(
+        KeySpec(".") { onDot() },
+        digit('0'),
+        KeySpec("C") { onClear() },
+        KeySpec("⌫", contentDescription = "Backspace") { onBackspace() },
     ),
 )
 

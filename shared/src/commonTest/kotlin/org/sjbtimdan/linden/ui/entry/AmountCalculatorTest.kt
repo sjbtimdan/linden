@@ -79,6 +79,12 @@ private fun ComposeUiTest.openCalculator() {
 }
 
 @OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.switchToCalculator() {
+    onNodeWithTag("calculatorModeToggle").performClick()
+    waitForIdle()
+}
+
+@OptIn(ExperimentalTestApi::class)
 class AmountCalculatorTest : StringSpec({
 
     "entering a calculation commits the result" {
@@ -87,6 +93,7 @@ class AmountCalculatorTest : StringSpec({
                 var committed: String? = null
                 showForm(draft(""), onAmountChange = { committed = it })
                 openCalculator()
+                switchToCalculator()
 
                 onNodeWithText("1").performClick()
                 onNodeWithText("0").performClick()
@@ -111,6 +118,7 @@ class AmountCalculatorTest : StringSpec({
                 var committed: String? = null
                 showForm(draft(""), onAmountChange = { committed = it })
                 openCalculator()
+                switchToCalculator()
 
                 onNodeWithText("1").performClick()
                 onNodeWithText("0").performClick()
@@ -157,6 +165,91 @@ class AmountCalculatorTest : StringSpec({
                 committed.shouldBeNull()
                 onNodeWithText("10.00").assertIsDisplayed()
                 onNodeWithText("Enter").assertDoesNotExist()
+            }
+        }
+    }
+
+    "simple keypad is the default and hides the operators" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onNodeWithText("1").assertIsDisplayed()
+                onNodeWithText("÷").assertDoesNotExist()
+                onNodeWithText("×").assertDoesNotExist()
+                onNodeWithText("−").assertDoesNotExist()
+                onNodeWithText("+").assertDoesNotExist()
+                onNodeWithText("=").assertDoesNotExist()
+            }
+        }
+    }
+
+    "toggle switches between simple and calculator keypads" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onNodeWithTag("calculatorModeToggle").performClick()
+                waitForIdle()
+                onNodeWithText("÷").assertIsDisplayed()
+
+                onNodeWithTag("calculatorModeToggle").performClick()
+                waitForIdle()
+                onNodeWithText("÷").assertDoesNotExist()
+            }
+        }
+    }
+
+    "simple keypad commits a typed amount" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft(""), onAmountChange = { committed = it })
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("2").performClick()
+                onNodeWithText(".").performClick()
+                onNodeWithText("5").performClick()
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+
+                committed shouldBe "12.50"
+            }
+        }
+    }
+
+    "simple keypad clears with C" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("2").performClick()
+                onNodeWithText("12").assertIsDisplayed()
+                onNodeWithText("C").performClick()
+                onNodeWithText("0.00").assertIsDisplayed()
+            }
+        }
+    }
+
+    "typed value carries across mode switches" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithTag("calculatorModeToggle").performClick()
+                waitForIdle()
+                onNodeWithText("+").performClick()
+                onNodeWithText("3").performClick()
+                onNodeWithText("=").performClick()
+                onNodeWithText("13.00").assertIsDisplayed()
             }
         }
     }
