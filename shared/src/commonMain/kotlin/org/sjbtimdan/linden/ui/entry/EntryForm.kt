@@ -43,7 +43,7 @@ private enum class ActiveField { Description, From, To, Category, Account, Amoun
 
 /**
  * The field section of the entry editor, shared between the inline form on the
- * ledger screen and the edit dialog on the history screen.
+ * entry screen and the edit dialog on the history screen.
  */
 @Composable
 fun EntryForm(

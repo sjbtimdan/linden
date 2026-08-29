@@ -47,14 +47,14 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
-    "toggling the hide ledger total switch updates the setting" {
+    "toggling the hide total switch updates the setting" {
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
             onNode(isToggleable()).assertIsOff()
             onNode(isToggleable()).performClick()
             onNode(isToggleable()).assertIsOn()
 
-            viewModel.hideLedgerTotal.value shouldBe true
+            viewModel.hideEntryTotal.value shouldBe true
         }
     }
 

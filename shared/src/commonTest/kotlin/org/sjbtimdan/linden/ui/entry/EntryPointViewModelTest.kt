@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import io.kotest.core.spec.style.StringSpec
@@ -22,15 +22,15 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
-import org.sjbtimdan.linden.ui.withLedgerViewModel
+import org.sjbtimdan.linden.ui.withEntryPoint
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
-class LedgerViewModelTest : StringSpec({
+class EntryPointViewModelTest : StringSpec({
     "new entry state prefills from the most recent entry of the same type" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -47,7 +47,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "new entry state for a type with no entries is empty" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -63,7 +63,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "new transfer state prefills accounts from the most recent transfer" {
-        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
@@ -86,13 +86,13 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "draft starts empty until seeded" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             viewModel.draft.value.shouldBeNull()
         }
     }
 
     "seedDraft prefills from the latest expense" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -110,7 +110,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "seedDraft does not replace an existing draft" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onDescriptionChange("Edited")
@@ -122,7 +122,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "selectType carries over the common fields" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
@@ -142,7 +142,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "selectType to transfer prefills accounts from the latest transfer" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -171,7 +171,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "field setters update the draft" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             viewModel.seedDraft()
 
             viewModel.onAmountChange("7.25")
@@ -185,7 +185,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "clearDraft resets to an empty form" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             viewModel.seedDraft()
             viewModel.onDescriptionChange("Coffee")
 
@@ -201,7 +201,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "saveDraft creates the entry and resets the form prefilled from it" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
@@ -224,7 +224,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "saveDraft returns false and keeps the draft when invalid" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             viewModel.seedDraft()
 
             viewModel.saveDraft() shouldBe false
@@ -234,7 +234,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account and category suggestions are empty without a draft" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -244,7 +244,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account and category suggestions reflect the draft and history" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Leisure", CategoryType.Expense)
@@ -263,7 +263,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "total balance is the initial balance plus income minus expenses" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             categoryDao.create("Salary", CategoryType.Income)
@@ -280,7 +280,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "transfers move money between accounts without changing the total" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             accountDao.create("Savings", Currency.CHF)
             val main = accountDao.getAll().first().first { it.name == "Main" }
@@ -293,7 +293,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "foreign balances are converted with the stored rates" {
-        withLedgerViewModel(
+        withEntryPoint(
             rates = listOf(FxRate(Currency.CHF, Currency.EUR, 0.9, "2026-01-01")),
         ) { accountDao, _, viewModel ->
             accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
@@ -304,7 +304,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "total is null while a foreign currency has no stored rate" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
 
             viewModel.totalMinor.first().shouldBeNull()
@@ -312,7 +312,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "entries dated after today do not count toward the total" {
-        withLedgerViewModel(today = { LocalDate(2026, 1, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(today = { LocalDate(2026, 1, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()

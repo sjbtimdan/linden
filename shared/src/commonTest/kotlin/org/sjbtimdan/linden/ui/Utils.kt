@@ -29,8 +29,8 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
+import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.history.HistoryViewModel
-import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 import kotlin.time.Clock
@@ -151,12 +151,12 @@ fun withRatesViewModel(block: suspend ComposeUiTest.(RatesViewModel) -> Unit) =
     withRatesViewModel { _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
+fun withEntryPoint(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
-    hideLedgerTotal: Boolean = false,
+    hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
+    block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
@@ -166,16 +166,16 @@ fun withLedgerViewModel(
             val categoryDao = CategoryDao(database.categoryQueries)
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
-            if (hideLedgerTotal) settingsDao.setHideLedgerTotal(true)
+            if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
-            val viewModel = LedgerViewModel(
+            val viewModel = EntryPointViewModel(
                 entryDao,
                 accountDao,
                 categoryDao,
                 settingsDao,
                 FxRatesRepository(fxRateDao, FakeFxRatesSource()),
-                initialHideLedgerTotal = hideLedgerTotal,
+                initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )
             block(entryDao, accountDao, categoryDao, viewModel)
@@ -184,24 +184,24 @@ fun withLedgerViewModel(
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
+fun withEntryPoint(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
-    hideLedgerTotal: Boolean = false,
+    hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, hideLedgerTotal, rates) { _, accountDao, categoryDao, viewModel ->
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
+) = withEntryPoint(today, defaultCurrency, hideEntryTotal, rates) { _, accountDao, categoryDao, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
+fun withEntryPoint(
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
     defaultCurrency: Currency = Currency.CHF,
-    hideLedgerTotal: Boolean = false,
+    hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, hideLedgerTotal, rates) { _, _, _, viewModel -> block(viewModel) }
+    block: suspend ComposeUiTest.(EntryPointViewModel) -> Unit,
+) = withEntryPoint(today, defaultCurrency, hideEntryTotal, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withHistoryViewModel(

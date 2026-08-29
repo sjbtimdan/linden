@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
@@ -39,16 +39,16 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.rates.RatesWarning
-import org.sjbtimdan.linden.ui.withLedgerViewModel
+import org.sjbtimdan.linden.ui.withEntryPoint
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalTestApi::class)
-class LedgerScreenTest : StringSpec({
+class EntryPointTest : StringSpec({
     "shows the expense form with add disabled initially" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Amount").assertIsDisplayed()
@@ -58,11 +58,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "hero card shows the total balance across accounts" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Total balance").assertIsDisplayed()
@@ -71,11 +71,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "hero card masks the total when hiding is enabled" {
-        withLedgerViewModel(hideLedgerTotal = true) { accountDao, _, viewModel ->
+        withEntryPoint(hideEntryTotal = true) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Total balance").assertIsDisplayed()
@@ -86,11 +86,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "tapping the eye hides and restores the hero card total" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("123.45").assertIsDisplayed()
@@ -99,21 +99,21 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("••••••").assertIsDisplayed()
             onNodeWithText("123.45").assertDoesNotExist()
-            viewModel.hideLedgerTotal.value shouldBe true
+            viewModel.hideEntryTotal.value shouldBe true
 
             onNodeWithContentDescription("Show total").performClick()
             waitForIdle()
 
             onNodeWithText("123.45").assertIsDisplayed()
             onNodeWithText("••••••").assertDoesNotExist()
-            viewModel.hideLedgerTotal.value shouldBe false
+            viewModel.hideEntryTotal.value shouldBe false
         }
     }
 
     "expense is the default selected type" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Expense").assertIsSelected()
@@ -123,11 +123,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "creating an expense saves it and resets the form" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             enterAmount("12.50")
@@ -152,14 +152,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "clear resets the form without adding an entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             // A prior entry prefills the form, so Clear must empty it rather
             // than restoring the prefill.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -182,11 +182,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "back arrow while editing expands the form and keeps the draft" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             enterAmount("12.50")
@@ -210,11 +210,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "add is enabled once the form is valid" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Add").assertIsNotEnabled()
@@ -229,11 +229,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "switching type keeps amount and description" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             enterAmount("12.50")
@@ -248,11 +248,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "switching type swaps the type-specific fields" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Category").assertIsDisplayed()
@@ -266,7 +266,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "switching to transfer prefills accounts from the last transfer" {
-        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
@@ -283,7 +283,7 @@ class LedgerScreenTest : StringSpec({
             )
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
@@ -293,12 +293,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "cross-currency transfer requires the received amount" {
-        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
@@ -325,12 +325,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "same-currency transfer hides the received amount field" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
@@ -346,9 +346,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "type tabs hide while the amount calculator is open and return on commit" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Amount").performClick()
@@ -370,11 +370,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "back arrow closes the amount calculator and keeps the draft" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+        withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             enterAmount("12.50")
@@ -398,12 +398,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "received amount opens its own calculator and collapses the form" {
-        withLedgerViewModel { entryDao, accountDao, _, viewModel ->
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
@@ -436,10 +436,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows settings links when no accounts or categories exist" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             var settingsNavigations = 0
             setContent {
-                LedgerScreen(
+                EntryPoint(
                     viewModel = viewModel,
                     onNavigateToSettings = { settingsNavigations++ },
                 )
@@ -456,9 +456,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows account link for transfer fields when no accounts exist" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(
+                EntryPoint(
                     viewModel = viewModel,
                     onNavigateToSettings = {},
                 )
@@ -472,12 +472,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows add-second-account link for transfer when only one account exists" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             var settingsNavigations = 0
 
             setContent {
-                LedgerScreen(
+                EntryPoint(
                     viewModel = viewModel,
                     onNavigateToSettings = { settingsNavigations++ },
                 )
@@ -494,12 +494,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "to account dropdown excludes the from account" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withEntryPoint { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
@@ -516,12 +516,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "expense form prefills from the last expense" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -535,13 +535,13 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows description suggestions based on category, account and amount" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -555,14 +555,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "selecting a description suggestion fills the field" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -580,14 +580,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "tapping outside the description field clears focus and hides suggestions" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -612,14 +612,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "typing filters the description suggestions" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Cocoa", main, 450, createdAt = now.minus(1.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Cocoa")
@@ -635,7 +635,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows predicted account and category chips from history" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -652,7 +652,7 @@ class LedgerScreenTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -675,7 +675,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "prefilled account and category fall back to the full list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -689,7 +689,7 @@ class LedgerScreenTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Coffee")
@@ -705,13 +705,13 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows quick entry chips for the current type" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Quick entry")
@@ -722,7 +722,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "selecting a quick entry fills the form" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val now = Clock.System.now()
             // Two occurrences of each description so the frequency filter passes.
@@ -732,7 +732,7 @@ class LedgerScreenTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Quick entry")
@@ -746,13 +746,13 @@ class LedgerScreenTest : StringSpec({
     }
 
     "quick entry chips hide for a type without matching history" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
-                LedgerScreen(viewModel = viewModel)
+                EntryPoint(viewModel = viewModel)
             }
 
             waitForText("Quick entry")
@@ -764,9 +764,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows a banner when rates are missing" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(viewModel = viewModel, ratesWarning = RatesWarning.Missing)
+                EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Missing)
             }
 
             onNodeWithText("No exchange rates available. You can set them manually.").assertIsDisplayed()
@@ -774,9 +774,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows a banner when rates are over a week old" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             setContent {
-                LedgerScreen(viewModel = viewModel, ratesWarning = RatesWarning.Outdated)
+                EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Outdated)
             }
 
             onNodeWithText("Exchange rates are over a week old. You can set them manually.").assertIsDisplayed()
@@ -784,10 +784,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "the rates banner navigates to the rates screen" {
-        withLedgerViewModel { viewModel ->
+        withEntryPoint { viewModel ->
             var navigatedToRates = false
             setContent {
-                LedgerScreen(
+                EntryPoint(
                     viewModel = viewModel,
                     ratesWarning = RatesWarning.Missing,
                     onNavigateToRates = { navigatedToRates = true },

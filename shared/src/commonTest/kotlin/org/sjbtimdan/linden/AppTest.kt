@@ -11,7 +11,7 @@ import org.sjbtimdan.linden.ui.withApp
 
 @OptIn(ExperimentalTestApi::class)
 class AppTest : StringSpec({
-    "starts on the ledger screen" {
+    "starts on the entry screen" {
         withApp { dependencies ->
             setContent { App(dependencies) }
             onNodeWithText("Add").assertExists()
@@ -28,7 +28,7 @@ class AppTest : StringSpec({
             onNodeWithText("Settings").performClick()
             onNodeWithText("Import from Ivy").assertExists()
 
-            onNodeWithText("Ledger").performClick()
+            onNodeWithText("Entry").performClick()
             onNodeWithText("Add").assertExists()
         }
     }

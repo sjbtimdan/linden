@@ -24,7 +24,7 @@ When developing, it's quicker to use IntelliJ MCP to run tests.
 
 - `:shared` — shared UI and business logic (KMP library, Compose Multiplatform; targets `jvm()` + `android`).
   All UI lives here. `App.kt` owns screen navigation via a sealed `Screen` class
-  (Ledger/History/Settings/CategoryList/AccountList/Rates) in a `NavigationBar` scaffold with `AnimatedContent` transitions.
+  (Entry/History/Settings/CategoryList/AccountList/Rates) in a `NavigationBar` scaffold with `AnimatedContent` transitions.
 - `:androidApp` — Android entry (`MainActivity`, appId `org.sjbtimdan.linden`, minSdk 24, targetSdk 37, edge-to-edge).
 - `:desktopApp` — Desktop/JVM entry (`Main.kt` → Compose `Window`, main class `org.sjbtimdan.linden.MainKt`).
 
@@ -123,7 +123,7 @@ coverage is only enforced there because the Android target runs device tests onl
   `createTestSqlDriver()` has a JVM-only actual, so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers
   instead of wiring up in-memory DBs per test: `lindenDatabase()` / `createTestSqlDriver()` live in
   `data/TestSqlUtils.kt`; Compose harnesses (`onTestMain`, `withApp`, `withViewModel`, `withAccountViewModel`,
-  `withSettingsViewModel`, `withRatesViewModel`, `withLedgerViewModel`, `withHistoryViewModel`) live in `ui/Utils.kt`.
+  `withSettingsViewModel`, `withRatesViewModel`, `withEntryPoint`, `withHistoryViewModel`) live in `ui/Utils.kt`.
   JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic,
   and run test classes in parallel across up to 4 forked JVMs (`maxParallelForks` in `shared/build.gradle.kts`).
 - Configuration cache + build cache enabled (`gradle.properties`).

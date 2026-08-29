@@ -70,7 +70,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val hideLedgerTotal by viewModel.hideLedgerTotal.collectAsState()
+    val hideEntryTotal by viewModel.hideEntryTotal.collectAsState()
     val importState by viewModel.importState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
@@ -150,12 +150,12 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Hide ledger total",
+                text = "Hide total",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Switch(
-                checked = hideLedgerTotal,
-                onCheckedChange = viewModel::setHideLedgerTotal,
+                checked = hideEntryTotal,
+                onCheckedChange = viewModel::setHideEntryTotal,
             )
         }
 

@@ -30,14 +30,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
+import org.sjbtimdan.linden.ui.entry.EntryPoint
 import org.sjbtimdan.linden.ui.history.HistoryScreen
-import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.rates.RatesScreen
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 sealed class Screen {
-    data object Ledger : Screen()
+    data object Entry : Screen()
     data object History : Screen()
     data object Settings : Screen()
     data object CategoryList : Screen()
@@ -47,12 +47,12 @@ sealed class Screen {
 
 @Composable
 fun App(dependencies: AppDependencies) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Ledger) }
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Entry) }
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
-    val ledgerViewModel = dependencies.ledgerViewModel
+    val entryViewModel = dependencies.entryViewModel
     val historyViewModel = dependencies.historyViewModel
     DisposableEffect(dependencies.httpClient) {
         onDispose { dependencies.httpClient.close() }
@@ -70,15 +70,15 @@ fun App(dependencies: AppDependencies) {
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                     NavigationBarItem(
-                        selected = currentScreen == Screen.Ledger,
-                        onClick = { currentScreen = Screen.Ledger },
+                        selected = currentScreen == Screen.Entry,
+                        onClick = { currentScreen = Screen.Entry },
                         icon = {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.List,
                                 contentDescription = null,
                             )
                         },
-                        label = { Text("Ledger") },
+                        label = { Text("Entry") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.History,
@@ -119,8 +119,8 @@ fun App(dependencies: AppDependencies) {
                     label = "screenTransition",
                 ) { screen ->
                     when (screen) {
-                        Screen.Ledger -> LedgerScreen(
-                            viewModel = ledgerViewModel,
+                        Screen.Entry -> EntryPoint(
+                            viewModel = entryViewModel,
                             onNavigateToSettings = { currentScreen = Screen.Settings },
                             onNavigateToRates = { currentScreen = Screen.Rates },
                             ratesWarning = ratesWarning,

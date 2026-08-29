@@ -43,7 +43,7 @@ class SettingsViewModel(
     private val backupManager: LindenBackupManager,
     initialTheme: ThemeMode,
     initialCurrency: Currency,
-    initialHideLedgerTotal: Boolean = false,
+    initialHideEntryTotal: Boolean = false,
 ) : ViewModel() {
     private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
@@ -51,8 +51,8 @@ class SettingsViewModel(
     private val _defaultCurrency = MutableStateFlow(initialCurrency)
     val defaultCurrency: StateFlow<Currency> = _defaultCurrency.asStateFlow()
 
-    val hideLedgerTotal: StateFlow<Boolean> = settingsDao.hideLedgerTotalFlow()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, initialHideLedgerTotal)
+    val hideEntryTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, initialHideEntryTotal)
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState: StateFlow<ImportState> = _importState.asStateFlow()
@@ -77,9 +77,9 @@ class SettingsViewModel(
         }
     }
 
-    fun setHideLedgerTotal(hidden: Boolean) {
+    fun setHideEntryTotal(hidden: Boolean) {
         viewModelScope.launch {
-            settingsDao.setHideLedgerTotal(hidden)
+            settingsDao.setHideEntryTotal(hidden)
         }
     }
 

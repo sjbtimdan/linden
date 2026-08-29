@@ -204,7 +204,7 @@ class HistoryScreenTest : StringSpec({
             for (day in 8..12) {
                 runCatching {
                     val top = onNodeWithText("$day Sep 2001").getUnclippedBoundsInRoot().top
-                    if (pinnedTop == null || top < pinnedTop!!) pinnedTop = top
+                    if (pinnedTop == null || top < pinnedTop) pinnedTop = top
                 }
             }
             // The pinned date must sit flush at the top of the list, not over the first entry.

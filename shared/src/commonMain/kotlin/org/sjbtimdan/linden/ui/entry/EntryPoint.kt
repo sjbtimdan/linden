@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -51,10 +51,6 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
-import org.sjbtimdan.linden.ui.entry.EntryForm
-import org.sjbtimdan.linden.ui.entry.displayName
-import org.sjbtimdan.linden.ui.entry.formatAmountCompact
-import org.sjbtimdan.linden.ui.entry.icon
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenInsets
@@ -62,8 +58,8 @@ import org.sjbtimdan.linden.ui.screenInsets
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
 @Composable
-fun LedgerScreen(
-    viewModel: LedgerViewModel,
+fun EntryPoint(
+    viewModel: EntryPointViewModel,
     onNavigateToSettings: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
@@ -78,7 +74,7 @@ fun LedgerScreen(
     val quickEntries by viewModel.quickEntries.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val hideLedgerTotal by viewModel.hideLedgerTotal.collectAsState()
+    val hideEntryTotal by viewModel.hideEntryTotal.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -153,8 +149,8 @@ fun LedgerScreen(
             TotalBalanceCard(
                 total = totalMinor,
                 currency = defaultCurrency,
-                hidden = hideLedgerTotal,
-                onToggleHidden = { viewModel.setHideLedgerTotal(!hideLedgerTotal) },
+                hidden = hideEntryTotal,
+                onToggleHidden = { viewModel.setHideEntryTotal(!hideEntryTotal) },
             )
 
             ratesWarning?.let { warning ->

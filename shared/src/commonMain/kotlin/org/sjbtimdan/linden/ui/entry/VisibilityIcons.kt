@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor

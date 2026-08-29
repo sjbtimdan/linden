@@ -19,8 +19,8 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
+import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.history.HistoryViewModel
-import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
@@ -35,7 +35,7 @@ class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
-    val initialHideLedgerTotal: Boolean = false,
+    val initialHideEntryTotal: Boolean = false,
     private val fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
@@ -61,18 +61,18 @@ class AppDependencies(
         backupManager,
         initialTheme,
         initialCurrency,
-        initialHideLedgerTotal,
+        initialHideEntryTotal,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao)
-    val ledgerViewModel = LedgerViewModel(
+    val entryViewModel = EntryPointViewModel(
         entryDao,
         accountDao,
         categoryDao,
         settingsDao,
         fxRatesRepository,
-        initialHideLedgerTotal,
+        initialHideEntryTotal,
     )
     val historyViewModel = HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
 }
@@ -82,6 +82,6 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val settingsDao = SettingsDao(database.settingsQueries)
     val initialTheme = settingsDao.getTheme()
     val initialCurrency = settingsDao.getDefaultCurrency()
-    val initialHideLedgerTotal = settingsDao.getHideLedgerTotal()
-    return AppDependencies(database, initialTheme, initialCurrency, initialHideLedgerTotal)
+    val initialHideEntryTotal = settingsDao.getHideEntryTotal()
+    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal)
 }

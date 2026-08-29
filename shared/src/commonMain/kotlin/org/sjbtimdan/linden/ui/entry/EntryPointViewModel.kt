@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.ledger
+package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
@@ -27,20 +27,16 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
-import org.sjbtimdan.linden.ui.entry.EntryDraft
-import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
-import org.sjbtimdan.linden.ui.entry.EntrySuggestionsProvider
-import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.history.accountBalancesAtEnd
 import kotlin.time.Clock
 
-class LedgerViewModel(
+class EntryPointViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
     private val settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
-    initialHideLedgerTotal: Boolean = false,
+    initialHideEntryTotal: Boolean = false,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
@@ -55,13 +51,13 @@ class LedgerViewModel(
      * stored setting (never flashes the amount at startup) and kept in sync with
      * the settings screen via the database flow.
      */
-    val hideLedgerTotal: StateFlow<Boolean> = settingsDao.hideLedgerTotalFlow()
-        .stateFlow(initialHideLedgerTotal)
+    val hideEntryTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
+        .stateFlow(initialHideEntryTotal)
 
     /** Persists the hero-card visibility; the database flow propagates it back. */
-    fun setHideLedgerTotal(hidden: Boolean) {
+    fun setHideEntryTotal(hidden: Boolean) {
         viewModelScope.launch {
-            settingsDao.setHideLedgerTotal(hidden)
+            settingsDao.setHideEntryTotal(hidden)
         }
     }
 

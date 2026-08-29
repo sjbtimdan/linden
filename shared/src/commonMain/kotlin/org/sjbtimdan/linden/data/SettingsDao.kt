@@ -11,7 +11,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 
 const val THEME_KEY = "theme"
 const val CURRENCY_KEY = "currency"
-const val HIDE_LEDGER_TOTAL_KEY = "hideLedgerTotal"
+const val HIDE_ENTRY_TOTAL_KEY = "hideEntryTotal"
 const val AUTO_UPDATE_RATES_KEY = "autoUpdateRates"
 
 class SettingsDao(private val queries: SettingsQueries) {
@@ -50,20 +50,20 @@ class SettingsDao(private val queries: SettingsQueries) {
                 ?: Currency.CHF
         }
 
-    suspend fun getHideLedgerTotal(): Boolean {
-        val entity = queries.selectByKey(HIDE_LEDGER_TOTAL_KEY).awaitAsOneOrNull()
+    suspend fun getHideEntryTotal(): Boolean {
+        val entity = queries.selectByKey(HIDE_ENTRY_TOTAL_KEY).awaitAsOneOrNull()
         return entity?.value_?.toBoolean() == true
     }
 
-    suspend fun setHideLedgerTotal(hidden: Boolean) {
-        queries.insertOrReplace(HIDE_LEDGER_TOTAL_KEY, hidden.toString())
+    suspend fun setHideEntryTotal(hidden: Boolean) {
+        queries.insertOrReplace(HIDE_ENTRY_TOTAL_KEY, hidden.toString())
     }
 
-    fun hideLedgerTotalFlow(): Flow<Boolean> = queries.selectAll()
+    fun hideEntryTotalFlow(): Flow<Boolean> = queries.selectAll()
         .asFlow()
         .map { rows ->
             rows.awaitAsList()
-                .firstOrNull { it.key == HIDE_LEDGER_TOTAL_KEY }
+                .firstOrNull { it.key == HIDE_ENTRY_TOTAL_KEY }
                 ?.let { row -> row.value_.toBoolean() }
                 ?: false
         }
