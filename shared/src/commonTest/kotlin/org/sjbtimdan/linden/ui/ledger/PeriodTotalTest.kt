@@ -83,6 +83,42 @@ class PeriodTotalTest : StringSpec({
         ) shouldBe null
     }
 
+    "accountNetInDefaultMinor counts a transfer out as negative" {
+        val entries = listOf(
+            IncomeEntry(0, groceries, null, chf, 500),
+            TransferEntry(0, null, null, chf, 300, toAccount = usd, toAmount = null),
+        )
+        accountNetInDefaultMinor(chf, entries, Currency.CHF, emptyList()) shouldBe 200L
+    }
+
+    "accountNetInDefaultMinor counts a transfer in as positive" {
+        val entries = listOf(
+            ExpenseEntry(0, groceries, null, chf, 100),
+            TransferEntry(0, null, null, usd, 300, toAccount = chf, toAmount = null),
+        )
+        accountNetInDefaultMinor(chf, entries, Currency.CHF, emptyList()) shouldBe 200L
+    }
+
+    "accountNetInDefaultMinor converts a foreign received amount at its own rate" {
+        // The CHF account receives 1,000 CHF for the 800 USD it was sent.
+        val entries = listOf(
+            TransferEntry(0, null, null, usd, 800, toAccount = chf, toAmount = 1_000),
+        )
+        accountNetInDefaultMinor(chf, entries, Currency.CHF, chfUsdRate) shouldBe 1_000L
+    }
+
+    "accountNetInDefaultMinor is null when the account's currency has no stored rate" {
+        // The USD account's delta is in USD, which cannot convert without a CHF->USD rate.
+        val entries = listOf(
+            TransferEntry(0, null, null, chf, 100, toAccount = usd, toAmount = 80),
+        )
+        accountNetInDefaultMinor(usd, entries, Currency.CHF, emptyList()) shouldBe null
+    }
+
+    "accountNetInDefaultMinor is zero for an account with no matching entries" {
+        accountNetInDefaultMinor(eur, emptyList(), Currency.CHF, emptyList()) shouldBe 0L
+    }
+
     "default-currency entries do not need a stored rate" {
         periodTotalMinor(
             listOf(ExpenseEntry(0, groceries, null, chf, 450)),

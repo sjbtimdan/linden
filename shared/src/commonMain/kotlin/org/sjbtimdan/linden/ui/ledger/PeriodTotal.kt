@@ -1,9 +1,11 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.ui.accounts.entryDeltas
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import kotlin.math.abs
 import kotlin.math.roundToLong
@@ -15,6 +17,28 @@ import kotlin.math.roundToLong
  */
 fun periodTotalMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? =
     entriesNetInDefaultMinor(entries.filter { it.type != EntryType.Transfer }, defaultCurrency, rates)
+
+/**
+ * Net change to a single [account] over [entries] in [defaultCurrency] minor units:
+ * income adds and expenses subtract as usual, and transfers count in the direction
+ * they move money — out of the account at the sent amount (negative) or into it at
+ * the received amount (positive). This is what the total shows while an account
+ * filter is active in the ledger, where a transfer is a real change to that
+ * account's balance. Returns null when the account's currency has no stored rate
+ * against [defaultCurrency], since the total would be incomplete.
+ */
+fun accountNetInDefaultMinor(
+    account: Account,
+    entries: List<Entry>,
+    defaultCurrency: Currency,
+    rates: List<FxRate>,
+): Long? {
+    val delta = entryDeltas(entries)[account.id] ?: return 0L
+    val ratesByQuote = rates
+        .filter { it.baseCurrency == defaultCurrency }
+        .associate { it.quoteCurrency to it.rate }
+    return toDefaultMinor(delta, account.currency, defaultCurrency, ratesByQuote)
+}
 
 /**
  * Net of [entries] (transfers already excluded) in [defaultCurrency] minor units.

@@ -124,7 +124,8 @@ class LedgerViewModel(
      * narrowed to a single category and/or account while those filters are set.
      * Transfers never contribute to category totals, so they are excluded from a
      * category-filtered view to keep the list consistent with the category total
-     * it drills into. The account filter keeps transfers of that account.
+     * it drills into. The account filter keeps transfers of that account — whether
+     * it is the source or the target.
      */
     val displayedEntries: StateFlow<List<Entry>> = combine(
         entries,
@@ -137,19 +138,33 @@ class LedgerViewModel(
             entries.filter { entry ->
                 val matchesCategory = categoryId == null ||
                     (entry.type != EntryType.Transfer && (entry.category?.id ?: 0L) == categoryId)
-                val matchesAccount = accountId == null || entry.account.id == accountId
+                val matchesAccount = accountId == null ||
+                    entry.account.id == accountId ||
+                    (entry is TransferEntry && entry.toAccount.id == accountId)
                 matchesCategory && matchesAccount
             }
         }
     }.stateFlow(emptyList())
 
-    /** Net total of the displayed entries in the default currency; null when a rate is missing. */
+    /**
+     * Net total of the displayed entries in the default currency; null when a rate
+     * is missing. Without an account filter transfers are net zero internally and
+     * excluded; with one they count against that account's balance: out of the
+     * account negative, into it positive.
+     */
     val totalMinor: StateFlow<Long?> = combine(
         displayedEntries,
+        _accountFilter,
+        accounts,
         defaultCurrency,
         rates,
-    ) { entries, currency, rates ->
-        periodTotalMinor(entries, currency, rates)
+    ) { entries, accountId, accounts, currency, rates ->
+        if (accountId == null) {
+            periodTotalMinor(entries, currency, rates)
+        } else {
+            val account = accounts.firstOrNull { it.id == accountId } ?: return@combine 0L
+            accountNetInDefaultMinor(account, entries, currency, rates)
+        }
     }.stateFlow(0L)
 
     /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */

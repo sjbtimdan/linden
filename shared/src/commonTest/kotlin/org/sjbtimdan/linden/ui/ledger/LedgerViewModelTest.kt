@@ -868,6 +868,79 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "account filter counts an outgoing transfer as negative" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(
+                TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
+            )
+
+            viewModel.setAccountFilter(main.id)
+
+            viewModel.totalMinor.value shouldBe -950L
+        }
+    }
+
+    "account filter keeps transfers into the account and counts them positive" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(
+                TransferEntry(0, groceries, "Move", savings, 500, toAccount = main, toAmount = null),
+            )
+
+            viewModel.setAccountFilter(main.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Move", "Coffee")
+            viewModel.totalMinor.value shouldBe 50L
+        }
+    }
+
+    "account filter totals an incoming foreign transfer at the received amount" {
+        withLedgerViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 0.8, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+
+            viewModel.createEntry(
+                TransferEntry(0, null, "Convert", usd, 800, toAccount = main, toAmount = 1_000),
+            )
+
+            viewModel.setAccountFilter(main.id)
+
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Convert")
+            viewModel.totalMinor.value shouldBe 1_000L
+        }
+    }
+
+    "account filter without a rate for a foreign account yields a null total" {
+        withLedgerViewModel(
+            defaultCurrency = Currency.CHF,
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            accountDao.create("USD", Currency.USD)
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+
+            viewModel.createEntry(
+                TransferEntry(0, null, "Convert", main, 100, toAccount = usd, toAmount = 80),
+            )
+
+            viewModel.setAccountFilter(usd.id)
+
+            viewModel.totalMinor.value shouldBe null
+        }
+    }
+
     "category and account filters combine" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
