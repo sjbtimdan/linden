@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row

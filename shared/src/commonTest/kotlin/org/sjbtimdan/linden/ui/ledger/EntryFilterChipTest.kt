@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color

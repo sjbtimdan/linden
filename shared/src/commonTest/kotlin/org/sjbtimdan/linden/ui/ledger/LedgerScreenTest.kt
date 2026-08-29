@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
@@ -27,15 +27,15 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.ui.withHistoryViewModel
+import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
-class HistoryScreenTest : StringSpec({
+class LedgerScreenTest : StringSpec({
     "displays empty state" {
-        withHistoryViewModel { viewModel ->
+        withLedgerViewModel { viewModel ->
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("No entries yet.").assertIsDisplayed()
@@ -43,13 +43,13 @@ class HistoryScreenTest : StringSpec({
     }
 
     "search narrows the list" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Search").performTextInput("lunch")
@@ -60,13 +60,13 @@ class HistoryScreenTest : StringSpec({
     }
 
     "type filter narrows the list" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Coffee").assertIsDisplayed()
@@ -81,12 +81,12 @@ class HistoryScreenTest : StringSpec({
     }
 
     "no entries match message when nothing matches" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Search").performTextInput("zzz")
@@ -96,12 +96,12 @@ class HistoryScreenTest : StringSpec({
     }
 
     "editing an entry shows current values and saves changes" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Coffee").performClick()
@@ -126,12 +126,12 @@ class HistoryScreenTest : StringSpec({
     }
 
     "deleting an entry from the edit dialog removes it" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Coffee").performClick()
@@ -142,7 +142,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "day headers appear when entries span multiple days" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(
@@ -166,7 +166,7 @@ class HistoryScreenTest : StringSpec({
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("10 Sep 2001").assertIsDisplayed()
@@ -175,7 +175,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "day header sticks flush to the top of the list while scrolling" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             for (day in 8..12) {
                 repeat(4) { hour ->
@@ -193,7 +193,7 @@ class HistoryScreenTest : StringSpec({
             }
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             repeat(3) { onNodeWithTag("entryList").performTouchInput { swipeUp() } }
@@ -213,7 +213,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "selecting a period narrows the list" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
@@ -223,7 +223,7 @@ class HistoryScreenTest : StringSpec({
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("In Aug").assertIsDisplayed()
@@ -239,7 +239,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "arrows move between periods" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
@@ -249,7 +249,7 @@ class HistoryScreenTest : StringSpec({
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("periodLabel").performClick()
@@ -274,14 +274,14 @@ class HistoryScreenTest : StringSpec({
     }
 
     "period with no entries shows no entries match" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("periodLabel").performClick()
@@ -294,13 +294,13 @@ class HistoryScreenTest : StringSpec({
     }
 
     "shows the net total of the period next to the navigator" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("+ 15.50 CHF").assertIsDisplayed()
@@ -308,7 +308,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "shows the total converted to the default currency" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
@@ -321,7 +321,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             // 450 CHF + 200 USD / 2.0 = 550 CHF
@@ -330,7 +330,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "shows a dash when the total cannot be computed" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Groceries", CategoryType.Expense)
             val usd = accountDao.getAll().first().first()
@@ -338,7 +338,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("–").assertIsDisplayed()
@@ -346,12 +346,12 @@ class HistoryScreenTest : StringSpec({
     }
 
     "view dropdown switches to the accounts view and back" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Refund").assertIsDisplayed()
@@ -377,13 +377,13 @@ class HistoryScreenTest : StringSpec({
     }
 
     "type filter is disabled in the accounts view and preserved across switches" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("typeFilterDropdown").performClick()
@@ -408,7 +408,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "search filters accounts by name in the accounts view" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -419,7 +419,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, groceries, "Pay", usd, 200))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -432,7 +432,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "accounts view shows balances at the end of the selected period" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -445,7 +445,7 @@ class HistoryScreenTest : StringSpec({
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -465,9 +465,9 @@ class HistoryScreenTest : StringSpec({
     }
 
     "accounts view shows the empty state when there are no accounts" {
-        withHistoryViewModel { viewModel ->
+        withLedgerViewModel { viewModel ->
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -478,12 +478,12 @@ class HistoryScreenTest : StringSpec({
     }
 
     "view dropdown switches to the categories view and back" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithText("Coffee").assertIsDisplayed()
@@ -506,9 +506,9 @@ class HistoryScreenTest : StringSpec({
     }
 
     "categories view shows the empty state when there are no entries" {
-        withHistoryViewModel { viewModel ->
+        withLedgerViewModel { viewModel ->
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -519,7 +519,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "search filters categories by name in the categories view" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -527,7 +527,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -540,7 +540,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "categories view shows totals at the end of the selected period" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -553,7 +553,7 @@ class HistoryScreenTest : StringSpec({
             )
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -573,7 +573,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "tapping a category drills into its entries with a filter chip" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -582,7 +582,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -599,7 +599,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "removing the category filter restores the full entries list" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -607,7 +607,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("viewModeDropdown").performClick()
@@ -623,7 +623,7 @@ class HistoryScreenTest : StringSpec({
     }
 
     "category dropdown filters the entries and shows the chip" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -631,7 +631,7 @@ class HistoryScreenTest : StringSpec({
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("categoryFilterDropdown").performClick()
@@ -644,13 +644,13 @@ class HistoryScreenTest : StringSpec({
     }
 
     "account dropdown filters the entries and shows the chip" {
-        withHistoryViewModel { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
-                HistoryScreen(viewModel = viewModel)
+                LedgerScreen(viewModel = viewModel)
             }
 
             onNodeWithTag("accountFilterDropdown").performClick()

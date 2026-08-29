@@ -22,7 +22,7 @@ class AppTest : StringSpec({
         withApp { dependencies ->
             setContent { App(dependencies) }
 
-            onNodeWithText("History").performClick()
+            onNodeWithText("Ledger").performClick()
             onNodeWithText("No entries yet.").assertExists()
 
             onNodeWithText("Settings").performClick()

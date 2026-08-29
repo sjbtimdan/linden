@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime

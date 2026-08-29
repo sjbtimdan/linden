@@ -1,16 +1,16 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
-import org.sjbtimdan.linden.ui.history.HistoryPeriod.All
-import org.sjbtimdan.linden.ui.history.HistoryPeriod.Day
-import org.sjbtimdan.linden.ui.history.HistoryPeriod.Month
-import org.sjbtimdan.linden.ui.history.HistoryPeriod.Week
-import org.sjbtimdan.linden.ui.history.HistoryPeriod.Year
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.All
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Day
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Month
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Week
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Year
 
-class HistoryPeriodTest : StringSpec({
+class LedgerPeriodTest : StringSpec({
     "day window is the anchor day" {
         Day.windowStart(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 13)
         Day.windowEnd(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 13)

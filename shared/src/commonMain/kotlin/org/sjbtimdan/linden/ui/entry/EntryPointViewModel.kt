@@ -27,7 +27,7 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
-import org.sjbtimdan.linden.ui.history.accountBalancesAtEnd
+import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
 import kotlin.time.Clock
 
 class EntryPointViewModel(

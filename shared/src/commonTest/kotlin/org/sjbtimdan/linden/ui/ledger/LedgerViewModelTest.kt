@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import io.kotest.core.spec.style.StringSpec
@@ -21,19 +21,19 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
-import org.sjbtimdan.linden.ui.withHistoryViewModel
+import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
-class HistoryViewModelTest : StringSpec({
+class LedgerViewModelTest : StringSpec({
     "entries start empty" {
-        withHistoryViewModel { viewModel ->
+        withLedgerViewModel { viewModel ->
             viewModel.entries.value.shouldBeEmpty()
         }
     }
 
     "search filters by description and account name" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -51,7 +51,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "search matches a transfer's to-account name" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -77,7 +77,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "type filter keeps only matching entries" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -94,7 +94,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "entries are always latest first by createdAt then id" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
@@ -112,7 +112,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "update reflects in the list" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -126,7 +126,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "delete removes an entry" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -141,7 +141,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "direct database writes reflect in the list" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100))
@@ -151,7 +151,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "month period shows only entries in the window and navigates" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -163,7 +163,7 @@ class HistoryViewModelTest : StringSpec({
                 ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.setPeriod(LedgerPeriod.Month)
             viewModel.entries.value.map { it.description } shouldBe listOf("After")
 
             viewModel.goToNextPeriod()
@@ -178,13 +178,13 @@ class HistoryViewModelTest : StringSpec({
             viewModel.goToPreviousPeriod()
             viewModel.entries.value.map { it.description } shouldBe listOf("Before")
 
-            viewModel.setPeriod(HistoryPeriod.All)
+            viewModel.setPeriod(LedgerPeriod.All)
             viewModel.entries.value.shouldHaveSize(3)
         }
     }
 
     "week period shows only entries in the calendar week" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 16) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 16) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")),
@@ -199,14 +199,14 @@ class HistoryViewModelTest : StringSpec({
                 ExpenseEntry(0, groceries, "MonAfter", main, 400, createdAt = Instant.parse("2026-08-17T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Week)
+            viewModel.setPeriod(LedgerPeriod.Week)
 
             viewModel.entries.value.map { it.description } shouldBe listOf("SunInside", "MonInside")
         }
     }
 
     "day period shows only entries on the anchor day and navigates" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "SameDay", main, 200, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
@@ -215,19 +215,19 @@ class HistoryViewModelTest : StringSpec({
                 ExpenseEntry(0, groceries, "Yesterday", main, 100, createdAt = Instant.parse("2026-08-14T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Day)
+            viewModel.setPeriod(LedgerPeriod.Day)
             viewModel.entries.value.map { it.description } shouldBe listOf("SameDay")
 
             viewModel.goToPreviousPeriod()
             viewModel.entries.value.map { it.description } shouldBe listOf("Yesterday")
 
-            viewModel.setPeriod(HistoryPeriod.All)
+            viewModel.setPeriod(LedgerPeriod.All)
             viewModel.entries.value.shouldHaveSize(2)
         }
     }
 
-    "future entries are excluded from the history" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+    "future entries are excluded from the ledger" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
@@ -241,7 +241,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "year period shows only entries in the year" {
-        withHistoryViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.parse("2025-12-31T12:00:00Z")),
@@ -250,20 +250,20 @@ class HistoryViewModelTest : StringSpec({
                 ExpenseEntry(0, groceries, "Current", main, 200, createdAt = Instant.parse("2026-01-01T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Year)
+            viewModel.setPeriod(LedgerPeriod.Year)
 
             viewModel.entries.value.map { it.description } shouldBe listOf("Current")
         }
     }
 
     "period with no entries shows an empty list" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Year)
+            viewModel.setPeriod(LedgerPeriod.Year)
             viewModel.goToNextPeriod()
 
             viewModel.entries.value.shouldBeEmpty()
@@ -271,7 +271,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "total is the net of income and expenses" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
@@ -281,7 +281,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "total converts foreign currency entries via stored rates" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -295,7 +295,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "total is null when a foreign rate is missing" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -306,7 +306,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "total follows search and type filters" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -323,7 +323,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "total follows the default currency" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
@@ -342,7 +342,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "openEditDialog prefills the draft from the entry" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -359,7 +359,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "saveDialog updates the entry and closes the dialog" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -374,7 +374,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "saveDialog keeps a transfer's category" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("General", CategoryType.Both)
@@ -398,7 +398,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "deleteDialogEntry deletes the entry and closes the dialog" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -412,7 +412,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "dismissDialog closes the dialog" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -425,25 +425,25 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "view mode defaults to entries and toggles" {
-        withHistoryViewModel { viewModel ->
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+        withLedgerViewModel { viewModel ->
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
 
-            viewModel.setViewMode(HistoryViewMode.Accounts)
-            viewModel.viewMode.value shouldBe HistoryViewMode.Accounts
+            viewModel.setViewMode(LedgerViewMode.Accounts)
+            viewModel.viewMode.value shouldBe LedgerViewMode.Accounts
 
-            viewModel.setViewMode(HistoryViewMode.Entries)
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.setViewMode(LedgerViewMode.Entries)
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
 
-            viewModel.setViewMode(HistoryViewMode.Categories)
-            viewModel.viewMode.value shouldBe HistoryViewMode.Categories
+            viewModel.setViewMode(LedgerViewMode.Categories)
+            viewModel.viewMode.value shouldBe LedgerViewMode.Categories
 
-            viewModel.setViewMode(HistoryViewMode.Entries)
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.setViewMode(LedgerViewMode.Entries)
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
         }
     }
 
     "account balances follow the end of the selected period" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -457,7 +457,7 @@ class HistoryViewModelTest : StringSpec({
 
             // Anchor is today (2026-09-15): the month window is Sep 2026, so the
             // balance includes every entry before and during September.
-            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.setPeriod(LedgerPeriod.Month)
             viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -600L))
 
             viewModel.goToPreviousPeriod()
@@ -469,7 +469,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "account balances exclude future entries" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
@@ -483,7 +483,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "account balances include the initial balance and react to direct writes" {
-        withHistoryViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 5_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
@@ -496,7 +496,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "account total converts foreign balances via stored rates" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -516,7 +516,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "account total is null when a foreign rate is missing" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Salary", CategoryType.Income)
             val usd = accountDao.getAll().first().first()
@@ -529,7 +529,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals show net per category" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -548,7 +548,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category total is the sum of category totals" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -561,7 +561,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals reconcile with the total chip and with income plus expenses" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 0.8, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -594,7 +594,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals follow the period" {
-        withHistoryViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -606,7 +606,7 @@ class HistoryViewModelTest : StringSpec({
                 ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
-            viewModel.setPeriod(HistoryPeriod.Month)
+            viewModel.setPeriod(LedgerPeriod.Month)
             viewModel.categoryTotals.value.shouldHaveSize(1)
             viewModel.categoryTotals.value.first().total shouldBe -300L
 
@@ -616,7 +616,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals follow search filter" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -633,7 +633,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals follow type filter" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -651,7 +651,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals convert foreign currency entries via stored rates" {
-        withHistoryViewModel(
+        withLedgerViewModel(
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -667,7 +667,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category total is null when a foreign rate is missing" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -678,7 +678,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "openCategory filters the entries to the category and switches to the entries view" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -687,10 +687,10 @@ class HistoryViewModelTest : StringSpec({
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
             viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
 
-            viewModel.setViewMode(HistoryViewMode.Categories)
+            viewModel.setViewMode(LedgerViewMode.Categories)
             viewModel.openCategory(groceries.id)
 
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
             viewModel.categoryFilter.value shouldBe groceries.id
             viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Lunch", "Coffee")
             viewModel.totalMinor.value shouldBe -1_650L
@@ -698,7 +698,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category filter excludes transfers from the drill-down" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -716,7 +716,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category filter follows the type filter" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -732,7 +732,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "clearCategoryFilter restores the full entries list" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -746,14 +746,14 @@ class HistoryViewModelTest : StringSpec({
             viewModel.clearCategoryFilter()
 
             viewModel.categoryFilter.value.shouldBeNull()
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
             viewModel.displayedEntries.value.shouldHaveSize(2)
             viewModel.totalMinor.value shouldBe 1_550L
         }
     }
 
     "switching the view mode away from entries clears the entry filters" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -762,7 +762,7 @@ class HistoryViewModelTest : StringSpec({
             viewModel.categoryFilter.value shouldBe groceries.id
             viewModel.accountFilter.value shouldBe main.id
 
-            viewModel.setViewMode(HistoryViewMode.Categories)
+            viewModel.setViewMode(LedgerViewMode.Categories)
 
             viewModel.categoryFilter.value.shouldBeNull()
             viewModel.accountFilter.value.shouldBeNull()
@@ -770,7 +770,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "setCategoryFilter narrows the entries without switching the view mode" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -780,13 +780,13 @@ class HistoryViewModelTest : StringSpec({
 
             viewModel.setCategoryFilter(salary.id)
 
-            viewModel.viewMode.value shouldBe HistoryViewMode.Entries
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
             viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Pay")
         }
     }
 
     "account filter narrows the entries to the account" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -804,7 +804,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "account filter keeps transfers of the source account" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -821,7 +821,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category and account filters combine" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -840,7 +840,7 @@ class HistoryViewModelTest : StringSpec({
     }
 
     "category totals ignore the category filter" {
-        withHistoryViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }

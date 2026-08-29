@@ -24,7 +24,7 @@ When developing, it's quicker to use IntelliJ MCP to run tests.
 
 - `:shared` — shared UI and business logic (KMP library, Compose Multiplatform; targets `jvm()` + `android`).
   All UI lives here. `App.kt` owns screen navigation via a sealed `Screen` class
-  (Entry/History/Settings/CategoryList/AccountList/Rates) in a `NavigationBar` scaffold with `AnimatedContent` transitions.
+  (Entry/Ledger/Settings/CategoryList/AccountList/Rates) in a `NavigationBar` scaffold with `AnimatedContent` transitions.
 - `:androidApp` — Android entry (`MainActivity`, appId `org.sjbtimdan.linden`, minSdk 24, targetSdk 37, edge-to-edge).
 - `:desktopApp` — Desktop/JVM entry (`Main.kt` → Compose `Window`, main class `org.sjbtimdan.linden.MainKt`).
 
@@ -109,8 +109,8 @@ coverage is only enforced there because the Android target runs device tests onl
 - `IvyImporter` replaces all rows in one transaction, infers `CategoryType` (Expense/Income/Both) from usage, maps
   "initial balance"/"adjust balance" titles onto `Account.initialBalance`, and routes currency-mismatched transactions
   to split accounts named `IVY: <name> (<currency>)`.
-- History has three view modes (`HistoryViewMode`: Entries/Accounts/Categories) with period navigation, search and
-  type filters; "nothing in the future" and "balance at period end" rules are enforced in `HistoryViewModel`.
+- Ledger has three view modes (`LedgerViewMode`: Entries/Accounts/Categories) with period navigation, search and
+  type filters; "nothing in the future" and "balance at period end" rules are enforced in `LedgerViewModel`.
 
 ## Conventions
 
@@ -123,7 +123,7 @@ coverage is only enforced there because the Android target runs device tests onl
   `createTestSqlDriver()` has a JVM-only actual, so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers
   instead of wiring up in-memory DBs per test: `lindenDatabase()` / `createTestSqlDriver()` live in
   `data/TestSqlUtils.kt`; Compose harnesses (`onTestMain`, `withApp`, `withViewModel`, `withAccountViewModel`,
-  `withSettingsViewModel`, `withRatesViewModel`, `withEntryPoint`, `withHistoryViewModel`) live in `ui/Utils.kt`.
+  `withSettingsViewModel`, `withRatesViewModel`, `withEntryPoint`, `withLedgerViewModel`) live in `ui/Utils.kt`.
   JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic,
   and run test classes in parallel across up to 4 forked JVMs (`maxParallelForks` in `shared/build.gradle.kts`).
 - Configuration cache + build cache enabled (`gradle.properties`).

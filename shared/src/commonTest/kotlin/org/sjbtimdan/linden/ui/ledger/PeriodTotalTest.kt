@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry

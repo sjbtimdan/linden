@@ -31,14 +31,14 @@ import androidx.compose.ui.Modifier
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.entry.EntryPoint
-import org.sjbtimdan.linden.ui.history.HistoryScreen
+import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.rates.RatesScreen
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 sealed class Screen {
     data object Entry : Screen()
-    data object History : Screen()
+    data object Ledger : Screen()
     data object Settings : Screen()
     data object CategoryList : Screen()
     data object AccountList : Screen()
@@ -53,7 +53,7 @@ fun App(dependencies: AppDependencies) {
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
     val entryViewModel = dependencies.entryViewModel
-    val historyViewModel = dependencies.historyViewModel
+    val ledgerViewModel = dependencies.ledgerViewModel
     DisposableEffect(dependencies.httpClient) {
         onDispose { dependencies.httpClient.close() }
     }
@@ -81,15 +81,15 @@ fun App(dependencies: AppDependencies) {
                         label = { Text("Entry") },
                     )
                     NavigationBarItem(
-                        selected = currentScreen == Screen.History,
-                        onClick = { currentScreen = Screen.History },
+                        selected = currentScreen == Screen.Ledger,
+                        onClick = { currentScreen = Screen.Ledger },
                         icon = {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
                             )
                         },
-                        label = { Text("History") },
+                        label = { Text("Ledger") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
@@ -126,8 +126,8 @@ fun App(dependencies: AppDependencies) {
                             ratesWarning = ratesWarning,
                         )
 
-                        Screen.History -> HistoryScreen(
-                            viewModel = historyViewModel,
+                        Screen.Ledger -> LedgerScreen(
+                            viewModel = ledgerViewModel,
                             onNavigateToSettings = { currentScreen = Screen.Settings },
                         )
 

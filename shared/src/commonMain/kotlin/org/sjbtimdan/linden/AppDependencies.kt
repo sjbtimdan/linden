@@ -20,7 +20,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
-import org.sjbtimdan.linden.ui.history.HistoryViewModel
+import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
 
@@ -74,7 +74,7 @@ class AppDependencies(
         fxRatesRepository,
         initialHideEntryTotal,
     )
-    val historyViewModel = HistoryViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
+    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
 }
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {

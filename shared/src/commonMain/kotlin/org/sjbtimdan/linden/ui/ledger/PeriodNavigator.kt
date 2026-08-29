@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -25,14 +25,14 @@ import kotlinx.datetime.LocalDate
 
 @Composable
 fun PeriodNavigator(
-    period: HistoryPeriod,
+    period: LedgerPeriod,
     anchor: LocalDate,
-    onPeriodChange: (HistoryPeriod) -> Unit,
+    onPeriodChange: (LedgerPeriod) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val canNavigate = period != HistoryPeriod.All
+    val canNavigate = period != LedgerPeriod.All
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(
@@ -64,7 +64,7 @@ fun PeriodNavigator(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
             ) {
-                HistoryPeriod.entries.forEach { option ->
+                LedgerPeriod.entries.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(option.name) },
                         onClick = {

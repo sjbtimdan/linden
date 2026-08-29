@@ -7,7 +7,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
-import org.sjbtimdan.linden.ui.history.toDefaultMinor
+import org.sjbtimdan.linden.ui.ledger.toDefaultMinor
 
 /** An account paired with its current balance in the account's own currency (minor units). */
 data class AccountWithBalance(

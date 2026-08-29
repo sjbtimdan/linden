@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -11,7 +11,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import kotlin.time.Instant
 
-class HistoryDayHeadersTest : StringSpec({
+class LedgerDayHeadersTest : StringSpec({
     val account = Account(1, "Main", Currency.CHF)
     val category = Category(1, "Groceries", CategoryType.Expense)
 
@@ -28,11 +28,11 @@ class HistoryDayHeadersTest : StringSpec({
     val day = 86_400_000L
 
     "empty list produces no items" {
-        historyListItems(emptyList()) shouldBe emptyList()
+        ledgerListItems(emptyList()) shouldBe emptyList()
     }
 
     "entries on a single day produce one header" {
-        val items = historyListItems(
+        val items = ledgerListItems(
             listOf(expense(1, 0), expense(2, day - 1)),
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L)
@@ -40,7 +40,7 @@ class HistoryDayHeadersTest : StringSpec({
     }
 
     "entries on multiple days produce a header per day" {
-        val items = historyListItems(
+        val items = ledgerListItems(
             listOf(
                 expense(1, 0),
                 expense(2, day - 1),
@@ -63,7 +63,7 @@ class HistoryDayHeadersTest : StringSpec({
 
     "different zones landing on the same local day produce one header" {
         val la = TimeZone.of("America/Los_Angeles")
-        val items = historyListItems(
+        val items = ledgerListItems(
             listOf(
                 expense(1, 0, TimeZone.UTC),
                 expense(2, 8 * 3_600_000, la),
@@ -74,7 +74,7 @@ class HistoryDayHeadersTest : StringSpec({
     }
 
     "non-chronological input produces a header per contiguous run" {
-        val items = historyListItems(
+        val items = ledgerListItems(
             listOf(expense(1, day), expense(2, 0), expense(3, 2 * day)),
         )
         items.map { it.key } shouldBe listOf(

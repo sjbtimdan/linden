@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +49,7 @@ import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
-fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit = {}) {
+fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -68,7 +68,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
     val dialogState by viewModel.dialogState.collectAsState()
 
     val listItems = remember(displayedEntries) {
-        historyListItems(entries = displayedEntries)
+        ledgerListItems(entries = displayedEntries)
     }
 
     BackHandler(enabled = dialogState == null && (categoryFilter != null || accountFilter != null)) {
@@ -128,16 +128,16 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                 optionLabel = { it?.displayName() ?: "All" },
                 onSelect = viewModel::setTypeFilter,
                 modifier = Modifier.testTag("typeFilterDropdown"),
-                enabled = viewMode != HistoryViewMode.Accounts,
+                enabled = viewMode != LedgerViewMode.Accounts,
             )
             ChipDropdown(
                 selected = viewMode,
-                options = HistoryViewMode.entries,
+                options = LedgerViewMode.entries,
                 optionLabel = { it.displayName() },
                 onSelect = viewModel::setViewMode,
                 modifier = Modifier.testTag("viewModeDropdown"),
             )
-            if (viewMode == HistoryViewMode.Entries) {
+            if (viewMode == LedgerViewMode.Entries) {
                 ChipDropdown(
                     selected = categoryFilter,
                     options = listOf(null) + categories.map { it.id },
@@ -181,15 +181,15 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
             }
             TotalLabel(
                 total = when (viewMode) {
-                    HistoryViewMode.Accounts -> accountTotal
-                    HistoryViewMode.Categories -> categoryTotal
-                    HistoryViewMode.Entries -> totalMinor
+                    LedgerViewMode.Accounts -> accountTotal
+                    LedgerViewMode.Categories -> categoryTotal
+                    LedgerViewMode.Entries -> totalMinor
                 },
                 currency = defaultCurrency,
             )
         }
 
-        if (viewMode == HistoryViewMode.Entries && (categoryFilter != null || accountFilter != null)) {
+        if (viewMode == LedgerViewMode.Entries && (categoryFilter != null || accountFilter != null)) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -214,7 +214,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
             }
         }
 
-        if (viewMode == HistoryViewMode.Accounts) {
+        if (viewMode == LedgerViewMode.Accounts) {
             val accountFilter = searchQuery.trim()
             val shownBalances =
                 if (accountFilter.isEmpty()) {
@@ -236,7 +236,7 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                     .fillMaxWidth()
                     .weight(1f),
             )
-        } else if (viewMode == HistoryViewMode.Categories) {
+        } else if (viewMode == LedgerViewMode.Categories) {
             val categoryFilter = searchQuery.trim()
             val shownCategories =
                 if (categoryFilter.isEmpty()) {
@@ -274,9 +274,9 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
                         (categoryFilter != null || accountFilter != null) &&
                             searchQuery.isBlank() &&
                             typeFilter == null &&
-                            periodSelection.period == HistoryPeriod.All -> "No entries match this filter."
+                            periodSelection.period == LedgerPeriod.All -> "No entries match this filter."
 
-                        searchQuery.isBlank() && typeFilter == null && periodSelection.period == HistoryPeriod.All ->
+                        searchQuery.isBlank() && typeFilter == null && periodSelection.period == LedgerPeriod.All ->
                             "No entries yet."
 
                         else -> "No entries match."
@@ -331,21 +331,21 @@ fun HistoryScreen(viewModel: HistoryViewModel, onNavigateToSettings: () -> Unit 
     }
 }
 
-internal sealed interface HistoryListItem {
+internal sealed interface LedgerListItem {
     val key: Any
 }
 
 internal data class DayHeaderItem(
     override val key: Any,
     val label: String,
-) : HistoryListItem
+) : LedgerListItem
 
-internal data class EntryListItem(val entry: Entry) : HistoryListItem {
+internal data class EntryListItem(val entry: Entry) : LedgerListItem {
     override val key: Any get() = entry.id
 }
 
-/** Builds the flat list of headers and entries shown by the history list. */
-internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> = buildList {
+/** Builds the flat list of headers and entries shown by the ledger list. */
+internal fun ledgerListItems(entries: List<Entry>): List<LedgerListItem> = buildList {
     var previousDay: LocalDate? = null
     entries.forEach { entry ->
         val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
@@ -360,10 +360,10 @@ internal fun historyListItems(entries: List<Entry>): List<HistoryListItem> = bui
 /** All options of the type filter dropdown: the "All" (no filter) state plus every entry type. */
 private val typeFilterOptions: List<EntryType?> = listOf(null) + EntryType.entries
 
-private fun HistoryViewMode.displayName(): String = when (this) {
-    HistoryViewMode.Entries -> "Entries"
-    HistoryViewMode.Accounts -> "Accounts"
-    HistoryViewMode.Categories -> "Categories"
+private fun LedgerViewMode.displayName(): String = when (this) {
+    LedgerViewMode.Entries -> "Entries"
+    LedgerViewMode.Accounts -> "Accounts"
+    LedgerViewMode.Categories -> "Categories"
 }
 
 @Composable

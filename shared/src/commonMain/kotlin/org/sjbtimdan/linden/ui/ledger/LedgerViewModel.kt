@@ -1,4 +1,4 @@
-package org.sjbtimdan.linden.ui.history
+package org.sjbtimdan.linden.ui.ledger
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +40,7 @@ import kotlin.math.abs
 import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HistoryViewModel(
+class LedgerViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
@@ -56,7 +56,7 @@ class HistoryViewModel(
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
 
-    private val _periodSelection = MutableStateFlow(PeriodSelection(HistoryPeriod.All, today()))
+    private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.All, today()))
     val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
 
     /** Start/end of the selected period's window, derived once and reused by every period flow. */
@@ -68,8 +68,8 @@ class HistoryViewModel(
         }
         .stateFlow(null)
 
-    private val _viewMode = MutableStateFlow(HistoryViewMode.Entries)
-    val viewMode: StateFlow<HistoryViewMode> = _viewMode.asStateFlow()
+    private val _viewMode = MutableStateFlow(LedgerViewMode.Entries)
+    val viewMode: StateFlow<LedgerViewMode> = _viewMode.asStateFlow()
 
     /** Id of the category the entries view is narrowed to, or null for all entries. 0 means "Uncategorized". */
     private val _categoryFilter = MutableStateFlow<Long?>(null)
@@ -145,7 +145,7 @@ class HistoryViewModel(
         periodTotalMinor(entries, currency, rates)
     }.stateFlow(0L)
 
-    /** Last day of the selected period (inclusive); null for [HistoryPeriod.All]. */
+    /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */
     private val periodEnd: StateFlow<LocalDate?> = periodWindow
         .map { it?.end }
         .stateFlow(null)
@@ -162,7 +162,7 @@ class HistoryViewModel(
      * Balance of each account at the end of the selected period in the account's own
      * currency: initial balance plus the net of entries dated on or before the last
      * day of the period (or today, whichever is earlier — entries in the future never
-     * count). For [HistoryPeriod.All] this is the current balance.
+     * count). For [LedgerPeriod.All] this is the current balance.
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
         entriesUpToPeriodEnd,
@@ -216,14 +216,14 @@ class HistoryViewModel(
         _typeFilter.value = type
     }
 
-    fun setPeriod(period: HistoryPeriod) {
+    fun setPeriod(period: LedgerPeriod) {
         _periodSelection.update { it.copy(period = period) }
     }
 
-    fun setViewMode(mode: HistoryViewMode) {
+    fun setViewMode(mode: LedgerViewMode) {
         // The entry filters only apply to the entries view; leaving it clears
         // them so no stale chip can sit over the categories or accounts list.
-        if (mode != HistoryViewMode.Entries) {
+        if (mode != LedgerViewMode.Entries) {
             _categoryFilter.value = null
             _accountFilter.value = null
         }
@@ -233,7 +233,7 @@ class HistoryViewModel(
     /** Drills into a category from the categories view: narrows the entries to it and switches to the entries view. */
     fun openCategory(categoryId: Long) {
         setCategoryFilter(categoryId)
-        _viewMode.value = HistoryViewMode.Entries
+        _viewMode.value = LedgerViewMode.Entries
     }
 
     /** Narrows the entries view to a single category; null restores all entries. */
@@ -334,20 +334,20 @@ private fun LocalDate.sqlLowerBound(): Long =
 private fun LocalDate.sqlUpperBound(): Long =
     plus(2, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 
-/** What the history screen shows: the entry list, period-end account balances, or category totals. */
-enum class HistoryViewMode {
+/** What the ledger screen shows: the entry list, period-end account balances, or category totals. */
+enum class LedgerViewMode {
     Entries,
     Accounts,
     Categories,
 }
 
-/** The selected [HistoryPeriod] together with the anchor date its window is centered on. */
+/** The selected [LedgerPeriod] together with the anchor date its window is centered on. */
 data class PeriodSelection(
-    val period: HistoryPeriod,
+    val period: LedgerPeriod,
     val anchor: LocalDate,
 )
 
-/** First and last day of the calendar window of a period selection; null for [HistoryPeriod.All]. */
+/** First and last day of the calendar window of a period selection; null for [LedgerPeriod.All]. */
 private data class PeriodWindow(
     val start: LocalDate,
     val end: LocalDate,
