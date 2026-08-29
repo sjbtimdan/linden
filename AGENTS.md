@@ -39,7 +39,7 @@ When developing, it's quicker to use IntelliJ MCP to run tests.
 ./gradlew :shared:jvmTest                   # run Kotest suite (commonTest + jvmTest)
 ./gradlew :androidApp:assembleDebug         # full Android debug build
 ./gradlew :desktopApp:run                   # run Desktop app
-./gradlew check                             # full check — no CI pipeline (see check.sh)
+./gradlew check                             # full check — CI runs this too (.github/workflows/check.yml)
 ./gradlew detekt                            # formatting check (ktlint ruleset, all modules)
 ./gradlew detekt --auto-correct             # auto-fix formatting violations
 ./gradlew :desktopApp:renderIcon            # regenerate master icon into build/icon-render/
@@ -90,12 +90,15 @@ coverage is only enforced there because the Android target runs device tests onl
   desktop DB at `~/.linden/linden.db` — add a `.sqm` migration, or delete the local DB.
 - Startup is async: `AppRoot` calls the suspend `createAppDependencies(driver)` (in `AppDependencies.kt`) — both
   `MainActivity` and desktop `Main` hop to `Dispatchers.IO` — and shows a `CircularProgressIndicator`
-  (`testTag("loading")`) until ready. `AppDependencies` is a lazy composition root (DAOs, ViewModels, shared
-  `HttpClient`); theme + default currency are read from `SettingsDao` with fallbacks `ThemeMode.SYSTEM` /
-  `Currency.CHF` (nothing is written at startup). Theme applies live via `SettingsViewModel.themeMode`.
+  (`testTag("loading")`) until ready. `AppDependencies` is the composition root from `AppDependencies.kt`: DAOs,
+  repository and ViewModels are created eagerly, only `httpClient` is `by lazy` (its engine is expensive to build and
+  tests injecting a fake FX source never trigger it). Theme + default currency are read from `SettingsDao` with
+  fallbacks `ThemeMode.SYSTEM` / `Currency.CHF` (nothing is written at startup). Theme applies live via
+  `SettingsViewModel.themeMode`.
 - FX rates power cross-currency totals: `FxRatesFetcher` (in `.data`) calls Frankfurter
   (`api.frankfurter.dev/v1/latest`) over Ktor (OkHttp on Android, CIO on JVM), responses decode via
-  `parseFxRatesResponse` (kotlinx.serialization). Rates refresh once at startup (`App.kt` `LaunchedEffect`), cached in
+  `parseFxRatesResponse` (kotlinx.serialization). Rates refresh only when the cached rates are older than 24 hours
+  (`App.kt` `LaunchedEffect` → `ratesViewModel.refreshRatesIfStale`), cached in
   `FxRateEntity` (`FxRateDao`), consumed via `FxRatesRepository`; `RatesFlowProvider` exposes default currency + rates
   as `StateFlow`s. Tests inject `FakeFxRatesSource` — never hit the real API.
 - `DatabaseDriverFactory` is an `expect class` (shared enables `-Xexpect-actual-classes`), with per-source-set
