@@ -2,6 +2,18 @@
 
 An expenses tracker written in KMP for Android and Desktop
 
+## Codebase Mental Map
+
+New agents with a fresh context should read the project-intelligence files first to understand the
+codebase without re-reading all the source code:
+
+- `.opencode/context/project-intelligence/navigation.md` — overview of the mental map
+- `.opencode/context/project-intelligence/technical-domain.md` — stack, architecture, structure, decisions
+- `.opencode/context/project-intelligence/business-domain.md` — why the project exists
+- `.opencode/context/project-intelligence/business-tech-bridge.md` — business → technical mapping
+- `.opencode/context/project-intelligence/decisions-log.md` — key architectural decisions
+- `.opencode/context/project-intelligence/living-notes.md` — gotchas, patterns, technical debt
+
 ## Skills
 
 Read `../compose-kotlin-agent-skills/SKILL.md` first, then load the matching reference file

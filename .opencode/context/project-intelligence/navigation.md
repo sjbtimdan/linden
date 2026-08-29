@@ -1,8 +1,9 @@
-<!-- Context: project-intelligence/nav | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/nav | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
 
 # Project Intelligence
 
 > Start here for quick project understanding. These files bridge business and technical domains.
+> **This is the codebase "mental map"** — a new agent should read these files to understand the project without re-reading all the source code.
 
 ## Structure
 

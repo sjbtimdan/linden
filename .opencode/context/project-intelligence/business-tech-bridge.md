@@ -1,8 +1,8 @@
-<!-- Context: project-intelligence/bridge | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/bridge | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
 
 # Business ↔ Tech Bridge
 
-> Document how business needs translate to technical solutions. This is the critical connection point.
+> How business needs translate to technical solutions in Linden.
 
 ## Quick Reference
 
@@ -14,55 +14,79 @@
 
 | Business Need | Technical Solution | Why This Mapping | Business Value |
 |---------------|-------------------|------------------|----------------|
-| [Users need X] | [Technical implementation] | [Why this maps] | [Value delivered] |
-| [Business wants Y] | [Technical implementation] | [Why this maps] | [Value delivered] |
-| [Compliance requires Z] | [Technical implementation] | [Why this maps] | [Value delivered] |
+| Run on Android + Desktop | KMP shared module (`:shared`) | Single codebase, both platforms in lockstep | Lower maintenance, consistent UX |
+| Accurate money handling | Integer minor units (`Long`), exact calculator | No floating-point errors | Trustworthy balances |
+| Multi-currency support | `Currency` enum, FX rates via Frankfurter, per-currency accounts | Cross-currency totals in default currency | Users can hold accounts in any currency |
+| Fast entry | Predictions (`DescriptionPredictor`, `FieldPredictor`, `QuickEntryPredictor`) | Heuristic scoring of past entries | Less typing, fewer errors |
+| Migrate from Ivy Wallet | `IvyImporter` (ZIP+JSON import) | Maps Ivy backup to Linden schema | Easy onboarding for existing users |
+| Data safety | `LindenBackupManager` (JSON dump/restore) | Versioned, transactional restore | No data loss |
+| Local-first | SQLDelight local DB, no server | All data on device | Privacy, offline, no accounts |
 
 ## Feature Mapping Examples
 
-### Feature: [Feature Name]
+### Feature: Entry Tracking
 
 **Business Context**:
-- User need: [What users need]
-- Business goal: [Why this matters to business]
-- Priority: [Why this was prioritized]
+- User need: Record expenses, income, and transfers quickly
+- Business goal: Core value proposition
+- Priority: Highest (it's the primary screen)
 
 **Technical Implementation**:
-- Solution: [What was built]
-- Architecture: [How it fits the system]
-- Trade-offs: [What was considered and why it won]
+- Solution: `EntryPoint` screen with `EntryForm`, `EntryDraft`, `EntryPointViewModel`
+- Architecture: MVVM — ViewModel exposes `StateFlow`s, screen collects with `collectAsState()`
+- Trade-offs: Draft kept in ViewModel across config changes; exact calculator for amount entry
 
 **Connection**:
-[Explain clearly how the technical solution serves the business need. What would happen without this feature? What does this feature enable for the business?]
+Fast, accurate entry is the heart of the app. The calculator avoids floating-point surprises,
+predictions reduce typing, and the draft survives configuration changes.
 
-### Feature: [Feature Name]
+### Feature: Multi-Currency Ledger
 
 **Business Context**:
-- User need: [What users need]
-- Business goal: [Why this matters to business]
-- Priority: [Why this was prioritized]
+- User need: See balances and totals across accounts in different currencies
+- Business goal: Differentiate from single-currency trackers
+- Priority: High
 
 **Technical Implementation**:
-- Solution: [What was built]
-- Architecture: [How it fits the system]
-- Trade-offs: [What was considered and why it won]
+- Solution: `LedgerViewModel` with `RatesFlowProvider`, `accountDeltas`/`categoryTotals` SQL queries
+- Architecture: Aggregation pushed into SQL, converted to default currency once per currency group
+- Trade-offs: FX rates cached 24h (Frankfurter API); missing rate → null total
 
 **Connection**:
-[Explain clearly how the technical solution serves the business need.]
+Users can hold accounts in any of 7 currencies and still see a single default-currency total.
+
+### Feature: Ivy Wallet Import
+
+**Business Context**:
+- User need: Migrate from Ivy Wallet without re-entering history
+- Business goal: Reduce onboarding friction
+- Priority: Medium
+
+**Technical Implementation**:
+- Solution: `IvyImporter` reads ZIP+JSON, infers `CategoryType` from usage, maps balance titles to `initialBalance`
+- Architecture: Replaces all rows in one transaction; currency-mismatched transactions routed to split accounts
+- Trade-offs: `last_insert_rowid()` resolves auto-increment IDs; charset detection for UTF-16
+
+**Connection**:
+Existing users can switch to Linden without losing their financial history.
 
 ## Trade-off Decisions
 
-When business and technical needs conflict, document the trade-off:
-
 | Situation | Business Priority | Technical Priority | Decision Made | Rationale |
 |-----------|-------------------|-------------------|---------------|-----------|
-| [Conflict] | [What business wants] | [What tech wants] | [What was chosen] | [Why this was right] |
+| Money accuracy vs. simplicity | Accurate balances | Avoid float errors | Integer minor units + exact calculator | No floating-point surprises |
+| Multi-currency vs. complexity | Cross-currency totals | Keep it simple | FX rates via Frankfurter, cached 24h | Live rates without a server |
+| Local-first vs. cloud sync | Privacy, offline | No server to maintain | SQLDelight local DB | All data on device |
+| KMP vs. native per platform | One codebase | Consistency | KMP shared module | Both platforms in lockstep |
 
 ## Common Misalignments
 
 | Misalignment | Warning Signs | Resolution Approach |
 |--------------|---------------|---------------------|
-| [Type of mismatch] | [Symptoms to watch for] | [How to address] |
+| Money as `Double`/`BigDecimal` | Floating-point rounding in amounts | Always use integer minor units (`Long`) |
+| `formatAmountCompact` in edit fields | `parseAmount` can't parse "1.25m" | Only use compact format for read-only displays |
+| Editing `.sq` tables without migration | Desktop DB at `~/.linden/linden.db` not migrated | Add a `.sqm` migration or delete the local DB |
+| Currency change on account with entries | `accountsWithEntries` blocks it | Respect the business rule |
 
 ## Stakeholder Communication
 
@@ -80,11 +104,11 @@ This file helps translate between worlds:
 
 ## Onboarding Checklist
 
-- [ ] Understand the core business needs this project addresses
-- [ ] See how each major feature maps to business value
-- [ ] Know the key trade-offs and why decisions were made
-- [ ] Be able to explain to stakeholders why technical choices matter
-- [ ] Be able to explain to developers why business constraints exist
+- [x] Understand the core business needs this project addresses
+- [x] See how each major feature maps to business value
+- [x] Know the key trade-offs and why decisions were made
+- [x] Be able to explain to stakeholders why technical choices matter
+- [x] Be able to explain to developers why business constraints exist
 
 ## Related Files
 

@@ -1,8 +1,8 @@
-<!-- Context: project-intelligence/business | Priority: high | Version: 1.0 | Updated: 2025-01-12 -->
+<!-- Context: project-intelligence/business | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
 
 # Business Domain
 
-> Document the business context, problems solved, and value created.
+> The business context, problems solved, and value created by Linden.
 
 ## Quick Reference
 
@@ -13,73 +13,74 @@
 ## Project Identity
 
 ```
-Project Name: [Name]
-Tagline: [One-line description]
-Problem Statement: [What problem are we solving?]
-Solution: [How we're solving it]
+Project Name: Linden
+Tagline: An expenses tracker
+Problem Statement: Track personal expenses and income across multiple accounts and currencies
+Solution: A KMP app (Android + Desktop) with entry tracking, ledger views, FX-rate-aware totals, and Ivy Wallet import
 ```
 
 ## Target Users
 
 | User Segment | Who They Are | What They Need | Pain Points |
 |--------------|--------------|----------------|-------------|
-| [Primary] | [Description] | [Their needs] | [Their frustrations] |
-| [Secondary] | [Description] | [Their needs] | [Their frustrations] |
+| Primary | Individuals tracking personal finances | Track expenses/income, see balances, multi-currency support | Manual spreadsheets, no cross-currency totals |
+| Secondary | Users migrating from Ivy Wallet | Import existing data | Manual re-entry of historical transactions |
 
 ## Value Proposition
 
 **For Users**:
-- [Key benefit 1]
-- [Key benefit 2]
-- [Key benefit 3]
+- Track expenses, income, and transfers across multiple accounts
+- Multi-currency support with live FX rates (Frankfurter API)
+- Fast entry with predictions (description/account/category suggestions, quick entries)
+- Exact calculator for amount entry (no floating-point surprises)
+- Ledger with period navigation, search, and filters
+- Backup/restore and Ivy Wallet import
 
 **For Business**:
-- [Key value 1]
-- [Key value 2]
+- Single KMP codebase for Android + Desktop (maintenance efficiency)
+- Local-first (no server, no accounts, no cloud)
 
 ## Success Metrics
 
 | Metric | Definition | Target | Current |
 |--------|------------|--------|---------|
-| [Metric 1] | [What it measures] | [Goal] | [Actual] |
-| [Metric 2] | [What it measures] | [Goal] | [Actual] |
+| Test coverage | Kover JVM variant | ≥ 50% | Enforced via `koverVerifyJvm` in `check` |
 
 ## Business Model (if applicable)
 
 ```
-Revenue Model: [How the business makes money]
-Pricing Strategy: [If applicable]
-Unit Economics: [CAC, LTV, etc.]
-Market Position: [Where we fit in the market]
+Revenue Model: N/A (personal project)
+Pricing Strategy: N/A
+Unit Economics: N/A
+Market Position: Personal expenses tracker (local-first, multi-currency)
 ```
 
 ## Key Stakeholders
 
 | Role | Name | Responsibility | Contact |
 |------|------|----------------|---------|
-| [Product Owner] | [Name] | [What they own] | [Contact] |
-| [Tech Lead] | [Name] | [What they own] | [Contact] |
-| [Business Lead] | [Name] | [What they own] | [Contact] |
+| Maintainer | Steve | All development | N/A |
 
 ## Roadmap Context
 
-**Current Focus**: [What we're working on now]
-**Next Milestone**: [Upcoming goal]
-**Long-term Vision**: [Where this is heading]
+**Current Focus**: Core expense tracking (entry, ledger, accounts, categories, rates, settings)
+**Next Milestone**: N/A
+**Long-term Vision**: N/A
 
 ## Business Constraints
 
-- [Constraint 1] - [Why it exists]
-- [Constraint 2] - [Why it exists]
+- Local-first: no server, no accounts, no cloud sync
+- Multi-currency: users may hold accounts in CHF/EUR/GBP/HKD/JPY/SGD/USD
+- Cross-currency totals require FX rates (fetched from Frankfurter, cached 24h)
 
 ## Onboarding Checklist
 
-- [ ] Understand the problem statement
-- [ ] Identify target users and their needs
-- [ ] Know the key value proposition
-- [ ] Understand success metrics
-- [ ] Know who the stakeholders are
-- [ ] Understand current business constraints
+- [x] Understand the problem statement (personal expenses tracker)
+- [x] Identify target users and their needs (individuals, Ivy Wallet migrants)
+- [x] Know the key value proposition (multi-currency, fast entry, local-first)
+- [x] Understand success metrics (test coverage gate)
+- [x] Know who the stakeholders are (single maintainer)
+- [x] Understand current business constraints (local-first, multi-currency)
 
 ## Related Files
 
