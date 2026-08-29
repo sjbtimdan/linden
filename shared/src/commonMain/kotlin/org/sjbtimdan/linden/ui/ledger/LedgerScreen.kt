@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
@@ -54,6 +58,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
+    val showFuture by viewModel.showFuture.collectAsState()
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
@@ -88,29 +93,52 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             .padding(ScreenPadding)
             .widthIn(max = ScreenMaxWidth),
     ) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = viewModel::setSearchQuery,
-            label = { Text("Search") },
-            singleLine = true,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                )
-            },
-            trailingIcon = if (searchQuery.isNotEmpty()) {
-                {
-                    IconButton(
-                        onClick = { viewModel.setSearchQuery("") },
-                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
-                }
-            } else {
-                null
-            },
-            shape = RoundedCornerShape(24.dp),
+        Row(
             modifier = Modifier.fillMaxWidth(),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::setSearchQuery,
+                label = { Text("Search") },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null,
+                    )
+                },
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(
+                            onClick = { viewModel.setSearchQuery("") },
+                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    }
+                } else {
+                    null
+                },
+                shape = RoundedCornerShape(24.dp),
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(24.dp))
+                    .clickable { viewModel.setShowFuture(!showFuture) }
+                    .testTag("showFutureToggle"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = showFuture,
+                    onCheckedChange = null,
+                )
+                Text(
+                    text = "Show future\nentries",
+                    style = MaterialTheme.typography.labelSmall,
+                    lineHeight = MaterialTheme.typography.labelSmall.lineHeight,
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 

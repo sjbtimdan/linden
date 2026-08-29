@@ -240,6 +240,54 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "showFuture includes future entries in the entries list" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            viewModel.setShowFuture(true)
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Future", "Today")
+        }
+    }
+
+    "showFuture includes future entries in account balances" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            viewModel.setShowFuture(true)
+
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -300L))
+        }
+    }
+
+    "showFuture includes future entries in category totals" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            viewModel.setShowFuture(true)
+
+            viewModel.categoryTotals.value.first().total shouldBe -300L
+        }
+    }
+
     "year period shows only entries in the year" {
         withLedgerViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

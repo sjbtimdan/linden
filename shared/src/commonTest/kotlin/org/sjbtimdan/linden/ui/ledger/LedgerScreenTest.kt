@@ -59,6 +59,30 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "show future checkbox reveals future entries" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Today").assertIsDisplayed()
+            onNodeWithText("Scheduled").assertDoesNotExist()
+
+            onNodeWithTag("showFutureToggle").performClick()
+
+            onNodeWithText("Scheduled").assertIsDisplayed()
+            onNodeWithText("Today").assertIsDisplayed()
+        }
+    }
+
     "type filter narrows the list" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

@@ -56,6 +56,10 @@ class LedgerViewModel(
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
 
+    /** Whether future-dated entries are shown in the ledger (all view modes). */
+    private val _showFuture = MutableStateFlow(false)
+    val showFuture: StateFlow<Boolean> = _showFuture.asStateFlow()
+
     private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.All, today()))
     val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
 
@@ -79,8 +83,11 @@ class LedgerViewModel(
     private val _accountFilter = MutableStateFlow<Long?>(null)
     val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
 
-    private val periodEntries: StateFlow<List<SearchableEntry>> = periodWindow
-        .flatMapLatest { window ->
+    private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
+        periodWindow,
+        _showFuture,
+    ) { window, showFuture -> window to showFuture }
+        .flatMapLatest { (window, showFuture) ->
             // Only rows at or after a safe lower bound are fetched from the database.
             // The exact window and the "nothing in the future" rule are still enforced
             // here at emission time so a stale "today" never hides new entries.
@@ -88,7 +95,7 @@ class LedgerViewModel(
             source.map { rows ->
                 val now = today()
                 rows
-                    .filter { entry -> entry.isInWindow(window?.start, window?.end, now) }
+                    .filter { entry -> entry.isInWindow(window?.start, window?.end, now, showFuture) }
                     .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
                     .map(::SearchableEntry)
             }
@@ -168,9 +175,16 @@ class LedgerViewModel(
         entriesUpToPeriodEnd,
         periodEnd,
         accounts,
-    ) { entries, end, accounts ->
+        _showFuture,
+    ) { entries, end, accounts, showFuture ->
         val now = today()
-        val cutoff = end?.let { minOf(it, now) } ?: now
+        val cutoff = when {
+            // Showing future entries: include everything up to the period end (or all for "All").
+            showFuture -> end
+
+            // Otherwise balances stop at today, so entries in the future never count.
+            else -> end?.let { minOf(it, now) } ?: now
+        }
         accountBalancesAtEnd(entries, cutoff, accounts)
     }.stateFlow(emptyList())
 
@@ -214,6 +228,10 @@ class LedgerViewModel(
 
     fun setTypeFilter(type: EntryType?) {
         _typeFilter.value = type
+    }
+
+    fun setShowFuture(show: Boolean) {
+        _showFuture.value = show
     }
 
     fun setPeriod(period: LedgerPeriod) {
@@ -311,9 +329,9 @@ private class SearchableEntry(val entry: Entry) {
         toAccountName?.contains(query) == true
 }
 
-private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate): Boolean {
+private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate, showFuture: Boolean): Boolean {
     val date = createdAt.toLocalDateTime(createdZone).date
-    return date <= today &&
+    return (showFuture || date <= today) &&
         (start == null || date >= start) &&
         (end == null || date <= end)
 }
