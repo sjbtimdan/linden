@@ -1,3 +1,4 @@
+import java.time.Instant
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -82,6 +83,10 @@ kotlin {
     }
 }
 
+kotlin.sourceSets.getByName("commonMain").kotlin.srcDir(
+    layout.buildDirectory.dir("generated/buildInfo/kotlin"),
+)
+
 sqldelight {
     databases {
         create("LindenDatabase") {
@@ -140,4 +145,67 @@ tasks.withType<Test>().configureEach {
 
 tasks.named("check") {
     dependsOn(tasks.named("koverVerifyJvm"))
+}
+
+// Generates a BuildInfo.kt file in commonMain with the app version and the
+// current git commit, so the running build can be identified from the UI.
+// The version is derived from git tags: on a tag it's the tag version, otherwise
+// it's the last tag plus the number of commits since it (e.g. "0.1.1-3"). Until
+// the first tag exists it falls back to the base version plus the total commit
+// count (e.g. "0.1.0-42").
+val generateBuildInfo = tasks.register("generateBuildInfo") {
+    val outputDir = layout.buildDirectory.dir("generated/buildInfo/kotlin")
+    val baseVersion = providers.gradleProperty("lindenVersion").getOrElse("0.0.0")
+    val gitDescribe = providers.exec {
+        commandLine("git", "describe", "--tags", "--always")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim()
+    val version = when {
+        // No tags yet: describe returns a bare commit hash -> base + commit count.
+        gitDescribe.matches(Regex("[0-9a-f]{7,40}")) -> {
+            val count = providers.exec {
+                commandLine("git", "rev-list", "--count", "HEAD")
+                isIgnoreExitValue = true
+            }.standardOutput.asText.get().trim()
+            "$baseVersion-$count"
+        }
+        else -> gitDescribe
+            .removePrefix("v")
+            // Drop the "-g<sha>" suffix: the commit is shown separately.
+            .replace(Regex("-g[0-9a-f]{7,40}$"), "")
+    }
+    val gitCommit = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().ifEmpty { "unknown" }
+    val gitDirty = providers.exec {
+        commandLine("git", "status", "--porcelain")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().isNotBlank()
+    inputs.property("version", version)
+    inputs.property("gitCommit", gitCommit)
+    inputs.property("gitDirty", gitDirty)
+    outputs.dir(outputDir)
+    doLast {
+        val buildTime = Instant.now().toString()
+        val file = outputDir.get().file("org/sjbtimdan/linden/BuildInfo.kt").asFile
+        file.parentFile.mkdirs()
+        file.writeText(
+            """
+            |package org.sjbtimdan.linden
+            |
+            |/** Build-time metadata recorded at compile time. */
+            |object BuildInfo {
+            |    const val VERSION = "$version"
+            |    const val GIT_COMMIT = "$gitCommit"
+            |    const val GIT_DIRTY = $gitDirty
+            |    const val BUILD_TIME = "$buildTime"
+            |}
+            |""".trimMargin(),
+        )
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(generateBuildInfo)
 }

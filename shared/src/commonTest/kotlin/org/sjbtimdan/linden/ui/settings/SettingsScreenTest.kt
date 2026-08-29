@@ -13,6 +13,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import org.sjbtimdan.linden.BuildInfo
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.buildIvyZip
@@ -33,6 +34,16 @@ class SettingsScreenTest : StringSpec({
             onNodeWithText("Light").assertIsSelected()
 
             viewModel.themeMode.value shouldBe ThemeMode.LIGHT
+        }
+    }
+
+    "shows the build version footer" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""
+            onNodeWithText(
+                "Linden v${BuildInfo.VERSION} (${BuildInfo.GIT_COMMIT}$dirty)",
+            ).assertExists()
         }
     }
 

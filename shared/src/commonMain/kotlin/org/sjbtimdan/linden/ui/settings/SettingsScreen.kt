@@ -47,7 +47,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.BuildInfo
 import org.sjbtimdan.linden.backup.rememberDatabaseBackupPicker
 import org.sjbtimdan.linden.backup.rememberDatabaseRestorePicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
@@ -311,6 +313,18 @@ fun SettingsScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(32.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = buildVersionLabel(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         if (showImportConfirmation) {
             AlertDialog(
                 onDismissRequest = { showImportConfirmation = false },
@@ -418,4 +432,9 @@ private fun ThemeMode.displayName(): String = when (this) {
     ThemeMode.SYSTEM -> "System"
     ThemeMode.LIGHT -> "Light"
     ThemeMode.DARK -> "Dark"
+}
+
+private fun buildVersionLabel(): String {
+    val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""
+    return "Linden v${BuildInfo.VERSION} (${BuildInfo.GIT_COMMIT}$dirty)"
 }
