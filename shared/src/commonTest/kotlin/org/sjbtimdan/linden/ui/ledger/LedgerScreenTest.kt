@@ -19,6 +19,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Dp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
@@ -823,6 +824,81 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Groceries").performClick()
 
             onAllNodes(hasSetTextAction())[2].assertTextContains("Groceries")
+        }
+    }
+
+    "filters are expanded by default, keeping the period and total visible" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Search").assertIsDisplayed()
+            onNodeWithTag("viewModeDropdown").assertIsDisplayed()
+            onNodeWithTag("periodLabel").assertIsDisplayed()
+            // The expense row and the period total both show the amount.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+        }
+    }
+
+    "collapsing the filters hides search and combo boxes but keeps the period and total" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("filtersHeader").performClick()
+            waitForIdle()
+
+            onNodeWithText("Search").assertDoesNotExist()
+            onNodeWithTag("viewModeDropdown").assertDoesNotExist()
+            onNodeWithTag("periodLabel").assertIsDisplayed()
+            onNodeWithText("Coffee").assertIsDisplayed()
+            // The period total stays visible when the filters are collapsed.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+        }
+    }
+
+    "re-expanding the filters shows the search field again" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("filtersHeader").performClick()
+            onNodeWithTag("filtersHeader").performClick()
+            waitForIdle()
+
+            onNodeWithText("Search").assertIsDisplayed()
+        }
+    }
+
+    "collapsing the filters reclaims vertical space for the list" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            val expandedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
+
+            onNodeWithTag("filtersHeader").performClick()
+            waitForIdle()
+
+            val collapsedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
+            // Collapsing raises the top of the list, giving it more vertical space.
+            collapsedTop shouldBeLessThan expandedTop
         }
     }
 })

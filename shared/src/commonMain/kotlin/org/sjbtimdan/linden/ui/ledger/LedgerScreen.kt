@@ -1,10 +1,13 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,6 +43,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +81,7 @@ private data class AdjustBalanceDialogState(
     val categoryQuery: String = "",
 )
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
     val accounts by viewModel.accounts.collectAsState()
@@ -98,6 +105,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
     var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
+    var filtersExpanded by rememberSaveable { mutableStateOf(true) }
 
     val listItems = remember(displayedEntries) {
         ledgerListItems(entries = displayedEntries)
@@ -120,104 +128,118 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             .padding(ScreenPadding)
             .widthIn(max = ScreenMaxWidth),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = viewModel::setSearchQuery,
-                label = { Text("Search") },
-                singleLine = true,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = null,
+        FiltersHeader(
+            expanded = filtersExpanded,
+            onToggle = { filtersExpanded = !filtersExpanded },
+        )
+
+        AnimatedVisibility(visible = filtersExpanded) {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = viewModel::setSearchQuery,
+                        label = { Text("Search") },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                            )
+                        },
+                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                            {
+                                IconButton(
+                                    onClick = { viewModel.setSearchQuery("") },
+                                ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                            }
+                        } else {
+                            null
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.weight(1f),
                     )
-                },
-                trailingIcon = if (searchQuery.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = { viewModel.setSearchQuery("") },
-                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(24.dp))
+                            .clickable { viewModel.setShowFuture(!showFuture) }
+                            .testTag("showFutureToggle"),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(
+                            checked = showFuture,
+                            onCheckedChange = null,
+                        )
+                        Text(
+                            text = "Show future\nentries",
+                            style = MaterialTheme.typography.labelSmall,
+                            lineHeight = MaterialTheme.typography.labelSmall.lineHeight,
+                        )
                     }
-                } else {
-                    null
-                },
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(24.dp))
-                    .clickable { viewModel.setShowFuture(!showFuture) }
-                    .testTag("showFutureToggle"),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(
-                    checked = showFuture,
-                    onCheckedChange = null,
-                )
-                Text(
-                    text = "Show future\nentries",
-                    style = MaterialTheme.typography.labelSmall,
-                    lineHeight = MaterialTheme.typography.labelSmall.lineHeight,
-                )
-            }
-        }
+                }
 
-        Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            // The type filter only applies to entries and category totals, so it
-            // is disabled while the accounts view is showing period-end balances.
-            ChipDropdown(
-                selected = typeFilter,
-                options = typeFilterOptions,
-                optionLabel = { it?.displayName() ?: "All" },
-                onSelect = viewModel::setTypeFilter,
-                modifier = Modifier.testTag("typeFilterDropdown"),
-                enabled = viewMode != LedgerViewMode.Accounts,
-            )
-            ChipDropdown(
-                selected = viewMode,
-                options = LedgerViewMode.entries,
-                optionLabel = { it.displayName() },
-                onSelect = viewModel::setViewMode,
-                modifier = Modifier.testTag("viewModeDropdown"),
-            )
-            if (viewMode == LedgerViewMode.Entries) {
-                ChipDropdown(
-                    selected = categoryFilter,
-                    options = listOf(null) + categories.map { it.id },
-                    optionLabel = { id ->
-                        id?.let { cid -> categories.firstOrNull { it.id == cid }?.name }
-                            ?: "Category: All"
-                    },
-                    onSelect = viewModel::setCategoryFilter,
-                    modifier = Modifier.testTag("categoryFilterDropdown"),
-                )
-                ChipDropdown(
-                    selected = accountFilter,
-                    options = listOf(null) + accounts.map { it.id },
-                    optionLabel = { id ->
-                        id?.let { aid -> accounts.firstOrNull { it.id == aid }?.name }
-                            ?: "Account: All"
-                    },
-                    onSelect = viewModel::setAccountFilter,
-                    modifier = Modifier.testTag("accountFilterDropdown"),
-                )
-                AmountFilterChip(
-                    filter = amountFilter,
-                    onApply = viewModel::setAmountFilter,
-                    onClear = viewModel::clearAmountFilter,
-                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    // The type filter only applies to entries and category totals, so it
+                    // is disabled while the accounts view is showing period-end balances.
+                    ChipDropdown(
+                        selected = typeFilter,
+                        options = typeFilterOptions,
+                        optionLabel = { it?.displayName() ?: "All" },
+                        onSelect = viewModel::setTypeFilter,
+                        modifier = Modifier.testTag("typeFilterDropdown"),
+                        enabled = viewMode != LedgerViewMode.Accounts,
+                    )
+                    ChipDropdown(
+                        selected = viewMode,
+                        options = LedgerViewMode.entries,
+                        optionLabel = { it.displayName() },
+                        onSelect = viewModel::setViewMode,
+                        modifier = Modifier.testTag("viewModeDropdown"),
+                    )
+                }
+
+                if (viewMode == LedgerViewMode.Entries) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        ChipDropdown(
+                            selected = categoryFilter,
+                            options = listOf(null) + categories.map { it.id },
+                            optionLabel = { id ->
+                                id?.let { cid -> categories.firstOrNull { it.id == cid }?.name }
+                                    ?: "Category: All"
+                            },
+                            onSelect = viewModel::setCategoryFilter,
+                            modifier = Modifier.testTag("categoryFilterDropdown"),
+                        )
+                        ChipDropdown(
+                            selected = accountFilter,
+                            options = listOf(null) + accounts.map { it.id },
+                            optionLabel = { id ->
+                                id?.let { aid -> accounts.firstOrNull { it.id == aid }?.name }
+                                    ?: "Account: All"
+                            },
+                            onSelect = viewModel::setAccountFilter,
+                            modifier = Modifier.testTag("accountFilterDropdown"),
+                        )
+                        AmountFilterChip(
+                            filter = amountFilter,
+                            onApply = viewModel::setAmountFilter,
+                            onClear = viewModel::clearAmountFilter,
+                        )
+                    }
+                }
             }
         }
 
@@ -436,6 +458,34 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 }
             },
             onDismiss = { adjustState = null },
+        )
+    }
+}
+
+/**
+ * Always-visible header that toggles whether the search field and the filter
+ * combo boxes are shown. Collapsing reclaims vertical space for the list.
+ */
+@Composable
+private fun FiltersHeader(expanded: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 4.dp, vertical = 4.dp)
+            .testTag("filtersHeader"),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            contentDescription = if (expanded) "Collapse filters" else "Expand filters",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = "Filters & search",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
