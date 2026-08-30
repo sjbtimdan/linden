@@ -282,6 +282,40 @@ Liabilities are first-class data (negative balances must be representable), whil
 
 ---
 
+## Decision: Bottom Navigation Order (Ledger | Entry | Settings)
+
+**Date**: 2026-08-30
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+The bottom navigation bar has three destinations (Entry, Ledger, Settings). Entry is the most-used view —
+the primary screen and the one most likely to be used single-handedly on a phone.
+
+### Decision
+Order the bottom navigation as **Ledger | Entry | Settings**: Ledger on the left, Entry in the center,
+Settings on the right. The app still starts on Entry.
+
+### Rationale
+The center slot is the easiest to reach with a thumb when holding the phone one-handed, so the most-used
+view (Entry) sits there. Ledger takes the left slot, Settings the right.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| Keep Entry first (Entry \| Ledger \| Settings) | Matches startup screen | Left edge is the hardest to reach one-handed | Center is the most thumb-friendly slot |
+| Entry center, Ledger right | Entry centered | Ledger is a frequent destination; right reads less naturally for browsing | Ledger on the left is the better "review" position |
+
+### Impact
+**Positive**: One-handed thumb reach for the most-used view
+**Negative**: None significant
+**Risk**: None
+
+### Related
+- `App.kt` - `NavigationBar` item order
+
+---
+
 ## Deprecated Decisions
 
 | Decision | Date | Replaced By | Why |

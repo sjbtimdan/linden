@@ -52,7 +52,7 @@ linden/
 │   └── src/
 │       ├── commonMain/        # Shared code (Kotlin + .sq files)
 │       │   ├── kotlin/org/sjbtimdan/linden/
-│       │   │   ├── App.kt             # Screen navigation (sealed Screen)
+│   │   │   ├── App.kt             # Screen navigation (sealed Screen; bottom nav: Ledger | Entry | Settings)
 │       │   │   ├── AppDependencies.kt # Composition root
 │       │   │   ├── AppRoot.kt         # Async bootstrap + loading/error
 │       │   │   ├── model/             # Account, Category, Currency, Entry, FxRate, ThemeMode
@@ -101,6 +101,7 @@ linden/
 | Balance/total aggregation in SQL | `Entry.sq` `accountDeltas`/`categoryTotals` queries | Converted to default currency once per currency group |
 | Composition root `AppDependencies` | DAOs/repository/ViewModels created eagerly; `httpClient` lazy | Tests inject `FakeFxRatesSource`, never hit real API |
 | Startup async via `AppRoot` | `createAppDependencies(driver)` hops to `Dispatchers.IO` | Shows `CircularProgressIndicator` (`testTag("loading")`) until ready |
+| Bottom nav order: Ledger \| Entry \| Settings | Entry is the most-used view; the center slot is easiest to reach with a thumb one-handed | `App.kt` `NavigationBar` item order (app still starts on Entry) |
 
 See `decisions-log.md` for full decision history with alternatives.
 

@@ -39,7 +39,9 @@
 
 **Connection**:
 Fast, accurate entry is the heart of the app. The calculator avoids floating-point surprises,
-predictions reduce typing, and the draft survives configuration changes.
+predictions reduce typing, and the draft survives configuration changes. In the bottom navigation,
+Entry sits in the center — the easiest slot to reach with a thumb one-handed — with Ledger on the
+left and Settings on the right.
 
 ### Feature: Multi-Currency Ledger
 

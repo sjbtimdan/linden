@@ -70,17 +70,6 @@ fun App(dependencies: AppDependencies) {
             bottomBar = {
                 NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
                     NavigationBarItem(
-                        selected = currentScreen == Screen.Entry,
-                        onClick = { currentScreen = Screen.Entry },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.List,
-                                contentDescription = null,
-                            )
-                        },
-                        label = { Text("Entry") },
-                    )
-                    NavigationBarItem(
                         selected = currentScreen == Screen.Ledger,
                         onClick = { currentScreen = Screen.Ledger },
                         icon = {
@@ -90,6 +79,17 @@ fun App(dependencies: AppDependencies) {
                             )
                         },
                         label = { Text("Ledger") },
+                    )
+                    NavigationBarItem(
+                        selected = currentScreen == Screen.Entry,
+                        onClick = { currentScreen = Screen.Entry },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.List,
+                                contentDescription = null,
+                            )
+                        },
+                        label = { Text("Entry") },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
