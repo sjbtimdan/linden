@@ -374,6 +374,33 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "hides the top total when Hide Totals is enabled" {
+        withLedgerViewModel(
+            defaultCurrency = Currency.CHF,
+            rates = emptyList(),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // The amount appears twice while shown: once in the entry row and once
+            // in the top total label.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+            onAllNodesWithText("***").assertCountEquals(0)
+
+            settingsDao.setHideEntryTotal(true)
+            waitForIdle()
+
+            // Hiding masks the top total (leaving only the entry row's amount) and
+            // shows a *** placeholder in its place.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(1)
+            onNodeWithText("***").assertIsDisplayed()
+        }
+    }
+
     "view dropdown switches to the accounts view and back" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

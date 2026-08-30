@@ -129,6 +129,13 @@ class LedgerViewModel(
 
     val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
 
+    /**
+     * Whether the total at the top of the ledger is masked. Mirrors the
+     * "Hide totals" setting on the entry screen via the database flow.
+     */
+    val hideTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
+        .stateFlow(false)
+
     private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
 
     /**

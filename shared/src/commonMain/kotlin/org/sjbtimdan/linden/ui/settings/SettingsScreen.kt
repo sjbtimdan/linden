@@ -152,7 +152,7 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Hide total",
+                text = "Hide Totals",
                 style = MaterialTheme.typography.bodyLarge,
             )
             Switch(

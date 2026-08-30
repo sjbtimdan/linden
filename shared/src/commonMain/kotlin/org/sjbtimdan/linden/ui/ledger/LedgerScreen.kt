@@ -93,6 +93,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val accountBalances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
     val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
@@ -268,6 +269,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     LedgerViewMode.Entries -> totalMinor
                 },
                 currency = defaultCurrency,
+                hidden = hideTotal,
             )
         }
 
@@ -617,7 +619,7 @@ private fun LedgerViewMode.displayName(): String = when (this) {
 }
 
 @Composable
-private fun TotalLabel(total: Long?, currency: Currency) {
+private fun TotalLabel(total: Long?, currency: Currency, hidden: Boolean = false) {
     val colors = lindenColors()
     val tint = when {
         total != null && total < 0 -> colors.expense
@@ -638,7 +640,11 @@ private fun TotalLabel(total: Long?, currency: Currency) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = total?.let { formatTotal(it, currency) } ?: "–",
+                text = when {
+                    hidden -> "***"
+                    total != null -> formatTotal(total, currency)
+                    else -> "–"
+                },
                 style = MaterialTheme.typography.labelLarge,
                 color = tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
             )
