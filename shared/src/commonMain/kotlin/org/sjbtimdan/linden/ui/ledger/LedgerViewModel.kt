@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -26,6 +27,7 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -33,11 +35,15 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
+import org.sjbtimdan.linden.ui.accounts.adjustmentEntry
+import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LedgerViewModel(
@@ -218,6 +224,14 @@ class LedgerViewModel(
         accountTotalMinor(balances, currency, rates)
     }.stateFlow(null)
 
+    /** Current balance of each account in its own currency (minor units), used for balance adjustments. */
+    val currentAccountBalances: StateFlow<Map<Long, Long>> = combine(
+        accounts,
+        entryDao.accountDeltas(),
+    ) { accounts, deltas ->
+        accountBalancesMinor(deltas, accounts)
+    }.stateFlow(emptyMap())
+
     /** Net total per category in the default currency derived from the filtered entries. */
     val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
         entries,
@@ -338,6 +352,27 @@ class LedgerViewModel(
     fun dismissDialog() {
         draftState.value = null
     }
+
+    /**
+     * Records a balance adjustment for [account] so its current balance reaches
+     * [targetBalance] (in the account's own minor units), attaching [category] to
+     * the resulting entry. Each adjustment creates a fresh income/expense entry
+     * dated now; a positive delta becomes an income entry, a negative delta an
+     * expense entry. When the delta is zero nothing is created.
+     */
+    fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = Clock.System.now()) {
+        viewModelScope.launch {
+            val zone = TimeZone.currentSystemDefault()
+            val current = currentAccountBalances.value[account.id] ?: account.initialBalance
+            val adjustment = balanceAdjustment(current, targetBalance)
+            val entry = adjustmentEntry(adjustment, account, category, now, zone)
+                ?: return@launch
+            entryDao.create(entry)
+        }
+    }
+
+    /** Categories used on entries in [accountId], most-used first. */
+    suspend fun usedCategories(accountId: Long): List<Category> = entryDao.categoriesForAccount(accountId)
 
     /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
     private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(

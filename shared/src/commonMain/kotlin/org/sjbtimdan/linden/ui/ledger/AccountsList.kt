@@ -10,9 +10,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,6 +36,7 @@ fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
     emptyMessage: String = "No accounts yet.",
+    onAdjustBalance: ((AccountWithBalance) -> Unit)? = null,
 ) {
     if (balances.isEmpty()) {
         Box(
@@ -50,7 +61,7 @@ fun AccountsList(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                        .padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -68,6 +79,29 @@ fun AccountsList(
                         text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
                         style = MaterialTheme.typography.titleMedium,
                     )
+                    if (onAdjustBalance != null) {
+                        var menuOpen by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More options",
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Adjust Balance") },
+                                    onClick = {
+                                        menuOpen = false
+                                        onAdjustBalance(item)
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -187,6 +187,20 @@ ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
 deleteById:
 DELETE FROM EntryEntity WHERE id = :id;
 
+-- Categories used on entries in an account, most-used first (for the
+-- Adjust Balance dialog's category chips).
+selectCategoriesForAccount:
+SELECT CategoryEntity.id,
+       CategoryEntity.name,
+       CategoryEntity.type,
+       CategoryEntity.icon
+FROM EntryEntity
+JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
+WHERE EntryEntity.account_id = :accountId
+GROUP BY CategoryEntity.id
+ORDER BY COUNT(EntryEntity.id) DESC, CategoryEntity.name ASC
+LIMIT 5;
+
 updateById:
 UPDATE EntryEntity
 SET type = :type,

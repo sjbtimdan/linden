@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Account
@@ -1069,6 +1070,113 @@ class LedgerViewModelTest : StringSpec({
 
             viewModel.categoryTotals.value.shouldHaveSize(2)
             viewModel.categoryTotal.value shouldBe 1_550L
+        }
+    }
+
+    "adjustBalance to a higher target creates an income entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            viewModel.adjustBalance(main, targetBalance = 12_500, category = groceries)
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(1)
+            val entry = entries.first()
+            entry shouldBe IncomeEntry(
+                id = entry.id,
+                category = groceries,
+                description = null,
+                account = entry.account,
+                amount = 2_500,
+                createdAt = entry.createdAt,
+                createdZone = entry.createdZone,
+            )
+        }
+    }
+
+    "adjustBalance to a lower target creates an expense entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            viewModel.adjustBalance(main, targetBalance = 9_000, category = groceries)
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(1)
+            val entry = entries.first()
+            entry shouldBe ExpenseEntry(
+                id = entry.id,
+                category = groceries,
+                description = null,
+                account = entry.account,
+                amount = 1_000,
+                createdAt = entry.createdAt,
+                createdZone = entry.createdZone,
+            )
+        }
+    }
+
+    "usedCategories is empty when the account has no entries" {
+        withLedgerViewModel { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            val main = accountDao.getAll().first().first()
+
+            viewModel.usedCategories(main.id).shouldBeEmpty()
+        }
+    }
+
+    "usedCategories returns the account's most-used categories" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            categoryDao.create("Salary", CategoryType.Income)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+
+            // Two groceries entries, one salary entry.
+            entryDao.create(ExpenseEntry(0, groceries, "a", main, 100, at(1_700_000_000_000), TimeZone.UTC))
+            entryDao.create(ExpenseEntry(0, groceries, "b", main, 200, at(1_700_000_000_000), TimeZone.UTC))
+            entryDao.create(IncomeEntry(0, salary, "c", main, 300, at(1_700_000_000_000), TimeZone.UTC))
+
+            val categories = viewModel.usedCategories(main.id)
+
+            categories.map { it.id } shouldBe listOf(groceries.id, salary.id)
+        }
+    }
+
+    "adjustBalance with an unchanged balance creates no entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            viewModel.adjustBalance(main, targetBalance = 10_000, category = groceries)
+
+            entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
+
+    "adjusting again creates a separate entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            val now = at(1_700_000_000_000)
+
+            viewModel.adjustBalance(main, targetBalance = 12_500, category = groceries, now = now)
+            viewModel.adjustBalance(main, targetBalance = 11_000, category = groceries, now = now)
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(2)
+            entries.map { it.amount } shouldBe listOf(1_500L, 2_500L)
         }
     }
 })

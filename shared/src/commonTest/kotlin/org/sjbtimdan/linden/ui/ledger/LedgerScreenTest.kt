@@ -4,17 +4,21 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Dp
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
@@ -683,6 +687,142 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("No entries match this filter.").assertIsDisplayed()
             onNodeWithTag("accountFilterChip").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
+        }
+    }
+
+    "accounts view hamburger menu opens the Adjust Balance dialog" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onNodeWithText("Adjust Balance").assertIsDisplayed()
+            onNodeWithText("Current balance: 100.00 CHF").assertIsDisplayed()
+        }
+    }
+
+    "adjusting to a higher balance in the accounts view creates an income entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onAllNodes(hasSetTextAction())[1].performTextClearance()
+            onAllNodes(hasSetTextAction())[1].performTextInput("125.00")
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Adjust").performClick()
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(1)
+            entries.first().amount shouldBe 2_500
+        }
+    }
+
+    "adjusting to a lower balance in the accounts view creates an expense entry" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onAllNodes(hasSetTextAction())[1].performTextClearance()
+            onAllNodes(hasSetTextAction())[1].performTextInput("90.00")
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Adjust").performClick()
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(1)
+            entries.first().amount shouldBe 1_000
+        }
+    }
+
+    "adjusting to the same balance in the accounts view is disabled" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onNodeWithText("Adjust").assertIsNotEnabled()
+        }
+    }
+
+    "typing in the category field filters the category chips" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            categoryDao.create("Salary", CategoryType.Income)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Salary").assertIsDisplayed()
+
+            onAllNodes(hasSetTextAction())[2].performTextInput("sal")
+
+            onNodeWithText("Salary").assertIsDisplayed()
+            onNodeWithText("Groceries").assertDoesNotExist()
+        }
+    }
+
+    "clicking a category chip shows the category in the text field" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onNodeWithText("Groceries").performClick()
+
+            onAllNodes(hasSetTextAction())[2].assertTextContains("Groceries")
         }
     }
 })

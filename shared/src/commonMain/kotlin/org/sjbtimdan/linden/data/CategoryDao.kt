@@ -19,6 +19,10 @@ class CategoryDao(private val queries: CategoryQueries) {
         queries.update(category.name, category.type.name, category.icon?.name, category.id)
     }
 
+    suspend fun deleteAll() {
+        queries.deleteAll()
+    }
+
     fun getAll(): Flow<List<Category>> = queries.selectAll()
         .asFlow()
         .map { it.awaitAsList().map { row -> row.toCategory() } }

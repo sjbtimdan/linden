@@ -17,40 +17,63 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toLocalDateTime
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
+import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.displayName
+import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatDate
+import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
+
+private data class AdjustBalanceDialogState(
+    val account: AccountWithBalance,
+    val currentBalance: Long,
+    val targetBalanceText: String,
+    val categoryQuery: String = "",
+)
 
 @Composable
 fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
@@ -72,6 +95,9 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val accountFilter by viewModel.accountFilter.collectAsState()
     val displayedEntries by viewModel.displayedEntries.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
+    val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
+
+    var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
 
     val listItems = remember(displayedEntries) {
         ledgerListItems(entries = displayedEntries)
@@ -266,6 +292,14 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 } else {
                     "No accounts match."
                 },
+                onAdjustBalance = { item ->
+                    val current = currentAccountBalances[item.account.id] ?: item.account.initialBalance
+                    adjustState = AdjustBalanceDialogState(
+                        account = item,
+                        currentBalance = current,
+                        targetBalanceText = formatAmount(current),
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -363,6 +397,138 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             onDismiss = viewModel::dismissDialog,
         )
     }
+
+    adjustState?.let { state ->
+        val targetBalance = parseAmount(state.targetBalanceText)
+        val allCategories by viewModel.categories.collectAsState()
+        var usedCategories by remember(state.account.account.id) { mutableStateOf<List<Category>>(emptyList()) }
+        LaunchedEffect(state.account.account.id) {
+            usedCategories = viewModel.usedCategories(state.account.account.id)
+        }
+        val usedIds = usedCategories.map { it.id }.toSet()
+        val orderedCategories = usedCategories +
+            allCategories.filterNot { it.id in usedIds }.sortedBy { it.name }
+        val query = state.categoryQuery.trim()
+        val visibleCategories = if (query.isEmpty()) {
+            orderedCategories
+        } else {
+            orderedCategories.filter { it.name.contains(query, ignoreCase = true) }
+        }
+        // The category is selected by an exact (case-insensitive) match on the text field.
+        val selectedCategory = orderedCategories.firstOrNull { it.name.equals(query, ignoreCase = true) }
+        AdjustBalanceDialog(
+            account = state.account.account,
+            currentBalance = state.currentBalance,
+            targetBalanceText = state.targetBalanceText,
+            categoryQuery = state.categoryQuery,
+            categories = visibleCategories,
+            selectedCategoryId = selectedCategory?.id,
+            onCategoryQueryChange = { adjustState = state.copy(categoryQuery = it) },
+            onCategorySelect = { id ->
+                val name = orderedCategories.firstOrNull { it.id == id }?.name ?: return@AdjustBalanceDialog
+                adjustState = state.copy(categoryQuery = name)
+            },
+            onTargetBalanceChange = { adjustState = state.copy(targetBalanceText = it) },
+            onSave = {
+                if (targetBalance != null && selectedCategory != null) {
+                    viewModel.adjustBalance(state.account.account, targetBalance, selectedCategory)
+                    adjustState = null
+                }
+            },
+            onDismiss = { adjustState = null },
+        )
+    }
+}
+
+@Composable
+private fun AdjustBalanceDialog(
+    account: Account,
+    currentBalance: Long,
+    targetBalanceText: String,
+    categoryQuery: String,
+    categories: List<Category>,
+    selectedCategoryId: Long?,
+    onCategoryQueryChange: (String) -> Unit,
+    onCategorySelect: (Long) -> Unit,
+    onTargetBalanceChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val targetBalance = parseAmount(targetBalanceText)
+    val adjustment = targetBalance?.let { balanceAdjustment(currentBalance, it) }
+    val canSave = adjustment != null && !adjustment.isZero && selectedCategoryId != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = DialogShape,
+        title = { Text("Adjust Balance") },
+        text = {
+            Column {
+                Text(
+                    text = account.name,
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Current balance: ${formatAmount(currentBalance)} ${account.currency.symbol}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = targetBalanceText,
+                    onValueChange = onTargetBalanceChange,
+                    label = { Text("Bank balance") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    suffix = { Text(account.currency.symbol) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = categoryQuery,
+                    onValueChange = onCategoryQueryChange,
+                    label = { Text("Category") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    categories.forEach { category ->
+                        FilterChip(
+                            selected = category.id == selectedCategoryId,
+                            onClick = { onCategorySelect(category.id) },
+                            label = { Text(category.name) },
+                        )
+                    }
+                }
+                if (adjustment != null && !adjustment.isZero) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    val direction = if (adjustment.delta > 0) "income" else "expense"
+                    Text(
+                        text = "Will add ${formatAmount(adjustment.delta)} as $direction.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onSave, enabled = canSave) {
+                Text("Adjust")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 internal sealed interface LedgerListItem {

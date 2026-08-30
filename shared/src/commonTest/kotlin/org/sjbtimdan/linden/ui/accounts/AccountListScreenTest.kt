@@ -191,7 +191,7 @@ class AccountListScreenTest : StringSpec({
         }
     }
 
-    "displays the initial balance with its currency and an Initial label on each account" {
+    "displays the current balance with its currency and a Balance label on each account" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF, initialBalance = 150_050)
             viewModel.createAccount("Savings", Currency.USD, initialBalance = 12_345)
@@ -205,7 +205,7 @@ class AccountListScreenTest : StringSpec({
 
             onNodeWithText("1,500.50 CHF").assertIsDisplayed()
             onNodeWithText("123.45 $").assertIsDisplayed()
-            onAllNodes(hasText("Initial")).assertCountEquals(2)
+            onAllNodes(hasText("Balance")).assertCountEquals(2)
         }
     }
 

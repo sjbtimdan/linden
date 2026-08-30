@@ -72,6 +72,17 @@ class EntryDao(private val queries: EntryQueries) {
 
     suspend fun latest(type: EntryType): Entry? = queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
+    /** Categories used on entries in [accountId], most-used first (top 5). */
+    suspend fun categoriesForAccount(accountId: Long): List<Category> =
+        queries.selectCategoriesForAccount(accountId).awaitAsList().map { row ->
+            Category(
+                id = row.id,
+                name = row.name,
+                type = CategoryType.valueOf(row.type),
+                icon = row.icon?.let { CategoryIcon.valueOf(it) },
+            )
+        }
+
     /** Net change per account in the account's own currency (minor units). */
     fun accountDeltas(): Flow<Map<Long, Long>> = queries.accountDeltas().asFlow().map { rows ->
         rows.awaitAsList()
