@@ -235,10 +235,16 @@ class AccountListScreenTest : StringSpec({
         }
     }
 
-    "displays the current balance with its currency and a Balance label on each account" {
-        withAccountViewModel { viewModel ->
+    "displays the initial balance with its currency and an Initial balance label on each account" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
             viewModel.createAccount("Main", Currency.CHF, initialBalance = 150_050)
             viewModel.createAccount("Savings", Currency.USD, initialBalance = 12_345)
+            // An entry makes the current balance differ from the initial balance,
+            // so the settings view must show the initial balance, not the current one.
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 AccountListScreen(
@@ -249,7 +255,7 @@ class AccountListScreenTest : StringSpec({
 
             onNodeWithText("1,500.50 CHF").assertIsDisplayed()
             onNodeWithText("123.45 $").assertIsDisplayed()
-            onAllNodes(hasText("Balance")).assertCountEquals(2)
+            onAllNodes(hasText("Initial balance")).assertCountEquals(2)
         }
     }
 

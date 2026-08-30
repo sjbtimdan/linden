@@ -71,7 +71,6 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     val accounts by viewModel.accounts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
-    val accountBalances by viewModel.accountBalances.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
     BackHandler(enabled = dialogState != null) {
@@ -156,7 +155,6 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             ) {
                 items(accounts, key = { it.id }) { account ->
                     val accent = accentColor(account.name)
-                    val currentBalance = accountBalances[account.id] ?: account.initialBalance
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -200,11 +198,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "${formatAmountCompact(currentBalance)} ${account.currency.symbol}",
+                                text = "${formatAmountCompact(account.initialBalance)} ${account.currency.symbol}",
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                text = "Balance",
+                                text = "Initial balance",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

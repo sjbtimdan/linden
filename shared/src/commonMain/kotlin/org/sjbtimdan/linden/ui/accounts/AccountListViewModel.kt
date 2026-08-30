@@ -38,18 +38,6 @@ class AccountListViewModel(
         initialValue = emptyList(),
     )
 
-    /** Current balance of each account in its own currency (minor units). */
-    val accountBalances: StateFlow<Map<Long, Long>> = combine(
-        accountDao.getAll(),
-        entryDao.accountDeltas(),
-    ) { accounts, deltas ->
-        accountBalancesMinor(deltas, accounts)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = emptyMap(),
-    )
-
     /** Accounts referenced by at least one entry; their currency must not be changed. */
     val accountsWithEntries: StateFlow<Set<Long>> = entryDao.accountsWithEntries()
         .stateIn(
