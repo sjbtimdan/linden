@@ -34,10 +34,7 @@ fun accountNetInDefaultMinor(
     rates: List<FxRate>,
 ): Long? {
     val delta = entryDeltas(entries)[account.id] ?: return 0L
-    val ratesByQuote = rates
-        .filter { it.baseCurrency == defaultCurrency }
-        .associate { it.quoteCurrency to it.rate }
-    return toDefaultMinor(delta, account.currency, defaultCurrency, ratesByQuote)
+    return toDefaultMinor(delta, account.currency, defaultCurrency, ratesByQuote(rates, defaultCurrency))
 }
 
 /**
@@ -61,6 +58,13 @@ internal fun entriesNetInDefaultMinor(entries: List<Entry>, defaultCurrency: Cur
     ) ?: return null
     return incomeTotal + expenseTotal
 }
+
+/**
+ * Rates that convert from the default currency to each quote currency, indexed by
+ * quote currency. A rate from [base] maps the quote's value into the default currency.
+ */
+internal fun ratesByQuote(rates: List<FxRate>, base: Currency): Map<Currency, Double> =
+    rates.filter { it.baseCurrency == base }.associate { it.quoteCurrency to it.rate }
 
 /**
  * Converts [amount] from [from] into [defaultCurrency] minor units using [ratesByQuote].
@@ -88,9 +92,7 @@ internal fun sumInDefaultMinor(
     defaultCurrency: Currency,
     rates: List<FxRate>,
 ): Long? {
-    val ratesByQuote = rates
-        .filter { it.baseCurrency == defaultCurrency }
-        .associate { it.quoteCurrency to it.rate }
+    val ratesByQuote = ratesByQuote(rates, defaultCurrency)
     var total = 0L
     for ((from, amount) in groups) {
         val converted = toDefaultMinor(amount, from, defaultCurrency, ratesByQuote)
