@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/bridge | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
+<!-- Context: project-intelligence/bridge | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
 
 # Business ↔ Tech Bridge
 
@@ -21,6 +21,7 @@
 | Migrate from Ivy Wallet | `IvyImporter` (ZIP+JSON import) | Maps Ivy backup to Linden schema | Easy onboarding for existing users |
 | Data safety | `LindenBackupManager` (JSON dump/restore) | Versioned, transactional restore | No data loss |
 | Local-first | SQLDelight local DB, no server | All data on device | Privacy, offline, no accounts |
+| Reconcile account balances | `LedgerViewModel.adjustBalance` + `BalanceAdjustment` helpers | Fresh income/expense entry per adjustment, no special marker | Ledger always matches the real bank balance |
 
 ## Feature Mapping Examples
 
@@ -70,6 +71,23 @@ Users can hold accounts in any of 7 currencies and still see a single default-cu
 **Connection**:
 Existing users can switch to Linden without losing their financial history.
 
+### Feature: Balance Reconciliation (Adjust Balance)
+
+**Business Context**:
+- User need: Bring a tracked account in line with its real bank balance (or a target), e.g. after a missed payment
+- Business goal: Trustworthy "at a glance" balances
+- Priority: Medium
+
+**Technical Implementation**:
+- Solution: `LedgerViewModel.adjustBalance` (accounts view of the ledger) computes `balanceAdjustment(current, target)`
+  and turns the delta into a fresh entry via `adjustmentEntry` (`ui/accounts/BalanceAdjustment.kt`)
+- Architecture: No special treatment — a positive delta becomes an income entry, a negative delta an expense entry,
+  dated now with `description = null`; zero delta creates nothing
+- Trade-offs: Each adjustment is an ordinary, visible, editable entry — no `is_adjustment` column, no hidden state
+
+**Connection**:
+The tracker heals drift without magic: reconciling just records income/expense like any other entry.
+
 ## Trade-off Decisions
 
 | Situation | Business Priority | Technical Priority | Decision Made | Rationale |
@@ -78,6 +96,8 @@ Existing users can switch to Linden without losing their financial history.
 | Multi-currency vs. complexity | Cross-currency totals | Keep it simple | FX rates via Frankfurter, cached 24h | Live rates without a server |
 | Local-first vs. cloud sync | Privacy, offline | No server to maintain | SQLDelight local DB | All data on device |
 | KMP vs. native per platform | One codebase | Consistency | KMP shared module | Both platforms in lockstep |
+| Adjustment clarity vs. history | Exact reconciliation | Don't pollute the ledger | Fresh entry per adjustment, no marker | Simple, inspectable history |
+| Entry validation vs. flexible accounts | DB enforces valid entries | Allow liabilities | `amount >= 0` CHECKs; accounts may be negative | Correct data, flexible balances |
 
 ## Common Misalignments
 
@@ -86,6 +106,7 @@ Existing users can switch to Linden without losing their financial history.
 | Money as `Double`/`BigDecimal` | Floating-point rounding in amounts | Always use integer minor units (`Long`) |
 | `formatAmountCompact` in edit fields | `parseAmount` can't parse "1.25m" | Only use compact format for read-only displays |
 | Editing `.sq` tables without migration | Desktop DB at `~/.linden/linden.db` not migrated | Add a `.sqm` migration or delete the local DB |
+| Negative entry amounts | Entry `amount` < 0 | Entries carry a type; amount is always >= 0 (CHECK-enforced) |
 | Currency change on account with entries | `accountsWithEntries` blocks it | Respect the business rule |
 
 ## Stakeholder Communication

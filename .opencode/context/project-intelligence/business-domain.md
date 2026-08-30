@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/business | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
+<!-- Context: project-intelligence/business | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
 
 # Business Domain
 
@@ -34,6 +34,7 @@ Solution: A KMP app (Android + Desktop) with entry tracking, ledger views, FX-ra
 - Fast entry with predictions (description/account/category suggestions, quick entries)
 - Exact calculator for amount entry (no floating-point surprises)
 - Ledger with period navigation, search, and filters
+- Balance reconciliation (adjust any account to a target balance)
 - Backup/restore and Ivy Wallet import
 
 **For Business**:
@@ -63,7 +64,7 @@ Market Position: Personal expenses tracker (local-first, multi-currency)
 
 ## Roadmap Context
 
-**Current Focus**: Core expense tracking (entry, ledger, accounts, categories, rates, settings)
+**Current Focus**: Core expense tracking (entry, ledger, accounts, categories, rates, settings, balance reconciliation)
 **Next Milestone**: N/A
 **Long-term Vision**: N/A
 
@@ -72,6 +73,7 @@ Market Position: Personal expenses tracker (local-first, multi-currency)
 - Local-first: no server, no accounts, no cloud sync
 - Multi-currency: users may hold accounts in CHF/EUR/GBP/HKD/JPY/SGD/USD
 - Cross-currency totals require FX rates (fetched from Frankfurter, cached 24h)
+- Accounts can be liabilities: account balances may be negative, but a single entry is never negative (it has a type — expense or income)
 
 ## Onboarding Checklist
 

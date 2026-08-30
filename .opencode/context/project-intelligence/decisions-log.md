@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
+<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
 
 # Decisions Log
 
@@ -100,8 +100,8 @@ SQLDelight provides type-safe SQL with KMP support and an async API that fits th
 
 ### Impact
 **Positive**: Type-safe SQL, async API, KMP support
-**Negative**: Schema creation must be awaited; no auto-migrations
-**Risk**: Editing `.sq` tables without adding `.sqm` migrations breaks the persisted desktop DB
+**Negative**: Schema creation must be awaited; migrations are manual (`schema v2` via `migrations/1.sqm`)
+**Risk**: Editing `.sq` tables without adding a new `.sqm` migration breaks the persisted desktop DB
 
 ### Related
 - `data/DatabaseDriverFactory.kt` - `createLindenDatabase`
@@ -204,11 +204,90 @@ SQL aggregation is efficient and avoids loading all entries into memory.
 
 ---
 
+## Decision: Balance Adjustments Create Fresh Entries
+
+**Date**: 2026-08-30
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+The accounts view offers "adjust balance" to reconcile a tracked account with its real bank balance.
+
+### Decision
+Each adjustment creates a **fresh, ordinary entry**: `LedgerViewModel.adjustBalance` computes
+`balanceAdjustment(current, target)` and `adjustmentEntry` builds the delta as an income entry (delta > 0) or
+expense entry (delta < 0), dated now, `description = null`, amount = absolute delta. Zero delta creates nothing.
+There is no `is_adjustment` column, no per-month update logic, and no "Balance adjustment" description string —
+an adjustment is just an entry.
+
+### Rationale
+A reconciliation is a real financial event; modeling it as an ordinary entry keeps the history simple, inspectable
+and editable, with no hidden state to maintain or migrate.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| One adjustment entry per month, updated in place | Single entry per account | Needs a marker query + update-on-edit logic | Fresh entry per adjustment is simpler ("a balance adjustment just creates an entry") |
+| `is_adjustment` column / hidden marker | Filters could exclude adjustments | Column, migration, all branches | No special treatment wanted |
+| `description = "Balance adjustment"` | Human-readable in ledger | String-matching hacks to find adjustments | Entries already look fine without it; description stays null |
+
+### Impact
+**Positive**: Simple, immutable history; no hidden state; adjustments show up (and can be deleted) like any entry
+**Negative**: `description = null` shows a blank description in the ledger for adjustment entries
+**Risk**: None significant
+
+### Related
+- `ui/ledger/LedgerViewModel.kt` - `adjustBalance`
+- `ui/accounts/BalanceAdjustment.kt` - `balanceAdjustment`/`adjustmentEntry`
+
+---
+
+## Decision: Accounts May Be Negative; Entries Never Are
+
+**Date**: 2026-08-30
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+Accounts can represent liabilities (credit cards, loans), so balances — including `initial_balance` — must be
+allowed to go below zero. But an individual entry always has a type (expense vs income), so its amount is never negative.
+
+### Decision
+`parseAmount` accepts a leading `-` (returns negative minor units) so account dialogs can enter negative
+initial balances; the account dialog warns instead of silently truncating an invalid value. `Account.sq`
+`initial_balance` has no CHECK. Entry amounts are enforced non-negative in the DB: `Entry.sq` declares
+`amount INTEGER NOT NULL CHECK (amount >= 0)` and `to_amount` `CHECK (to_amount IS NULL OR to_amount >= 0)`,
+backed by the v1→v2 migration (`migrations/1.sqm`) that rebuilds `EntryEntity` to add the constraints
+(SQLite cannot add a CHECK in place).
+
+### Rationale
+Liabilities are first-class data (negative balances must be representable), while an entry's sign lives in its
+`type`, so a negative entry amount would be meaningless and should be impossible.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| Reject negative input everywhere | Simple | Can't model liabilities | Liabilities are real |
+| Allow negative entry `amount` | Flexible | Ambiguity with `type`, corrupts totals | Sign belongs in `type`, not amount |
+
+### Impact
+**Positive**: DB-enforced invariant (entries never negative); accounts can model debts
+**Negative**: First migration appeared (schema now v2); app/UI layer still guards against logical misuse
+**Risk**: Editing `Entry.sq` amounts later requires another `.sqm` migration
+
+### Related
+- `ui/entry/MoneyFormat.kt` - `parseAmount` (accepts `-`)
+- `Entry.sq` + `sqldelight/migrations/1.sqm` - CHECK constraints
+- `model/Entry.kt` - sealed `ExpenseEntry`/`IncomeEntry`/`TransferEntry`
+
+---
+
 ## Deprecated Decisions
 
 | Decision | Date | Replaced By | Why |
 |----------|------|-------------|-----|
-| (none) | - | - | - |
+| One-per-month balance adjustment (updated in place) | 2026-08-30 | Fresh entry per adjustment | Hidden update logic; a reconciliation is just an entry |
+| Special adjust-balance marker (`is_adjustment` column, "Balance adjustment" description) | 2026-08-30 | No marker — ordinary entries with `description = null` | "A balance adjustment just creates an entry, no need to mark it as special" |
 
 ## Onboarding Checklist
 

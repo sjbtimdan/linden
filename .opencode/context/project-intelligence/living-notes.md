@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-08-29 -->
+<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
 
 # Living Notes
 
@@ -14,17 +14,17 @@
 
 | Item | Impact | Priority | Mitigation |
 |------|--------|----------|------------|
-| No SQLDelight migrations (schema version 1) | Editing `.sq` tables won't auto-migrate the persisted desktop DB at `~/.linden/linden.db` | High | Add a `.sqm` migration, or delete the local DB |
+| Every `.sq` DDL change needs a new `.sqm` migration | Schema is now v2 (`migrations/1.sqm`: entry amount CHECKs); forgetting a migration breaks the persisted desktop DB at `~/.linden/linden.db` | Medium | Add a `.sqm` migration for table changes |
 | `:shared` Android compiles via `compileAndroidMain`, not `compileDebugKotlin` | Confusing for new devs | Low | Documented in AGENTS.md |
 | Kover coverage only on JVM variant | Android target runs device tests only | Low | `koverVerifyJvm` (50% min) runs as part of `check` |
 
 ### Technical Debt Details
 
-**No SQLDelight Migrations**  
-*Priority*: High  
-*Impact*: Editing an `.sq` table won't auto-migrate the persisted desktop DB at `~/.linden/linden.db`  
-*Root Cause*: Schema version 1, no `.sqm` migration files  
-*Proposed Solution*: Add `.sqm` migrations when schema changes  
+**SQLDelight migrations are manual**  
+*Priority*: Medium  
+*Impact*: Editing an `.sq` table without a matching `.sqm` breaks the persisted desktop DB at `~/.linden/linden.db`  
+*Root Cause*: Migrations exist (schema v2) but must be authored by hand  
+*Proposed Solution*: Keep adding `.sqm` files whenever a table changes  
 *Effort*: Small  
 *Status*: Acknowledged
 
@@ -49,9 +49,11 @@
 - **Composition root (`AppDependencies`)** - Centralized wiring, testable
 - **Exact calculator** - `100 / 3 * 3` = 100.00, not 99.99
 - **Predictions** - Heuristic scoring of past entries, pure functions, no DB
+- **Entry amount CHECK constraints** - DB-level guarantee that entries are never negative
+- **Adjust balance as ordinary entries** - Reconciliation just creates income/expense, no hidden state
 
 ### What Could Be Better
-- **No SQLDelight migrations** - Schema changes require manual DB deletion
+- **Manual SQLDelight migrations** - Schema v2 exists but every `.sq` DDL change needs a hand-written `.sqm`
 - **`formatAmountCompact` not parseable** - Can't pre-fill edit fields with it
 
 ### Lessons Learned
@@ -59,6 +61,7 @@
 - **`formatAmountCompact` is display-only** - `parseAmount` can't parse "1.25m"
 - **`compileAndroidMain` for `:shared`** - `compileDebugKotlin` only exists on `:androidApp`
 - **Tests inject `FakeFxRatesSource`** - Never hit the real Frankfurter API in tests
+- **`parseAmount` accepts negatives** - A leading `-` parses to negative minor units (liabilities); entry amounts are never negative
 
 ## Patterns & Conventions
 
@@ -73,6 +76,8 @@
 - **`formatAmountCompact`** - Never use it to pre-fill edit fields; `parseAmount` can't parse the suffix
 - **`accountsWithEntries`** - Blocks changing the currency of an account that has entries
 - **`Entry` sealed interface** - Adding a field touches all subclass branches plus `Entry.sq` insert/update and `EntryDao` mapping
+- **Adjust balance entries have `description = null`** - Reconciliation entries are ordinary entries with no marker, so they appear in the ledger without a description
+- **Accounts can be negative, entries never** - `parseAmount` handles `-` (liabilities/negative balances); entry `amount >= 0` is CHECK-enforced (schema v2)
 - **SQLDelight async** - Schema creation must be awaited; DB ops are `suspend`
 - **No pre-commit hook** - Run `./gradlew detekt --auto-correct` after edits
 - **JVM tests pin locale** - `user.language=en` / `user.country=US` so `formatAmount` assertions are deterministic
@@ -87,10 +92,10 @@
 
 Moved here for historical reference. Current team should refer to current notes above.
 
-### Resolved: (none)
-- **Resolved**: -
-- **Resolution**: -
-- **Learnings**: -
+### Resolved: No SQLDelight migrations existed (schema version 1)
+- **Resolved**: 2026-08-30
+- **Resolution**: Added `sqldelight/migrations/1.sqm` (v1→v2), rebuilding `EntryEntity` with CHECK constraints on `amount >= 0` and `to_amount` (NULL-or-`>= 0`)
+- **Learnings**: SQLite can't add a CHECK in place — a table rebuild (rename → create → copy → drop) is the migration pattern to follow
 
 ## Onboarding Checklist
 

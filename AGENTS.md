@@ -83,6 +83,11 @@ coverage is only enforced there because the Android target runs device tests onl
   common code that accepts grouped input ("1,000", "1.000", "1 000"). `formatAmountCompact` (pure common code) shortens
   read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b" (fixed '.', trimmed zeros, half-up rounding);
   never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
+  `parseAmount` accepts a leading `-` (negative balance/liability); accounts may be negative, entries never are.
+- Adjust Balance (accounts view of the ledger): `LedgerViewModel.adjustBalance` reconciles an account to a target
+  balance by creating a fresh income/expense entry per adjustment (positive delta → income, negative delta → expense,
+  dated now, `description = null`) — pure helpers in `ui/accounts/BalanceAdjustment.kt`. No `is_adjustment` column,
+  no per-month update logic: an adjustment is just an ordinary entry.
 - Amount entry in the entry dialog uses an exact calculator (`CalculatorModel`/`AmountCalculator` in `ui/entry`):
   arithmetic on reduced fractions (Long numerator/denominator, never floats), evaluated left-to-right with no
   operator precedence, rounded to two decimals only for display and commit.
@@ -98,8 +103,9 @@ coverage is only enforced there because the Android target runs device tests onl
   only the `LindenDatabase` class goes into the `packageName` set in `build.gradle.kts` (`org.sjbtimdan.linden.db`).
 - `Import.sq` declares no table — it only exposes `last_insert_rowid()`, used by `IvyImporter` to resolve
   auto-increment IDs when restoring a backup in a transaction.
-- No SQLDelight migrations exist (schema version 1). Editing an `.sq` table won't auto-migrate the persisted
-  desktop DB at `~/.linden/linden.db` — add a `.sqm` migration, or delete the local DB.
+- SQLDelight schema is version 2 — `sqldelight/migrations/1.sqm` rebuilds `EntryEntity` to add CHECK
+  constraints (`amount >= 0`, `to_amount` NULL-or-`>= 0`). Editing an `.sq` table still requires a new `.sqm`
+  migration, or delete the local DB (`~/.linden/linden.db` on desktop); missing migrations break the persisted DB.
 - Startup is async: `AppRoot` calls the suspend `createAppDependencies(driver)` (in `AppDependencies.kt`) — both
   `MainActivity` and desktop `Main` hop to `Dispatchers.IO` — and shows a `CircularProgressIndicator`
   (`testTag("loading")`) until ready. `AppDependencies` is the composition root from `AppDependencies.kt`: DAOs,
