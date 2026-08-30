@@ -153,6 +153,9 @@ class EntryPointViewModel(
         }
     }
 
+    /** A new draft of [type] prefilled from the latest entry of that type. */
+    internal suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(type, entryDao.latest(type))
+
     /** Resets the form to an empty draft of the selected type. */
     fun clearDraft() {
         draftState.value = EntryDraft.forNew(_selectedType.value)

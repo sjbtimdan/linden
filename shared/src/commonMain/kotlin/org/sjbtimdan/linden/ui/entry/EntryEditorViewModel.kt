@@ -15,7 +15,6 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
-import org.sjbtimdan.linden.model.EntryType
 import kotlin.time.Instant
 
 abstract class EntryEditorViewModel(
@@ -66,6 +65,4 @@ abstract class EntryEditorViewModel(
             entryDao.delete(id)
         }
     }
-
-    suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(type, entryDao.latest(type))
 }
