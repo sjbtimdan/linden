@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS EntryEntity (
     category_id INTEGER,
     description TEXT,
     account_id INTEGER NOT NULL,
-    amount INTEGER NOT NULL,
+    amount INTEGER NOT NULL CHECK (amount >= 0),
     to_account_id INTEGER,
-    to_amount INTEGER,
+    to_amount INTEGER CHECK (to_amount IS NULL OR to_amount >= 0),
     created_at INTEGER NOT NULL,
     created_zone TEXT NOT NULL
 );

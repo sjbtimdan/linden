@@ -1,0 +1,23 @@
+-- Migrate schema from version 1 to 2: add CHECK constraints to EntryEntity.amount
+-- (>= 0) and EntryEntity.to_amount (NULL or >= 0).
+-- SQLite cannot add a CHECK constraint in place, so the table is rebuilt.
+ALTER TABLE EntryEntity RENAME TO EntryEntity_old;
+
+CREATE TABLE EntryEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    category_id INTEGER,
+    description TEXT,
+    account_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL CHECK (amount >= 0),
+    to_account_id INTEGER,
+    to_amount INTEGER CHECK (to_amount IS NULL OR to_amount >= 0),
+    created_at INTEGER NOT NULL,
+    created_zone TEXT NOT NULL
+);
+
+INSERT INTO EntryEntity (id, type, category_id, description, account_id, amount, to_account_id, to_amount, created_at, created_zone)
+SELECT id, type, category_id, description, account_id, amount, to_account_id, to_amount, created_at, created_zone
+FROM EntryEntity_old;
+
+DROP TABLE EntryEntity_old;
