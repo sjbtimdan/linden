@@ -90,7 +90,7 @@ class AccountListViewModelTest : StringSpec({
     }
 
     "direct database writes reflect in the list" {
-        withAccountViewModel { dao, viewModel ->
+        withAccountViewModel { dao, _, _, viewModel ->
             viewModel.accounts.value.shouldBeEmpty()
 
             dao.create("Wallet", Currency.EUR)

@@ -23,7 +23,7 @@ import org.sjbtimdan.linden.ui.withRatesViewModel
 @OptIn(ExperimentalTestApi::class)
 class RatesScreenTest : StringSpec({
     "clicking Refresh loads and shows the rate rows for the base currency" {
-        withRatesViewModel { viewModel ->
+        withRatesViewModel { _, viewModel ->
             setContent {
                 RatesScreen(
                     viewModel = viewModel,
@@ -118,7 +118,7 @@ class RatesScreenTest : StringSpec({
     }
 
     "clicking back triggers navigation" {
-        withRatesViewModel { viewModel ->
+        withRatesViewModel { _, viewModel ->
             var navigatedBack = false
 
             setContent {

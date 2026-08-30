@@ -96,10 +96,6 @@ fun withAccountViewModel(
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withAccountViewModel(block: suspend ComposeUiTest.(AccountDao, AccountListViewModel) -> Unit) =
-    withAccountViewModel { accountDao, _, _, viewModel -> block(accountDao, viewModel) }
-
-@OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(block: suspend ComposeUiTest.(AccountListViewModel) -> Unit) =
     withAccountViewModel { _, _, _, viewModel -> block(viewModel) }
 
@@ -145,10 +141,6 @@ fun withRatesViewModel(
         }
     }
 }
-
-@OptIn(ExperimentalTestApi::class)
-fun withRatesViewModel(block: suspend ComposeUiTest.(RatesViewModel) -> Unit) =
-    withRatesViewModel { _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
