@@ -7,21 +7,26 @@ package org.sjbtimdan.linden.ui.entry
 expect fun formatAmount(amount: Long): String
 
 /**
- * Parses a user-typed amount (e.g. "42.50", "42,5", "1,000.00") into minor units.
- * The last `.` or `, ` is the decimal separator; other occurrences of `.`/`, ` and
- * spaces in the integer part are treated as grouping separators. A trailing
- * separator followed by exactly 3 digits is a grouping separator (minor units are
- * always 2 digits), so "1,000", "1.000" and "1 000" all parse as 1000.
- * Returns null when the input is not a valid non-negative amount.
+ * Parses a user-typed amount (e.g. "42.50", "42,5", "1,000.00", "-500") into minor
+ * units. A leading `-` makes the result negative (used for liabilities such as a
+ * negative account balance). The last `.` or `, ` is the decimal separator; other
+ * occurrences of `.`/`, ` and spaces in the integer part are treated as grouping
+ * separators. A trailing separator followed by exactly 3 digits is a grouping
+ * separator (minor units are always 2 digits), so "1,000", "1.000" and "1 000" all
+ * parse as 1000. Returns null when the input is not a valid amount.
  */
 fun parseAmount(input: String): Long? {
     val text = input.trim()
     if (text.isEmpty()) return null
-    if (text.startsWith("-") || text.startsWith("+")) return null
+    if (text.startsWith("+")) return null
 
-    val decimalIndex = maxOf(text.lastIndexOf('.'), text.lastIndexOf(','))
-    val integerPart = if (decimalIndex == -1) text else text.substring(0, decimalIndex)
-    val fractionPart = if (decimalIndex == -1) "" else text.substring(decimalIndex + 1)
+    val negative = text.startsWith("-")
+    val magnitudeText = if (negative) text.substring(1) else text
+    if (magnitudeText.isEmpty()) return null
+
+    val decimalIndex = maxOf(magnitudeText.lastIndexOf('.'), magnitudeText.lastIndexOf(','))
+    val integerPart = if (decimalIndex == -1) magnitudeText else magnitudeText.substring(0, decimalIndex)
+    val fractionPart = if (decimalIndex == -1) "" else magnitudeText.substring(decimalIndex + 1)
     if (integerPart.isEmpty() && fractionPart.isEmpty()) return null
     if (fractionPart.any { !it.isDigit() }) return null
 
@@ -33,18 +38,19 @@ fun parseAmount(input: String): Long? {
     val groupingChars =
         if (separatorIsGrouping || decimalIndex == -1) {
             ". ,\u00A0\u202F"
-        } else if (text[decimalIndex] == '.') {
+        } else if (magnitudeText[decimalIndex] == '.') {
             ", \u00A0\u202F"
         } else {
             ". \u00A0\u202F"
         }
-    if (!separatorIsGrouping && decimalIndex != -1 && integerPart.contains(text[decimalIndex])) return null
+    if (!separatorIsGrouping && decimalIndex != -1 && integerPart.contains(magnitudeText[decimalIndex])) return null
     if (integerPart.any { it !in groupingChars && !it.isDigit() }) return null
 
     val digits = integerPart + if (separatorIsGrouping) fractionPart else ""
     val major = digits.filter { it !in groupingChars }.ifEmpty { "0" }.toLongOrNull() ?: return null
     val minor = if (separatorIsGrouping) 0L else fractionPart.padEnd(2, '0').toLongOrNull() ?: return null
-    return major * 100 + minor
+    val magnitude = major * 100 + minor
+    return if (negative) -magnitude else magnitude
 }
 
 private const val MILLION_MINOR = 100_000_000L // 1,000,000.00 in minor units

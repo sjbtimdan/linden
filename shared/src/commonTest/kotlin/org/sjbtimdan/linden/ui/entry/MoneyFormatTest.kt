@@ -26,21 +26,30 @@ class MoneyFormatTest : StringSpec({
         parseAmount("1,000,000") shouldBe 100_000_000
     }
 
+    "parseAmount accepts negative amounts" {
+        parseAmount("-42") shouldBe -4_200
+        parseAmount("-42.50") shouldBe -4_250
+        parseAmount("-1,000.00") shouldBe -100_000
+        parseAmount("-0.05") shouldBe -5
+        parseAmount("-0") shouldBe 0
+        parseAmount(" -500 ") shouldBe -50_000
+    }
+
     "parseAmount rejects invalid input" {
         parseAmount("") shouldBe null
         parseAmount("  ") shouldBe null
         parseAmount(".") shouldBe null
         parseAmount("abc") shouldBe null
         parseAmount("12.3.4") shouldBe null
-        parseAmount("-42") shouldBe null
         parseAmount("+42") shouldBe null
+        parseAmount("-") shouldBe null
         parseAmount("1,00,0") shouldBe null
         parseAmount("1,0000") shouldBe null
         parseAmount("12,3456") shouldBe null
     }
 
     "parse and format round-trip" {
-        listOf(0L, 1L, 50L, 4_250L, 12_345L, 1_000_000L, 99_999_999L).forEach { amount ->
+        listOf(0L, 1L, 50L, 4_250L, 12_345L, 1_000_000L, 99_999_999L, -4_250L, -1_000_000L).forEach { amount ->
             parseAmount(formatAmount(amount)) shouldBe amount
         }
     }

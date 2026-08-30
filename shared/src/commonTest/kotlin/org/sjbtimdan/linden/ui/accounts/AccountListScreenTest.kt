@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,6 +73,49 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("Save").performClick()
 
             viewModel.accounts.value.single().initialBalance shouldBe 150_050
+        }
+    }
+
+    "editing an account's initial balance to a negative value persists it" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 5_000)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            onAllNodesWithContentDescription("Clear")[1].performClick()
+            onAllNodes(hasSetTextAction())[2].performTextInput("-500")
+            onNodeWithText("Save").performClick()
+
+            viewModel.accounts.value.single().initialBalance shouldBe -50_000
+        }
+    }
+
+    "entering an invalid initial balance shows a warning and does not save" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 5_000)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            onAllNodesWithContentDescription("Clear")[1].performClick()
+            onAllNodes(hasSetTextAction())[2].performTextInput("abc")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("Enter a valid amount").assertIsDisplayed()
+            viewModel.accounts.value.single().initialBalance shouldBe 5_000
         }
     }
 

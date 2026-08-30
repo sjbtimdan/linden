@@ -63,6 +63,7 @@ private data class AccountDialogState(
     val name: String,
     val currency: Currency,
     val initialBalanceText: String,
+    val initialBalanceError: String? = null,
 )
 
 @Composable
@@ -220,28 +221,39 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             name = state.name,
             currency = state.currency,
             initialBalanceText = state.initialBalanceText,
+            initialBalanceError = state.initialBalanceError,
             isEditing = isEditing,
             canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
             onNameChange = { dialogState = state.copy(name = it) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
-            onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it) },
+            onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it, initialBalanceError = null) },
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
-                    val initialBalance = parseAmount(state.initialBalanceText) ?: 0
-                    val existing = state.account
-                    if (existing != null) {
-                        viewModel.updateAccount(
-                            existing.copy(
-                                name = name,
-                                currency = state.currency,
-                                initialBalance = initialBalance,
-                            ),
-                        )
+                    // An empty initial balance means zero; any other unparseable value is
+                    // an error and must not be silently truncated to zero.
+                    val initialBalance = if (state.initialBalanceText.isBlank()) {
+                        0L
                     } else {
-                        viewModel.createAccount(name, state.currency, initialBalance)
+                        parseAmount(state.initialBalanceText)
                     }
-                    dialogState = null
+                    if (initialBalance == null) {
+                        dialogState = state.copy(initialBalanceError = "Enter a valid amount")
+                    } else {
+                        val existing = state.account
+                        if (existing != null) {
+                            viewModel.updateAccount(
+                                existing.copy(
+                                    name = name,
+                                    currency = state.currency,
+                                    initialBalance = initialBalance,
+                                ),
+                            )
+                        } else {
+                            viewModel.createAccount(name, state.currency, initialBalance)
+                        }
+                        dialogState = null
+                    }
                 }
             },
             onDismiss = { dialogState = null },
@@ -254,6 +266,7 @@ private fun AccountDialog(
     name: String,
     currency: Currency,
     initialBalanceText: String,
+    initialBalanceError: String?,
     isEditing: Boolean,
     canChangeCurrency: Boolean,
     onNameChange: (String) -> Unit,
@@ -293,6 +306,8 @@ private fun AccountDialog(
                     label = { Text("Initial balance") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = initialBalanceError != null,
+                    supportingText = initialBalanceError?.let { error -> { Text(error) } },
                     trailingIcon = if (initialBalanceText.isNotEmpty()) {
                         {
                             IconButton(
