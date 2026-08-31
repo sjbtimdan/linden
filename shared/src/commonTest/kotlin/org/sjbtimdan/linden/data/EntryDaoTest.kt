@@ -397,6 +397,46 @@ class EntryDaoTest : StringSpec({
         )
     }
 
+    "accountDeltasUpTo excludes entries created after the cutoff" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        val groceries = categoryDao.getAll().first().first()
+
+        // A past expense and a future transfer out of Main.
+        entryDao.create(
+            ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Instant.fromEpochMilliseconds(1_000)),
+        )
+        entryDao.create(
+            TransferEntry(
+                0,
+                null,
+                null,
+                main,
+                10_000,
+                toAccount = savings,
+                toAmount = null,
+                createdAt = Instant.fromEpochMilliseconds(9_999_999_999),
+            ),
+        )
+
+        // Cutoff after the expense but before the future transfer.
+        entryDao.accountDeltasUpTo(2_000).first() shouldBe mapOf(main.id to -450L)
+        // No cutoff: both count.
+        entryDao.accountDeltas().first() shouldBe mapOf(
+            main.id to -10_450L,
+            savings.id to 10_000L,
+        )
+    }
+
     "categoryTotals groups income and expense per category and currency" {
         val database = lindenDatabase()
         val entryDao = EntryDao(database.entryQueries)

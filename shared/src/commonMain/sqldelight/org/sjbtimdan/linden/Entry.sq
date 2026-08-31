@@ -250,6 +250,26 @@ FROM (
 )
 GROUP BY accountId;
 
+-- Net change per account for entries created at or before :epochMs, so future
+-- entries never count toward a "current" balance.
+accountDeltasUpTo:
+SELECT accountId, COALESCE(SUM(delta), 0) AS delta
+FROM (
+    SELECT EntryEntity.account_id AS accountId,
+           CASE
+               WHEN EntryEntity.type = 'Income' THEN EntryEntity.amount
+               ELSE -EntryEntity.amount
+           END AS delta
+    FROM EntryEntity
+    WHERE EntryEntity.created_at <= :epochMs
+    UNION ALL
+    SELECT EntryEntity.to_account_id AS accountId,
+           COALESCE(EntryEntity.to_amount, EntryEntity.amount) AS delta
+    FROM EntryEntity
+    WHERE EntryEntity.type = 'Transfer' AND EntryEntity.created_at <= :epochMs
+)
+GROUP BY accountId;
+
 -- Net total per category and entry currency (transfers excluded), so FX
 -- conversion can happen once per currency group instead of per entry.
 categoryTotals:

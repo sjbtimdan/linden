@@ -231,10 +231,13 @@ class LedgerViewModel(
         accountTotalMinor(balances, currency, rates)
     }.stateFlow(null)
 
-    /** Current balance of each account in its own currency (minor units), used for balance adjustments. */
+    /**
+     * Current balance of each account in its own currency (minor units), used for balance
+     * adjustments. Entries dated in the future never count, matching [accountBalancesAtPeriodEnd].
+     */
     val currentAccountBalances: StateFlow<Map<Long, Long>> = combine(
         accounts,
-        entryDao.accountDeltas(),
+        entryDao.accountDeltasUpTo(today().sqlUpperBound()),
     ) { accounts, deltas ->
         accountBalancesMinor(deltas, accounts)
     }.stateFlow(emptyMap())

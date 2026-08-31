@@ -1163,6 +1163,33 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "currentAccountBalances excludes future-dated entries" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val accounts = accountDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val savings = accounts.first { it.name == "Savings" }
+            val groceries = categoryDao.getAll().first().first()
+
+            // A past expense (2026-08-01) and a future transfer out of Main (2026-09-01).
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, at(1_784_000_000_000), TimeZone.UTC))
+            entryDao.create(
+                TransferEntry(
+                    0, null, null, main, 10_000, toAccount = savings, toAmount = null,
+                    createdAt = at(1_787_000_000_000), createdZone = TimeZone.UTC,
+                ),
+            )
+
+            // The future transfer must not count toward the current balance.
+            viewModel.currentAccountBalances.value shouldBe mapOf(
+                main.id to 9_550L,
+                savings.id to 0L,
+            )
+        }
+    }
+
     "adjusting again creates a separate entry" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
