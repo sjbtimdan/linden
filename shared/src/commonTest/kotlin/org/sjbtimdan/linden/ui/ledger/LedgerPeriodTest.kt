@@ -105,4 +105,33 @@ class LedgerPeriodTest : StringSpec({
     "All has no label" {
         All.windowLabel(LocalDate(2026, 8, 13)).shouldBeNull()
     }
+
+    "All includes every date" {
+        All.includes(LocalDate(2026, 8, 13), LocalDate(2026, 8, 13)) shouldBe true
+        All.includes(LocalDate(2020, 1, 1), LocalDate(2026, 8, 13)) shouldBe true
+    }
+
+    "day includes only its own day" {
+        Day.includes(LocalDate(2026, 8, 13), LocalDate(2026, 8, 13)) shouldBe true
+        Day.includes(LocalDate(2026, 8, 14), LocalDate(2026, 8, 13)) shouldBe false
+        Day.includes(LocalDate(2026, 8, 12), LocalDate(2026, 8, 13)) shouldBe false
+    }
+
+    "week includes dates up to its end" {
+        Week.includes(LocalDate(2026, 8, 13), LocalDate(2026, 8, 13)) shouldBe true
+        Week.includes(LocalDate(2026, 8, 16), LocalDate(2026, 8, 13)) shouldBe true
+        Week.includes(LocalDate(2026, 8, 17), LocalDate(2026, 8, 13)) shouldBe false
+    }
+
+    "month includes dates up to its end" {
+        Month.includes(LocalDate(2026, 8, 15), LocalDate(2026, 8, 15)) shouldBe true
+        Month.includes(LocalDate(2026, 8, 31), LocalDate(2026, 8, 15)) shouldBe true
+        Month.includes(LocalDate(2026, 9, 1), LocalDate(2026, 8, 15)) shouldBe false
+    }
+
+    "year includes dates up to its end" {
+        Year.includes(LocalDate(2026, 6, 1), LocalDate(2026, 6, 1)) shouldBe true
+        Year.includes(LocalDate(2026, 12, 31), LocalDate(2026, 6, 1)) shouldBe true
+        Year.includes(LocalDate(2027, 1, 1), LocalDate(2026, 6, 1)) shouldBe false
+    }
 })

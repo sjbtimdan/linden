@@ -854,6 +854,49 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "adjust balance shows an explanation when viewing a historical period" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            // Switch to a bounded period (Month) then navigate to the previous (historical) month.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+            onNodeWithContentDescription("Previous period").performClick()
+
+            // The menu stays discoverable, but tapping Adjust Balance explains why it's unavailable.
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+            onNodeWithText("Adjust Balance can only be done when the period is the latest.").assertIsDisplayed()
+        }
+    }
+
+    "adjust balance is shown for the current period" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeDropdown").performClick()
+            onNodeWithText("Accounts").performClick()
+
+            // The current month includes today, so Adjust Balance stays available.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").assertIsDisplayed()
+        }
+    }
+
     "filters are expanded by default, keeping the period and total visible" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

@@ -52,7 +52,7 @@ class LedgerViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
 

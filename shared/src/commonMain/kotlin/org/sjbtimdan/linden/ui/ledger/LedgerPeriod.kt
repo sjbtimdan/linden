@@ -32,6 +32,17 @@ fun LedgerPeriod.windowEnd(anchor: LocalDate): LocalDate? {
     return start.plus(amount, unit).minus(1, DateTimeUnit.DAY)
 }
 
+/**
+ * Whether the period's window contains [date]. [LedgerPeriod.All] has no window, so it
+ * always contains every date. For bounded periods this is true when [date] falls within
+ * the window's first and last day — i.e. the period is the current one.
+ */
+fun LedgerPeriod.includes(date: LocalDate, anchor: LocalDate): Boolean {
+    val start = windowStart(anchor) ?: return true
+    val end = windowEnd(anchor) ?: return true
+    return date >= start && date <= end
+}
+
 /** Anchor moved one period backwards; unchanged for [LedgerPeriod.All]. */
 fun LedgerPeriod.previousAnchor(anchor: LocalDate): LocalDate {
     val (amount, unit) = step() ?: return anchor

@@ -36,7 +36,9 @@ fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
     emptyMessage: String = "No accounts yet.",
-    onAdjustBalance: ((AccountWithBalance) -> Unit)? = null,
+    canAdjustBalance: Boolean = true,
+    onAdjustBalance: (AccountWithBalance) -> Unit,
+    onAdjustBalanceUnavailable: (AccountWithBalance) -> Unit = {},
 ) {
     if (balances.isEmpty()) {
         Box(
@@ -79,27 +81,29 @@ fun AccountsList(
                         text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    if (onAdjustBalance != null) {
-                        var menuOpen by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(onClick = { menuOpen = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More options",
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = menuOpen,
-                                onDismissRequest = { menuOpen = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("Adjust Balance") },
-                                    onClick = {
-                                        menuOpen = false
+                    var menuOpen by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options",
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Adjust Balance") },
+                                onClick = {
+                                    menuOpen = false
+                                    if (canAdjustBalance) {
                                         onAdjustBalance(item)
-                                    },
-                                )
-                            }
+                                    } else {
+                                        onAdjustBalanceUnavailable(item)
+                                    }
+                                },
+                            )
                         }
                     }
                 }

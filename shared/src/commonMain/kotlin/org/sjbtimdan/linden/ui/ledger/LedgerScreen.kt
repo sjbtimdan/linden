@@ -106,6 +106,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
     var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
+    var adjustUnavailableAccount by remember { mutableStateOf<Account?>(null) }
     var filtersExpanded by rememberSaveable { mutableStateOf(true) }
 
     val listItems = remember(displayedEntries) {
@@ -306,6 +307,11 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 } else {
                     accountBalances.filter { it.account.name.contains(accountFilter, ignoreCase = true) }
                 }
+            // Adjust Balance reconciles to the account's current balance, which only matches
+            // the balance shown in the list when the selected period includes today. For a
+            // historical period the list shows a period-end balance, so adjusting would be
+            // confusing — keep the action discoverable but explain why it's unavailable.
+            val canAdjustBalance = periodSelection.period.includes(viewModel.today(), periodSelection.anchor)
             AccountsList(
                 balances = shownBalances,
                 emptyMessage =
@@ -316,6 +322,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 } else {
                     "No accounts match."
                 },
+                canAdjustBalance = canAdjustBalance,
                 onAdjustBalance = { item ->
                     val current = currentAccountBalances[item.account.id] ?: item.account.initialBalance
                     adjustState = AdjustBalanceDialogState(
@@ -324,6 +331,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                         targetBalanceText = formatAmount(current),
                     )
                 },
+                onAdjustBalanceUnavailable = { item -> adjustUnavailableAccount = item.account },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -460,6 +468,25 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 }
             },
             onDismiss = { adjustState = null },
+        )
+    }
+
+    adjustUnavailableAccount?.let { account ->
+        AlertDialog(
+            onDismissRequest = { adjustUnavailableAccount = null },
+            shape = DialogShape,
+            title = { Text("Adjust Balance") },
+            text = {
+                Text(
+                    text = "Adjust Balance can only be done when the period is the latest.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { adjustUnavailableAccount = null }) {
+                    Text("OK")
+                }
+            },
         )
     }
 }
