@@ -298,4 +298,81 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("No matching accounts.").assertIsDisplayed()
         }
     }
+
+    "delete button is shown when editing an account without entries" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Delete Account").assertIsDisplayed()
+            onNodeWithText("Delete Account").assertIsEnabled()
+        }
+    }
+
+    "delete button is hidden when creating a new account" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").assertIsDisplayed()
+            onNodeWithText("Delete Account").assertDoesNotExist()
+        }
+    }
+
+    "delete button is disabled with a note when editing an account with entries" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            onNodeWithText("This account cannot be deleted: it has entries.").assertIsDisplayed()
+            onNodeWithText("Delete Account").assertIsNotEnabled()
+        }
+    }
+
+    "deleting an account without entries removes it from the list" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            onNodeWithText("Delete Account").performClick()
+
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Savings")
+            onNodeWithText("Savings").assertIsDisplayed()
+            onNodeWithText("Main").assertDoesNotExist()
+        }
+    }
 })

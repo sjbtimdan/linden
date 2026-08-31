@@ -14,6 +14,10 @@ class AccountDao(private val queries: AccountQueries) {
         queries.insert(name, currency.name, initialBalance)
     }
 
+    suspend fun delete(id: Long) {
+        queries.deleteById(id)
+    }
+
     suspend fun update(account: Account) {
         queries.update(account.name, account.currency.name, account.initialBalance, account.id)
     }

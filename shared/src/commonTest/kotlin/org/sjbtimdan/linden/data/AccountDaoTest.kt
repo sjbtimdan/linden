@@ -66,6 +66,19 @@ class AccountDaoTest : StringSpec({
         names shouldBe listOf("A", "B", "C")
     }
 
+    "deleting an account removes it from the list" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+        dao.create("Savings", Currency.USD)
+        val main = dao.getAll().first().first { it.name == "Main" }
+
+        dao.delete(main.id)
+
+        dao.getAll().first().map { it.name } shouldBe listOf("Savings")
+    }
+
     "Currency.fromCode returns the enum for a known code" {
         Currency.entries.forEach { currency ->
             Currency.fromCode(currency.name) shouldBe currency

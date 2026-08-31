@@ -66,4 +66,12 @@ class AccountListViewModel(
             accountDao.update(account)
         }
     }
+
+    /** Deletes an account; ignored when the account still has entries on it. */
+    fun deleteAccount(id: Long) {
+        viewModelScope.launch {
+            if (id in accountsWithEntries.value) return@launch
+            accountDao.delete(id)
+        }
+    }
 }

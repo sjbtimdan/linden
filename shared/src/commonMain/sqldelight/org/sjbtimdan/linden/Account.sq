@@ -34,5 +34,8 @@ FROM AccountEntity
 WHERE name = ?
 LIMIT 1;
 
+deleteById:
+DELETE FROM AccountEntity WHERE id = ?;
+
 deleteAll:
 DELETE FROM AccountEntity;

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withAccountViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -131,6 +132,60 @@ class AccountListViewModelTest : StringSpec({
             viewModel.setSearchQuery("nonexistent")
 
             viewModel.accounts.value.shouldBeEmpty()
+        }
+    }
+
+    "deleteAccount removes an account with no entries" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+            val main = viewModel.accounts.value.first { it.name == "Main" }
+
+            viewModel.deleteAccount(main.id)
+
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Savings")
+        }
+    }
+
+    "deleteAccount ignores an account that still has entries" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+
+            viewModel.deleteAccount(main.id)
+
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main")
+        }
+    }
+
+    "deleteAccount ignores an account that is a transfer target" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Source", Currency.CHF)
+            accountDao.create("Target", Currency.CHF)
+            val source = accountDao.getAll().first().first { it.name == "Source" }
+            val target = accountDao.getAll().first().first { it.name == "Target" }
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(
+                TransferEntry(
+                    id = 0,
+                    category = groceries,
+                    description = "Move",
+                    account = source,
+                    amount = 450,
+                    toAccount = target,
+                    toAmount = null,
+                ),
+            )
+            viewModel.accountsWithEntries.first { target.id in it }
+
+            viewModel.deleteAccount(target.id)
+
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Source", "Target")
         }
     }
 })

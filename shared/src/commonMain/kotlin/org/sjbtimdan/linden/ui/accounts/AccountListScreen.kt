@@ -23,13 +23,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -222,9 +225,17 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             initialBalanceError = state.initialBalanceError,
             isEditing = isEditing,
             canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
+            canDelete = isEditing && state.account.id !in accountsWithEntries,
             onNameChange = { dialogState = state.copy(name = it) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
             onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it, initialBalanceError = null) },
+            onDelete = {
+                val existing = state.account
+                if (existing != null) {
+                    dialogState = null
+                    viewModel.deleteAccount(existing.id)
+                }
+            },
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
@@ -267,9 +278,11 @@ private fun AccountDialog(
     initialBalanceError: String?,
     isEditing: Boolean,
     canChangeCurrency: Boolean,
+    canDelete: Boolean,
     onNameChange: (String) -> Unit,
     onCurrencyChange: (Currency) -> Unit,
     onInitialBalanceChange: (String) -> Unit,
+    onDelete: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -344,6 +357,32 @@ private fun AccountDialog(
                             onClick = { onCurrencyChange(entry) },
                             label = { Text(entry.name) },
                         )
+                    }
+                }
+                if (isEditing) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (!canDelete) {
+                        Text(
+                            text = "This account cannot be deleted: it has entries.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onDelete,
+                        enabled = canDelete,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Delete Account")
                     }
                 }
             }
