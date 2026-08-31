@@ -11,13 +11,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
     private val entryDao: EntryDao,
+    settingsDao: SettingsDao,
 ) : ViewModel() {
+    val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = Currency.CHF,
+        )
+
     private val _searchQuery = MutableStateFlow("")
 
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

@@ -74,6 +74,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     val accounts by viewModel.accounts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
 
     BackHandler(enabled = dialogState != null) {
@@ -123,7 +124,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
 
         Button(
             onClick = {
-                dialogState = AccountDialogState(null, "", Currency.CHF, "")
+                dialogState = AccountDialogState(null, "", defaultCurrency, "")
             },
             modifier = Modifier.fillMaxWidth(),
         ) {

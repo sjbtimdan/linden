@@ -89,7 +89,8 @@ fun withAccountViewModel(
             val accountDao = AccountDao(database.accountQueries)
             val entryDao = EntryDao(database.entryQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = AccountListViewModel(accountDao, entryDao)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            val viewModel = AccountListViewModel(accountDao, entryDao, settingsDao)
             block(accountDao, entryDao, categoryDao, viewModel)
         }
     }
