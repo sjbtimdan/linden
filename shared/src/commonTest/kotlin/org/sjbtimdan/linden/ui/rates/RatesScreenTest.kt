@@ -92,7 +92,7 @@ class RatesScreenTest : StringSpec({
             onNode(isToggleable()).performClick()
             onNode(isToggleable()).assertIsOff()
 
-            settingsDao.getAutoUpdateRates() shouldBe false
+            settingsDao.autoUpdateRatesFlow().first() shouldBe false
         }
     }
 

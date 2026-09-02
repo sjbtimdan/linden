@@ -68,11 +68,6 @@ class SettingsDao(private val queries: SettingsQueries) {
                 ?: false
         }
 
-    suspend fun getAutoUpdateRates(): Boolean {
-        val entity = queries.selectByKey(AUTO_UPDATE_RATES_KEY).awaitAsOneOrNull()
-        return entity?.value_?.toBoolean() ?: true
-    }
-
     suspend fun setAutoUpdateRates(enabled: Boolean) {
         queries.insertOrReplace(AUTO_UPDATE_RATES_KEY, enabled.toString())
     }

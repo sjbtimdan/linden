@@ -10,8 +10,6 @@ import org.sjbtimdan.linden.model.Budget
 
 /** Persists monthly category budgets in their own table, keyed by category name. */
 class BudgetDao(private val queries: BudgetQueries) {
-    suspend fun getAll(): List<Budget> = queries.selectAll().awaitAsList().map { it.toBudget() }
-
     fun budgetsFlow(): Flow<List<Budget>> = queries.selectAll()
         .asFlow()
         .map { it.awaitAsList().map { row -> row.toBudget() } }
@@ -24,10 +22,6 @@ class BudgetDao(private val queries: BudgetQueries) {
     /** Removes the budget for [categoryName] if one exists. */
     suspend fun delete(categoryName: String) {
         queries.deleteByCategoryName(categoryName)
-    }
-
-    suspend fun deleteAll() {
-        queries.deleteAll()
     }
 
     private fun BudgetEntity.toBudget() = Budget(

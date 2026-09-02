@@ -83,13 +83,6 @@ class EntryDao(private val queries: EntryQueries) {
             )
         }
 
-    /** Net change per account in the account's own currency (minor units). */
-    fun accountDeltas(): Flow<Map<Long, Long>> = queries.accountDeltas().asFlow().map { rows ->
-        rows.awaitAsList()
-            .mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
-            .toMap()
-    }
-
     /** Net change per account for entries created at or before [epochMs] (minor units). */
     fun accountDeltasUpTo(epochMs: Long): Flow<Map<Long, Long>> = queries.accountDeltasUpTo(
         epochMs,
@@ -107,15 +100,6 @@ class EntryDao(private val queries: EntryQueries) {
     /** Categories referenced by at least one entry; they cannot be deleted while entries exist. */
     fun categoriesWithEntries(): Flow<Set<Long>> = queries.categoriesWithEntries().asFlow().map { rows ->
         rows.awaitAsList().toSet()
-    }
-
-    /** Net total per category and entry currency (minor units). */
-    fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> = queries.categoryTotals().asFlow().map { rows ->
-        rows.awaitAsList()
-            .mapNotNull { row ->
-                row.categoryId?.let { id -> (id to Currency.fromCode(row.currency)) to row.net }
-            }
-            .toMap()
     }
 
     private fun Entry.sqlArgs(): SqlArgs = when (this) {

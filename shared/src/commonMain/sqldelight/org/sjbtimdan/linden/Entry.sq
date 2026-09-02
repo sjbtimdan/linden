@@ -236,26 +236,6 @@ SELECT DISTINCT category_id
 FROM EntryEntity
 WHERE category_id IS NOT NULL;
 
--- Net change per account in the account's own currency: income adds, expenses
--- and transfers subtract from the source; the transfer target gains the received
--- amount (or the sent amount for same-currency transfers).
-accountDeltas:
-SELECT accountId, COALESCE(SUM(delta), 0) AS delta
-FROM (
-    SELECT EntryEntity.account_id AS accountId,
-           CASE
-               WHEN EntryEntity.type = 'Income' THEN EntryEntity.amount
-               ELSE -EntryEntity.amount
-           END AS delta
-    FROM EntryEntity
-    UNION ALL
-    SELECT EntryEntity.to_account_id AS accountId,
-           COALESCE(EntryEntity.to_amount, EntryEntity.amount) AS delta
-    FROM EntryEntity
-    WHERE EntryEntity.type = 'Transfer'
-)
-GROUP BY accountId;
-
 -- Net change per account for entries created at or before :epochMs, so future
 -- entries never count toward a "current" balance.
 accountDeltasUpTo:
@@ -275,20 +255,3 @@ FROM (
     WHERE EntryEntity.type = 'Transfer' AND EntryEntity.created_at <= :epochMs
 )
 GROUP BY accountId;
-
--- Net total per category and entry currency (transfers excluded), so FX
--- conversion can happen once per currency group instead of per entry.
-categoryTotals:
-SELECT categoryId, currency, COALESCE(SUM(net), 0) AS net
-FROM (
-    SELECT EntryEntity.category_id AS categoryId,
-           AccountEntity.currency AS currency,
-           CASE
-               WHEN EntryEntity.type = 'Income' THEN EntryEntity.amount
-               ELSE -EntryEntity.amount
-           END AS net
-    FROM EntryEntity
-    JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-    WHERE EntryEntity.type != 'Transfer'
-)
-GROUP BY categoryId, currency;
