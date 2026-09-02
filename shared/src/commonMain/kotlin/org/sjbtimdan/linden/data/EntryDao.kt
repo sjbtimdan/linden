@@ -103,9 +103,7 @@ class EntryDao(private val queries: EntryQueries) {
     }
 
     private fun Entry.sqlArgs(): SqlArgs = when (this) {
-        is ExpenseEntry -> SqlArgs(category.id, null, null)
-
-        is IncomeEntry -> SqlArgs(category.id, null, null)
+        is ExpenseEntry, is IncomeEntry -> SqlArgs(category?.id, null, null)
 
         is TransferEntry -> SqlArgs(
             category?.id,

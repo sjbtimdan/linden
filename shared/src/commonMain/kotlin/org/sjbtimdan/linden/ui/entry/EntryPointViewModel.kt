@@ -16,9 +16,6 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
@@ -70,40 +67,12 @@ class EntryPointViewModel(
 
     /** Fills the draft from a quick-entry chip, keeping the current date and time. */
     fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->
-        if (state == null) {
-            null
-        } else {
-            when (val entry = quickEntry.entry) {
-                is TransferEntry -> state.copy(
-                    type = EntryType.Transfer,
-                    amountText = formatAmount(entry.amount),
-                    categoryId = entry.category?.id,
-                    accountId = entry.account.id,
-                    toAccountId = entry.toAccount.id,
-                    toAmountText = formatAmount(entry.toAmount ?: entry.amount),
-                    description = entry.description.orEmpty(),
-                )
-
-                is ExpenseEntry -> state.copy(
-                    type = EntryType.Expense,
-                    amountText = formatAmount(entry.amount),
-                    categoryId = entry.category.id,
-                    accountId = entry.account.id,
-                    toAccountId = null,
-                    toAmountText = "",
-                    description = entry.description.orEmpty(),
-                )
-
-                is IncomeEntry -> state.copy(
-                    type = EntryType.Income,
-                    amountText = formatAmount(entry.amount),
-                    categoryId = entry.category.id,
-                    accountId = entry.account.id,
-                    toAccountId = null,
-                    toAmountText = "",
-                    description = entry.description.orEmpty(),
-                )
-            }
+        state?.let {
+            EntryDraft.forEdit(quickEntry.entry).copy(
+                editing = null,
+                createdAt = it.createdAt,
+                createdZone = it.createdZone,
+            )
         }
     }
 
