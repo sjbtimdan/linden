@@ -170,14 +170,14 @@ class QuickEntryPredictorTest : StringSpec({
             result.single().entry.id shouldBe 1L
         }
 
-        "keeps same-description entries at different hours" {
+        "deduplicates same-description entries across different hours" {
             val entries = listOf(
                 expense(1, "Coffee", now.minus(1.days)),
                 expense(2, "Coffee", now.minus(1.days)),
                 expense(3, "Coffee", now.minus(1.days).minus(5.hours)),
                 expense(4, "Coffee", now.minus(1.days).minus(5.hours)),
             )
-            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee", "Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee")
         }
 
         "caps results at the top five" {

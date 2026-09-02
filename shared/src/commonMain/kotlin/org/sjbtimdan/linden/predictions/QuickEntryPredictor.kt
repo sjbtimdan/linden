@@ -28,10 +28,9 @@ data class QuickEntry(
  * Entries without a description are ignored: a chip shows the description, so
  * auto-generated entries without one can't be picked. A description entered
  * today is excluded entirely — the user just entered it, so it isn't suggested
- * again even when it recurs. Recurring entries are deduplicated by description
- * and hour of day, so the same thing at the same clock time can't fill the
- * list — even when its amount, category or account drifted between
- * occurrences. Each result carries the [RecurrenceCadence] detected for its
+ * again even when it recurs. Recurring entries are deduplicated by description,
+ * so the same thing can't fill the list even when it occurs at different
+ * hours, amounts, categories, or accounts. Each result carries the [RecurrenceCadence] detected for its
  * description, so a chip can label a subscription.
  */
 fun predictQuickEntries(
@@ -73,7 +72,7 @@ fun predictQuickEntries(
                 .thenByDescending { it.fieldScore }
                 .thenBy { it.entry.id },
         )
-        .distinctBy { it.entry.quickEntryKey(timeZone) }
+        .distinctBy { it.entry.description.orEmpty().lowercase() }
         .take(topN)
         .map { scored ->
             QuickEntry(
@@ -89,15 +88,6 @@ private data class ScoredEntry(
     val timeScore: Double,
     val fieldScore: Double,
 )
-
-/** What makes two entries the same recurring thing: the description at the same clock hour. */
-private data class QuickEntryKey(
-    val description: String,
-    val hourOfDay: Int,
-)
-
-private fun Entry.quickEntryKey(timeZone: TimeZone): QuickEntryKey =
-    QuickEntryKey(description.orEmpty(), createdAt.toLocalDateTime(timeZone).hour)
 
 /** Score of the entry's amount/category/account/description against the draft's entered fields. */
 private fun fieldMatchScore(entry: Entry, input: FieldPredictionInput): Double {
