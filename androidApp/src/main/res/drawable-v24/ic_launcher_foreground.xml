@@ -7,18 +7,54 @@
     <path
             android:fillColor="#FFFFFF"
             android:pathData="M54,84.6 A30.6,30.6 0 1 1 54,23.4 A30.6,30.6 0 1 1 54,84.6 Z"/>
+    <!-- Coin rim edge -->
+    <path
+            android:fillColor="#B8860B"
+            android:pathData="M54,85.43 A15.82,15.82 0 1 1 54,53.79 A15.82,15.82 0 1 1 54,85.43 Z"/>
+    <!-- Coin gold face -->
+    <path
+            android:fillColor="#F5B301"
+            android:pathData="M54,84.16 A14.55,14.55 0 1 1 54,55.06 A14.55,14.55 0 1 1 54,84.16 Z"/>
+    <!-- Coin rim highlight -->
     <path
             android:fillColor="#00000000"
-            android:pathData="M54,77.2 A23.2,23.2 0 1 1 54,30.8 A23.2,23.2 0 1 1 54,77.2 Z"
-            android:strokeWidth="2.53"
-            android:strokeColor="#1B5E20"/>
+            android:pathData="M54,84.16 A14.55,14.55 0 1 1 54,55.06 A14.55,14.55 0 1 1 54,84.16 Z"
+            android:strokeWidth="0.53"
+            android:strokeColor="#C98A00"/>
+    <!-- Coin inner detail ring -->
+    <path
+            android:fillColor="#00000000"
+            android:pathData="M54,79.95 A10.34,10.34 0 1 1 54,59.27 A10.34,10.34 0 1 1 54,79.95 Z"
+            android:strokeWidth="0.74"
+            android:strokeColor="#E0A800"/>
+    <!-- Tree trunk -->
+    <path
+            android:fillColor="#00000000"
+            android:pathData="M54,53.26 L54,45.35"
+            android:strokeWidth="2.74"
+            android:strokeColor="#795548"
+            android:strokeLineCap="round"/>
+    <!-- Tree canopy -->
     <path
             android:fillColor="#43A047"
-            android:pathData="M54,68.07 C45.80,63.38 37.58,57.52 37.58,49.31 C37.58,43.45 41.72,39.87 46.41,39.87 C49.31,39.87 52.83,42.83 54,45.80 C55.17,42.83 58.69,39.87 61.59,39.87 C66.28,39.87 70.42,43.45 70.42,49.31 C70.42,57.52 62.20,63.38 54,68.07 Z"/>
+            android:pathData="M54,46.62 A8.65,8.65 0 1 1 54,29.32 A8.65,8.65 0 1 1 54,46.62 Z"/>
     <path
-            android:fillColor="#00000000"
-            android:pathData="M54,67.94 L54,71.96"
-            android:strokeWidth="2.26"
-            android:strokeColor="#43A047"
-            android:strokeLineCap="round"/>
+            android:fillColor="#43A047"
+            android:pathData="M47.46,46.62 A5.70,5.70 0 1 1 47.46,35.22 A5.70,5.70 0 1 1 47.46,46.62 Z"/>
+    <path
+            android:fillColor="#43A047"
+            android:pathData="M60.54,46.62 A5.70,5.70 0 1 1 60.54,35.22 A5.70,5.70 0 1 1 60.54,46.62 Z"/>
+    <path
+            android:fillColor="#43A047"
+            android:pathData="M54,37.75 A5.27,5.27 0 1 1 54,27.21 A5.27,5.27 0 1 1 54,37.75 Z"/>
+    <!-- Canopy highlights -->
+    <path
+            android:fillColor="#66BB6A"
+            android:pathData="M54,40.92 A4.85,4.85 0 1 1 54,31.22 A4.85,4.85 0 1 1 54,40.92 Z"/>
+    <path
+            android:fillColor="#66BB6A"
+            android:pathData="M50.42,42.39 A3.16,3.16 0 1 1 50.42,36.07 A3.16,3.16 0 1 1 50.42,42.39 Z"/>
+    <path
+            android:fillColor="#66BB6A"
+            android:pathData="M57.58,42.39 A3.16,3.16 0 1 1 57.58,36.07 A3.16,3.16 0 1 1 57.58,42.39 Z"/>
 </vector>

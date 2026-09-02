@@ -3,9 +3,9 @@ package org.sjbtimdan.linden
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.GradientPaint
+import java.awt.RadialGradientPaint
 import java.awt.RenderingHints
 import java.awt.geom.Ellipse2D
-import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
@@ -32,23 +32,48 @@ fun main() {
     g.color = Color.WHITE
     g.fill(Ellipse2D.Float(512f - 290f, 512f - 290f, 580f, 580f))
 
-    g.color = Color(0x1B5E20)
-    g.stroke = BasicStroke(24f)
-    g.draw(Ellipse2D.Float(512f - 220f, 512f - 220f, 440f, 440f))
+    // Coin: dark rim edge
+    g.color = Color(0xB8860B)
+    g.fill(Ellipse2D.Float(512f - 150f, 660f - 150f, 300f, 300f))
 
+    // Coin: gold face (radial gradient for metallic sheen)
+    g.paint = RadialGradientPaint(
+        512f,
+        660f - 40f,
+        138f,
+        floatArrayOf(0f, 0.6f, 1f),
+        arrayOf(Color(0xFFD54F), Color(0xF5B301), Color(0xE0A800)),
+    )
+    g.fill(Ellipse2D.Float(512f - 138f, 660f - 138f, 276f, 276f))
+
+    // Coin: rim highlight
+    g.color = Color(0xC98A00)
+    g.stroke = BasicStroke(5f)
+    g.draw(Ellipse2D.Float(512f - 138f, 660f - 138f, 276f, 276f))
+
+    // Coin: inner detail ring
+    g.color = Color(0xE0A800)
+    g.stroke = BasicStroke(7f)
+    g.draw(Ellipse2D.Float(512f - 98f, 660f - 98f, 196f, 196f))
+
+    // Tree trunk
+    g.color = Color(0x795548)
+    g.stroke = BasicStroke(26f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+    g.drawLine(512, 505, 512, 430)
+
+    // Tree canopy: rounded crown of overlapping leaves
     g.color = Color(0x43A047)
-    val leaf = Path2D.Float()
-    leaf.moveTo(512.0, 645.2)
-    leaf.curveTo(434.25, 600.94, 356.32, 545.38, 356.32, 467.53)
-    leaf.curveTo(356.32, 411.97, 395.57, 378.03, 440.04, 378.03)
-    leaf.curveTo(467.53, 378.03, 500.91, 406.09, 512.0, 468.84)
-    leaf.curveTo(523.09, 406.09, 556.47, 378.03, 583.96, 378.03)
-    leaf.curveTo(628.43, 378.03, 667.68, 411.97, 667.68, 467.53)
-    leaf.curveTo(667.68, 545.38, 589.75, 600.94, 512.0, 645.2)
-    leaf.closePath()
-    g.fill(leaf)
+    g.fill(Ellipse2D.Float(512f - 82f, 360f - 82f, 164f, 164f))
+    g.fill(Ellipse2D.Float(450f - 54f, 388f - 54f, 108f, 108f))
+    g.fill(Ellipse2D.Float(574f - 54f, 388f - 54f, 108f, 108f))
+    g.fill(Ellipse2D.Float(512f - 50f, 308f - 50f, 100f, 100f))
 
-    g.fill(RoundRectangle2D.Float(501.29f, 644.17f, 21.42f, 38.12f, 21.42f, 21.42f))
+    // Canopy highlights
+    g.color = Color(0x66BB6A)
+    g.fill(Ellipse2D.Float(512f - 46f, 342f - 46f, 92f, 92f))
+    g.fill(Ellipse2D.Float(478f - 30f, 372f - 30f, 60f, 60f))
+    g.fill(Ellipse2D.Float(546f - 30f, 372f - 30f, 60f, 60f))
+
     g.dispose()
 
     val outDir = File("build/icon-render")
