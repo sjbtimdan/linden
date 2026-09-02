@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -34,7 +35,7 @@ class AccountListScreenTest : StringSpec({
             }
 
             onNodeWithText("No accounts yet.").assertIsDisplayed()
-            onNodeWithText("+ New Account").assertIsDisplayed()
+            onNodeWithText("New Account").assertIsDisplayed()
         }
     }
 
@@ -47,8 +48,8 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
-            onNodeWithText("New Account").assertIsDisplayed()
+            onNodeWithText("New Account").performClick()
+            onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
 
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onNodeWithText("USD").performClick()
@@ -68,7 +69,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onAllNodes(hasSetTextAction())[2].performTextInput("1500.50")
             onNodeWithText("Save").performClick()
@@ -88,12 +89,12 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onNodeWithText("Save").performClick()
 
             onNodeWithText("An account with this name already exists").assertIsDisplayed()
-            onNodeWithText("New Account").assertIsDisplayed()
+            onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
             viewModel.accounts.value.shouldHaveSize(1)
         }
     }
@@ -173,7 +174,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").performClick()
             onNodeWithText("Initial balance").assertIsDisplayed()
         }
     }
@@ -187,7 +188,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").performClick()
             Currency.entries.forEach { currency ->
                 onNodeWithText(currency.name).assertIsDisplayed()
             }
@@ -242,7 +243,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
+            onNodeWithText("New Account").performClick()
             onNodeWithText("EUR").assertIsEnabled()
         }
     }
@@ -370,8 +371,8 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Account").performClick()
-            onNodeWithText("New Account").assertIsDisplayed()
+            onNodeWithText("New Account").performClick()
+            onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
             onNodeWithText("Delete Account").assertDoesNotExist()
         }
     }

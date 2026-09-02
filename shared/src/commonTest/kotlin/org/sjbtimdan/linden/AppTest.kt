@@ -52,7 +52,7 @@ class AppTest : StringSpec({
 
             onNodeWithText("Settings").performClick()
             onNodeWithText("Accounts").performClick()
-            onNodeWithText("+ New Account").assertExists()
+            onNodeWithText("New Account").assertExists()
 
             onNodeWithContentDescription("Back").performClick()
             onNodeWithText("Import from Ivy").assertExists()

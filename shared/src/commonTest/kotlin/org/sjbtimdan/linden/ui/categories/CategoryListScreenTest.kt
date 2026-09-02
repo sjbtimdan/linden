@@ -2,7 +2,9 @@ package org.sjbtimdan.linden.ui.categories
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -25,7 +27,7 @@ class CategoryListScreenTest : StringSpec({
             }
 
             onNodeWithText("No categories yet.").assertIsDisplayed()
-            onNodeWithText("+ New Category").assertIsDisplayed()
+            onNodeWithText("New Category").assertIsDisplayed()
         }
     }
 
@@ -38,8 +40,8 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Category").performClick()
-            onNodeWithText("New Category").assertIsDisplayed()
+            onNodeWithText("New Category").performClick()
+            onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
 
             // The OutlinedTextField fills in via the node's text input semantics
             onNodeWithText("Save").performClick()
@@ -57,12 +59,12 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("+ New Category").performClick()
+            onNodeWithText("New Category").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Groceries")
             onNodeWithText("Save").performClick()
 
             onNodeWithText("A category with this name already exists").assertIsDisplayed()
-            onNodeWithText("New Category").assertIsDisplayed()
+            onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
             viewModel.categories.value.shouldHaveSize(1)
         }
     }

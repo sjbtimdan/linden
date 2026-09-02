@@ -23,7 +23,7 @@ class BudgetScreenTest : StringSpec({
                 BudgetScreen(viewModel = viewModel, onNavigateBack = {})
             }
 
-            onNodeWithText("+ New Budget").performClick()
+            onNodeWithText("New Budget").performClick()
             onNodeWithContentDescription("Choose category").performClick()
 
             onNodeWithText("Groceries").assertIsDisplayed()
@@ -41,7 +41,7 @@ class BudgetScreenTest : StringSpec({
                 BudgetScreen(viewModel = viewModel, onNavigateBack = {})
             }
 
-            onNodeWithText("+ New Budget").performClick()
+            onNodeWithText("New Budget").performClick()
             onNodeWithContentDescription("Choose category").performClick()
             onNodeWithText("Groceries").performClick()
             onNode(hasSetTextAction()).performTextInput("800.00")

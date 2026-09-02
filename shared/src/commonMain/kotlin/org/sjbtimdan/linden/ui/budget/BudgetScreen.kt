@@ -105,7 +105,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("+ New Budget")
+            Text("New Budget")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

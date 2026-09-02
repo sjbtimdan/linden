@@ -131,7 +131,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("+ New Category")
+            Text("New Category")
         }
 
         Spacer(modifier = Modifier.height(16.dp))

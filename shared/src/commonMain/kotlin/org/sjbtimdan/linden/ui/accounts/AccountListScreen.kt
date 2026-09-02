@@ -135,7 +135,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("+ New Account")
+            Text("New Account")
         }
 
         Spacer(modifier = Modifier.height(16.dp))
