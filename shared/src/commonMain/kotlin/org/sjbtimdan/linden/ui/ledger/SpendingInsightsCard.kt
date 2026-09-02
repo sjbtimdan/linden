@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +70,7 @@ fun SpendingInsightsCard(insights: SpendingInsights, currency: Currency, modifie
                 val tint = if (increased) colors.expense else colors.income
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (increased) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown,
+                        imageVector = if (increased) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
                         contentDescription = null,
                         tint = tint,
                     )
