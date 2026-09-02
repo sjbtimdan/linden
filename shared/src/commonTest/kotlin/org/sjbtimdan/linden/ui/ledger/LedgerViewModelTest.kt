@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
@@ -51,9 +52,37 @@ class LedgerViewModelTest : StringSpec({
                     CategoryDao(database.categoryQueries),
                     SettingsDao(database.settingsQueries),
                     FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    BudgetDao(database.budgetQueries),
                     { LocalDate(2026, 8, 15) },
                 )
                 viewModel.periodSelection.value.period shouldBe LedgerPeriod.Month
+            }
+        }
+    }
+
+    "categoryTotals carries the budget limit for budgeted categories" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val budgetDao = BudgetDao(database.budgetQueries)
+                val viewModel = LedgerViewModel(
+                    EntryDao(database.entryQueries),
+                    accountDao,
+                    categoryDao,
+                    SettingsDao(database.settingsQueries),
+                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    budgetDao,
+                    { LocalDate(2026, 8, 15) },
+                )
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                viewModel.setPeriod(LedgerPeriod.All)
+                budgetDao.upsert("Groceries", 1_000)
+
+                val groceriesTotal = viewModel.categoryTotals.value.first { it.category?.name == "Groceries" }
+                groceriesTotal.budget shouldBe 1_000
             }
         }
     }

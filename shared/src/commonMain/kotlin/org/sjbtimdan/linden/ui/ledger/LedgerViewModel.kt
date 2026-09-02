@@ -23,6 +23,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
@@ -40,6 +41,7 @@ import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.accounts.adjustmentEntry
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
+import org.sjbtimdan.linden.ui.budget.computeCategoryBudgets
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import kotlin.math.abs
@@ -53,6 +55,7 @@ class LedgerViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
+    private val budgetDao: BudgetDao,
     val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
     private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
@@ -296,8 +299,9 @@ class LedgerViewModel(
         entries,
         defaultCurrency,
         rates,
-    ) { entries, currency, rates ->
-        entries
+        budgetDao.budgetsFlow(),
+    ) { entries, currency, rates, budgets ->
+        val totals = entries
             .filter { it.type != EntryType.Transfer }
             .groupBy { it.category }
             .mapNotNull { (category, catEntries) ->
@@ -305,6 +309,12 @@ class LedgerViewModel(
                 CategoryWithTotal(category, total, catEntries.size)
             }
             .sortedByDescending { abs(it.total) }
+        val budgetByName = computeCategoryBudgets(totals, budgets)
+            .mapNotNull { it.category?.let { category -> category.name.lowercase() to it.limit } }
+            .toMap()
+        totals.map { total ->
+            total.copy(budget = total.category?.let { budgetByName[it.name.lowercase()] })
+        }
     }.stateFlow(emptyList())
 
     /** Net total of all categories in the default currency; null when a rate is missing. */
@@ -524,4 +534,6 @@ data class CategoryWithTotal(
     val category: Category?,
     val total: Long,
     val count: Int,
+    /** Monthly budget limit in the default currency's minor units, or null when none is set. */
+    val budget: Long? = null,
 )

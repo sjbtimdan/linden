@@ -15,6 +15,7 @@ import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.AppDependencies
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
@@ -242,6 +243,7 @@ fun withLedgerViewModel(
                 categoryDao,
                 settingsDao,
                 FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                BudgetDao(database.budgetQueries),
                 today,
             )
             // Tests create entries with the default epoch timestamp, so they assume

@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
@@ -19,6 +20,7 @@ import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
+import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
@@ -44,6 +46,7 @@ class AppDependencies(
     val categoryDao = CategoryDao(database.categoryQueries)
     val entryDao = EntryDao(database.entryQueries)
     val fxRateDao = FxRateDao(database.fxRateQueries)
+    val budgetDao = BudgetDao(database.budgetQueries)
     val httpClient by lazy {
         HttpClient {
             install(HttpTimeout) {
@@ -69,6 +72,7 @@ class AppDependencies(
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao)
+    val budgetViewModel = BudgetViewModel(budgetDao, categoryDao)
     val entryViewModel = EntryPointViewModel(
         entryDao,
         accountDao,
@@ -77,7 +81,7 @@ class AppDependencies(
         fxRatesRepository,
         initialHideEntryTotal,
     )
-    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository)
+    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository, budgetDao)
 }
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {

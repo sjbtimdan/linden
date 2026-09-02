@@ -62,6 +62,7 @@ class LindenBackupManagerTest : StringSpec({
         )
         settingsQueries.insertOrReplace(THEME_KEY, ThemeMode.DARK.name)
         fxRateQueries.insertOrReplace("CHF", "EUR", 1.04, "2026-08-23", 42)
+        budgetQueries.insertOrReplace("Food", 80_000)
     }
 
     "backupTo writes a backup that restores into an empty database" {
@@ -111,6 +112,8 @@ class LindenBackupManagerTest : StringSpec({
             .shouldBe(listOf(THEME_KEY to ThemeMode.DARK.name))
         restored.fxRateQueries.selectAll().awaitAsList().map { it.baseCurrency to it.quoteCurrency to it.rate }
             .shouldBe(listOf("CHF" to "EUR" to 1.04))
+        restored.budgetQueries.selectAll().awaitAsList().map { it.category_name to it.limit_minor }
+            .shouldBe(listOf("Food" to 80_000L))
     }
 
     "restoreFrom replaces all existing data" {

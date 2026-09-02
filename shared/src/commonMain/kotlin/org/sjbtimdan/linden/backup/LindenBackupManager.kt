@@ -40,6 +40,7 @@ data class LindenBackup(
     val entries: List<BackupEntry> = emptyList(),
     val settings: List<BackupSetting> = emptyList(),
     val fxRates: List<BackupFxRate> = emptyList(),
+    val budgets: List<BackupBudget> = emptyList(),
 )
 
 @Serializable
@@ -72,6 +73,13 @@ data class BackupFxRate(
     val rate: Double,
     val date: String,
     val fetchedAt: Long,
+)
+
+@Serializable
+data class BackupBudget(
+    val id: Long,
+    val categoryName: String,
+    val limitMinor: Long,
 )
 
 /**
@@ -109,6 +117,7 @@ class LindenBackupManager(private val database: LindenDatabase) {
             database.accountQueries.deleteAll()
             database.settingsQueries.deleteAll()
             database.fxRateQueries.deleteAll()
+            database.budgetQueries.deleteAll()
             backup.accounts.forEach { account ->
                 database.accountQueries.insertWithId(account.id, account.name, account.currency, account.initialBalance)
             }
@@ -139,6 +148,13 @@ class LindenBackupManager(private val database: LindenDatabase) {
                     rate.rate,
                     rate.date,
                     rate.fetchedAt,
+                )
+            }
+            backup.budgets.forEach { budget ->
+                database.budgetQueries.insertWithId(
+                    budget.id,
+                    budget.categoryName,
+                    budget.limitMinor,
                 )
             }
         }
@@ -212,6 +228,9 @@ class LindenBackupManager(private val database: LindenDatabase) {
         },
         fxRates = database.fxRateQueries.selectAll().awaitAsList().map { rate ->
             BackupFxRate(rate.baseCurrency, rate.quoteCurrency, rate.rate, rate.date, rate.fetchedAt)
+        },
+        budgets = database.budgetQueries.selectAll().awaitAsList().map { budget ->
+            BackupBudget(budget.id, budget.category_name, budget.limit_minor)
         },
     )
 }

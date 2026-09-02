@@ -1,0 +1,26 @@
+-- Migrate schema from version 3 to 4: add the BudgetEntity table.
+-- Budgets previously lived as a JSON array under the "budgets" key in the
+-- settings table; they are now a first-class table. Any budgets stored there
+-- are migrated into the new table, then the settings key is removed.
+CREATE TABLE IF NOT EXISTS BudgetEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_name TEXT NOT NULL UNIQUE,
+    limit_minor INTEGER NOT NULL
+);
+
+INSERT INTO BudgetEntity (category_name, limit_minor)
+WITH RECURSIVE elements(value, idx) AS (
+    SELECT value, 0
+    FROM AppSettingsEntity
+    WHERE key = 'budgets'
+    UNION ALL
+    SELECT value, idx + 1
+    FROM elements
+    WHERE json_extract(value, '$[' || idx || ']') IS NOT NULL
+)
+SELECT json_extract(value, '$[' || idx || '].categoryName'),
+       json_extract(value, '$[' || idx || '].limitMinor')
+FROM elements
+WHERE json_extract(value, '$[' || idx || '].categoryName') IS NOT NULL;
+
+DELETE FROM AppSettingsEntity WHERE key = 'budgets';

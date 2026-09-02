@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS BudgetEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_name TEXT NOT NULL UNIQUE,
+    limit_minor INTEGER NOT NULL
+);
+
+selectAll:
+SELECT *
+FROM BudgetEntity
+ORDER BY category_name ASC;
+
+insertOrReplace:
+INSERT OR REPLACE INTO BudgetEntity (category_name, limit_minor)
+VALUES (?, ?);
+
+insertWithId:
+INSERT OR REPLACE INTO BudgetEntity (id, category_name, limit_minor)
+VALUES (?, ?, ?);
+
+deleteByCategoryName:
+DELETE FROM BudgetEntity
+WHERE category_name = ?;
+
+deleteAll:
+DELETE FROM BudgetEntity;

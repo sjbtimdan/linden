@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
+import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.entry.EntryPoint
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
@@ -43,6 +44,7 @@ sealed class Screen {
     data object CategoryList : Screen()
     data object AccountList : Screen()
     data object Rates : Screen()
+    data object Budgets : Screen()
 }
 
 @Composable
@@ -52,6 +54,7 @@ fun App(dependencies: AppDependencies) {
     val ratesViewModel = dependencies.ratesViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
+    val budgetViewModel = dependencies.budgetViewModel
     val entryViewModel = dependencies.entryViewModel
     val ledgerViewModel = dependencies.ledgerViewModel
     DisposableEffect(dependencies.httpClient) {
@@ -136,6 +139,7 @@ fun App(dependencies: AppDependencies) {
                             onNavigateToCategories = { currentScreen = Screen.CategoryList },
                             onNavigateToAccounts = { currentScreen = Screen.AccountList },
                             onNavigateToRates = { currentScreen = Screen.Rates },
+                            onNavigateToBudgets = { currentScreen = Screen.Budgets },
                         )
 
                         Screen.CategoryList -> CategoryListScreen(
@@ -150,6 +154,11 @@ fun App(dependencies: AppDependencies) {
 
                         Screen.Rates -> RatesScreen(
                             viewModel = ratesViewModel,
+                            onNavigateBack = { currentScreen = Screen.Settings },
+                        )
+
+                        Screen.Budgets -> BudgetScreen(
+                            viewModel = budgetViewModel,
                             onNavigateBack = { currentScreen = Screen.Settings },
                         )
                     }

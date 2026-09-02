@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,6 +68,7 @@ fun SettingsScreen(
     onNavigateToCategories: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
+    onNavigateToBudgets: () -> Unit = {},
     pickImportFile: (() -> Unit)? = null,
     pickBackupFile: (() -> Unit)? = null,
     pickRestoreFile: (() -> Unit)? = null,
@@ -201,6 +203,15 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Currency rates")
+            }
+            Button(onClick = onNavigateToBudgets) {
+                Icon(
+                    imageVector = Icons.Filled.Savings,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Budgets")
             }
             FilledTonalButton(
                 onClick = { showImportConfirmation = true },

@@ -124,4 +124,33 @@ class SchemaMigrationTest : StringSpec({
             db.categoryQueries.insert(name = "Food", type = "Expense", icon = null)
         }
     }
+
+    "migrating from v3 to v4 creates BudgetEntity and migrates JSON budgets" {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+        // Create the v3 schema (no BudgetEntity) and seed a JSON budget in settings.
+        val createSettings = """
+            CREATE TABLE AppSettingsEntity (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+        """.trimIndent()
+        driver.execute(null, createSettings, 0)
+        driver.execute(
+            null,
+            "INSERT INTO AppSettingsEntity (key, value) VALUES ('budgets', '[{\"categoryName\":\"Groceries\",\"limitMinor\":80000},{\"categoryName\":\"Food\",\"limitMinor\":50000}]')",
+            0,
+        )
+
+        // Migrate to v4.
+        LindenDatabase.Schema.migrate(driver, 3, 4).await()
+
+        val db = LindenDatabase(driver)
+        val budgets = db.budgetQueries.selectAll().executeAsList()
+        budgets.map { it.category_name to it.limit_minor } shouldBe
+            listOf("Food" to 50_000L, "Groceries" to 80_000L)
+
+        // The settings key is removed.
+        db.settingsQueries.selectAll().executeAsList().map { it.key } shouldBe emptyList()
+    }
 })
