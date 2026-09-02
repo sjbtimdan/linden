@@ -261,7 +261,7 @@ fun EntryForm(
                     },
                 )
             }
-            // Add button to confirm the description without using the back arrow
+            // Ok button to confirm the description without using the back arrow
             if (activeField == ActiveField.Description) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -275,7 +275,7 @@ fun EntryForm(
                             focusManager.clearFocus()
                         },
                     ) {
-                        Text("Add")
+                        Text("Ok")
                     }
                 }
             }
