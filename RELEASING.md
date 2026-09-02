@@ -55,3 +55,24 @@ intended safety behaviour.
 ```
 
 The signed AAB/APK is produced under `androidApp/build/outputs/`.
+
+## Minification (R8)
+
+Minification and resource shrinking are enabled for release builds (`isMinifyEnabled =
+true`, `isShrinkResources = true` in `androidApp/build.gradle.kts`). The `proguard-rules.pro`
+file is empty — R8 consumer rules from Compose, SQLDelight, Ktor, and kotlinx.serialization
+are applied automatically.
+
+### Verified (2026-09-02)
+
+- `assembleRelease` completes with **zero** R8 missing-class warnings or errors.
+- Key runtime-critical classes are **kept** (not stripped):
+  - `MainActivity` (entry point)
+  - SQLDelight generated classes (`LindenDatabase`, `EntryQueries`, `CategoryQueries`,
+    `AccountQueries`, `SettingsQueries`, `FxRateQueries`)
+  - kotlinx.serialization (`parseFxRatesResponse`, `FxRates` model)
+- Mapping/usage/seeds files generated under `androidApp/build/outputs/mapping/release/`.
+
+**Caveat:** Build-time verification only — no runtime test on a device/emulator yet.
+The definitive test is installing the minified release APK and exercising the full app
+(add entries, check FX rates, backup/restore, ledger views).
