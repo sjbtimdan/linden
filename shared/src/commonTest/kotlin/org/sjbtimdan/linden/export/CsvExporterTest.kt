@@ -138,6 +138,34 @@ class CsvExporterTest : StringSpec({
         lines[1] shouldContain ",12345.67,CHF"
     }
 
+    "entriesToCsv prefixes negative amounts with a minus sign" {
+        val csv = entriesToCsv(
+            listOf(
+                ExpenseEntry(
+                    id = 7,
+                    category = food,
+                    description = "Refund overpay",
+                    account = cash,
+                    amount = -450,
+                    createdAt = Instant.fromEpochMilliseconds(1_700_600_000_000),
+                    createdZone = TimeZone.UTC,
+                ),
+                ExpenseEntry(
+                    id = 8,
+                    category = food,
+                    description = "Fee",
+                    account = cash,
+                    amount = -5,
+                    createdAt = Instant.fromEpochMilliseconds(1_700_700_000_000),
+                    createdZone = TimeZone.UTC,
+                ),
+            ),
+        )
+
+        csv shouldContain ",Refund overpay,-4.50,CHF"
+        csv shouldContain ",Fee,-0.05,CHF"
+    }
+
     "CsvExportManager writes all entries from the database" {
         val database = lindenDatabase().apply {
             accountQueries.insert("Cash", "CHF", 0)
