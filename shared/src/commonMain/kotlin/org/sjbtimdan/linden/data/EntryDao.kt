@@ -104,6 +104,11 @@ class EntryDao(private val queries: EntryQueries) {
         rows.awaitAsList().toSet()
     }
 
+    /** Categories referenced by at least one entry; they cannot be deleted while entries exist. */
+    fun categoriesWithEntries(): Flow<Set<Long>> = queries.categoriesWithEntries().asFlow().map { rows ->
+        rows.awaitAsList().toSet()
+    }
+
     /** Net total per category and entry currency (minor units). */
     fun categoryTotals(): Flow<Map<Pair<Long, Currency>, Long>> = queries.categoryTotals().asFlow().map { rows ->
         rows.awaitAsList()

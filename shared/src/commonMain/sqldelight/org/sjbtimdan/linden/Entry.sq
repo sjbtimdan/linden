@@ -230,6 +230,12 @@ FROM (
     WHERE EntryEntity.to_account_id IS NOT NULL
 );
 
+-- Categories referenced by at least one entry; they cannot be deleted while entries exist.
+categoriesWithEntries:
+SELECT DISTINCT category_id
+FROM EntryEntity
+WHERE category_id IS NOT NULL;
+
 -- Net change per account in the account's own currency: income adds, expenses
 -- and transfers subtract from the source; the transfer target gains the received
 -- amount (or the sent amount for same-currency transfers).

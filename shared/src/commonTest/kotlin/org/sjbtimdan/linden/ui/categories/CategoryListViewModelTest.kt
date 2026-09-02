@@ -5,7 +5,10 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.ui.withViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -131,6 +134,33 @@ class CategoryListViewModelTest : StringSpec({
             viewModel.setSearchQuery("nonexistent")
 
             viewModel.categories.value.shouldBeEmpty()
+        }
+    }
+
+    "deleteCategory removes a category with no entries" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+            val groceries = viewModel.categories.value.first { it.name == "Groceries" }
+
+            viewModel.deleteCategory(groceries.id)
+
+            viewModel.categories.value.map { it.name } shouldBe listOf("Salary")
+        }
+    }
+
+    "deleteCategory ignores a category that still has entries" {
+        withViewModel { categoryDao, entryDao, accountDao, viewModel ->
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.categoriesWithEntries.first { groceries.id in it }
+
+            viewModel.deleteCategory(groceries.id)
+
+            viewModel.categories.value.map { it.name } shouldBe listOf("Groceries")
         }
     }
 })

@@ -67,7 +67,7 @@ class AppDependencies(
         initialHideEntryTotal,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
-    val categoryListViewModel = CategoryListViewModel(categoryDao)
+    val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao)
     val entryViewModel = EntryPointViewModel(
         entryDao,

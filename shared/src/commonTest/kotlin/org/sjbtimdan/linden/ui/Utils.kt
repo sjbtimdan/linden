@@ -66,20 +66,30 @@ fun withApp(
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withViewModel(block: suspend ComposeUiTest.(CategoryDao, CategoryListViewModel) -> Unit) {
+fun withViewModel(block: suspend ComposeUiTest.(CategoryDao, EntryDao, AccountDao, CategoryListViewModel) -> Unit) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = CategoryListViewModel(categoryDao)
-            block(categoryDao, viewModel)
+            val entryDao = EntryDao(database.entryQueries)
+            val accountDao = AccountDao(database.accountQueries)
+            val viewModel = CategoryListViewModel(categoryDao, entryDao)
+            block(categoryDao, entryDao, accountDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
+fun withViewModel(block: suspend ComposeUiTest.(CategoryDao, EntryDao, CategoryListViewModel) -> Unit) =
+    withViewModel { categoryDao, entryDao, _, viewModel -> block(categoryDao, entryDao, viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withViewModel(block: suspend ComposeUiTest.(CategoryDao, CategoryListViewModel) -> Unit) =
+    withViewModel { categoryDao, _, _, viewModel -> block(categoryDao, viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
 fun withViewModel(block: suspend ComposeUiTest.(CategoryListViewModel) -> Unit) =
-    withViewModel { _, viewModel -> block(viewModel) }
+    withViewModel { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(

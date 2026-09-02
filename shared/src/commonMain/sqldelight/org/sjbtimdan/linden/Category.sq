@@ -23,5 +23,9 @@ SELECT *
 FROM CategoryEntity
 ORDER BY name ASC;
 
+deleteById:
+DELETE FROM CategoryEntity
+WHERE id = ?;
+
 deleteAll:
 DELETE FROM CategoryEntity;

@@ -19,6 +19,10 @@ class CategoryDao(private val queries: CategoryQueries) {
         queries.update(category.name, category.type.name, category.icon?.name, category.id)
     }
 
+    suspend fun delete(id: Long) {
+        queries.deleteById(id)
+    }
+
     suspend fun deleteAll() {
         queries.deleteAll()
     }

@@ -22,12 +22,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -68,6 +71,7 @@ private data class CategoryDialogState(
 fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> Unit) {
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val categoriesWithEntries by viewModel.categoriesWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
 
     BackHandler(enabled = dialogState != null) {
@@ -201,9 +205,17 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             icon = state.icon,
             nameError = state.nameError,
             isEditing = isEditing,
+            canDelete = isEditing && state.category.id !in categoriesWithEntries,
             onNameChange = { dialogState = state.copy(name = it, nameError = null) },
             onTypeChange = { dialogState = state.copy(type = it) },
             onIconChange = { dialogState = state.copy(icon = it) },
+            onDelete = {
+                val existing = state.category
+                if (existing != null) {
+                    dialogState = null
+                    viewModel.deleteCategory(existing.id)
+                }
+            },
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
@@ -260,9 +272,11 @@ private fun CategoryDialog(
     icon: CategoryIcon?,
     nameError: String?,
     isEditing: Boolean,
+    canDelete: Boolean,
     onNameChange: (String) -> Unit,
     onTypeChange: (CategoryType) -> Unit,
     onIconChange: (CategoryIcon?) -> Unit,
+    onDelete: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -322,6 +336,32 @@ private fun CategoryDialog(
                         ) {
                             Text(ct.dialogLabel())
                         }
+                    }
+                }
+                if (isEditing) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (!canDelete) {
+                        Text(
+                            text = "This category cannot be deleted: it has entries.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = onDelete,
+                        enabled = canDelete,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Delete Category")
                     }
                 }
             }
