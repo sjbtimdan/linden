@@ -707,8 +707,9 @@ class EntryPointTest : StringSpec({
     "shows quick entry chips for the current type" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            val yesterday = Clock.System.now().minus(1.days)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -724,12 +725,12 @@ class EntryPointTest : StringSpec({
     "selecting a quick entry fills the form" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val now = Clock.System.now()
+            val yesterday = Clock.System.now().minus(1.days)
             // Two occurrences of each description so the frequency filter passes.
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = now))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = yesterday))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -748,8 +749,9 @@ class EntryPointTest : StringSpec({
     "quick entry chips hide for a type without matching history" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            val yesterday = Clock.System.now().minus(1.days)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
 
             setContent {
                 EntryPoint(viewModel = viewModel)

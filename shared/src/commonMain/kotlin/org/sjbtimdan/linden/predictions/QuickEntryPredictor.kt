@@ -26,11 +26,13 @@ data class QuickEntry(
  * horizon can still surface.
  *
  * Entries without a description are ignored: a chip shows the description, so
- * auto-generated entries without one can't be picked. Recurring entries are
- * deduplicated by description and hour of day, so the same thing at the same
- * clock time can't fill the list — even when its amount, category or account
- * drifted between occurrences. Each result carries the [RecurrenceCadence]
- * detected for its description, so a chip can label a subscription.
+ * auto-generated entries without one can't be picked. A description entered
+ * today is excluded entirely — the user just entered it, so it isn't suggested
+ * again even when it recurs. Recurring entries are deduplicated by description
+ * and hour of day, so the same thing at the same clock time can't fill the
+ * list — even when its amount, category or account drifted between
+ * occurrences. Each result carries the [RecurrenceCadence] detected for its
+ * description, so a chip can label a subscription.
  */
 fun predictQuickEntries(
     entries: List<Entry>,
@@ -44,9 +46,18 @@ fun predictQuickEntries(
         .groupingBy { it.description!!.lowercase() }
         .eachCount()
 
+    // Descriptions entered today are excluded: the user just entered them, so
+    // they don't need to be suggested again — even when they recur monthly.
+    val enteredToday = entries
+        .filter { it.type == input.type }
+        .filter { it.createdAt.toLocalDateTime(timeZone).date == now.toLocalDateTime(timeZone).date }
+        .mapNotNull { it.description?.lowercase() }
+        .toSet()
+
     return entries.asSequence()
         .filter { it.type == input.type }
         .filter { !it.description.isNullOrBlank() }
+        .filter { it.description!!.lowercase() !in enteredToday }
         .filter { (frequency[it.description!!.lowercase()] ?: 0) >= 2 }
         .map { entry ->
             val weight = recencyWeight(entry.createdAt, now) *

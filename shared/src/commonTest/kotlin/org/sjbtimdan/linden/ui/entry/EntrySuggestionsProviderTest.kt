@@ -137,8 +137,9 @@ class EntrySuggestionsProviderTest : StringSpec({
     "quick entries only consider entries of the draft's type" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            val yesterday = Clock.System.now().minus(1, DateTimeUnit.DAY, TimeZone.currentSystemDefault())
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             draft.value = EntryDraft.forNew(EntryType.Income)
 
             provider.quickEntries.first().shouldBeEmpty()
