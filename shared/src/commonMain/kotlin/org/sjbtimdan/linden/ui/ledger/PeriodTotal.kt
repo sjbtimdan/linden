@@ -47,12 +47,9 @@ fun accountNetInDefaultMinor(
  */
 internal fun entriesNetInDefaultMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? {
     val (income, expenses) = entries.partition { it.type == EntryType.Income }
-    fun groupsOf(entries: List<Entry>) = entries
-        .groupBy { it.account.currency }
-        .map { (currency, group) -> currency to group.sumOf { it.amount } }
-    val incomeTotal = sumInDefaultMinor(groupsOf(income), defaultCurrency, rates) ?: return null
+    val incomeTotal = sumInDefaultMinor(sumByCurrency(income), defaultCurrency, rates) ?: return null
     val expenseTotal = sumInDefaultMinor(
-        groupsOf(expenses).map { (currency, amount) -> currency to -amount },
+        sumByCurrency(expenses).map { (currency, amount) -> currency to -amount },
         defaultCurrency,
         rates,
     ) ?: return null
@@ -81,6 +78,11 @@ internal fun toDefaultMinor(
     val rate = ratesByQuote[from] ?: return null
     return (amount.toDouble() / rate).roundToLong()
 }
+
+/** [entries] grouped by their entry currency, each group's amounts summed in that currency. */
+internal fun sumByCurrency(entries: List<Entry>): List<Pair<Currency, Long>> = entries
+    .groupBy { it.account.currency }
+    .map { (currency, group) -> currency to group.sumOf { it.amount } }
 
 /**
  * Sums [groups] (amounts in their source currencies) converted to [defaultCurrency]

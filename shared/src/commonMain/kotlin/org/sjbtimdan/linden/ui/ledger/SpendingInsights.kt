@@ -79,12 +79,8 @@ fun computeSpendingInsights(
 }
 
 /** Total expenses of [entries] (transfers excluded) in [defaultCurrency] minor units; null when a rate is missing. */
-internal fun expensesInDefaultMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? {
-    val expenses = entries.filter { it.type == EntryType.Expense }
-    val groups = expenses.groupBy { it.account.currency }
-        .map { (currency, group) -> currency to group.sumOf { it.amount } }
-    return sumInDefaultMinor(groups, defaultCurrency, rates)
-}
+internal fun expensesInDefaultMinor(entries: List<Entry>, defaultCurrency: Currency, rates: List<FxRate>): Long? =
+    sumInDefaultMinor(sumByCurrency(entries.filter { it.type == EntryType.Expense }), defaultCurrency, rates)
 
 /** Top [limit] expense categories by converted amount, each with its share of total spending. */
 internal fun topExpenseCategories(
@@ -99,12 +95,7 @@ internal fun topExpenseCategories(
     return expenses
         .groupBy { it.category }
         .mapNotNull { (category, group) ->
-            val amount = sumInDefaultMinor(
-                group.groupBy { it.account.currency }
-                    .map { (currency, entries) -> currency to entries.sumOf { it.amount } },
-                defaultCurrency,
-                rates,
-            ) ?: return@mapNotNull null
+            val amount = sumInDefaultMinor(sumByCurrency(group), defaultCurrency, rates) ?: return@mapNotNull null
             CategoryShare(category, amount, (amount * 100 / total).toInt())
         }
         .sortedByDescending { it.amount }
