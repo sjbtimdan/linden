@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.ui.BackHandler
 import kotlin.time.Instant
 
@@ -63,8 +63,8 @@ fun EntryForm(
     descriptionSuggestions: List<String> = emptyList(),
     accountSuggestions: List<Long> = emptyList(),
     categorySuggestions: List<Long> = emptyList(),
-    quickEntries: List<Entry> = emptyList(),
-    onQuickEntry: (Entry) -> Unit = {},
+    quickEntries: List<QuickEntry> = emptyList(),
+    onQuickEntry: (QuickEntry) -> Unit = {},
 ) {
     val visibleCategories = when (state.type) {
         EntryType.Expense -> categories.filter { it.type != CategoryType.Income }

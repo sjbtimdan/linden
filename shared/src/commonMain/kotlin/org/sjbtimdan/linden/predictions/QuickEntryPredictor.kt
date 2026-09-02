@@ -8,6 +8,12 @@ import kotlin.time.Instant
 
 const val QUICK_ENTRY_TOP_N = 5
 
+/** A whole entry the user is likely to repeat right now, with its detected cadence. */
+data class QuickEntry(
+    val entry: Entry,
+    val cadence: RecurrenceCadence?,
+)
+
 /**
  * Returns the whole entries a new entry is most likely to repeat right now.
  *
@@ -23,7 +29,8 @@ const val QUICK_ENTRY_TOP_N = 5
  * auto-generated entries without one can't be picked. Recurring entries are
  * deduplicated by description and hour of day, so the same thing at the same
  * clock time can't fill the list — even when its amount, category or account
- * drifted between occurrences.
+ * drifted between occurrences. Each result carries the [RecurrenceCadence]
+ * detected for its description, so a chip can label a subscription.
  */
 fun predictQuickEntries(
     entries: List<Entry>,
@@ -31,7 +38,7 @@ fun predictQuickEntries(
     now: Instant,
     timeZone: TimeZone,
     topN: Int,
-): List<Entry> {
+): List<QuickEntry> {
     val frequency = entries
         .filter { it.type == input.type && !it.description.isNullOrBlank() }
         .groupingBy { it.description!!.lowercase() }
@@ -57,7 +64,12 @@ fun predictQuickEntries(
         )
         .distinctBy { it.entry.quickEntryKey(timeZone) }
         .take(topN)
-        .map { it.entry }
+        .map { scored ->
+            QuickEntry(
+                entry = scored.entry,
+                cadence = recurringCadence(entries, scored.entry.description.orEmpty()),
+            )
+        }
         .toList()
 }
 

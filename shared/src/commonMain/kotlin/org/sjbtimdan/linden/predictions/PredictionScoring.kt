@@ -27,6 +27,9 @@ internal const val TIME_OF_DAY_TOLERANCE_HOURS = 2
 internal const val TIME_OF_DAY_NEAR_WEIGHT = 0.75
 internal const val WEEKDAY_WEIGHT = 1.0
 internal const val MONTH_WEIGHT = 0.5
+internal const val DAY_OF_MONTH_WEIGHT = 1.0
+internal const val DAY_OF_MONTH_TOLERANCE_DAYS = 2
+internal const val DAY_OF_MONTH_NEAR_WEIGHT = 0.5
 
 /** Entries of [type] from the last [PREDICTION_HORIZON_MONTHS] months, in list order. */
 internal fun candidateEntries(
@@ -86,8 +89,10 @@ internal fun descriptionScore(entryDescription: String?, inputDescription: Strin
 }
 
 /**
- * Bonus for entries created close to [now] in hour of day, weekday and month —
- * the only signals that repeat across dates.
+ * Bonus for entries created close to [now] in hour of day, weekday, month and
+ * day of month — the signals that repeat across dates. Day of month matters for
+ * monthly bills (e.g. rent on the 2nd), which otherwise get no affinity bonus
+ * because their weekday and month drift between occurrences.
  */
 internal fun timeAffinityScore(createdAt: Instant, now: Instant, timeZone: TimeZone): Double {
     val created = createdAt.toLocalDateTime(timeZone)
@@ -101,5 +106,11 @@ internal fun timeAffinityScore(createdAt: Instant, now: Instant, timeZone: TimeZ
     }
     if (created.dayOfWeek == current.dayOfWeek) score += WEEKDAY_WEIGHT
     if (created.month == current.month) score += MONTH_WEIGHT
+    val dayDiff = abs(created.day - current.day)
+    score += when {
+        dayDiff == 0 -> DAY_OF_MONTH_WEIGHT
+        dayDiff <= DAY_OF_MONTH_TOLERANCE_DAYS -> DAY_OF_MONTH_NEAR_WEIGHT
+        else -> 0.0
+    }
     return score
 }

@@ -20,12 +20,12 @@ import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
 import kotlin.time.Clock
@@ -85,14 +85,14 @@ class EntryPointViewModel(
     val descriptionSuggestions: StateFlow<List<String>> get() = suggestions.descriptionSuggestions
 
     /** Whole entries the user is likely to repeat right now, ranked time first. */
-    val quickEntries: StateFlow<List<Entry>> get() = suggestions.quickEntries
+    val quickEntries: StateFlow<List<QuickEntry>> get() = suggestions.quickEntries
 
     /** Fills the draft from a quick-entry chip, keeping the current date and time. */
-    fun applyQuickEntry(entry: Entry) = draftState.update { state ->
+    fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->
         if (state == null) {
             null
         } else {
-            when (entry) {
+            when (val entry = quickEntry.entry) {
                 is TransferEntry -> state.copy(
                     type = EntryType.Transfer,
                     amountText = formatAmount(entry.amount),

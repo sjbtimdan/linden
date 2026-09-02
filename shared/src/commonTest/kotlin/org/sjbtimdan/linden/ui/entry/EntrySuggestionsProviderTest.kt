@@ -130,7 +130,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
             draft.value = EntryDraft.forNew(EntryType.Expense)
 
-            provider.quickEntries.awaitNotEmpty().map { it.description } shouldContainExactly listOf("Coffee")
+            provider.quickEntries.awaitNotEmpty().map { it.entry.description } shouldContainExactly listOf("Coffee")
         }
     }
 
@@ -145,7 +145,7 @@ class EntrySuggestionsProviderTest : StringSpec({
 
             draft.value = draft.value?.copy(type = EntryType.Expense)
 
-            provider.quickEntries.awaitNotEmpty().map { it.description } shouldContainExactly listOf("Coffee")
+            provider.quickEntries.awaitNotEmpty().map { it.entry.description } shouldContainExactly listOf("Coffee")
         }
     }
 

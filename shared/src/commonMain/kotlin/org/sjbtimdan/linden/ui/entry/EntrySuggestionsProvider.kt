@@ -26,6 +26,7 @@ import org.sjbtimdan.linden.predictions.FieldPredictionInput
 import org.sjbtimdan.linden.predictions.PREDICTION_HORIZON_MONTHS
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.QUICK_ENTRY_TOP_N
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.predictions.predictAccounts
 import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
@@ -130,7 +131,7 @@ class EntrySuggestionsProvider(
     }
 
     /** Whole entries the user is likely to repeat right now, ranked time first. */
-    val quickEntries: StateFlow<List<Entry>> = suggestion(allTypeEntries) { state, entries ->
+    val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries ->
         predictQuickEntries(
             entries = entries,
             input = state.fieldInput(),

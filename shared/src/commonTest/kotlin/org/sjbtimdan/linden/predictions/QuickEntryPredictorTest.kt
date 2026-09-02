@@ -63,7 +63,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(2, "Coffee", now),
                 IncomeEntry(3, food, "Salary", main, 450, createdAt = now, createdZone = TimeZone.UTC),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee")
         }
 
         "ignores entries without a description" {
@@ -74,7 +74,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(4, "Coffee", now),
                 expense(5, "Coffee", now),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee")
         }
 
         "ranks same-hour above near-hour above far-hour" {
@@ -86,7 +86,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(5, "Cinema", now.minus(6.hours)),
                 expense(6, "Cinema", now.minus(6.hours)),
             )
-            predict(entries).map { it.description }
+            predict(entries).map { it.entry.description }
                 .shouldContainExactly("Coffee", "Train", "Cinema")
         }
 
@@ -99,7 +99,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(5, "Cinema", now.minus(9.days)),
                 expense(6, "Cinema", now.minus(9.days)),
             )
-            predict(entries).map { it.description }
+            predict(entries).map { it.entry.description }
                 .shouldContainExactly("Coffee", "Train", "Cinema")
         }
 
@@ -110,7 +110,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(3, "Train", now.minus(3.days)),
                 expense(4, "Train", now.minus(3.days)),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Train", "Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Train", "Coffee")
         }
 
         "considers entries beyond the prediction horizon but recency still matters" {
@@ -120,7 +120,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(3, "Train", now.minus(4.days)),
                 expense(4, "Train", now.minus(4.days)),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Train", "Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Train", "Coffee")
         }
 
         "prefers field matches within the same time tier" {
@@ -133,14 +133,14 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(6, "Cinema", now.minus(3.hours)),
             )
             val input = FieldPredictionInput(EntryType.Expense, null, null, 450, "Coffee")
-            predict(entries, input).map { it.description }
+            predict(entries, input).map { it.entry.description }
                 .shouldContainExactly("Coffee", "Train", "Cinema")
         }
 
         "frequent entries rank above rare ones" {
             val entries = (1L..5L).map { expense(it, "Coffee", now) } +
                 (6L..7L).map { expense(it, "Generali", now) }
-            predict(entries).map { it.description }
+            predict(entries).map { it.entry.description }
                 .shouldContainExactly("Coffee", "Generali")
         }
 
@@ -155,7 +155,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(13, "Cinema", now),
                 expense(14, "Cinema", now),
             )
-            predict(entries).map { it.description }
+            predict(entries).map { it.entry.description }
                 .shouldContainExactly("Coffee", "Train", "Lunch", "Dinner", "Cinema")
         }
 
@@ -167,7 +167,7 @@ class QuickEntryPredictorTest : StringSpec({
             )
             val result = predict(entries)
             result.shouldHaveSize(1)
-            result.single().id shouldBe 1L
+            result.single().entry.id shouldBe 1L
         }
 
         "keeps same-description entries at different hours" {
@@ -177,7 +177,7 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(3, "Coffee", now.minus(5.hours)),
                 expense(4, "Coffee", now.minus(5.hours)),
             )
-            predict(entries).map { it.description }.shouldContainExactly("Coffee", "Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee", "Coffee")
         }
 
         "caps results at the top five" {
@@ -203,6 +203,29 @@ class QuickEntryPredictorTest : StringSpec({
             )
             predict(transfers, FieldPredictionInput(EntryType.Transfer, null, null, null, null))
                 .shouldHaveSize(1)
+        }
+
+        "boosts a monthly bill near its day of month even when weekday and month drift" {
+            // now = 2027-02-02T08:00:00Z (Tuesday, day 2)
+            val billNow = Instant.fromEpochMilliseconds(1_800_000_000_000L + 18.days.inWholeMilliseconds)
+            // Service charge recurs on the 2nd; the most recent occurrence is in a
+            // different month and weekday, so only the day-of-month matches now.
+            val entries = listOf(
+                expense(1, "Service Charge", billNow.minus(31.days)), // 2027-01-02, Saturday
+                expense(2, "Service Charge", billNow.minus(62.days)),
+                expense(3, "Service Charge", billNow.minus(93.days)),
+                expense(4, "Coffee", billNow.minus(17.days)), // 2027-01-16, Saturday
+                expense(5, "Coffee", billNow.minus(17.days)),
+                expense(6, "Coffee", billNow.minus(17.days)),
+            )
+            predictQuickEntries(
+                entries,
+                FieldPredictionInput(EntryType.Expense, null, null, null, null),
+                billNow,
+                timeZone,
+                QUICK_ENTRY_TOP_N,
+            ).map { it.entry.description }
+                .shouldContainExactly("Service Charge", "Coffee")
         }
     }
 })
