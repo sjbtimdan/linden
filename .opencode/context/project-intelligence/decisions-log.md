@@ -316,6 +316,54 @@ view (Entry) sits there. Ledger takes the left slot, Settings the right.
 
 ---
 
+## Decision: No Foreign Key Constraints in the Database
+
+**Date**: 2026-09-02
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+The schema has three inter-table references — `EntryEntity.account_id` and `EntryEntity.to_account_id` →
+`AccountEntity.id`, and `EntryEntity.category_id` → `CategoryEntity.id` — but no FK constraints. Referential
+integrity is enforced entirely in application code.
+
+### Decision
+Do **not** add foreign key constraints. Keep enforcing relationships in the ViewModel/DAO layer:
+`accountsWithEntries` blocks deleting an account that has entries (and changing its currency); categories are
+never individually deleted (no `deleteById` in `Category.sq`); `EntryDao.toEntry` fails loudly via
+`requireNotNull` if a dangling reference is ever read.
+
+### Rationale
+- SQLite does **not** enforce FKs unless `PRAGMA foreign_keys = ON` is set per connection; SQLDelight doesn't
+  enable it by default, so constraints would be decorative unless both `DatabaseDriverFactory` actuals
+  (Android + JVM) are updated — a classic false-confidence trap.
+- Adding FKs requires a table-rebuild migration (SQLite can't add an FK in place), the same pattern as
+  `migrations/1.sqm` — real work and risk for a safety net the code already provides.
+- `ON DELETE CASCADE` would silently delete entries when an account is deleted, contradicting the deliberate
+  "block deletion of accounts with entries" behavior.
+- Backup restore and Ivy import already insert parents-before-children and delete children-before-parents, but
+  with enforced FKs that ordering becomes a hard requirement rather than a convenience.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| FKs with `ON DELETE CASCADE` | DB-enforced integrity | Silently deletes entries on account delete | Contradicts the deliberate delete guard |
+| FKs without cascade | Write-time safety net | Needs `PRAGMA foreign_keys = ON` in both drivers + rebuild migration + strict insert/delete ordering | Cost without behavior change; code already enforces the invariants |
+| Code-level enforcement (chosen) | No migration risk, no pragma gotcha | Schema doesn't self-document relationships | Simplest; a future orphan bug would be caught at read time |
+
+### Impact
+**Positive**: No migration risk, no pragma gotcha, no ordering fragility in bulk paths
+**Negative**: Schema doesn't self-document relationships; a future app-code bug could create orphans (caught at read time by `requireNotNull`)
+**Risk**: If individual account/category deletion is ever added, revisit FKs (with `PRAGMA foreign_keys = ON` in both drivers + a rebuild migration + a test proving enforcement)
+
+### Related
+- `Entry.sq` / `Account.sq` / `Category.sq` - Schema (no FK declarations)
+- `ui/accounts/AccountListViewModel.kt` - `accountsWithEntries` delete/currency guard
+- `data/EntryDao.kt` - `toEntry` `requireNotNull` on dangling references
+- `backup/LindenBackupManager.kt`, `imports/IvyImporter.kt` - Parent-before-child insert ordering
+
+---
+
 ## Deprecated Decisions
 
 | Decision | Date | Replaced By | Why |

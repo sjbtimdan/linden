@@ -62,6 +62,7 @@
 - **`compileAndroidMain` for `:shared`** - `compileDebugKotlin` only exists on `:androidApp`
 - **Tests inject `FakeFxRatesSource`** - Never hit the real Frankfurter API in tests
 - **`parseAmount` accepts negatives** - A leading `-` parses to negative minor units (liabilities); entry amounts are never negative
+- **No FK constraints (deliberate)** - Relationships are enforced in app code (`accountsWithEntries` guard, `requireNotNull` in `toEntry`); SQLite FKs are off by default and would need a rebuild migration
 
 ## Patterns & Conventions
 
@@ -77,6 +78,7 @@
 - **`accountsWithEntries`** - Blocks changing the currency of an account that has entries
 - **`Entry` sealed interface** - Adding a field touches all subclass branches plus `Entry.sq` insert/update and `EntryDao` mapping
 - **Adjust balance entries have `description = null`** - Reconciliation entries are ordinary entries with no marker, so they appear in the ledger without a description
+- **SQLite FK enforcement is off by default** - If FKs are ever added, `PRAGMA foreign_keys = ON` must be set in both `DatabaseDriverFactory` actuals (Android + JVM) or the constraints are decorative
 - **Accounts can be negative, entries never** - `parseAmount` handles `-` (liabilities/negative balances); entry `amount >= 0` is CHECK-enforced (schema v2)
 - **SQLDelight async** - Schema creation must be awaited; DB ops are `suspend`
 - **No pre-commit hook** - Run `./gradlew detekt --auto-correct` after edits
