@@ -196,7 +196,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     ChipDropdown(
                         selected = typeFilter,
                         options = typeFilterOptions,
-                        optionLabel = { it?.displayName() ?: "All" },
+                        optionLabel = { it?.displayName() ?: "Types: All" },
                         onSelect = viewModel::setTypeFilter,
                         modifier = Modifier.testTag("typeFilterDropdown"),
                         enabled = viewMode != LedgerViewMode.Accounts,

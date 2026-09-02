@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -12,6 +13,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FakeFxRatesSource
+import org.sjbtimdan.linden.data.FxRateDao
+import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
@@ -22,6 +29,7 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.onTestMain
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
@@ -30,6 +38,23 @@ class LedgerViewModelTest : StringSpec({
     "entries start empty" {
         withLedgerViewModel { viewModel ->
             viewModel.entries.value.shouldBeEmpty()
+        }
+    }
+
+    "defaults to the current month period" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val viewModel = LedgerViewModel(
+                    EntryDao(database.entryQueries),
+                    AccountDao(database.accountQueries),
+                    CategoryDao(database.categoryQueries),
+                    SettingsDao(database.settingsQueries),
+                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    { LocalDate(2026, 8, 15) },
+                )
+                viewModel.periodSelection.value.period shouldBe LedgerPeriod.Month
+            }
         }
     }
 

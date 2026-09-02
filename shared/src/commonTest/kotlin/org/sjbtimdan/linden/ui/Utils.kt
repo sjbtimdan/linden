@@ -31,6 +31,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
@@ -233,6 +234,9 @@ fun withLedgerViewModel(
                 FxRatesRepository(fxRateDao, FakeFxRatesSource()),
                 today,
             )
+            // Tests create entries with the default epoch timestamp, so they assume
+            // the "All" period rather than the production default of "Month".
+            viewModel.setPeriod(LedgerPeriod.All)
             block(entryDao, accountDao, categoryDao, settingsDao, viewModel)
         }
     }

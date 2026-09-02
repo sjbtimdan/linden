@@ -23,7 +23,7 @@ class AppTest : StringSpec({
             setContent { App(dependencies) }
 
             onNodeWithText("Ledger").performClick()
-            onNodeWithText("No entries yet.").assertExists()
+            onNodeWithText("No entries match.").assertExists()
 
             onNodeWithText("Settings").performClick()
             onNodeWithText("Import from Ivy").assertExists()

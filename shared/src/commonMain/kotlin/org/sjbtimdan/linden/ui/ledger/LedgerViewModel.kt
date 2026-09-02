@@ -71,7 +71,7 @@ class LedgerViewModel(
     private val _showFuture = MutableStateFlow(false)
     val showFuture: StateFlow<Boolean> = _showFuture.asStateFlow()
 
-    private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.All, today()))
+    private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.Month, today()))
     val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
 
     /** Start/end of the selected period's window, derived once and reused by every period flow. */
