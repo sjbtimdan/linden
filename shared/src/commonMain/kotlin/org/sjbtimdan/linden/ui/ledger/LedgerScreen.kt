@@ -102,6 +102,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val categoryFilter by viewModel.categoryFilter.collectAsState()
     val accountFilter by viewModel.accountFilter.collectAsState()
     val displayedEntries by viewModel.displayedEntries.collectAsState()
+    val spendingInsights by viewModel.spendingInsights.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
@@ -239,6 +240,17 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                             filter = amountFilter,
                             onApply = viewModel::setAmountFilter,
                             onClear = viewModel::clearAmountFilter,
+                        )
+                    }
+                }
+
+                if (viewMode == LedgerViewMode.Entries) {
+                    spendingInsights?.let { insights ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SpendingInsightsCard(
+                            insights = insights,
+                            currency = defaultCurrency,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }

@@ -971,6 +971,98 @@ class LedgerScreenTest : StringSpec({
             collapsedTop shouldBeLessThan expandedTop
         }
     }
+
+    "spending insights card shows month-to-date spending" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "Last month",
+                    main,
+                    1_000,
+                    createdAt = Instant.parse("2026-08-10T12:00:00Z"),
+                ),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "This month",
+                    main,
+                    1_200,
+                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
+                ),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+            onNodeWithText("Spending insights").assertIsDisplayed()
+            onNodeWithText("Spent this month").assertIsDisplayed()
+        }
+    }
+
+    "spending insights card collapses with the filters" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "This month",
+                    main,
+                    1_200,
+                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
+                ),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+
+            onNodeWithTag("filtersHeader").performClick()
+            waitForIdle()
+
+            onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+        }
+    }
+
+    "spending insights card is hidden outside the month period" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+        }
+    }
+
+    "spending insights card is hidden when there is no spending" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                IncomeEntry(0, groceries, "Salary", main, 5_000, createdAt = Instant.parse("2026-09-10T12:00:00Z")),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

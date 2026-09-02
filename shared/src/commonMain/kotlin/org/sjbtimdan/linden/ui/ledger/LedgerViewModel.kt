@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -127,6 +128,38 @@ class LedgerViewModel(
             .toList()
     }.stateFlow(emptyList())
 
+    /**
+     * Windows for the spending insights comparison: the selected month up to today
+     * and the same day-range of the previous month. Null unless the period is
+     * [LedgerPeriod.Month] with at least one elapsed day.
+     */
+    private val insightWindows: StateFlow<Pair<InsightWindow, InsightWindow>?> = _periodSelection
+        .map { selection ->
+            if (selection.period != LedgerPeriod.Month) return@map null
+            monthInsightWindows(selection.anchor, today())
+        }
+        .stateFlow(null)
+
+    /** Entries in the current insight window (month-to-date). */
+    private val currentInsightEntries: StateFlow<List<Entry>> = insightWindows
+        .flatMapLatest { windows ->
+            val window = windows?.first ?: return@flatMapLatest flowOf(emptyList())
+            entryDao.getSince(window.start.sqlLowerBound()).map { rows ->
+                rows.filter { entry -> entry.isInWindow(window.start, window.end, today(), showFuture = false) }
+            }
+        }
+        .stateFlow(emptyList())
+
+    /** Entries in the previous insight window (same day-range last month). */
+    private val previousInsightEntries: StateFlow<List<Entry>> = insightWindows
+        .flatMapLatest { windows ->
+            val window = windows?.second ?: return@flatMapLatest flowOf(emptyList())
+            entryDao.getSince(window.start.sqlLowerBound()).map { rows ->
+                rows.filter { entry -> entry.isInWindow(window.start, window.end, today(), showFuture = false) }
+            }
+        }
+        .stateFlow(emptyList())
+
     val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
 
     /**
@@ -137,6 +170,22 @@ class LedgerViewModel(
         .stateFlow(false)
 
     private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
+
+    /**
+     * Spending insights for the selected month: expenses month-to-date vs the same
+     * day-range of the previous month, plus the top expense categories. Null when
+     * the period is not [LedgerPeriod.Month], when there is no spending at all, or
+     * when a rate is missing.
+     */
+    val spendingInsights: StateFlow<SpendingInsights?> = combine(
+        currentInsightEntries,
+        previousInsightEntries,
+        defaultCurrency,
+        rates,
+    ) { current, previous, currency, rates ->
+        computeSpendingInsights(current, previous, currency, rates)
+            ?.takeIf { it.currentSpent != 0L || it.previousSpent != 0L }
+    }.stateFlow(null)
 
     /**
      * Entries shown by the entries view: the period/search/type filtered entries,
