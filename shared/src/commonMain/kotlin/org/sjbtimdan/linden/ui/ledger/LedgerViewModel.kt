@@ -277,7 +277,8 @@ class LedgerViewModel(
         defaultCurrency,
         rates,
         budgetDao.budgetsFlow(),
-    ) { entries, currency, rates, budgets ->
+        _periodSelection,
+    ) { entries, currency, rates, budgets, selection ->
         val totals = entries
             .filter { it.type != EntryType.Transfer }
             .groupBy { it.category }
@@ -286,6 +287,8 @@ class LedgerViewModel(
                 CategoryWithTotal(category, total, catEntries.size)
             }
             .sortedByDescending { abs(it.total) }
+        // Budgets are monthly limits, so they only make sense against a month of spending.
+        if (selection.period != LedgerPeriod.Month) return@combine totals
         val budgetByName = computeCategoryBudgets(totals, budgets)
             .mapNotNull { it.category?.let { category -> category.name.lowercase() to it.limit } }
             .toMap()
@@ -508,6 +511,6 @@ data class CategoryWithTotal(
     val category: Category?,
     val total: Long,
     val count: Int,
-    /** Monthly budget limit in the default currency's minor units, or null when none is set. */
+    /** Monthly budget limit in the default currency's minor units; null when none is set or the period is not a month. */
     val budget: Long? = null,
 )

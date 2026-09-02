@@ -60,7 +60,7 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
-    "categoryTotals carries the budget limit for budgeted categories" {
+    "categoryTotals carries the budget limit in a month period" {
         onTestMain {
             runComposeUiTest {
                 val database = lindenDatabase()
@@ -77,12 +77,57 @@ class LedgerViewModelTest : StringSpec({
                     { LocalDate(2026, 8, 15) },
                 )
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-                viewModel.setPeriod(LedgerPeriod.All)
+                viewModel.createEntry(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Coffee",
+                        main,
+                        450,
+                        createdAt = Instant.parse("2026-08-10T12:00:00Z"),
+                    ),
+                )
                 budgetDao.upsert("Groceries", 1_000)
 
                 val groceriesTotal = viewModel.categoryTotals.value.first { it.category?.name == "Groceries" }
                 groceriesTotal.budget shouldBe 1_000
+            }
+        }
+    }
+
+    "categoryTotals drops the budget limit outside a month period" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val budgetDao = BudgetDao(database.budgetQueries)
+                val viewModel = LedgerViewModel(
+                    EntryDao(database.entryQueries),
+                    accountDao,
+                    categoryDao,
+                    SettingsDao(database.settingsQueries),
+                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    budgetDao,
+                    { LocalDate(2026, 8, 15) },
+                )
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Coffee",
+                        main,
+                        450,
+                        createdAt = Instant.parse("2026-08-10T12:00:00Z"),
+                    ),
+                )
+                budgetDao.upsert("Groceries", 1_000)
+
+                viewModel.categoryTotals.value.first().budget shouldBe 1_000
+
+                viewModel.setPeriod(LedgerPeriod.All)
+                viewModel.categoryTotals.value.first { it.category?.name == "Groceries" }.budget.shouldBeNull()
             }
         }
     }
