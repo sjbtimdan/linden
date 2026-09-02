@@ -30,6 +30,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
+import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
@@ -112,6 +113,23 @@ fun withAccountViewModel(
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(block: suspend ComposeUiTest.(AccountListViewModel) -> Unit) =
     withAccountViewModel { _, _, _, viewModel -> block(viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withBudgetViewModel(block: suspend ComposeUiTest.(BudgetDao, CategoryDao, BudgetViewModel) -> Unit) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val budgetDao = BudgetDao(database.budgetQueries)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val viewModel = BudgetViewModel(budgetDao, categoryDao)
+            block(budgetDao, categoryDao, viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withBudgetViewModel(block: suspend ComposeUiTest.(CategoryDao, BudgetViewModel) -> Unit) =
+    withBudgetViewModel { _, categoryDao, viewModel -> block(categoryDao, viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withSettingsViewModel(

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -185,7 +186,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
             categoryName = state.categoryName,
             limitText = state.limitText,
             limitError = state.limitError,
-            categories = categories,
+            categories = categories.filter { it.type != CategoryType.Income },
             isEditing = isEditing,
             onCategoryChange = { dialogState = state.copy(categoryName = it) },
             onLimitChange = { dialogState = state.copy(limitText = it, limitError = null) },

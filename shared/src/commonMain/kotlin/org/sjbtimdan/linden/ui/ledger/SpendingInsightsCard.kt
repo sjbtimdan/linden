@@ -70,7 +70,11 @@ fun SpendingInsightsCard(insights: SpendingInsights, currency: Currency, modifie
                 val tint = if (increased) colors.expense else colors.income
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (increased) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
+                        imageVector = if (increased) {
+                            Icons.AutoMirrored.Filled.TrendingUp
+                        } else {
+                            Icons.AutoMirrored.Filled.TrendingDown
+                        },
                         contentDescription = null,
                         tint = tint,
                     )
