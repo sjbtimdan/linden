@@ -13,6 +13,9 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.ThemeMode
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 class LindenBackupManagerTest : StringSpec({
 
@@ -136,22 +139,87 @@ class LindenBackupManagerTest : StringSpec({
         exception.message shouldContain "empty"
     }
 
+    "backupTo writes a zip archive containing the backup JSON" {
+        val bytes = ByteArrayOutputStream().also { LindenBackupManager(seedDatabase()).backupTo(it) }.toByteArray()
+
+        val zip = ZipInputStream(ByteArrayInputStream(bytes))
+        zip.use { zis ->
+            val entry = zis.nextEntry
+            entry?.name shouldBe "linden-backup.json"
+            zis.readBytes().decodeToString() shouldContain "\"accounts\""
+        }
+    }
+
+    "restoreFrom restores a manually zipped backup" {
+        val backupJson = """
+            {
+              "formatVersion": 1,
+              "accounts": [{"id": 1, "name": "Cash", "currency": "CHF", "initialBalance": 500}],
+              "categories": [{"id": 1, "name": "Food", "type": "Expense"}],
+              "entries": [{"id": 1, "type": "Expense", "categoryId": 1, "description": "Coffee", "accountId": 1, "amount": 450, "createdAt": 1700000000000, "createdZone": "Europe/Zurich"}]
+            }
+        """.trimIndent()
+
+        val restored = lindenDatabase()
+        val result = LindenBackupManager(restored).restoreFrom(ByteArrayInputStream(buildBackupZip(backupJson)))
+
+        result.accounts shouldBe 1
+        result.categories shouldBe 1
+        result.entries shouldBe 1
+        restored.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Cash")
+        restored.entryQueries.selectAllRows().awaitAsList().map { it.description } shouldBe listOf("Coffee")
+    }
+
+    "restoreFrom rejects a zip archive without a JSON entry" {
+        val zip = ByteArrayOutputStream().also { out ->
+            ZipOutputStream(out).use { zos ->
+                zos.putNextEntry(ZipEntry("readme.txt"))
+                zos.write("hello".encodeToByteArray())
+                zos.closeEntry()
+            }
+        }.toByteArray()
+
+        val exception = shouldThrow<LindenBackupException> {
+            LindenBackupManager(lindenDatabase()).restoreFrom(ByteArrayInputStream(zip))
+        }
+
+        exception.message shouldContain "does not contain a Linden backup"
+    }
+
+    "restoreFrom rejects a truncated zip archive" {
+        val valid = buildBackupZip("""{"formatVersion": 1}""")
+        val truncated = valid.copyOfRange(0, valid.size / 2)
+
+        shouldThrow<LindenBackupException> {
+            LindenBackupManager(lindenDatabase()).restoreFrom(ByteArrayInputStream(truncated))
+        }
+    }
+
     "restoreFrom rejects a backup with an unsupported format version" {
         val exception = shouldThrow<LindenBackupException> {
             LindenBackupManager(lindenDatabase())
-                .restoreFrom(ByteArrayInputStream("""{"formatVersion": 99}""".encodeToByteArray()))
+                .restoreFrom(ByteArrayInputStream(buildBackupZip("""{"formatVersion": 99}""")))
         }
 
         exception.message shouldContain "incompatible app version"
     }
 
-    "restoreFrom rejects input that is not a Linden backup" {
+    "restoreFrom rejects a zip whose JSON is not a Linden backup" {
+        val exception = shouldThrow<LindenBackupException> {
+            LindenBackupManager(lindenDatabase())
+                .restoreFrom(ByteArrayInputStream(buildBackupZip("this is not json")))
+        }
+
+        exception.message shouldContain "not a valid Linden backup"
+    }
+
+    "restoreFrom rejects input that is not a zip archive" {
         val exception = shouldThrow<LindenBackupException> {
             LindenBackupManager(lindenDatabase())
                 .restoreFrom(ByteArrayInputStream("this is not json".encodeToByteArray()))
         }
 
-        exception.message shouldContain "not a valid Linden backup"
+        exception.message shouldContain "not a zip archive"
     }
 
     "restoreFrom leaves the database untouched when the backup is invalid" {
@@ -184,7 +252,7 @@ class LindenBackupManagerTest : StringSpec({
         """.trimIndent()
 
         shouldThrow<Exception> {
-            LindenBackupManager(database).restoreFrom(ByteArrayInputStream(corrupt.encodeToByteArray()))
+            LindenBackupManager(database).restoreFrom(ByteArrayInputStream(buildBackupZip(corrupt)))
         }
 
         database.accountQueries.selectAll().awaitAsList() shouldBe accountsBefore
@@ -194,7 +262,7 @@ class LindenBackupManagerTest : StringSpec({
 
     "restoreFrom rejects an empty backup and leaves the database untouched" {
         val database = seedDatabase()
-        val emptyBackup = """{"formatVersion": 1}""".encodeToByteArray()
+        val emptyBackup = buildBackupZip("""{"formatVersion": 1}""")
 
         shouldThrow<LindenBackupException> {
             LindenBackupManager(database).restoreFrom(ByteArrayInputStream(emptyBackup))
@@ -207,10 +275,10 @@ class LindenBackupManagerTest : StringSpec({
     }
 
     "backupFileName includes a zero-padded local date-time in the name" {
-        backupFileName(LocalDateTime(2026, 8, 28, 15, 30, 45)) shouldBe "linden-backup-2026-08-28-153045.json"
+        backupFileName(LocalDateTime(2026, 8, 28, 15, 30, 45)) shouldBe "linden-backup-2026-08-28-153045.zip"
     }
 
     "backupFileName zero-pads single-digit date and time parts" {
-        backupFileName(LocalDateTime(2026, 1, 3, 9, 5, 7)) shouldBe "linden-backup-2026-01-03-090507.json"
+        backupFileName(LocalDateTime(2026, 1, 3, 9, 5, 7)) shouldBe "linden-backup-2026-01-03-090507.zip"
     }
 })

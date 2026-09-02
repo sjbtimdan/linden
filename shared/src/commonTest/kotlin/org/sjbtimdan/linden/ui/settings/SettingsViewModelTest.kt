@@ -7,6 +7,7 @@ import io.kotest.matchers.string.shouldContain
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.backup.LindenBackupManager
+import org.sjbtimdan.linden.backup.buildBackupZip
 import org.sjbtimdan.linden.data.CURRENCY_KEY
 import org.sjbtimdan.linden.data.HIDE_ENTRY_TOTAL_KEY
 import org.sjbtimdan.linden.data.SettingsDao
@@ -291,7 +292,7 @@ class SettingsViewModelTest : StringSpec({
                 initialCurrency = Currency.CHF,
             )
 
-            viewModel.restoreFrom(ByteArrayInputStream("""{"formatVersion": 1}""".encodeToByteArray()))
+            viewModel.restoreFrom(ByteArrayInputStream(buildBackupZip("""{"formatVersion": 1}""")))
             val state = withTimeout(5_000) {
                 viewModel.restoreState.first { it is BackupState.Error }
             }

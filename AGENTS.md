@@ -73,7 +73,7 @@ coverage is only enforced there because the Android target runs device tests onl
 ## Architecture & Gotchas
 
 - Package root `org.sjbtimdan.linden`. Models in `.model`, DAOs in `.data`, screens/ViewModels in `.ui.<feature>`,
-  backup/restore in `.backup` (`LindenBackupManager` — JSON dump of all tables, invoked from Settings),
+  backup/restore in `.backup` (`LindenBackupManager` — zipped JSON dump of all tables, invoked from Settings),
   import in `.imports` (`IvyImporter`), entry prediction in `.predictions` (`DescriptionPredictor`,
   `FieldPredictor` — heuristic scoring of past entries, pure functions, no DB) consumed via
   `EntrySuggestionsProvider` in `ui/entry`. Kotlin source files use PascalCase.

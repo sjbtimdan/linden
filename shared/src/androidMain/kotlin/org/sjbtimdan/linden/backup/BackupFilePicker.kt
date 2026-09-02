@@ -14,7 +14,7 @@ import kotlin.time.Clock
 actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -> Unit {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json"),
+        ActivityResultContracts.CreateDocument("application/zip"),
     ) { uri ->
         if (uri == null) {
             onPicked(null)
@@ -38,6 +38,6 @@ actual fun rememberDatabaseRestorePicker(onPicked: (InputStream?) -> Unit): () -
         }
     }
     return {
-        launcher.launch(arrayOf("application/json", "application/octet-stream"))
+        launcher.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
     }
 }

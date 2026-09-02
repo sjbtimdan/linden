@@ -5,10 +5,23 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.sjbtimdan.linden.db.LindenDatabase
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.ByteArrayInputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 const val BACKUP_FORMAT_VERSION = 1
+
+/** Name of the single JSON entry inside a zipped Linden backup. */
+private const val BACKUP_ENTRY_NAME = "linden-backup.json"
+
+/** "PK" — the first two bytes of every zip archive. */
+private val ZIP_MAGIC = byteArrayOf(0x50, 0x4B)
 
 class LindenBackupException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
@@ -62,9 +75,9 @@ data class BackupFxRate(
 )
 
 /**
- * Serializes the whole database to a versioned JSON backup and restores such
- * backups transactionally. Ids are preserved so references between tables stay
- * intact; a failed restore rolls back and leaves the database untouched.
+ * Serializes the whole database to a versioned, zipped JSON backup and restores
+ * such backups transactionally. Ids are preserved so references between tables
+ * stay intact; a failed restore rolls back and leaves the database untouched.
  */
 class LindenBackupManager(private val database: LindenDatabase) {
     private val json = Json {
@@ -74,7 +87,13 @@ class LindenBackupManager(private val database: LindenDatabase) {
 
     suspend fun backupTo(output: OutputStream) {
         val bytes = json.encodeToString(readBackup()).encodeToByteArray()
-        output.use { it.write(bytes) }
+        output.use { out ->
+            ZipOutputStream(BufferedOutputStream(out)).use { zip ->
+                zip.putNextEntry(ZipEntry(BACKUP_ENTRY_NAME))
+                zip.write(bytes)
+                zip.closeEntry()
+            }
+        }
     }
 
     suspend fun restoreFrom(input: InputStream): RestoreResult {
@@ -127,7 +146,8 @@ class LindenBackupManager(private val database: LindenDatabase) {
     }
 
     private fun decode(input: InputStream): LindenBackup {
-        val text = input.use { it.readBytes().decodeToString() }
+        val bytes = input.use { it.readBytes() }
+        val text = readBackupJson(bytes)
         val backup = try {
             json.decodeFromString<LindenBackup>(text)
         } catch (e: SerializationException) {
@@ -144,6 +164,27 @@ class LindenBackupManager(private val database: LindenDatabase) {
         }
         return backup
     }
+
+    /** Extracts the JSON payload from the backup entry of a zipped backup. */
+    private fun readBackupJson(bytes: ByteArray): String {
+        if (!isZipArchive(bytes)) {
+            throw LindenBackupException("The backup is not a valid Linden backup: it is not a zip archive")
+        }
+        val zip = ZipInputStream(BufferedInputStream(ByteArrayInputStream(bytes)))
+        return try {
+            zip.use { zis ->
+                generateSequence { zis.nextEntry }
+                    .firstOrNull { it.name.endsWith(".json") }
+                    ?.let { zis.readBytes().decodeToString() }
+                    ?: throw LindenBackupException("The backup archive does not contain a Linden backup")
+            }
+        } catch (e: IOException) {
+            throw LindenBackupException("The backup is not a valid Linden backup: it is not a zip archive", e)
+        }
+    }
+
+    private fun isZipArchive(bytes: ByteArray): Boolean =
+        bytes.size >= ZIP_MAGIC.size && bytes[0] == ZIP_MAGIC[0] && bytes[1] == ZIP_MAGIC[1]
 
     private suspend fun readBackup(): LindenBackup = LindenBackup(
         accounts = database.accountQueries.selectAll().awaitAsList().map { account ->
