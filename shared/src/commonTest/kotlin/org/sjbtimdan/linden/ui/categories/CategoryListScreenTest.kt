@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.ui.withViewModel
@@ -42,6 +43,27 @@ class CategoryListScreenTest : StringSpec({
 
             // The OutlinedTextField fills in via the node's text input semantics
             onNodeWithText("Save").performClick()
+        }
+    }
+
+    "creating a category with a duplicate name shows an error and keeps the dialog open" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+
+            setContent {
+                CategoryListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Category").performClick()
+            onAllNodes(hasSetTextAction())[1].performTextInput("Groceries")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("A category with this name already exists").assertIsDisplayed()
+            onNodeWithText("New Category").assertIsDisplayed()
+            viewModel.categories.value.shouldHaveSize(1)
         }
     }
 

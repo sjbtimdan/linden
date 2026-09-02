@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.CategoryType
@@ -73,6 +74,50 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("Save").performClick()
 
             viewModel.accounts.value.single().initialBalance shouldBe 150_050
+        }
+    }
+
+    "creating an account with a duplicate name shows an error and keeps the dialog open" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("+ New Account").performClick()
+            onAllNodes(hasSetTextAction())[1].performTextInput("Main")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("An account with this name already exists").assertIsDisplayed()
+            onNodeWithText("New Account").assertIsDisplayed()
+            viewModel.accounts.value.shouldHaveSize(1)
+        }
+    }
+
+    "editing an account to a duplicate name shows an error and keeps the dialog open" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onAllNodesWithContentDescription("Clear")[0].performClick()
+            onAllNodes(hasSetTextAction())[1].performTextInput("Savings")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("An account with this name already exists").assertIsDisplayed()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main", "Savings")
         }
     }
 

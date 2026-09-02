@@ -41,15 +41,25 @@ class CategoryListViewModel(
         _searchQuery.value = query
     }
 
-    fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null) {
+    /** Creates a category; returns false when the name is empty or already taken (case-insensitive). */
+    fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return false
+        if (categories.value.any { it.name.equals(trimmed, ignoreCase = true) }) return false
         viewModelScope.launch {
-            categoryDao.create(name, type, icon)
+            categoryDao.create(trimmed, type, icon)
         }
+        return true
     }
 
-    fun updateCategory(category: Category) {
+    /** Updates a category; returns false when the name is empty or taken by another category (case-insensitive). */
+    fun updateCategory(category: Category): Boolean {
+        val trimmed = category.name.trim()
+        if (trimmed.isEmpty()) return false
+        if (categories.value.any { it.id != category.id && it.name.equals(trimmed, ignoreCase = true) }) return false
         viewModelScope.launch {
-            categoryDao.update(category)
+            categoryDao.update(category.copy(name = trimmed))
         }
+        return true
     }
 }

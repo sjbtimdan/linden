@@ -61,6 +61,7 @@ private data class CategoryDialogState(
     val name: String,
     val type: CategoryType,
     val icon: CategoryIcon? = null,
+    val nameError: String? = null,
 )
 
 @Composable
@@ -198,22 +199,27 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             name = state.name,
             type = state.type,
             icon = state.icon,
+            nameError = state.nameError,
             isEditing = isEditing,
-            onNameChange = { dialogState = state.copy(name = it) },
+            onNameChange = { dialogState = state.copy(name = it, nameError = null) },
             onTypeChange = { dialogState = state.copy(type = it) },
             onIconChange = { dialogState = state.copy(icon = it) },
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
                     val existing = state.category
-                    if (existing != null) {
+                    val saved = if (existing != null) {
                         viewModel.updateCategory(
                             existing.copy(name = name, type = state.type, icon = state.icon),
                         )
                     } else {
                         viewModel.createCategory(name, state.type, state.icon)
                     }
-                    dialogState = null
+                    if (saved) {
+                        dialogState = null
+                    } else {
+                        dialogState = state.copy(nameError = "A category with this name already exists")
+                    }
                 }
             },
             onDismiss = { dialogState = null },
@@ -252,6 +258,7 @@ private fun CategoryDialog(
     name: String,
     type: CategoryType,
     icon: CategoryIcon?,
+    nameError: String?,
     isEditing: Boolean,
     onNameChange: (String) -> Unit,
     onTypeChange: (CategoryType) -> Unit,
@@ -272,6 +279,8 @@ private fun CategoryDialog(
                     onValueChange = onNameChange,
                     label = { Text("Name") },
                     singleLine = true,
+                    isError = nameError != null,
+                    supportingText = nameError?.let { error -> { Text(error) } },
                     trailingIcon = if (name.isNotEmpty()) {
                         {
                             IconButton(

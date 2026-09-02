@@ -34,6 +34,62 @@ class AccountListViewModelTest : StringSpec({
         }
     }
 
+    "createAccount refuses a duplicate name" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            val result = viewModel.createAccount("Main", Currency.USD)
+
+            result shouldBe false
+            viewModel.accounts.value.shouldHaveSize(1)
+        }
+    }
+
+    "createAccount refuses a case-variant duplicate name" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            val result = viewModel.createAccount("MAIN", Currency.USD)
+
+            result shouldBe false
+            viewModel.accounts.value.shouldHaveSize(1)
+        }
+    }
+
+    "createAccount trims the name before storing" {
+        withAccountViewModel { viewModel ->
+            val result = viewModel.createAccount("  Main  ", Currency.CHF)
+
+            result shouldBe true
+            viewModel.accounts.value.single().name shouldBe "Main"
+        }
+    }
+
+    "updateAccount refuses renaming to a taken name" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+            val main = viewModel.accounts.value.first { it.name == "Main" }
+
+            val result = viewModel.updateAccount(main.copy(name = "Savings"))
+
+            result shouldBe false
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main", "Savings")
+        }
+    }
+
+    "updateAccount allows keeping its own name" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            val main = viewModel.accounts.value.first()
+
+            val result = viewModel.updateAccount(main.copy(name = "Main"))
+
+            result shouldBe true
+            viewModel.accounts.value.single().name shouldBe "Main"
+        }
+    }
+
     "updating an account reflects in the list" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF)

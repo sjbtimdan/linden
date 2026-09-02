@@ -22,6 +22,62 @@ class CategoryListViewModelTest : StringSpec({
         }
     }
 
+    "createCategory refuses a duplicate name" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+
+            val result = viewModel.createCategory("Groceries", CategoryType.Income)
+
+            result shouldBe false
+            viewModel.categories.value.shouldHaveSize(1)
+        }
+    }
+
+    "createCategory refuses a case-variant duplicate name" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+
+            val result = viewModel.createCategory("GROCERIES", CategoryType.Income)
+
+            result shouldBe false
+            viewModel.categories.value.shouldHaveSize(1)
+        }
+    }
+
+    "createCategory trims the name before storing" {
+        withViewModel { viewModel ->
+            val result = viewModel.createCategory("  Groceries  ", CategoryType.Expense)
+
+            result shouldBe true
+            viewModel.categories.value.single().name shouldBe "Groceries"
+        }
+    }
+
+    "updateCategory refuses renaming to a taken name" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+            val groceries = viewModel.categories.value.first { it.name == "Groceries" }
+
+            val result = viewModel.updateCategory(groceries.copy(name = "Salary"))
+
+            result shouldBe false
+            viewModel.categories.value.map { it.name } shouldBe listOf("Groceries", "Salary")
+        }
+    }
+
+    "updateCategory allows keeping its own name" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            val groceries = viewModel.categories.value.first()
+
+            val result = viewModel.updateCategory(groceries.copy(name = "Groceries"))
+
+            result shouldBe true
+            viewModel.categories.value.single().name shouldBe "Groceries"
+        }
+    }
+
     "updating a category reflects in the list" {
         withViewModel { viewModel ->
             viewModel.createCategory("Groceries", CategoryType.Expense)

@@ -66,6 +66,7 @@ private data class AccountDialogState(
     val name: String,
     val currency: Currency,
     val initialBalanceText: String,
+    val nameError: String? = null,
     val initialBalanceError: String? = null,
 )
 
@@ -223,11 +224,12 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             name = state.name,
             currency = state.currency,
             initialBalanceText = state.initialBalanceText,
+            nameError = state.nameError,
             initialBalanceError = state.initialBalanceError,
             isEditing = isEditing,
             canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
             canDelete = isEditing && state.account.id !in accountsWithEntries,
-            onNameChange = { dialogState = state.copy(name = it) },
+            onNameChange = { dialogState = state.copy(name = it, nameError = null) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
             onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it, initialBalanceError = null) },
             onDelete = {
@@ -251,7 +253,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         dialogState = state.copy(initialBalanceError = "Enter a valid amount")
                     } else {
                         val existing = state.account
-                        if (existing != null) {
+                        val saved = if (existing != null) {
                             viewModel.updateAccount(
                                 existing.copy(
                                     name = name,
@@ -262,7 +264,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         } else {
                             viewModel.createAccount(name, state.currency, initialBalance)
                         }
-                        dialogState = null
+                        if (saved) {
+                            dialogState = null
+                        } else {
+                            dialogState = state.copy(nameError = "An account with this name already exists")
+                        }
                     }
                 }
             },
@@ -276,6 +282,7 @@ private fun AccountDialog(
     name: String,
     currency: Currency,
     initialBalanceText: String,
+    nameError: String?,
     initialBalanceError: String?,
     isEditing: Boolean,
     canChangeCurrency: Boolean,
@@ -300,6 +307,8 @@ private fun AccountDialog(
                     onValueChange = onNameChange,
                     label = { Text("Name") },
                     singleLine = true,
+                    isError = nameError != null,
+                    supportingText = nameError?.let { error -> { Text(error) } },
                     trailingIcon = if (name.isNotEmpty()) {
                         {
                             IconButton(

@@ -72,4 +72,56 @@ class SchemaMigrationTest : StringSpec({
             )
         }
     }
+
+    "migrating from v2 to v3 preserves accounts/categories, renames duplicates and enforces unique names" {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+        // Create the v2 schema (no UNIQUE constraints) and seed duplicates.
+        val createAccount = """
+            CREATE TABLE AccountEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                currency TEXT NOT NULL,
+                initialBalance INTEGER NOT NULL DEFAULT 0
+            );
+        """.trimIndent()
+        driver.execute(null, createAccount, 0)
+        val createCategory = """
+            CREATE TABLE CategoryEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                icon TEXT
+            );
+        """.trimIndent()
+        driver.execute(null, createCategory, 0)
+
+        driver.execute(null, "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Cash', 'CHF', 0)", 0)
+        driver.execute(null, "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Cash', 'CHF', 0)", 0)
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Savings', 'USD', 0)",
+            0,
+        )
+        driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
+        driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
+
+        // Migrate to v3.
+        LindenDatabase.Schema.migrate(driver, 2, 3).await()
+
+        // Data is preserved; duplicates renamed.
+        val db = LindenDatabase(driver)
+        val accounts = db.accountQueries.selectAll().executeAsList()
+        accounts.map { it.name } shouldBe listOf("Cash", "Cash (2)", "Savings")
+        val categories = db.categoryQueries.selectAll().executeAsList()
+        categories.map { it.name } shouldBe listOf("Food", "Food (2)")
+
+        // The UNIQUE constraint now rejects a duplicate name.
+        shouldThrow<Exception> {
+            db.accountQueries.insert(name = "Cash", currency = "EUR", initialBalance = 0)
+        }
+        shouldThrow<Exception> {
+            db.categoryQueries.insert(name = "Food", type = "Expense", icon = null)
+        }
+    }
 })

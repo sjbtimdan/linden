@@ -1,0 +1,57 @@
+-- Migrate schema from version 2 to 3: add UNIQUE constraints to
+-- AccountEntity.name and CategoryEntity.name.
+-- SQLite cannot add a UNIQUE constraint in place, so both tables are rebuilt.
+-- Existing duplicate names are renamed ("name (2)", "name (3)", ...) so the
+-- rebuild succeeds and no data is lost. A pre-existing name that already ends
+-- in " (N)" could collide with a generated one and fail the migration; that is
+-- an acceptable edge case for a personal expenses app.
+
+-- Accounts: rename later duplicates first.
+UPDATE AccountEntity
+SET name = name || ' (' || (
+    SELECT COUNT(*) FROM AccountEntity AS b
+    WHERE b.name = AccountEntity.name AND b.id <= AccountEntity.id
+) || ')'
+WHERE EXISTS (
+    SELECT 1 FROM AccountEntity AS c
+    WHERE c.name = AccountEntity.name AND c.id < AccountEntity.id
+);
+
+ALTER TABLE AccountEntity RENAME TO AccountEntity_old;
+
+CREATE TABLE AccountEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    currency TEXT NOT NULL,
+    initialBalance INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO AccountEntity (id, name, currency, initialBalance)
+SELECT id, name, currency, initialBalance FROM AccountEntity_old;
+
+DROP TABLE AccountEntity_old;
+
+-- Categories: rename later duplicates first.
+UPDATE CategoryEntity
+SET name = name || ' (' || (
+    SELECT COUNT(*) FROM CategoryEntity AS b
+    WHERE b.name = CategoryEntity.name AND b.id <= CategoryEntity.id
+) || ')'
+WHERE EXISTS (
+    SELECT 1 FROM CategoryEntity AS c
+    WHERE c.name = CategoryEntity.name AND c.id < CategoryEntity.id
+);
+
+ALTER TABLE CategoryEntity RENAME TO CategoryEntity_old;
+
+CREATE TABLE CategoryEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL,
+    icon TEXT
+);
+
+INSERT INTO CategoryEntity (id, name, type, icon)
+SELECT id, name, type, icon FROM CategoryEntity_old;
+
+DROP TABLE CategoryEntity_old;

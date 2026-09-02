@@ -79,6 +79,30 @@ class AccountDaoTest : StringSpec({
         dao.getAll().first().map { it.name } shouldBe listOf("Savings")
     }
 
+    "creating an account with a duplicate name throws" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+
+        shouldThrow<Exception> {
+            dao.create("Main", Currency.USD)
+        }
+    }
+
+    "updating an account to a duplicate name throws" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+        dao.create("Savings", Currency.USD)
+        val main = dao.getAll().first().first { it.name == "Main" }
+
+        shouldThrow<Exception> {
+            dao.update(main.copy(name = "Savings"))
+        }
+    }
+
     "Currency.fromCode returns the enum for a known code" {
         Currency.entries.forEach { currency ->
             Currency.fromCode(currency.name) shouldBe currency

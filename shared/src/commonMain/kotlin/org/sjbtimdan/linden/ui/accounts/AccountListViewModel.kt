@@ -59,21 +59,31 @@ class AccountListViewModel(
         _searchQuery.value = query
     }
 
-    fun createAccount(name: String, currency: Currency, initialBalance: Long = 0) {
+    /** Creates an account; returns false when the name is empty or already taken (case-insensitive). */
+    fun createAccount(name: String, currency: Currency, initialBalance: Long = 0): Boolean {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return false
+        if (accounts.value.any { it.name.equals(trimmed, ignoreCase = true) }) return false
         viewModelScope.launch {
-            accountDao.create(name, currency, initialBalance)
+            accountDao.create(trimmed, currency, initialBalance)
         }
+        return true
     }
 
-    fun updateAccount(account: Account) {
+    /** Updates an account; returns false when the name is empty or taken by another account (case-insensitive). */
+    fun updateAccount(account: Account): Boolean {
+        val trimmed = account.name.trim()
+        if (trimmed.isEmpty()) return false
+        if (accounts.value.any { it.id != account.id && it.name.equals(trimmed, ignoreCase = true) }) return false
         viewModelScope.launch {
             val current = accounts.value.firstOrNull { it.id == account.id }
             val currencyChanged = current != null && current.currency != account.currency
             // Changing the currency of an account with entries would reinterpret
             // every historical entry in the new currency, so it is refused.
             if (currencyChanged && account.id in accountsWithEntries.value) return@launch
-            accountDao.update(account)
+            accountDao.update(account.copy(name = trimmed))
         }
+        return true
     }
 
     /** Deletes an account; ignored when the account still has entries on it. */
