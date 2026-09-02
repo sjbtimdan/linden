@@ -9,10 +9,12 @@ import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.backup.buildBackupZip
 import org.sjbtimdan.linden.data.CURRENCY_KEY
+import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HIDE_ENTRY_TOTAL_KEY
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.THEME_KEY
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
@@ -32,6 +34,7 @@ class SettingsViewModelTest : StringSpec({
                 dao,
                 IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -52,6 +55,7 @@ class SettingsViewModelTest : StringSpec({
                 dao,
                 IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -72,6 +76,7 @@ class SettingsViewModelTest : StringSpec({
                 dao,
                 IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -91,6 +96,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -115,6 +121,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -161,6 +168,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -183,6 +191,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -206,6 +215,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -241,6 +251,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -266,6 +277,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -288,6 +300,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -309,6 +322,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -331,6 +345,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )
@@ -353,6 +368,7 @@ class SettingsViewModelTest : StringSpec({
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
             )

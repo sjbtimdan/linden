@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.BuildInfo
 import org.sjbtimdan.linden.backup.rememberDatabaseBackupPicker
 import org.sjbtimdan.linden.backup.rememberDatabaseRestorePicker
+import org.sjbtimdan.linden.export.rememberCsvExportPicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -69,6 +70,7 @@ fun SettingsScreen(
     pickImportFile: (() -> Unit)? = null,
     pickBackupFile: (() -> Unit)? = null,
     pickRestoreFile: (() -> Unit)? = null,
+    pickExportFile: (() -> Unit)? = null,
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
@@ -76,6 +78,7 @@ fun SettingsScreen(
     val importState by viewModel.importState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
+    val exportState by viewModel.exportState.collectAsState()
     var showImportConfirmation by remember { mutableStateOf(false) }
     var showRestoreConfirmation by remember { mutableStateOf(false) }
 
@@ -85,6 +88,8 @@ fun SettingsScreen(
         ?: rememberDatabaseBackupPicker { output -> output?.let(viewModel::backupTo) }
     val restoreFilePicker = pickRestoreFile
         ?: rememberDatabaseRestorePicker { input -> input?.let(viewModel::restoreFrom) }
+    val exportFilePicker = pickExportFile
+        ?: rememberCsvExportPicker { output -> output?.let(viewModel::exportCsv) }
     val transferInProgress = backupState is BackupState.Working || restoreState is BackupState.Working
 
     Column(
@@ -277,6 +282,18 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Restore from backup")
             }
+            OutlinedButton(
+                onClick = { exportFilePicker() },
+                enabled = exportState !is BackupState.Working,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Export to CSV")
+            }
         }
 
         when (val state = backupState) {
@@ -310,6 +327,22 @@ fun SettingsScreen(
             is BackupState.Error -> ImportResultRow(
                 text = "Restore failed: ${state.message}",
                 onDismiss = viewModel::clearRestoreState,
+            )
+        }
+
+        when (val state = exportState) {
+            BackupState.Idle -> Unit
+
+            BackupState.Working -> WorkingRow(text = "Exporting…")
+
+            is BackupState.Success -> ImportResultRow(
+                text = "CSV exported.",
+                onDismiss = viewModel::clearExportState,
+            )
+
+            is BackupState.Error -> ImportResultRow(
+                text = "Export failed: ${state.message}",
+                onDismiss = viewModel::clearExportState,
             )
         }
 

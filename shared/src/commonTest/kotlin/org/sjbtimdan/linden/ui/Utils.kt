@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.FxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
@@ -114,6 +115,7 @@ fun withSettingsViewModel(
                 settingsDao = dao,
                 importer = IvyImporter(database),
                 backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = initialTheme,
                 initialCurrency = initialCurrency,
             )

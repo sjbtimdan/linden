@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.backup.RestoreResult
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImportResult
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
@@ -41,6 +42,7 @@ class SettingsViewModel(
     private val settingsDao: SettingsDao,
     private val importer: IvyImporter,
     private val backupManager: LindenBackupManager,
+    private val csvExporter: CsvExportManager,
     initialTheme: ThemeMode,
     initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
@@ -62,6 +64,9 @@ class SettingsViewModel(
 
     private val _restoreState = MutableStateFlow<BackupState<RestoreResult>>(BackupState.Idle)
     val restoreState: StateFlow<BackupState<RestoreResult>> = _restoreState.asStateFlow()
+
+    private val _exportState = MutableStateFlow<BackupState<Unit>>(BackupState.Idle)
+    val exportState: StateFlow<BackupState<Unit>> = _exportState.asStateFlow()
 
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
@@ -138,6 +143,26 @@ class SettingsViewModel(
     private suspend fun reloadSettings() {
         _themeMode.value = settingsDao.getTheme()
         _defaultCurrency.value = settingsDao.getDefaultCurrency()
+    }
+
+    fun exportCsv(output: OutputStream) {
+        viewModelScope.launch {
+            _exportState.update { BackupState.Working }
+            _exportState.update {
+                try {
+                    withContext(Dispatchers.IO) { csvExporter.exportTo(output) }
+                    BackupState.Success(Unit)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    BackupState.Error(e.message ?: "Export failed")
+                }
+            }
+        }
+    }
+
+    fun clearExportState() {
+        _exportState.update { BackupState.Idle }
     }
 
     fun clearBackupState() {

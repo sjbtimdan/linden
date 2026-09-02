@@ -14,6 +14,7 @@ import org.sjbtimdan.linden.data.FxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -55,10 +56,12 @@ class AppDependencies(
     }
     val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
     val backupManager = LindenBackupManager(database)
+    val csvExportManager = CsvExportManager(entryDao)
     val settingsViewModel = SettingsViewModel(
         settingsDao,
         IvyImporter(database),
         backupManager,
+        csvExportManager,
         initialTheme,
         initialCurrency,
         initialHideEntryTotal,
