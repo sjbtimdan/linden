@@ -2,16 +2,13 @@ package org.sjbtimdan.linden.ui.ledger
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -27,14 +24,11 @@ import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
-import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
@@ -57,9 +51,7 @@ class LedgerViewModel(
     fxRatesRepository: FxRatesRepository,
     private val budgetDao: BudgetDao,
     val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
-) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
-    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
-
+) : EntryEditorViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -143,36 +135,22 @@ class LedgerViewModel(
         }
         .stateFlow(null)
 
-    /** Entries in the current insight window (month-to-date). */
-    private val currentInsightEntries: StateFlow<List<Entry>> = insightWindows
-        .flatMapLatest { windows ->
-            val window = windows?.first ?: return@flatMapLatest flowOf(emptyList())
-            entryDao.getSince(window.start.sqlLowerBound()).map { rows ->
-                rows.filter { entry -> entry.isInWindow(window.start, window.end, today(), showFuture = false) }
-            }
-        }
-        .stateFlow(emptyList())
-
-    /** Entries in the previous insight window (same day-range last month). */
-    private val previousInsightEntries: StateFlow<List<Entry>> = insightWindows
-        .flatMapLatest { windows ->
-            val window = windows?.second ?: return@flatMapLatest flowOf(emptyList())
-            entryDao.getSince(window.start.sqlLowerBound()).map { rows ->
-                rows.filter { entry -> entry.isInWindow(window.start, window.end, today(), showFuture = false) }
-            }
-        }
-        .stateFlow(emptyList())
-
-    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
-
     /**
-     * Whether the total at the top of the ledger is masked. Mirrors the
-     * "Hide totals" setting on the entry screen via the database flow.
+     * Entries of the current and the previous insight window, fetched with a
+     * single query from the earlier of the two window starts. Both windows stay
+     * empty while [insightWindows] is null (not a month period).
      */
-    val hideTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
-        .stateFlow(false)
-
-    private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
+    private val insightEntries: StateFlow<Pair<List<Entry>, List<Entry>>> = insightWindows
+        .flatMapLatest { windows ->
+            if (windows == null) return@flatMapLatest flowOf(emptyList<Entry>() to emptyList<Entry>())
+            val (current, previous) = windows
+            val source = entryDao.getSince(minOf(current.start, previous.start).sqlLowerBound())
+            source.map { rows ->
+                val now = today()
+                rows.inInsightWindow(current, now) to rows.inInsightWindow(previous, now)
+            }
+        }
+        .stateFlow(emptyList<Entry>() to emptyList<Entry>())
 
     /**
      * Spending insights for the selected month: expenses month-to-date vs the same
@@ -181,11 +159,10 @@ class LedgerViewModel(
      * when a rate is missing.
      */
     val spendingInsights: StateFlow<SpendingInsights?> = combine(
-        currentInsightEntries,
-        previousInsightEntries,
+        insightEntries,
         defaultCurrency,
         rates,
-    ) { current, previous, currency, rates ->
+    ) { (current, previous), currency, rates ->
         computeSpendingInsights(current, previous, currency, rates)
             ?.takeIf { it.currentSpent != 0L || it.previousSpent != 0L }
     }.stateFlow(null)
@@ -442,13 +419,6 @@ class LedgerViewModel(
 
     /** Categories used on entries in [accountId], most-used first. */
     suspend fun usedCategories(accountId: Long): List<Category> = entryDao.categoriesForAccount(accountId)
-
-    /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
-    private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initial,
-    )
 }
 
 /** An entry with its searchable fields pre-lowercased, so filtering on a keystroke does not re-lowercase every field. */
@@ -493,6 +463,10 @@ private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDat
         (start == null || date >= start) &&
         (end == null || date <= end)
 }
+
+/** Rows that fall inside [window]; insight comparisons never count future entries. */
+private fun List<Entry>.inInsightWindow(window: InsightWindow, today: LocalDate): List<Entry> =
+    filter { entry -> entry.isInWindow(window.start, window.end, today, showFuture = false) }
 
 /**
  * Epoch-millis lower bound for a period query. Entries are re-filtered in memory

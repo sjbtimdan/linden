@@ -1,13 +1,10 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -17,12 +14,9 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
-import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
-import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
@@ -34,32 +28,19 @@ class EntryPointViewModel(
     entryDao: EntryDao,
     accountDao: AccountDao,
     categoryDao: CategoryDao,
-    private val settingsDao: SettingsDao,
+    settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
     initialHideEntryTotal: Boolean = false,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
-) : EntryEditorViewModel(entryDao, accountDao, categoryDao) {
+) : EntryEditorViewModel(
+    entryDao,
+    accountDao,
+    categoryDao,
+    settingsDao,
+    fxRatesRepository,
+    initialHideTotal = initialHideEntryTotal,
+) {
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
-    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
-
-    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
-
-    private val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
-
-    /**
-     * Whether the hero card masks the total across all accounts. Seeded from the
-     * stored setting (never flashes the amount at startup) and kept in sync with
-     * the settings screen via the database flow.
-     */
-    val hideEntryTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
-        .stateFlow(initialHideEntryTotal)
-
-    /** Persists the hero-card visibility; the database flow propagates it back. */
-    fun setHideEntryTotal(hidden: Boolean) {
-        viewModelScope.launch {
-            settingsDao.setHideEntryTotal(hidden)
-        }
-    }
 
     /**
      * Total across all accounts in the default currency: initial balances plus
@@ -169,11 +150,4 @@ class EntryPointViewModel(
         draftState.value = EntryDraft.forNew(entry.type, entry)
         return true
     }
-
-    /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
-    private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initial,
-    )
 }

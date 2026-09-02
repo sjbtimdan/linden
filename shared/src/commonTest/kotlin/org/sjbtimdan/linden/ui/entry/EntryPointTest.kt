@@ -99,14 +99,14 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("••••••").assertIsDisplayed()
             onNodeWithText("123.45").assertDoesNotExist()
-            viewModel.hideEntryTotal.value shouldBe true
+            viewModel.hideTotal.value shouldBe true
 
             onNodeWithContentDescription("Show total").performClick()
             waitForIdle()
 
             onNodeWithText("123.45").assertIsDisplayed()
             onNodeWithText("••••••").assertDoesNotExist()
-            viewModel.hideEntryTotal.value shouldBe false
+            viewModel.hideTotal.value shouldBe false
         }
     }
 

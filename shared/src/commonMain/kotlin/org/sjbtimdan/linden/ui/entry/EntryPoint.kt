@@ -74,7 +74,7 @@ fun EntryPoint(
     val quickEntries by viewModel.quickEntries.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val hideEntryTotal by viewModel.hideEntryTotal.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -149,8 +149,8 @@ fun EntryPoint(
             TotalBalanceCard(
                 total = totalMinor,
                 currency = defaultCurrency,
-                hidden = hideEntryTotal,
-                onToggleHidden = { viewModel.setHideEntryTotal(!hideEntryTotal) },
+                hidden = hideTotal,
+                onToggleHidden = { viewModel.setHideTotal(!hideTotal) },
             )
 
             ratesWarning?.let { warning ->
