@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,7 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,21 +34,75 @@ import kotlin.math.abs
 /**
  * Compact month-to-date spending summary: total spent this month vs the same
  * day-range of last month, plus the top expense categories with their share.
+ *
+ * When [onToggleCollapsed] is provided the card can be collapsed to a slim
+ * header row (a chevron expands it again), so the month summary never takes
+ * more space than the user wants.
  */
 @Composable
-fun SpendingInsightsCard(insights: SpendingInsights, currency: Currency, modifier: Modifier = Modifier) {
+fun SpendingInsightsCard(
+    insights: SpendingInsights,
+    currency: Currency,
+    modifier: Modifier = Modifier,
+    collapsed: Boolean = false,
+    onToggleCollapsed: (() -> Unit)? = null,
+) {
     val colors = lindenColors()
+    val titleColor = MaterialTheme.colorScheme.onSurfaceVariant
+    if (collapsed && onToggleCollapsed != null) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = modifier.testTag("spendingInsightsHeader"),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onToggleCollapsed)
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Spending insights",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = titleColor,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ExpandMore,
+                    contentDescription = "Expand insights",
+                    tint = titleColor,
+                )
+            }
+        }
+        return
+    }
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = modifier.testTag("spendingInsightsCard"),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = "Spending insights",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Column(modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Spending insights",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onToggleCollapsed != null) {
+                    IconButton(
+                        onClick = onToggleCollapsed,
+                        modifier = Modifier.testTag("collapseInsights"),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ExpandLess,
+                            contentDescription = "Collapse insights",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(

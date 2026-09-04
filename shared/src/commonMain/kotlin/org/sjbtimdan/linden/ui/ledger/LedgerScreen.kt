@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -114,6 +112,12 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     // the mode tabs, the period bar and the list. Active filters stay visible
     // as removable summary chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
+    // Collapsing the spending insights hides the details behind a slim header for
+    // the rest of the session; any period change re-expands them for the new window.
+    var insightsCollapsed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(periodSelection) {
+        insightsCollapsed = false
+    }
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
     LaunchedEffect(requestSearchFocus) {
@@ -191,24 +195,6 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                             .weight(1f)
                             .focusRequester(searchFocusRequester),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(24.dp))
-                            .clickable { viewModel.setShowFuture(!showFuture) }
-                            .testTag("showFutureToggle"),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = showFuture,
-                            onCheckedChange = null,
-                        )
-                        Text(
-                            text = "Show future\nentries",
-                            style = MaterialTheme.typography.labelSmall,
-                            lineHeight = MaterialTheme.typography.labelSmall.lineHeight,
-                        )
-                    }
                 }
 
                 // The type filter applies to the entries and categories views; it is
@@ -262,17 +248,6 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                         )
                     }
                 }
-
-                if (viewMode == LedgerViewMode.Entries) {
-                    spendingInsights?.let { insights ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        SpendingInsightsCard(
-                            insights = insights,
-                            currency = defaultCurrency,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
             }
         }
 
@@ -292,6 +267,8 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                     onPeriodChange = viewModel::setPeriod,
                     onPrevious = viewModel::goToPreviousPeriod,
                     onNext = viewModel::goToNextPeriod,
+                    showFuture = showFuture,
+                    onToggleShowFuture = { viewModel.setShowFuture(!showFuture) },
                 )
             }
             TotalLabel(
@@ -302,6 +279,21 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
                 },
                 currency = defaultCurrency,
                 hidden = hideTotal,
+            )
+        }
+
+        // Spending insights live with the content, not the filters: they sit between
+        // the period bar and the list while the entries view shows a month. They can
+        // be collapsed to a slim header and re-expanded in one tap (insightsCollapsed).
+        val insights = spendingInsights
+        if (viewMode == LedgerViewMode.Entries && insights != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            SpendingInsightsCard(
+                insights = insights,
+                currency = defaultCurrency,
+                collapsed = insightsCollapsed,
+                onToggleCollapsed = { insightsCollapsed = !insightsCollapsed },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 

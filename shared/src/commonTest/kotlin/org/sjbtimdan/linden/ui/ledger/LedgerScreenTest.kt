@@ -67,7 +67,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "show future checkbox reveals future entries" {
+    "show future toggle on the period navigator reveals future entries" {
         withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
@@ -84,8 +84,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Today").assertIsDisplayed()
             onNodeWithText("Scheduled").assertDoesNotExist()
 
-            expandFilters()
-
+            // The toggle lives on the period navigator, always visible.
             onNodeWithTag("showFutureToggle").performClick()
 
             onNodeWithText("Scheduled").assertIsDisplayed()
@@ -1112,15 +1111,13 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            expandFilters()
-
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
             onNodeWithText("Spending insights").assertIsDisplayed()
             onNodeWithText("Spent this month").assertIsDisplayed()
         }
     }
 
-    "spending insights card collapses with the filters" {
+    "spending insights card is shown regardless of the filter panel" {
         withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
@@ -1139,6 +1136,10 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            // Content-first: the card sits with the list, so expanding and
+            // collapsing the search/filter panel leaves it untouched.
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+
             expandFilters()
 
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
@@ -1146,7 +1147,107 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("filtersHeader").performClick()
             waitForIdle()
 
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+        }
+    }
+
+    "spending insights card is hidden outside the entries view" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "This month",
+                    main,
+                    1_200,
+                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
+                ),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
             onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+
+            onNodeWithTag("viewModeTab-Categories").performClick()
+
+            onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+        }
+    }
+
+    "collapsing the spending insights card leaves a header that expands it again" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "This month",
+                    main,
+                    1_200,
+                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
+                ),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+
+            onNodeWithTag("collapseInsights").performClick()
+
+            onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
+            onNodeWithTag("spendingInsightsHeader").assertIsDisplayed()
+            onNodeWithText("Spent this month").assertDoesNotExist()
+
+            onNodeWithTag("spendingInsightsHeader").performClick()
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+            onNodeWithTag("spendingInsightsHeader").assertDoesNotExist()
+        }
+    }
+
+    "collapsing the spending insights card resets when the period changes" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "This month",
+                    main,
+                    1_200,
+                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
+                ),
+            )
+            viewModel.setPeriod(LedgerPeriod.Month)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
+
+            onNodeWithTag("collapseInsights").performClick()
+
+            onNodeWithTag("spendingInsightsHeader").assertIsDisplayed()
+
+            // Any period change re-expands the card for the newly selected window.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("All").performClick()
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
         }
     }
 
