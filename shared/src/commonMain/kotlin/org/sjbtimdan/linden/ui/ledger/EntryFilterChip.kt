@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
@@ -30,7 +31,7 @@ internal fun EntryFilterChip(
     InputChip(
         selected = false,
         onClick = onClick,
-        label = { Text(name) },
+        label = { Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingIcon = if (leadingColor != null) {
             {
                 Box(

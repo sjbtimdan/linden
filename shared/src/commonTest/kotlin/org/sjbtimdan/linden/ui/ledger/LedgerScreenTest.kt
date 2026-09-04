@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -57,6 +58,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithText("Search").performTextInput("lunch")
 
             onNodeWithText("Lunch").assertIsDisplayed()
@@ -81,6 +84,8 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Today").assertIsDisplayed()
             onNodeWithText("Scheduled").assertDoesNotExist()
 
+            expandFilters()
+
             onNodeWithTag("showFutureToggle").performClick()
 
             onNodeWithText("Scheduled").assertIsDisplayed()
@@ -101,6 +106,8 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Coffee").assertIsDisplayed()
             onNodeWithText("Refund").assertIsDisplayed()
 
+            expandFilters()
+
             onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
 
@@ -117,6 +124,8 @@ class LedgerScreenTest : StringSpec({
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
+
+            expandFilters()
 
             onNodeWithText("Search").performTextInput("zzz")
 
@@ -401,7 +410,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "view dropdown switches to the accounts view and back" {
+    "mode tabs switch to the accounts view and back" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
@@ -412,27 +421,34 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Refund").assertIsDisplayed()
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
-            // Accounts view: the balance row replaces the entries, but the search
-            // field stays; the type filter is disabled because it does not apply.
+            // Accounts view: the balance row replaces the entries. The tabs and the
+            // period bar stay visible; the entries-only filters are not shown.
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertIsDisplayed()
             onNodeWithText("+ 20.00 CHF").assertIsDisplayed()
             onNodeWithText("Refund").assertDoesNotExist()
+            onNodeWithTag("viewModeTab-Entries").assertIsDisplayed()
+            onNodeWithTag("periodLabel").assertIsDisplayed()
+            onNodeWithTag("typeFilterDropdown").assertDoesNotExist()
+
+            // Expanding the panel in the accounts view only reveals the search field.
+            expandFilters()
+
             onNodeWithText("Search").assertIsDisplayed()
-            onNodeWithTag("typeFilterDropdown").assertIsNotEnabled()
+            onNodeWithTag("typeFilterDropdown").assertDoesNotExist()
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Entries").performClick()
+            onNodeWithTag("viewModeTab-Entries").performClick()
 
+            // Back in the entries view the filter chip row is there again.
             onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertDoesNotExist()
         }
     }
 
-    "type filter is disabled in the accounts view and preserved across switches" {
+    "type filter is hidden in the accounts view and preserved across switches" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -442,21 +458,23 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("activeTypeFilterChip").assertIsDisplayed()
 
-            // The type filter does not apply to balances, so its dropdown is disabled.
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            // The type filter does not apply to balances, so it is hidden in the accounts view.
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
-            onNodeWithTag("typeFilterDropdown").assertIsNotEnabled()
+            onNodeWithTag("typeFilterDropdown").assertDoesNotExist()
+            onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
 
             // Switching back keeps the filter.
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Entries").performClick()
+            onNodeWithTag("viewModeTab-Entries").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
@@ -478,8 +496,9 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            expandFilters()
+
             onNodeWithText("Search").performTextInput("usd")
 
             onNodeWithText("2.00 $").assertIsDisplayed()
@@ -504,8 +523,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
 
@@ -526,14 +544,13 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithText("No accounts yet.").assertIsDisplayed()
         }
     }
 
-    "view dropdown switches to the categories view and back" {
+    "mode tabs switch to the categories view and back" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -544,17 +561,20 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Coffee").assertIsDisplayed()
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
 
             onNodeWithText("Groceries").assertIsDisplayed()
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
             onNodeWithText("Coffee").assertDoesNotExist()
+
+            // In the categories view the panel shows search and the type filter only.
+            expandFilters()
+
             onNodeWithText("Search").assertIsDisplayed()
             onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
+            onNodeWithTag("categoryFilterDropdown").assertDoesNotExist()
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Entries").performClick()
+            onNodeWithTag("viewModeTab-Entries").performClick()
 
             onNodeWithText("Coffee").assertIsDisplayed()
             onNodeWithText("1 entry").assertDoesNotExist()
@@ -567,8 +587,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
 
             onNodeWithText("No categories yet.").assertIsDisplayed()
         }
@@ -586,8 +605,9 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
+            expandFilters()
+
             onNodeWithText("Search").performTextInput("salary")
 
             onNodeWithText("Salary").assertIsDisplayed()
@@ -612,8 +632,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
 
@@ -641,8 +660,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
             onNodeWithText("Groceries").performClick()
 
             // The entries view is narrowed to Groceries and the chip is visible.
@@ -666,8 +684,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Categories").performClick()
+            onNodeWithTag("viewModeTab-Categories").performClick()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Pay").assertDoesNotExist()
 
@@ -690,6 +707,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("categoryFilterDropdown").performClick()
             onNodeWithText("Salary").performClick()
 
@@ -709,6 +728,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("accountFilterDropdown").performClick()
             onNodeWithText("Savings").performClick()
 
@@ -726,8 +747,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
@@ -746,14 +766,13 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
 
-            onAllNodes(hasSetTextAction())[1].performTextClearance()
-            onAllNodes(hasSetTextAction())[1].performTextInput("125.00")
+            onAllNodes(hasSetTextAction())[0].performTextClearance()
+            onAllNodes(hasSetTextAction())[0].performTextInput("125.00")
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Adjust").performClick()
 
@@ -772,14 +791,13 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
 
-            onAllNodes(hasSetTextAction())[1].performTextClearance()
-            onAllNodes(hasSetTextAction())[1].performTextInput("90.00")
+            onAllNodes(hasSetTextAction())[0].performTextClearance()
+            onAllNodes(hasSetTextAction())[0].performTextInput("90.00")
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Adjust").performClick()
 
@@ -797,8 +815,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
@@ -817,8 +834,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
@@ -826,7 +842,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Salary").assertIsDisplayed()
 
-            onAllNodes(hasSetTextAction())[2].performTextInput("sal")
+            onAllNodes(hasSetTextAction())[1].performTextInput("sal")
 
             onNodeWithText("Salary").assertIsDisplayed()
             onNodeWithText("Groceries").assertDoesNotExist()
@@ -842,15 +858,14 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").performClick()
 
             onNodeWithText("Groceries").performClick()
 
-            onAllNodes(hasSetTextAction())[2].assertTextContains("Groceries")
+            onAllNodes(hasSetTextAction())[1].assertTextContains("Groceries")
         }
     }
 
@@ -862,8 +877,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             // Switch to a bounded period (Month) then navigate to the previous (historical) month.
             onNodeWithTag("periodLabel").performClick()
@@ -885,8 +899,7 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithTag("viewModeDropdown").performClick()
-            onNodeWithText("Accounts").performClick()
+            onNodeWithTag("viewModeTab-Accounts").performClick()
 
             // The current month includes today, so Adjust Balance stays available.
             onNodeWithTag("periodLabel").performClick()
@@ -897,7 +910,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "filters are expanded by default, keeping the period and total visible" {
+    "filters are collapsed by default, keeping the tabs, period and total visible" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -906,15 +919,19 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("Search").assertIsDisplayed()
-            onNodeWithTag("viewModeDropdown").assertIsDisplayed()
+            onNodeWithText("Search").assertDoesNotExist()
+            onNodeWithTag("typeFilterDropdown").assertDoesNotExist()
+            // The mode tabs are navigation and never collapse.
+            onNodeWithTag("viewModeTab-Entries").assertIsDisplayed()
+            onNodeWithTag("viewModeTab-Accounts").assertIsDisplayed()
+            onNodeWithTag("viewModeTab-Categories").assertIsDisplayed()
             onNodeWithTag("periodLabel").assertIsDisplayed()
             // The expense row and the period total both show the amount.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
         }
     }
 
-    "collapsing the filters hides search and combo boxes but keeps the period and total" {
+    "expanding the filters shows search and the filter chips" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -922,33 +939,41 @@ class LedgerScreenTest : StringSpec({
             setContent {
                 LedgerScreen(viewModel = viewModel)
             }
+
+            expandFilters()
+
+            onNodeWithText("Search").assertIsDisplayed()
+            onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
+            onNodeWithTag("categoryFilterDropdown").assertIsDisplayed()
+            onNodeWithTag("periodLabel").assertIsDisplayed()
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+        }
+    }
+
+    "collapsing the filters hides search and chips but keeps the tabs, period and total" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+
+            onNodeWithText("Search").assertIsDisplayed()
 
             onNodeWithTag("filtersHeader").performClick()
             waitForIdle()
 
             onNodeWithText("Search").assertDoesNotExist()
-            onNodeWithTag("viewModeDropdown").assertDoesNotExist()
+            onNodeWithTag("typeFilterDropdown").assertDoesNotExist()
+            // The tabs survive collapsing: only the search/filter panel hides.
+            onNodeWithTag("viewModeTab-Entries").assertIsDisplayed()
             onNodeWithTag("periodLabel").assertIsDisplayed()
             onNodeWithText("Coffee").assertIsDisplayed()
             // The period total stays visible when the filters are collapsed.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
-        }
-    }
-
-    "re-expanding the filters shows the search field again" {
-        withLedgerViewModel { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-
-            setContent {
-                LedgerScreen(viewModel = viewModel)
-            }
-
-            onNodeWithTag("filtersHeader").performClick()
-            onNodeWithTag("filtersHeader").performClick()
-            waitForIdle()
-
-            onNodeWithText("Search").assertIsDisplayed()
         }
     }
 
@@ -961,6 +986,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             val expandedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
 
             onNodeWithTag("filtersHeader").performClick()
@@ -969,6 +996,90 @@ class LedgerScreenTest : StringSpec({
             val collapsedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
             // Collapsing raises the top of the list, giving it more vertical space.
             collapsedTop shouldBeLessThan expandedTop
+        }
+    }
+
+    "search icon in the collapsed header opens the panel and focuses the search field" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Search").assertDoesNotExist()
+
+            onNodeWithContentDescription("Search").performClick()
+            waitForIdle()
+
+            onNodeWithText("Search").assertIsDisplayed()
+        }
+    }
+
+    "collapsed filters still summarize active filters with removable chips" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+
+            onNodeWithTag("typeFilterDropdown").performClick()
+            onNodeWithText("Income").performClick()
+
+            onNodeWithTag("filtersHeader").performClick()
+            waitForIdle()
+
+            onNodeWithText("Search").assertDoesNotExist()
+            // The active type filter stays visible as a removable summary chip.
+            onNodeWithTag("activeTypeFilterChip").assertIsDisplayed()
+            onNodeWithText("Refund").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+
+            onNodeWithTag("activeTypeFilterChip").performClick()
+
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
+        }
+    }
+
+    "clear all removes every active filter from the summary row" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+
+            onNodeWithTag("typeFilterDropdown").performClick()
+            onNodeWithText("Income").performClick()
+
+            onNodeWithTag("categoryFilterDropdown").performClick()
+            onNodeWithText("Salary").performClick()
+
+            // Both filters apply: only the income entry in Salary is left.
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("activeTypeFilterChip").assertIsDisplayed()
+            onNodeWithTag("categoryFilterChip").assertIsDisplayed()
+
+            onNodeWithTag("clearAllFilters").performClick()
+
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
+            onNodeWithTag("categoryFilterChip").assertDoesNotExist()
         }
     }
 
@@ -1001,6 +1112,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
             onNodeWithText("Spending insights").assertIsDisplayed()
             onNodeWithText("Spent this month").assertIsDisplayed()
@@ -1026,6 +1139,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
 
             onNodeWithTag("filtersHeader").performClick()
@@ -1044,6 +1159,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
         }
     }
@@ -1060,6 +1177,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
+            expandFilters()
+
             onNodeWithTag("spendingInsightsCard").assertDoesNotExist()
         }
     }
@@ -1071,4 +1190,11 @@ private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair
     val main = accountDao.getAll().first().first()
     val groceries = categoryDao.getAll().first().first()
     return main to groceries
+}
+
+/** The search/filter panel starts collapsed; tests that use it open it first. */
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.expandFilters() {
+    onNodeWithTag("filtersHeader").performClick()
+    waitForIdle()
 }

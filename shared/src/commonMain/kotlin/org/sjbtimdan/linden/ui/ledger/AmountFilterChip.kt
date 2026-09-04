@@ -54,7 +54,7 @@ fun AmountFilterChip(
             modifier = modifier.testTag("amountFilterChip"),
             label = {
                 Text(
-                    text = filter?.let { formatFilter(it) } ?: "Amount: All",
+                    text = filter?.displayLabel() ?: "Amount: All",
                     style = MaterialTheme.typography.labelMedium,
                 )
             },
@@ -129,7 +129,8 @@ private fun AmountOperator.symbol(): String = when (this) {
     AmountOperator.Approximately -> "~"
 }
 
-private fun formatFilter(filter: AmountFilter): String = "${filter.operator.symbol()} ${formatFilterValue(filter)}"
+/** Short label of an applied amount filter, e.g. "> 50" — used by the chip and the active-filter summary. */
+internal fun AmountFilter.displayLabel(): String = "${operator.symbol()} ${formatFilterValue(this)}"
 
 private fun formatFilterValue(filter: AmountFilter): String =
     (filter.minor / 100).toString() + if (filter.minor % 100 != 0L) {
