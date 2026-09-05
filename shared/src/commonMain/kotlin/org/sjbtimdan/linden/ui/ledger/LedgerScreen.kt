@@ -108,7 +108,6 @@ fun LedgerScreen(
     val accountFilter by viewModel.accountFilter.collectAsState()
     val displayedEntries by viewModel.displayedEntries.collectAsState()
     val hasAnyEntries by viewModel.hasAnyEntries.collectAsState()
-    val spendingInsights by viewModel.spendingInsights.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
@@ -117,11 +116,6 @@ fun LedgerScreen(
     // visible as removable chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
     var filtersOpen by remember { mutableStateOf(false) }
-    // Insights collapse to a slim header for the session; any period change re-expands them.
-    var insightsCollapsed by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(periodSelection) {
-        insightsCollapsed = false
-    }
     // Search narrows entry text in the entries view and names in the other two — the label says which.
     val searchLabel = when (viewMode) {
         LedgerViewMode.Entries -> "Search entries"
@@ -243,18 +237,6 @@ fun LedgerScreen(
                     )
                 }
             }
-        }
-
-        val insights = spendingInsights
-        if (viewMode == LedgerViewMode.Entries && insights != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            SpendingInsightsCard(
-                insights = insights,
-                currency = defaultCurrency,
-                collapsed = insightsCollapsed,
-                onToggleCollapsed = { insightsCollapsed = !insightsCollapsed },
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))

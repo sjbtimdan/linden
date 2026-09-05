@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -118,43 +117,6 @@ class LedgerViewModel(
             .map { it.entry }
             .toList()
     }.stateFlow(emptyList())
-
-    /**
-     * Month-to-date window and the same day-range of the previous month; null
-     * unless the period is [LedgerPeriod.Month] with at least one elapsed day.
-     */
-    private val insightWindows: StateFlow<Pair<InsightWindow, InsightWindow>?> = _periodSelection
-        .map { selection ->
-            if (selection.period != LedgerPeriod.Month) return@map null
-            monthInsightWindows(selection.anchor, today())
-        }
-        .stateFlow(null)
-
-    /** Entries of both insight windows, fetched with one query from the earlier start. */
-    private val insightEntries: StateFlow<Pair<List<Entry>, List<Entry>>> = insightWindows
-        .flatMapLatest { windows ->
-            if (windows == null) return@flatMapLatest flowOf(emptyList<Entry>() to emptyList())
-            val (current, previous) = windows
-            val source = entryDao.getSince(minOf(current.start, previous.start).sqlLowerBound())
-            source.map { rows ->
-                val now = today()
-                rows.inInsightWindow(current, now) to rows.inInsightWindow(previous, now)
-            }
-        }
-        .stateFlow(emptyList<Entry>() to emptyList())
-
-    /**
-     * Spending insights for the selected month: month-to-date expenses vs the same
-     * day-range of last month, plus the top expense categories. Null outside a month.
-     */
-    val spendingInsights: StateFlow<SpendingInsights?> = combine(
-        insightEntries,
-        defaultCurrency,
-        rates,
-    ) { (current, previous), currency, rates ->
-        computeSpendingInsights(current, previous, currency, rates)
-            ?.takeIf { it.currentSpent != 0L || it.previousSpent != 0L }
-    }.stateFlow(null)
 
     /**
      * Entries shown by the entries view, narrowed to a category and/or account
@@ -479,10 +441,6 @@ private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDat
         (start == null || date >= start) &&
         (end == null || date <= end)
 }
-
-/** Rows that fall inside [window]; insight comparisons never count future entries. */
-private fun List<Entry>.inInsightWindow(window: InsightWindow, today: LocalDate): List<Entry> =
-    filter { entry -> entry.isInWindow(window.start, window.end, today, showFuture = false) }
 
 /**
  * Epoch-millis lower bound for a period query. Entries are re-filtered in memory

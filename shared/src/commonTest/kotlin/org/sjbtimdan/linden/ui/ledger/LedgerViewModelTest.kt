@@ -1385,66 +1385,6 @@ class LedgerViewModelTest : StringSpec({
             entries.map { it.amount } shouldBe listOf(1_500L, 2_500L)
         }
     }
-
-    "spending insights compare month-to-date with the same range last month" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
-                ExpenseEntry(
-                    0,
-                    groceries,
-                    "Last month",
-                    main,
-                    1_000,
-                    createdAt = Instant.parse("2026-08-10T12:00:00Z"),
-                ),
-            )
-            viewModel.createEntry(
-                ExpenseEntry(
-                    0,
-                    groceries,
-                    "This month",
-                    main,
-                    1_200,
-                    createdAt = Instant.parse("2026-09-10T12:00:00Z"),
-                ),
-            )
-
-            viewModel.setPeriod(LedgerPeriod.Month)
-
-            val insights = viewModel.spendingInsights.value.shouldNotBeNull()
-            insights.currentSpent shouldBe 1_200L
-            insights.previousSpent shouldBe 1_000L
-            insights.changePercent shouldBe 20
-        }
-    }
-
-    "spending insights are null outside the month period" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "X", main, 500))
-
-            viewModel.spendingInsights.value.shouldBeNull()
-        }
-    }
-
-    "spending insights follow month navigation" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Aug", main, 1_000, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
-            )
-            viewModel.createEntry(
-                ExpenseEntry(0, groceries, "Sep", main, 1_200, createdAt = Instant.parse("2026-09-10T12:00:00Z")),
-            )
-
-            viewModel.setPeriod(LedgerPeriod.Month)
-            viewModel.spendingInsights.value?.currentSpent shouldBe 1_200L
-
-            viewModel.goToPreviousPeriod()
-            viewModel.spendingInsights.value?.currentSpent shouldBe 1_000L
-        }
-    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
