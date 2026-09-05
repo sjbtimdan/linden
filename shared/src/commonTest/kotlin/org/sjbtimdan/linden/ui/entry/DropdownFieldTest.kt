@@ -205,8 +205,7 @@ class DropdownFieldTest : StringSpec({
                 onNode(hasSetTextAction()).performTextInput("sav")
                 onNodeWithText("Savings").performClick()
 
-                // The label floats onto the border once the field holds text, so
-                // click the field itself to reopen.
+                // With text present the label floats; click the field itself to reopen.
                 onNode(hasSetTextAction() and hasText("Savings")).performClick()
 
                 accountOptions.forEach { option ->
@@ -235,8 +234,7 @@ class DropdownFieldTest : StringSpec({
                 accountOptions.forEach { option ->
                     onNodeWithText(option).assertIsDisplayed()
                 }
-                // Predicted options are highlighted and lead the list in
-                // prediction order; the rest follows alphabetically.
+                // Predicted options lead the list, highlighted.
                 onNode(hasText("Savings") and hasContentDescription("Recommended")).assertIsDisplayed()
                 onNode(hasText("Checking") and hasContentDescription("Recommended")).assertIsDisplayed()
                 onNode(hasText("Credit Card") and hasContentDescription("Recommended")).assertDoesNotExist()

@@ -89,10 +89,9 @@ fun EntryForm(
         fromAccount != null && toAccount != null &&
         fromAccount.currency != toAccount.currency
 
-    // While a field is focused the rest of the form collapses so that field and
-    // its options get the whole area above the keyboard. The focused field itself
-    // must stay mounted — unmounting it would drop focus — so each section only
-    // hides while a *different* field is active.
+    // While a field is focused the form collapses so that field and its options
+    // get the whole area above the keyboard. The focused field must stay mounted
+    // (unmounting drops focus), so sections hide only while another is active.
     var activeField by remember { mutableStateOf<ActiveField?>(null) }
     var amountWarning by remember { mutableStateOf<String?>(null) }
     var toAmountWarning by remember { mutableStateOf<String?>(null) }
@@ -101,8 +100,6 @@ fun EntryForm(
     }
     val editing = activeField != null
 
-    // The screen's back arrow bumps this to close the calculators from outside;
-    // the focused-field states are focus-driven and drop with clearFocus instead.
     LaunchedEffect(editEpoch) {
         if (activeField == ActiveField.Amount || activeField == ActiveField.ToAmount) activeField = null
     }
@@ -230,8 +227,6 @@ fun EntryForm(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // While a dropdown or calculator is open only that field and its chips
-        // show; the description would just be dead space beneath them.
         if (activeField == null || activeField == ActiveField.Description) {
             val visibleSuggestions = state.description.trim().let { query ->
                 val matches = if (query.isEmpty()) {
@@ -259,8 +254,6 @@ fun EntryForm(
                     .onFocusChanged { activeField = if (it.isFocused) ActiveField.Description else null }
                     .fillMaxWidth(),
             )
-            // Chips live in the layout instead of a popup so the keyboard can never cover them;
-            // they narrow as you type and disappear when focus moves elsewhere.
             if (activeField == ActiveField.Description && visibleSuggestions.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 OptionChipRow(
@@ -301,8 +294,7 @@ fun EntryForm(
                 onChange = onCreatedAtChange,
             )
 
-            // Chips for whole entries likely to be repeated now; picking one fills
-            // the form, keeping the current date and time.
+            // Quick entries fill the form from a past entry but keep the current date and time.
             if (quickEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -319,8 +311,6 @@ fun EntryForm(
         }
     }
 
-    // The scrollable column above collapses while the calculator is open, so the
-    // keypad replaces the whole form and gets the available space.
     if (activeField == ActiveField.Amount) {
         AmountCalculator(
             initialMinor = state.amount,

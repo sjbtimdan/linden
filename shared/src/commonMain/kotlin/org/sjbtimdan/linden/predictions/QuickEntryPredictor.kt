@@ -45,8 +45,8 @@ fun predictQuickEntries(
         .groupingBy { it.description!!.lowercase() }
         .eachCount()
 
-    // Descriptions entered today are excluded: the user just entered them, so
-    // they don't need to be suggested again — even when they recur monthly.
+    // Descriptions entered today are skipped: the user just typed them and
+    // doesn't need them re-suggested, even when they recur monthly.
     val enteredToday = entries
         .filter { it.type == input.type }
         .filter { it.createdAt.toLocalDateTime(timeZone).date == now.toLocalDateTime(timeZone).date }

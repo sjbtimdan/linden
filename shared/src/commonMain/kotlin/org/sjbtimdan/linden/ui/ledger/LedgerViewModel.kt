@@ -58,18 +58,17 @@ class LedgerViewModel(
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
 
-    /** Amount filter applied to the entries view, or null for no amount filter. */
     private val _amountFilter = MutableStateFlow<AmountFilter?>(null)
     val amountFilter: StateFlow<AmountFilter?> = _amountFilter.asStateFlow()
 
-    /** Whether future-dated entries are shown in the ledger (all view modes). */
+    /** Show future-dated entries in every view mode. */
     private val _showFuture = MutableStateFlow(false)
     val showFuture: StateFlow<Boolean> = _showFuture.asStateFlow()
 
     private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.Month, today()))
     val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
 
-    /** Start/end of the selected period's window, derived once and reused by every period flow. */
+    /** Selected period's start/end, derived once and shared by every period flow. */
     private val periodWindow: StateFlow<PeriodWindow?> = _periodSelection
         .map { selection ->
             val start = selection.period.windowStart(selection.anchor) ?: return@map null
@@ -81,11 +80,10 @@ class LedgerViewModel(
     private val _viewMode = MutableStateFlow(LedgerViewMode.Entries)
     val viewMode: StateFlow<LedgerViewMode> = _viewMode.asStateFlow()
 
-    /** Id of the category the entries view is narrowed to, or null for all entries. 0 means "Uncategorized". */
+    /** Category filter id; 0 means "Uncategorized". */
     private val _categoryFilter = MutableStateFlow<Long?>(null)
     val categoryFilter: StateFlow<Long?> = _categoryFilter.asStateFlow()
 
-    /** Id of the account the entries view is narrowed to, or null for all accounts. */
     private val _accountFilter = MutableStateFlow<Long?>(null)
     val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
 
@@ -94,9 +92,7 @@ class LedgerViewModel(
         _showFuture,
     ) { window, showFuture -> window to showFuture }
         .flatMapLatest { (window, showFuture) ->
-            // Only rows at or after a safe lower bound are fetched from the database.
-            // The exact window and the "nothing in the future" rule are still enforced
-            // here at emission time so a stale "today" never hides new entries.
+            // Only a safe lower bound is queried; the window rules are enforced here with a fresh "today".
             val source = window?.start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: entryDao.getAll()
             source.map { rows ->
                 val now = today()
@@ -124,9 +120,8 @@ class LedgerViewModel(
     }.stateFlow(emptyList())
 
     /**
-     * Windows for the spending insights comparison: the selected month up to today
-     * and the same day-range of the previous month. Null unless the period is
-     * [LedgerPeriod.Month] with at least one elapsed day.
+     * Month-to-date window and the same day-range of the previous month; null
+     * unless the period is [LedgerPeriod.Month] with at least one elapsed day.
      */
     private val insightWindows: StateFlow<Pair<InsightWindow, InsightWindow>?> = _periodSelection
         .map { selection ->
@@ -135,11 +130,7 @@ class LedgerViewModel(
         }
         .stateFlow(null)
 
-    /**
-     * Entries of the current and the previous insight window, fetched with a
-     * single query from the earlier of the two window starts. Both windows stay
-     * empty while [insightWindows] is null (not a month period).
-     */
+    /** Entries of both insight windows, fetched with one query from the earlier start. */
     private val insightEntries: StateFlow<Pair<List<Entry>, List<Entry>>> = insightWindows
         .flatMapLatest { windows ->
             if (windows == null) return@flatMapLatest flowOf(emptyList<Entry>() to emptyList<Entry>())
@@ -153,10 +144,8 @@ class LedgerViewModel(
         .stateFlow(emptyList<Entry>() to emptyList<Entry>())
 
     /**
-     * Spending insights for the selected month: expenses month-to-date vs the same
-     * day-range of the previous month, plus the top expense categories. Null when
-     * the period is not [LedgerPeriod.Month], when there is no spending at all, or
-     * when a rate is missing.
+     * Spending insights for the selected month: month-to-date expenses vs the same
+     * day-range of last month, plus the top expense categories. Null outside a month.
      */
     val spendingInsights: StateFlow<SpendingInsights?> = combine(
         insightEntries,
@@ -168,12 +157,10 @@ class LedgerViewModel(
     }.stateFlow(null)
 
     /**
-     * Entries shown by the entries view: the period/search/type filtered entries,
-     * narrowed to a single category and/or account while those filters are set.
-     * Transfers never contribute to category totals, so they are excluded from a
-     * category-filtered view to keep the list consistent with the category total
-     * it drills into. The account filter keeps transfers of that account — whether
-     * it is the source or the target.
+     * Entries shown by the entries view, narrowed to a category and/or account
+     * while those filters are set. A category filter drops transfers — they never
+     * contribute to category totals — while an account filter keeps transfers to
+     * or from that account.
      */
     val displayedEntries: StateFlow<List<Entry>> = combine(
         entries,
@@ -196,9 +183,8 @@ class LedgerViewModel(
 
     /**
      * Net total of the displayed entries in the default currency; null when a rate
-     * is missing. Without an account filter transfers are net zero internally and
-     * excluded; with one they count against that account's balance: out of the
-     * account negative, into it positive.
+     * is missing. Transfers cancel out unless an account filter counts them toward
+     * that account's balance.
      */
     val totalMinor: StateFlow<Long?> = combine(
         displayedEntries,
@@ -215,22 +201,16 @@ class LedgerViewModel(
         }
     }.stateFlow(0L)
 
-    /**
-     * Whether at least one entry exists anywhere, regardless of the selected
-     * period or of any filter. Lets the ledger distinguish "this app is brand
-     * new" (guided empty state with a call to action) from "entries exist but
-     * none match" (plain empty message).
-     */
+    /** Whether any entry exists at all, regardless of period or filters — drives the
+     * guided empty state for a new app vs the plain message for an empty match. */
     val hasAnyEntries: StateFlow<Boolean> = entryDao.getAll().map { it.isNotEmpty() }.stateFlow(false)
 
-    /**
-     * Last day of the selected period (inclusive); null for [LedgerPeriod.All].
-     */
+    /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */
     private val periodEnd: StateFlow<LocalDate?> = periodWindow
         .map { it?.end }
         .stateFlow(null)
 
-    /** All entries created at or before the end of the selected period (safety margin included). */
+    /** Entries dated up to the period end, fetched with a safety margin. */
     private val entriesUpToPeriodEnd: StateFlow<List<Entry>> = periodEnd
         .flatMapLatest { end ->
             val source = end?.let { entryDao.getUpTo(it.sqlUpperBound()) } ?: entryDao.getAll()
@@ -239,10 +219,9 @@ class LedgerViewModel(
         .stateFlow(emptyList())
 
     /**
-     * Balance of each account at the end of the selected period in the account's own
-     * currency: initial balance plus the net of entries dated on or before the last
-     * day of the period (or today, whichever is earlier — entries in the future never
-     * count). For [LedgerPeriod.All] this is the current balance.
+     * Balance of each account at period end in its own currency: initial balance
+     * plus entries through the period end, stopping at today unless future entries
+     * are shown.
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
         entriesUpToPeriodEnd,
@@ -251,11 +230,9 @@ class LedgerViewModel(
         _showFuture,
     ) { entries, end, accounts, showFuture ->
         val now = today()
+        // Entries dated after today count only when future entries are shown.
         val cutoff = when {
-            // Showing future entries: include everything up to the period end (or all for "All").
             showFuture -> end
-
-            // Otherwise balances stop at today, so entries in the future never count.
             else -> end?.let { minOf(it, now) } ?: now
         }
         accountBalancesAtEnd(entries, cutoff, accounts)

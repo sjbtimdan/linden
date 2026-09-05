@@ -35,8 +35,7 @@ fun <T> DropdownField(
     var query by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    // The most likely options lead the list, highlighted, and every other option
-    // follows alphabetically so nothing is hidden behind the predictions.
+    // Predicted options lead, highlighted; the rest follow alphabetically so nothing is hidden.
     val predicted = predictedOptions.orEmpty()
         .distinct()
         .filter { it in options }
@@ -52,9 +51,8 @@ fun <T> DropdownField(
         }
     }
     OutlinedTextField(
-        // Derived, not synced: while unfocused the field always shows the current
-        // selection (so external changes like a form reset can't leave stale text),
-        // and focusing starts a fresh search.
+        // Derived, not synced: while unfocused the field shows the current selection
+        // (a form reset can't leave stale text); focusing starts a fresh search.
         value = if (focused) query else selected?.let(optionLabel).orEmpty(),
         onValueChange = { query = it },
         label = { Text(label) },

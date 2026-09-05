@@ -80,19 +80,18 @@ fun EntryPoint(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Seeds the draft from the last entry of the selected type on first show.
-    // The ViewModel keeps the draft across configuration changes, so this only
-    // runs when the screen (and thus the draft) is created fresh.
+    // Seeds the draft from the last entry of the selected type. The ViewModel
+    // keeps the draft across configuration changes, so this runs only when the
+    // screen (and thus the draft) is created fresh.
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
     }
 
     var fieldFocused by remember { mutableStateOf(false) }
 
-    // While a field is focused the form collapses to just that field and its
-    // keyboard. The back arrow exits that state: it drops focus (which closes
-    // text fields and dropdowns) and bumps [editEpoch] so EntryForm closes its
-    // calculators. The draft is preserved — Clear is the full reset.
+    // The back arrow exits editing: clearFocus closes text fields and dropdowns,
+    // bumping editEpoch closes EntryForm's calculators. The draft stays — Clear
+    // is the full reset.
     var editEpoch by remember { mutableStateOf(0) }
     val exitEditing: () -> Unit = {
         focusManager.clearFocus()
@@ -114,8 +113,8 @@ fun EntryPoint(
             .imePadding()
             .padding(ScreenPadding)
             .widthIn(max = ScreenMaxWidth)
-            // Tapping anywhere outside a field dismisses the keyboard. Focus loss
-            // alone doesn't always close the IME on Android, so hide explicitly.
+            // Tapping outside a field hides the keyboard too — focus loss alone
+            // doesn't always close the IME on Android.
             .pointerInput(Unit) {
                 detectTapGestures {
                     focusManager.clearFocus()
@@ -123,8 +122,6 @@ fun EntryPoint(
                 }
             },
     ) {
-        // While a field is focused the form collapses to just that field and its
-        // keyboard, so the type selector hides too and only a visible cancel remains.
         if (!fieldFocused) {
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 entryTypes.forEachIndexed { index, type ->
@@ -196,10 +193,7 @@ fun EntryPoint(
                     onDescriptionChange = viewModel::onDescriptionChange,
                     onCreatedAtChange = viewModel::onCreatedAtChange,
                     onNavigateToSettings = onNavigateToSettings,
-                    // The form collapses to the focused field + its options; hide the
-                    // action buttons too so everything fits above the keyboard.
                     onFieldFocusChange = { fieldFocused = it },
-                    // Bumped by the back arrow so the form closes its calculators.
                     editEpoch = editEpoch,
                     descriptionSuggestions = descriptionSuggestions,
                     accountSuggestions = accountSuggestions,

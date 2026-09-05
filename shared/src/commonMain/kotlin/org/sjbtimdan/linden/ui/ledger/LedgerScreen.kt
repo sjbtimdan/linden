@@ -114,29 +114,22 @@ fun LedgerScreen(
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
     var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
-    // Content-first: the search/filter panel starts collapsed so new users see
-    // the mode tabs, the period bar and the list. Active filters stay visible
-    // as removable summary chips below the period bar.
+    // Starts collapsed so the tabs, period bar and list lead; active filters stay
+    // visible as removable chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
-    // The consolidated entry filters live in a dialog opened from the panel.
     var filtersOpen by remember { mutableStateOf(false) }
-    // Collapsing the spending insights hides the details behind a slim header for
-    // the rest of the session; any period change re-expands them for the new window.
+    // Insights collapse to a slim header for the session; any period change re-expands them.
     var insightsCollapsed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(periodSelection) {
         insightsCollapsed = false
     }
-    // The search field means different things per view: it narrows entry text in
-    // the entries view and account/category names in the other two. The label
-    // says which one is active, so a single field has no hidden personalities.
+    // Search narrows entry text in the entries view and names in the other two — the label says which.
     val searchLabel = when (viewMode) {
         LedgerViewMode.Entries -> "Search entries"
         LedgerViewMode.Accounts -> "Filter accounts"
         LedgerViewMode.Categories -> "Filter categories"
     }
-    // Whether any chip filter applies to the current view. The Filters control
-    // stays highlighted while one does; the dialog itself shows which filters
-    // are set, so the control never counts them.
+    // The Filters control only highlights while a chip filter applies; the dialog shows which are set.
     val hasActiveChipFilters = when (viewMode) {
         LedgerViewMode.Accounts -> false
 
@@ -229,9 +222,7 @@ fun LedgerScreen(
                     )
                 }
 
-                // All chip filters are consolidated behind a single "Filters" control
-                // that opens the filter dialog. The accounts view has no chip filters:
-                // its search field is the only narrowing control there.
+                // The accounts view has no chip filters, so its Filters control is omitted.
                 if (viewMode != LedgerViewMode.Accounts) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FilterChip(
@@ -255,10 +246,6 @@ fun LedgerScreen(
             }
         }
 
-        // Spending insights sit right below the filters region, above the period
-        // bar: they summarize the current month, while the period selector and
-        // its total stay anchored to the list underneath. The card collapses to
-        // a slim header and re-expands in one tap (insightsCollapsed).
         val insights = spendingInsights
         if (viewMode == LedgerViewMode.Entries && insights != null) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -302,10 +289,8 @@ fun LedgerScreen(
             )
         }
 
-        // Every active filter of the entries view is summarized here as a removable
-        // chip, whether the filter panel above is expanded or collapsed. The summary
-        // is the passive indicator that the list is narrowed, and "Clear all" resets
-        // everything at once.
+        // Active filters as removable chips — the passive signal that the list is
+        // narrowed, whether the filter panel is expanded or collapsed.
         val activeTypeFilter = typeFilter
         val activeAmountFilter = amountFilter
         val activeFilterChips = listOfNotNull(
@@ -388,10 +373,8 @@ fun LedgerScreen(
                 } else {
                     accountBalances.filter { it.account.name.contains(accountFilter, ignoreCase = true) }
                 }
-            // Adjust Balance reconciles to the account's current balance, which only matches
-            // the balance shown in the list when the selected period includes today. For a
-            // historical period the list shows a period-end balance, so adjusting would be
-            // confusing — the overflow menu disables the action with that reason.
+            // Adjust Balance targets today's balance; for a historical period the list
+            // shows a period-end balance, so the action is disabled there.
             val canAdjustBalance = periodSelection.period.includes(viewModel.today(), periodSelection.anchor)
             AccountsList(
                 balances = shownBalances,
@@ -401,11 +384,9 @@ fun LedgerScreen(
                 } else {
                     "No accounts yet."
                 },
-                // With no accounts at all (and no search text), point at where accounts are created.
                 emptyActionLabel = if (accountFilter.isEmpty()) "Create an account" else null,
                 onEmptyAction = onNavigateToAccounts,
                 canAdjustBalance = canAdjustBalance,
-                // Account rows drill into their entries, mirroring category rows.
                 onAccountClick = { viewModel.openAccount(it.account.id) },
                 onAdjustBalance = { item ->
                     val current = currentAccountBalances[item.account.id] ?: item.account.initialBalance
@@ -449,9 +430,8 @@ fun LedgerScreen(
                     .weight(1f),
             )
         } else if (displayedEntries.isEmpty()) {
-            // A brand-new dataset gets guided empty states with a call to action;
-            // once entries exist somewhere, the plain messages describe the filter
-            // or period narrowing that emptied the list.
+            // Guided empty state with a call to action for a brand-new dataset;
+            // once entries exist anywhere the plain message explains the narrowing.
             val nothingFiltered = searchQuery.isBlank() &&
                 typeFilter == null &&
                 categoryFilter == null &&
@@ -496,8 +476,8 @@ fun LedgerScreen(
                             EntryRow(
                                 entry = item.entry,
                                 onClick = { viewModel.openEditDialog(item.entry) },
-                                // Day headers above already carry the date; only the Day
-                                // period needs the per-row timestamp to tell entries apart.
+                                // Day headers already show the date; only Day rows need a
+                                // timestamp to tell entries apart.
                                 showTimestamp = periodSelection.period == LedgerPeriod.Day,
                             )
                         }
@@ -593,10 +573,8 @@ fun LedgerScreen(
 }
 
 /**
- * Always-visible header that toggles whether the search field and the filter
- * combo boxes are shown. Collapsing reclaims vertical space for the list; while
- * collapsed, the trailing search icon opens the panel and focuses the search
- * field in one tap.
+ * Always-visible header toggling the search/filter panel; while collapsed, its
+ * trailing search icon expands the panel and focuses the field in one tap.
  */
 @Composable
 private fun FiltersHeader(expanded: Boolean, onToggle: () -> Unit, onSearchClick: (() -> Unit)? = null) {

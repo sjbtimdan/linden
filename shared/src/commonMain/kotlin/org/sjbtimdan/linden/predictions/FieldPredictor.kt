@@ -69,8 +69,8 @@ private fun predictField(
         val id = predictedId(candidate) ?: return@mapNotNull null
         val match = baseMatchScore(candidate, input.categoryId, input.accountId, input.amount) ?: 0.0
         val description = descriptionScore(candidate.description, input.description)
-        // Time affinity alone never qualifies a candidate; at least one entered
-        // signal must match, otherwise everything recent would be suggested.
+        // At least one entered signal must match — time affinity alone would
+        // suggest everything recent.
         if (match == 0.0 && description == 0.0) return@mapNotNull null
         val score = (match + description + timeAffinityScore(candidate.createdAt, now, timeZone)) *
             recencyWeight(candidate.createdAt, now)

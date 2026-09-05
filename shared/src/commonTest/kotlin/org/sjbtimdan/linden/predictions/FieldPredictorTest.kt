@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
 class FieldPredictorTest : StringSpec({
-    // 2027-01-19T08:00:00Z, a Tuesday
+    // 2027-01-15T08:00:00Z, a Friday
     val now = Instant.fromEpochMilliseconds(1_800_000_000_000L)
     val main = Account(1, "Main", Currency.CHF)
     val savings = Account(2, "Savings", Currency.CHF)
@@ -161,8 +161,8 @@ class FieldPredictorTest : StringSpec({
         }
 
         "favours candidates on the same weekday" {
-            // B is one weekday off (4 days back) but more recent than C (7 days
-            // back, same weekday as now), yet ranks below it.
+            // B is more recent (4 days back) but on a different weekday; C (7 days
+            // back, same weekday as now) still ranks above it.
             val entries = listOf(
                 expense(1, food, "Coffee", main, 450, now),
                 expense(2, transport, "Train", main, 450, now.minus(4.days)),

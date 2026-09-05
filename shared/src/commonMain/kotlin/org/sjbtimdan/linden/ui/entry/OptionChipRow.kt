@@ -37,9 +37,8 @@ fun <T> OptionChipRow(
         options.forEach { option ->
             val isSelectedChip = isSelected(option)
             val isPredictedChip = !isSelectedChip && isPredicted(option)
-            // A bare tap handler instead of a Material chip: focusable chip internals
-            // steal focus from the text field on press, which unmounts this row
-            // mid-gesture before the click ever completes.
+            // A bare tap handler, not a Material chip: focusable chip internals steal
+            // focus on press, unmounting this row mid-gesture before the click ends.
             Surface(
                 shape = RoundedCornerShape(8.dp),
                 color = when {

@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
 class QuickEntryPredictorTest : StringSpec({
-    // 2027-01-19T08:00:00Z, a Tuesday
+    // 2027-01-15T08:00:00Z, a Friday
     val now = Instant.fromEpochMilliseconds(1_800_000_000_000L)
     val main = Account(1, "Main", Currency.CHF)
     val savings = Account(2, "Savings", Currency.CHF)
@@ -231,7 +231,7 @@ class QuickEntryPredictorTest : StringSpec({
         "excludes a recurring description entered today" {
             // Service Charge recurs monthly, but the user just entered it today.
             val entries = listOf(
-                expense(1, "Service Charge", now), // entered today
+                expense(1, "Service Charge", now),
                 expense(2, "Service Charge", now.minus(30.days)),
                 expense(3, "Service Charge", now.minus(60.days)),
                 expense(4, "Coffee", now.minus(1.days)),
@@ -243,7 +243,7 @@ class QuickEntryPredictorTest : StringSpec({
 
         "excludes any description entered today, not just recurring ones" {
             val entries = listOf(
-                expense(1, "Coffee", now), // entered today
+                expense(1, "Coffee", now),
                 expense(2, "Coffee", now.minus(1.days)),
                 expense(3, "Train", now.minus(1.days)),
                 expense(4, "Train", now.minus(2.days)),

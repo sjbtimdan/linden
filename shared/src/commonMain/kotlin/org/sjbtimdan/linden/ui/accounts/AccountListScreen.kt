@@ -242,8 +242,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             onSave = {
                 val name = state.name.trim()
                 if (name.isNotEmpty()) {
-                    // An empty initial balance means zero; any other unparseable value is
-                    // an error and must not be silently truncated to zero.
+                    // Blank means zero; any other unparseable value is an error, not zero.
                     val initialBalance = if (state.initialBalanceText.isBlank()) {
                         0L
                     } else {

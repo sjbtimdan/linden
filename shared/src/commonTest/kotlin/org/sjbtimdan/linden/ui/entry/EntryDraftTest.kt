@@ -50,8 +50,6 @@ private fun draft(
 
 class EntryDraftTest : StringSpec({
 
-    // isValid
-
     "expense and income drafts are valid with amount, account, and category" {
         draft().isValid(accounts) shouldBe true
         draft(type = EntryType.Income, categoryId = salary.id).isValid(accounts) shouldBe true
@@ -96,8 +94,6 @@ class EntryDraftTest : StringSpec({
         draft(type = EntryType.Transfer, accountId = 99, toAccountId = savingsChf.id)
             .isValid(accounts) shouldBe false
     }
-
-    // toEntry
 
     "expense drafts convert to an expense entry" {
         val entry = draft(amountText = "4.50", description = "  Coffee  ").toEntry(accounts, categories)
@@ -170,8 +166,6 @@ class EntryDraftTest : StringSpec({
         draft(type = EntryType.Transfer, toAccountId = 99).toEntry(accounts, categories).shouldBeNull()
     }
 
-    // forNew
-
     "new drafts start empty" {
         val state = EntryDraft.forNew()
         state.editing shouldBe null
@@ -214,8 +208,6 @@ class EntryDraftTest : StringSpec({
         state.accountId shouldBe null
         state.description shouldBe ""
     }
-
-    // forEdit
 
     "editing an expense entry round-trips" {
         val entry = ExpenseEntry(7, groceries, "Coffee", main, 450, createdAt = createdAt, createdZone = createdZone)
@@ -262,8 +254,6 @@ class EntryDraftTest : StringSpec({
         val saved = EntryDraft.forEdit(original).toEntry(accounts, categories)
         saved shouldBe original
     }
-
-    // carryOverCommonFields
 
     "carryOverCommonFields keeps the common fields but not the type-specific ones" {
         val previous = draft(

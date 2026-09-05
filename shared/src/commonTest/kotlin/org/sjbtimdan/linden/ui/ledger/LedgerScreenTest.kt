@@ -179,7 +179,6 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Today").assertIsDisplayed()
             onNodeWithText("Scheduled").assertDoesNotExist()
 
-            // The toggle lives on the period navigator, always visible.
             onNodeWithTag("showFutureToggle").performClick()
 
             onNodeWithText("Scheduled").assertIsDisplayed()
@@ -244,7 +243,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Amount").performClick()
             waitForIdle()
-            // The calculator opens prefilled with the current amount; clear and retype.
+            // Clear the prefilled current amount before typing the new one.
             onNodeWithText("C").performClick()
             onNodeWithText("5").performClick()
             onNodeWithText(".").performClick()
@@ -526,16 +525,14 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            // The amount appears twice while shown: once in the entry row and once
-            // in the top total label.
+            // Both the entry row and the top total show the amount.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
             onAllNodesWithText("***").assertCountEquals(0)
 
             settingsDao.setHideEntryTotal(true)
             waitForIdle()
 
-            // Hiding masks the top total (leaving only the entry row's amount) and
-            // shows a *** placeholder in its place.
+            // Hiding masks the total with a *** placeholder; only the row amount stays.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(1)
             onNodeWithText("***").assertIsDisplayed()
         }
@@ -554,8 +551,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("viewModeTab-Accounts").performClick()
 
-            // Accounts view: the balance row replaces the entries. The tabs and the
-            // period bar stay visible; the entries-only filters are not shown.
+            // Accounts view: balance rows replace entries; tabs and period stay, filters hide.
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertIsDisplayed()
             onNodeWithText("+ 20.00 CHF").assertIsDisplayed()
@@ -572,7 +568,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("viewModeTab-Entries").performClick()
 
-            // Back in the entries view the filters control is there again.
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithTag("filtersButton").assertIsDisplayed()
             onNodeWithText("20.00 CHF").assertDoesNotExist()
@@ -606,7 +601,6 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("filtersButton").assertDoesNotExist()
             onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
 
-            // Switching back keeps the filter.
             onNodeWithTag("viewModeTab-Entries").performClick()
 
             onNodeWithText("Refund").assertIsDisplayed()
@@ -796,7 +790,6 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("viewModeTab-Categories").performClick()
             onNodeWithText("Groceries").performClick()
 
-            // The entries view is narrowed to Groceries and the chip is visible.
             onNodeWithText("Coffee").assertIsDisplayed()
             onNodeWithText("Lunch").assertIsDisplayed()
             onNodeWithText("Pay").assertDoesNotExist()
@@ -891,7 +884,6 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("viewModeTab-Accounts").performClick()
             onNodeWithText("Savings").performClick()
 
-            // The entries view is narrowed to Savings and the chip is visible.
             onNodeWithText("Bonus").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
             onNodeWithTag("accountFilterChip").assertIsDisplayed()
@@ -1061,13 +1053,12 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("viewModeTab-Accounts").performClick()
 
-            // Switch to a bounded period (Month) then navigate to the previous (historical) month.
+            // Navigate to the previous, historical month.
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
             onNodeWithContentDescription("Previous period").performClick()
 
-            // The action stays visible but disabled, with the reason right there —
-            // no dead-end dialog after the fact.
+            // The action stays visible but disabled, reason inline — no dead-end dialog.
             onNodeWithContentDescription("More options").performClick()
             onNodeWithText("Adjust Balance").assertIsNotEnabled()
             onNodeWithText("Only available when the latest period is shown.").assertIsDisplayed()
@@ -1105,7 +1096,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertDoesNotExist()
             onNodeWithTag("filtersButton").assertDoesNotExist()
-            // The mode tabs are navigation and never collapse.
             onNodeWithTag("viewModeTab-Entries").assertIsDisplayed()
             onNodeWithTag("viewModeTab-Accounts").assertIsDisplayed()
             onNodeWithTag("viewModeTab-Categories").assertIsDisplayed()
@@ -1154,11 +1144,9 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertDoesNotExist()
             onNodeWithTag("filtersButton").assertDoesNotExist()
-            // The tabs survive collapsing: only the search/filter panel hides.
             onNodeWithTag("viewModeTab-Entries").assertIsDisplayed()
             onNodeWithTag("periodLabel").assertIsDisplayed()
             onNodeWithText("Coffee").assertIsDisplayed()
-            // The period total stays visible when the filters are collapsed.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
         }
     }
@@ -1180,7 +1168,6 @@ class LedgerScreenTest : StringSpec({
             waitForIdle()
 
             val collapsedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
-            // Collapsing raises the top of the list, giving it more vertical space.
             collapsedTop shouldBeLessThan expandedTop
         }
     }
@@ -1224,7 +1211,6 @@ class LedgerScreenTest : StringSpec({
             waitForIdle()
 
             onNodeWithTag("searchField").assertDoesNotExist()
-            // The active type filter stays visible as a removable summary chip.
             onNodeWithTag("activeTypeFilterChip").assertIsDisplayed()
             onNodeWithText("Refund").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
@@ -1298,7 +1284,6 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Pay").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
 
-            // Reopen the dialog and reset everything from inside it.
             onNodeWithTag("filtersButton").performClick()
             onNodeWithTag("clearFiltersButton").performClick()
             onNodeWithText("Done").performClick()
@@ -1470,9 +1455,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            // The card sits directly below the search/filter panel: expanding
-            // the panel pushes it down, collapsing tucks it under the header,
-            // and it stays on screen either way.
+            // The card sits below the search/filter panel and stays on screen
+            // whether the panel is expanded or collapsed.
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
 
             expandFilters()
@@ -1576,7 +1560,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("spendingInsightsHeader").assertIsDisplayed()
 
-            // Any period change re-expands the card for the newly selected window.
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("All").performClick()
             onNodeWithTag("periodLabel").performClick()

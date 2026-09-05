@@ -38,8 +38,7 @@ fun predictDescriptions(
             val description = candidate.description?.trim().orEmpty().ifEmpty { return@mapNotNull null }
             val match = baseMatchScore(candidate, input.categoryId, input.accountId, input.amount) ?: 0.0
             val descriptionMatch = descriptionScore(description, input.description)
-            // A typed description narrows candidates to matching descriptions;
-            // otherwise at least one entered field must match.
+            // A typed description must match; otherwise at least one entered field must.
             if (query.isNotEmpty()) {
                 if (descriptionMatch == 0.0) return@mapNotNull null
             } else if (match == 0.0) {

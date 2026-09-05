@@ -11,7 +11,8 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 
-// Generates the master app icon from the design in art/linden-icon.svg.
+// Generates the master app icon from the design in
+// src/main/composeResources/drawable/linden_icon.svg.
 // Run via ./gradlew :desktopApp:renderIcon
 fun main() {
     val size = 1024

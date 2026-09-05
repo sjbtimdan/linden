@@ -41,12 +41,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 /**
- * Amount entry keypad with two modes: a simple numeric keypad (the default) and
- * a full calculator. The toggle button in the display row switches between them
- * and the typed value carries across. Replaces the amount text field while
- * open: the display line shows the running value, "Enter" commits a valid
- * positive amount (or reports an invalid one via [onInvalid]), Escape or the
- * system back discards the edit. The screen's back arrow is the visible way out.
+ * Amount entry keypad with a simple numeric mode (default) and a full
+ * calculator; the display-row toggle switches modes, carrying the typed value
+ * across. Enter commits a valid positive amount via [onEnter] (otherwise
+ * [onInvalid] fires); Escape or the system back cancels via [onCancel].
  */
 @Composable
 fun AmountCalculator(
@@ -94,10 +92,9 @@ fun AmountCalculator(
             }
             .padding(8.dp),
     ) {
-        // Keys cap out at [keyHeight] so they never stretch; the keypad fills
-        // the available height and hugs the bottom of the screen for one-handed
-        // use. When the height is unbounded the keypad gets a fixed height
-        // instead, so it can't grow without limit.
+        // Keys cap at [keyHeight]; the keypad fills the available height and hugs
+        // the bottom for one-handed use, falling back to a fixed height when
+        // the height is unbounded.
         Column(
             modifier = Modifier
                 .fillMaxWidth()

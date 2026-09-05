@@ -117,7 +117,6 @@ class ChipDropdownTest : StringSpec({
                 onNodeWithTag(chipTag).performClick()
                 onNodeWithText("Expense").performClick()
 
-                // Chip label updated; the menu is gone (no other option visible).
                 onNodeWithText("Expense").assertIsDisplayed()
                 onNodeWithText("Income").assertDoesNotExist()
                 onNodeWithText("All").assertDoesNotExist()
@@ -142,7 +141,6 @@ class ChipDropdownTest : StringSpec({
                 onNodeWithTag(chipTag).performClick()
                 onNodeWithText("Expense").performClick()
 
-                // Reopen: the check has moved to the new selection, exactly one item is marked.
                 onNodeWithTag(chipTag).performClick()
                 onNodeWithContentDescription("Selected").assertIsDisplayed()
                 onNode(hasText("Expense") and hasContentDescription("Selected")).assertIsDisplayed()

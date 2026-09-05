@@ -137,16 +137,15 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Account").performClick()
             onNodeWithText("Main").performClick()
             onNodeWithText("Description (optional)").performTextInput("Coffee")
-            // typing the description collapses the form and hides the type tabs;
-            // tapping outside drops focus and brings the buttons back
+            // Typing hides the type tabs; tapOutside restores them.
             onNodeWithText("Expense").assertDoesNotExist()
             tapOutside()
             onNodeWithText("Add").performClick()
 
             onNodeWithText("Added").assertIsDisplayed()
-            // amount is cleared for the next entry
+            // The amount is cleared for the next entry.
             onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
-            // description is prefilled from the saved entry
+            // The description is prefilled from the saved entry.
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
             entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
         }
@@ -155,8 +154,7 @@ class EntryPointTest : StringSpec({
     "clear resets the form without adding an entry" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            // A prior entry prefills the form, so Clear must empty it rather
-            // than restoring the prefill.
+            // The prior entry prefills the form, so Clear must empty it, not restore the prefill.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
 
             setContent {
@@ -174,7 +172,7 @@ class EntryPointTest : StringSpec({
 
             onNode(hasSetTextAction() and hasText("12.50")).assertDoesNotExist()
             onNode(hasSetTextAction() and hasText("Lunch")).assertDoesNotExist()
-            // not reset to the prefill from the last entry either
+            // Not restored to the last entry's prefill either.
             onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
             onNodeWithText("Groceries").assertDoesNotExist()
             onNodeWithText("Main").assertDoesNotExist()
@@ -193,16 +191,14 @@ class EntryPointTest : StringSpec({
             enterAmount("12.50")
             onNodeWithText("Description (optional)").performTextInput("Lunch")
 
-            // typing the description collapses the form and hides the buttons
+            // The action buttons hide while a field is focused.
             onNodeWithTag("saveEntry").assertDoesNotExist()
 
-            // invoke the click action directly; the skiko mouse-click path misses
-            // the button when the form is collapsed, so a gesture-level tap here
-            // would be testing the input injection rather than the back logic
+            // Invoke the click action directly: the skiko mouse-click path misses the
+            // collapsed button, so a gesture tap would test injection, not the back logic.
             onNodeWithContentDescription("Back")
                 .performSemanticsAction(SemanticsActions.OnClick)
 
-            // the form expands with the draft preserved — Clear is the full reset
             onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("Lunch")).assertIsDisplayed()
             onNodeWithTag("saveEntry").assertIsDisplayed()
@@ -239,7 +235,7 @@ class EntryPointTest : StringSpec({
 
             enterAmount("12.50")
             onNodeWithText("Description (optional)").performTextInput("Lunch")
-            // the type tabs are hidden while a field is focused; drop focus first
+            // Drop focus first: the tabs are hidden while a field is focused.
             tapOutside()
             onNodeWithText("Income").performClick()
 
@@ -311,7 +307,7 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Amount (received)").assertIsDisplayed()
             onNodeWithText("Add").assertIsNotEnabled()
-            // focusing the received amount opens its own calculator
+            // The received amount opens its own keypad.
             onNodeWithText("Amount (received)").performClick()
             waitForIdle()
             onNodeWithText("9").performClick()
@@ -355,7 +351,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Amount").performClick()
             waitForIdle()
 
-            // only the calculator keypad remains: no tabs, no form, no actions
+            // Only the calculator keypad remains: no tabs, no form, no actions.
             onNodeWithText("Enter").assertIsDisplayed()
             onNodeWithText("Expense").assertDoesNotExist()
             onNodeWithText("Add").assertDoesNotExist()
@@ -380,7 +376,7 @@ class EntryPointTest : StringSpec({
 
             enterAmount("12.50")
 
-            // reopen the calculator; the back arrow must close it again
+            // Reopen the calculator so the back arrow must close it again.
             onNodeWithText("Amount").performClick()
             waitForIdle()
             onNodeWithText("Enter").assertIsDisplayed()
@@ -390,7 +386,7 @@ class EntryPointTest : StringSpec({
                 .performSemanticsAction(SemanticsActions.OnClick)
             waitForIdle()
 
-            // calculator gone, form expanded, committed value untouched
+            // Back closed the keypad and kept the committed value.
             onNodeWithText("Enter").assertDoesNotExist()
             onNodeWithText("Amount").assertIsDisplayed()
             onNodeWithText("Add").assertIsDisplayed()
@@ -417,7 +413,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Amount (received)").performClick()
             waitForIdle()
 
-            // the received amount gets its own keypad; the form and tabs collapse
+            // The received amount opens its own keypad; the form and tabs collapse.
             onNodeWithText("Enter").assertIsDisplayed()
             onNodeWithText("Transfer").assertDoesNotExist()
             onNodeWithText("Add").assertDoesNotExist()
@@ -427,7 +423,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Enter").performClick()
             waitForIdle()
 
-            // the committed value comes back formatted by the calculator
+            // The committed value comes back formatted by the calculator.
             onNode(hasSetTextAction() and hasText("95.00")).assertIsDisplayed()
             onNodeWithText("Add").performClick()
 
@@ -583,8 +579,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Main").performClick()
 
             onNodeWithText("To account").performClick()
-            // Focusing To account collapses the form, so the From field is gone too;
-            // Main must appear nowhere, i.e. it is never offered as a to-account option.
+            // Collapsed to To account, so Main's absence proves it is not offered as a target.
             onNodeWithText("Main").assertDoesNotExist()
             onNodeWithText("Savings").assertIsDisplayed()
         }
@@ -604,7 +599,7 @@ class EntryPointTest : StringSpec({
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Main").assertIsDisplayed()
-            // amount stays blank, so add is not enabled yet
+            // The amount stays blank, so Add is not enabled yet.
             onNodeWithText("Add").assertIsNotEnabled()
         }
     }
@@ -621,8 +616,7 @@ class EntryPointTest : StringSpec({
 
             waitForText("Coffee")
             enterAmount("4.50")
-            // clear the prefilled description so suggestions can be verified independently;
-            // clearing focuses the field, which collapses the rest of the form
+            // Clear the prefilled description (clearing focuses the field, showing suggestions).
             onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
 
             waitForText("Coffee")
@@ -648,8 +642,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
-            // the suggestion row is dismissed, leaving the field and the
-            // quick-entry chip (which also shows "Coffee")
+            // The suggestion row is gone; the field and the quick-entry chip both show "Coffee".
             onAllNodesWithText("Coffee").assertCountEquals(2)
         }
     }
@@ -672,14 +665,12 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Description (optional)").assertIsFocused()
 
-            // focusing the description collapses the rest of the form and hides the
-            // type tabs; tapping outside drops focus and brings the fields back
+            // The description is focused, so the tabs are hidden until tapOutside drops focus.
             onNodeWithText("Expense").assertDoesNotExist()
             tapOutside()
 
             onNodeWithText("Description (optional)").assertIsNotFocused()
-            // no suggestion was applied to the field; the persistent quick-entry
-            // chip still shows the description
+            // Nothing was applied — only the quick-entry chip still shows the description.
             onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
             onNodeWithText("Quick entry").assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
@@ -722,7 +713,7 @@ class EntryPointTest : StringSpec({
             val groceries = categories.first { it.name == "Groceries" }
             val leisure = categories.first { it.name == "Leisure" }
             val now = Clock.System.now()
-            // The pairings prediction must rediscover from history.
+            // The pairing prediction must be rediscovered from history.
             viewModel.createEntry(ExpenseEntry(0, leisure, "Cinema", savings, 2_000, createdAt = now.minus(5.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
@@ -770,8 +761,8 @@ class EntryPointTest : StringSpec({
             waitForText("Coffee")
             enterAmount("4.50")
 
-            // The only predicted category is the already-selected one, so it is
-            // excluded from the predictions and the full list is shown instead.
+            // The only predicted category is the already-selected one, so it is excluded
+            // from the predictions and the full list is shown instead.
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Leisure").assertIsDisplayed()
@@ -792,7 +783,7 @@ class EntryPointTest : StringSpec({
 
             waitForText("Quick entry")
             onNodeWithText("Quick entry").assertIsDisplayed()
-            // the chip duplicates the prefilled description field
+            // The chip duplicates the prefilled description field.
             onAllNodesWithText("Coffee").assertCountEquals(2)
         }
     }
@@ -885,10 +876,8 @@ private fun ComposeUiTest.waitForText(text: String) {
 }
 
 /**
- * Taps empty space to drop focus. While a field is focused the form collapses,
- * so the bottom-left area of the screen is just dead space; the tap reaches the
- * screen's tap-to-dismiss gesture, which is what real users do to close the
- * keyboard and bring the full form back.
+ * Taps dead space to drop focus, as a user would to close the keyboard and
+ * bring the full form back.
  */
 @OptIn(ExperimentalTestApi::class)
 private fun ComposeUiTest.tapOutside() {

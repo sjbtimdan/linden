@@ -14,9 +14,8 @@
 
 | Item | Impact | Priority | Mitigation |
 |------|--------|----------|------------|
-| Every `.sq` DDL change needs a new `.sqm` migration | Schema is v4 on `main` (`1.sqm` entry CHECKs, `2.sqm` UNIQUE names, `3.sqm` budgets); branch `hide-accounts` adds `4.sqm` (`AccountEntity.hidden`) → v5. Forgetting a migration breaks the persisted desktop DB at `~/.linden/linden.db` | Medium | Add a `.sqm` migration for table changes |
-| Android DB stamped by a newer app version opens as-is | `DatabaseDriverFactory` (androidMain) overrides `onDowngrade` to no-op — additive schema changes are safe, but the leftover `hidden` column + re-stamped `user_version=4` can trip the re-added `4.sqm` (`ADD COLUMN hidden`) on that same device | Low | Reinstall the debug app, or drop/tolerate the column when `hide-accounts` returns (see Known Issues) |
-| Desktop dev DB `~/.linden/linden.db` is stamped v5 with the `hidden` column | Created by the reverted `hide-accounts` build; the JVM driver ignores `user_version` so current v4 code runs fine and the column is inert | Low | Leave untouched — already matches v5 when `hide-accounts` is re-applied |
+| Every `.sq` DDL change needs a new `.sqm` migration | Schema is v5 on `main` (`1.sqm` entry CHECKs, `2.sqm` UNIQUE names, `3.sqm` budgets, `4.sqm` `AccountEntity.hidden`). Forgetting a migration breaks the persisted desktop DB at `~/.linden/linden.db` | Medium | Add a `.sqm` migration for table changes |
+| Android DB with a newer schema opened by an older app | `DatabaseDriverFactory` (androidMain) overrides `onDowngrade` to no-op, so the DB opens but keeps its newer columns, re-stamped to the older `user_version`. Moving back to the newer app replays the re-added migration (`4.sqm` = `ADD COLUMN hidden`) on a table that already has the column → `duplicate column name: hidden` on that device | Low | Reinstall the debug app, or drop/tolerate the leftover column (see Known Issues) |
 | `:shared` Android compiles via `compileAndroidMain`, not `compileDebugKotlin` | Confusing for new devs | Low | Documented in AGENTS.md |
 | Kover coverage only on JVM variant | Android target runs device tests only | Low | `koverVerifyJvm` (50% min) runs as part of `check` |
 
@@ -25,16 +24,16 @@
 **SQLDelight migrations are manual**  
 *Priority*: Medium  
 *Impact*: Editing an `.sq` table without a matching `.sqm` breaks the persisted desktop DB at `~/.linden/linden.db`  
-*Root Cause*: Migrations exist (v4 on `main`, 1–3.sqm) but must be authored by hand  
+*Root Cause*: Migrations exist (v5 on `main`, 1–4.sqm) but must be authored by hand  
 *Proposed Solution*: Keep adding `.sqm` files whenever a table changes  
 *Effort*: Small  
 *Status*: Acknowledged
 
 **Android opens newer DBs via no-op `onDowngrade` (2026-09-04)**  
 *Priority*: Low  
-*Impact*: A DB stamped by a newer app version no longer crashes startup ("Can't downgrade database from version X to Y") — data is preserved and schema changes here are additive-only, so extra columns are ignored safely. Mirrors what the JVM driver does implicitly (it never reads `user_version`).  
+*Impact*: A DB stamped by a newer app version no longer crashes startup ("Can't downgrade database from version X to Y") — data is preserved and schema changes here are additive-only, so extra columns are ignored safely.  
 *Root Cause*: `AndroidSqliteDriver` hands `Schema.version` to SQLiteOpenHelper; its default `onDowngrade` (androidx `SupportSQLiteOpenHelper.Callback`) always throws.  
-*Caveat*: After the no-op downgrade the framework re-stamps the DB to `user_version = Schema.version`, but **the table keeps its newer columns**. If `hide-accounts` (`4.sqm` = `ALTER TABLE AccountEntity ADD COLUMN hidden …`) is re-applied over such a DB, the migration fails with `duplicate column name: hidden`. Desktop is immune: its DB was never re-stamped, so it sits at v5 with the column already present and the re-added code (also v5) runs no migration.  
+*Caveat*: After the no-op downgrade the framework re-stamps the DB to `user_version = Schema.version`, but **the table keeps its newer columns**. If a newer app (schema v5, `4.sqm` = `ALTER TABLE AccountEntity ADD COLUMN hidden …`) is reinstalled over such a DB, the migration replays on a table that already has `hidden` and fails with `duplicate column name: hidden`.  
 *Status*: Acknowledged
 
 ## Open Questions
@@ -47,7 +46,7 @@
 
 | Issue | Severity | Workaround | Status |
 |-------|----------|------------|--------|
-| Android DB downgraded by no-op (v5→v4) keeps its `hidden` column; re-applying `hide-accounts` migration `4.sqm` on that DB errors `duplicate column name: hidden` | Low | Reinstall the debug app (fresh v4 DB migrates cleanly) or make `4.sqm` tolerate the existing column when the branch returns | Known |
+| Device that ran a v5 app then an older one keeps the `hidden` column re-stamped to `user_version=4`; reinstalling v5 replays `4.sqm` (`ADD COLUMN hidden`) on that DB and errors `duplicate column name: hidden` | Low | Reinstall the debug app (fresh v5 DB migrates cleanly) or make `4.sqm` tolerate the existing column | Known |
 
 ## Insights & Lessons Learned
 
@@ -62,7 +61,7 @@
 - **Adjust balance as ordinary entries** - Reconciliation just creates income/expense, no hidden state
 
 ### What Could Be Better
-- **Manual SQLDelight migrations** - Schema v4 on `main` (v5 on `hide-accounts`) but every `.sq` DDL change still needs a hand-written `.sqm`
+- **Manual SQLDelight migrations** - Schema v5 on `main` but every `.sq` DDL change still needs a hand-written `.sqm`
 - **`formatAmountCompact` not parseable** - Can't pre-fill edit fields with it
 
 ### Lessons Learned

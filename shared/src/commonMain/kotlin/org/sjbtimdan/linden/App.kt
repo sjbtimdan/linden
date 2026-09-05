@@ -61,7 +61,6 @@ fun App(dependencies: AppDependencies) {
         onDispose { dependencies.httpClient.close() }
     }
     LaunchedEffect(Unit) {
-        // Refresh rates at startup only when the cached rates are more than 24 hours old.
         ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()

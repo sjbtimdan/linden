@@ -43,7 +43,6 @@ class CategoryListScreenTest : StringSpec({
             onNodeWithText("New Category").performClick()
             onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
 
-            // The OutlinedTextField fills in via the node's text input semantics
             onNodeWithText("Save").performClick()
         }
     }

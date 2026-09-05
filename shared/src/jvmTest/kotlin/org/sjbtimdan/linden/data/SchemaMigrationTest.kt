@@ -33,10 +33,8 @@ class SchemaMigrationTest : StringSpec({
         """.trimIndent()
         driver.execute(null, insertEntry, 0)
 
-        // Migrate to v2.
         LindenDatabase.Schema.migrate(driver, 1, 2).await()
 
-        // Data is preserved.
         val db = LindenDatabase(driver)
         val entries = db.entryQueries.selectAllRows().executeAsList()
         entries.size shouldBe 1
@@ -106,10 +104,8 @@ class SchemaMigrationTest : StringSpec({
         driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
         driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
 
-        // Migrate to v3.
         LindenDatabase.Schema.migrate(driver, 2, 3).await()
 
-        // Data is preserved; duplicates renamed.
         val db = LindenDatabase(driver)
         val accounts = db.accountQueries.selectAll().executeAsList()
         accounts.map { it.name } shouldBe listOf("Cash", "Cash (2)", "Savings")
@@ -142,7 +138,6 @@ class SchemaMigrationTest : StringSpec({
             0,
         )
 
-        // Migrate to v4.
         LindenDatabase.Schema.migrate(driver, 3, 4).await()
 
         val db = LindenDatabase(driver)

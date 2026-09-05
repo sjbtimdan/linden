@@ -42,8 +42,8 @@ fun EntryDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
-        // Only Cancel (or the Android back button) closes the dialog; stray taps on
-        // the scrim must not discard an in-progress entry.
+        // Only Cancel or the system back closes the dialog; scrim taps must not
+        // discard an in-progress entry.
         properties = DialogProperties(dismissOnClickOutside = false),
         title = {
             Text(

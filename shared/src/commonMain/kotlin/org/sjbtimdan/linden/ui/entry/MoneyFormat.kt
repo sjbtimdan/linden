@@ -7,13 +7,11 @@ package org.sjbtimdan.linden.ui.entry
 expect fun formatAmount(amount: Long): String
 
 /**
- * Parses a user-typed amount (e.g. "42.50", "42,5", "1,000.00", "-500") into minor
- * units. A leading `-` makes the result negative (used for liabilities such as a
- * negative account balance). The last `.` or `, ` is the decimal separator; other
- * occurrences of `.`/`, ` and spaces in the integer part are treated as grouping
- * separators. A trailing separator followed by exactly 3 digits is a grouping
- * separator (minor units are always 2 digits), so "1,000", "1.000" and "1 000" all
- * parse as 1000. Returns null when the input is not a valid amount.
+ * Parses a user-typed amount ("42.50", "42,5", "1,000.00", "-500") into minor
+ * units, or null when invalid; a leading "-" yields a negative result. The last
+ * "." or "," is the decimal separator; earlier ones and spaces group the
+ * integer part. A trailing separator with exactly 3 digits is grouping — minor
+ * units always have 2 digits — so "1,000", "1.000" and "1 000" parse as 1000.
  */
 fun parseAmount(input: String): Long? {
     val text = input.trim()
@@ -30,8 +28,6 @@ fun parseAmount(input: String): Long? {
     if (integerPart.isEmpty() && fractionPart.isEmpty()) return null
     if (fractionPart.any { !it.isDigit() }) return null
 
-    // Minor units are always 2 digits, so a trailing separator followed by exactly
-    // 3 digits is grouping, not a decimal: "1,000" / "1.000" / "1 000" == 1000.
     val separatorIsGrouping = decimalIndex != -1 && fractionPart.length == 3 && integerPart.isNotEmpty()
     if (!separatorIsGrouping && fractionPart.length > 2) return null
 
@@ -53,16 +49,15 @@ fun parseAmount(input: String): Long? {
     return if (negative) -magnitude else magnitude
 }
 
-private const val MILLION_MINOR = 100_000_000L // 1,000,000.00 in minor units
-private const val BILLION_MINOR = 100_000_000_000L // 1,000,000,000.00 in minor units
+private const val MILLION_MINOR = 100_000_000L
+private const val BILLION_MINOR = 100_000_000_000L
 
 /**
- * Formats [amount] (minor units) compactly when it is at least one million, e.g.
- * 100_000_000 == "1m", 125_000_000 == "1.25m", 1_836_523_700 == "18.365m",
- * 123_456_789_000 == "1.235b". Trailing zeros are trimmed and the decimal
- * separator is always '.'. Smaller amounts fall back to [formatAmount].
- * Display-only: the result is not parseable by [parseAmount], so never use it
- * to pre-fill edit fields.
+ * Formats [amount] (minor units) compactly when it is at least one million:
+ * 100_000_000 -> "1m", 125_000_000 -> "1.25m", 123_456_789_000 -> "1.235b",
+ * with trailing zeros trimmed and "." as the decimal separator. Smaller
+ * amounts fall back to [formatAmount]. Display-only: not parseable by
+ * [parseAmount], so never pre-fill an edit field with it.
  */
 fun formatAmountCompact(amount: Long): String {
     val negative = amount < 0
@@ -82,7 +77,7 @@ private fun compact(absolute: Long, unitMinor: Long, suffix: String): String {
         whole++
         decimals = 0
     }
-    // Left-pad the fractional digits to three so "1.059m" cannot render as "1.59m",
+    // Pad fractional digits to three so "1.059m" can't render as "1.59m",
     // then trim trailing zeros ("1.250m" -> "1.25m").
     return if (decimals == 0L) "$whole$suffix" else "$whole.${decimals.toString().padStart(3, '0').trimEnd('0')}$suffix"
 }

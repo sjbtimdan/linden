@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 class RecurringDetectorTest : StringSpec({
-    // 2027-01-19T08:00:00Z, a Tuesday
+    // 2027-01-15T08:00:00Z, a Friday
     val now = Instant.fromEpochMilliseconds(1_800_000_000_000L)
     val main = Account(1, "Main", Currency.CHF)
     val food = Category(1, "Food", CategoryType.Expense)

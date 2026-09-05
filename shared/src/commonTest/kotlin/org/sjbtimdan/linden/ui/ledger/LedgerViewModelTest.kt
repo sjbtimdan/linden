@@ -1271,7 +1271,6 @@ class LedgerViewModelTest : StringSpec({
             val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            // Two groceries entries, one salary entry.
             entryDao.create(ExpenseEntry(0, groceries, "a", main, 100, at(1_700_000_000_000), TimeZone.UTC))
             entryDao.create(ExpenseEntry(0, groceries, "b", main, 200, at(1_700_000_000_000), TimeZone.UTC))
             entryDao.create(IncomeEntry(0, salary, "c", main, 300, at(1_700_000_000_000), TimeZone.UTC))
@@ -1314,7 +1313,6 @@ class LedgerViewModelTest : StringSpec({
                 ),
             )
 
-            // The future transfer must not count toward the current balance.
             viewModel.currentAccountBalances.value shouldBe mapOf(
                 main.id to 9_550L,
                 savings.id to 0L,

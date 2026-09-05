@@ -47,8 +47,7 @@ class OptionChipRowTest : StringSpec({
                     )
                 }
 
-                // A horizontal scroll row would leave the tail uncomposed; a
-                // wrapping row displays every chip.
+                // Chips wrap onto more lines, so every option stays composed and visible.
                 options.forEach { option ->
                     onNodeWithText(option).assertIsDisplayed()
                 }

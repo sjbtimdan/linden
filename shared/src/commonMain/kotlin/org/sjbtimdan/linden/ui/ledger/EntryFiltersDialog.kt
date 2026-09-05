@@ -48,8 +48,7 @@ fun EntryFiltersDialog(
     onClearAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // "Clear" resets the filters this dialog edits, so it only appears while
-    // at least one of them is set.
+    // "Clear" shows only while a filter this dialog edits is set.
     val entryFiltersActive = showCategoryAndAccountFilters &&
         (categoryFilter != null || accountFilter != null || amountFilter != null)
     val hasActiveFilters = typeFilter != null || entryFiltersActive
