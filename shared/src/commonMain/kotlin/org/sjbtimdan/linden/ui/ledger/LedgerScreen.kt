@@ -20,7 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -115,21 +114,11 @@ fun LedgerScreen(
     // Starts collapsed so the tabs, period bar and list lead; active filters stay
     // visible as removable chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
-    var filtersOpen by remember { mutableStateOf(false) }
     // Search narrows entry text in the entries view and names in the other two — the label says which.
     val searchLabel = when (viewMode) {
         LedgerViewMode.Entries -> "Search entries"
         LedgerViewMode.Accounts -> "Filter accounts"
         LedgerViewMode.Categories -> "Filter categories"
-    }
-    // The Filters control only highlights while a chip filter applies; the dialog shows which are set.
-    val hasActiveChipFilters = when (viewMode) {
-        LedgerViewMode.Accounts -> false
-
-        LedgerViewMode.Categories -> typeFilter != null
-
-        LedgerViewMode.Entries ->
-            typeFilter != null || categoryFilter != null || accountFilter != null || amountFilter != null
     }
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
@@ -151,10 +140,6 @@ fun LedgerScreen(
 
     BackHandler(enabled = dialogState != null) {
         viewModel.dismissDialog()
-    }
-
-    BackHandler(enabled = filtersOpen) {
-        filtersOpen = false
     }
 
     Column(
@@ -215,25 +200,24 @@ fun LedgerScreen(
                     )
                 }
 
-                // The accounts view has no chip filters, so its Filters control is omitted.
+                // The accounts view has no chip filters: a balance mixes every
+                // entry type, so its panel only holds the search field. The other
+                // views edit their filters inline — no dialog.
                 if (viewMode != LedgerViewMode.Accounts) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    FilterChip(
-                        selected = hasActiveChipFilters,
-                        onClick = { filtersOpen = true },
-                        modifier = Modifier.testTag("filtersButton"),
-                        label = {
-                            Text(
-                                text = "Filters",
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                        },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                            )
-                        },
+                    LedgerFilterControls(
+                        showEntryFilters = viewMode == LedgerViewMode.Entries,
+                        typeFilter = typeFilter,
+                        onTypeFilterChange = viewModel::setTypeFilter,
+                        categories = categories,
+                        categoryFilter = categoryFilter,
+                        onCategoryFilterChange = viewModel::setCategoryFilter,
+                        accounts = accounts,
+                        accountFilter = accountFilter,
+                        onAccountFilterChange = viewModel::setAccountFilter,
+                        amountFilter = amountFilter,
+                        onAmountFilterChange = viewModel::setAmountFilter,
+                        onClearAmountFilter = viewModel::clearAmountFilter,
                     )
                 }
             }
@@ -560,30 +544,6 @@ fun LedgerScreen(
                 }
             },
             onDismiss = { adjustState = null },
-        )
-    }
-
-    if (filtersOpen) {
-        EntryFiltersDialog(
-            showCategoryAndAccountFilters = viewMode == LedgerViewMode.Entries,
-            typeFilter = typeFilter,
-            onTypeFilterChange = viewModel::setTypeFilter,
-            categories = categories,
-            categoryFilter = categoryFilter,
-            onCategoryFilterChange = viewModel::setCategoryFilter,
-            accounts = accounts,
-            accountFilter = accountFilter,
-            onAccountFilterChange = viewModel::setAccountFilter,
-            amountFilter = amountFilter,
-            onAmountFilterChange = viewModel::setAmountFilter,
-            onClearAmountFilter = viewModel::clearAmountFilter,
-            onClearAll = {
-                viewModel.setTypeFilter(null)
-                viewModel.clearCategoryFilter()
-                viewModel.clearAccountFilter()
-                viewModel.clearAmountFilter()
-            },
-            onDismiss = { filtersOpen = false },
         )
     }
 }

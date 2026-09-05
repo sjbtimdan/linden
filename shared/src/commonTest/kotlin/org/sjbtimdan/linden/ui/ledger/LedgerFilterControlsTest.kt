@@ -22,28 +22,12 @@ private val salary = Category(2, "Salary", CategoryType.Income, null)
 private val mainAccount = Account(1, "Main", Currency.CHF)
 
 @OptIn(ExperimentalTestApi::class)
-class EntryFiltersDialogTest : StringSpec({
-    "shows the title and reports Done" {
-        onTestMain {
-            runComposeUiTest {
-                var dismissed = false
-                setDialogContent(onDismiss = { dismissed = true })
-
-                onNodeWithText("Filters").assertIsDisplayed()
-                onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
-
-                onNodeWithText("Done").performClick()
-
-                dismissed shouldBe true
-            }
-        }
-    }
-
+class LedgerFilterControlsTest : StringSpec({
     "type dropdown lists every type and reports the selection" {
         onTestMain {
             runComposeUiTest {
                 var selected: EntryType? = null
-                setDialogContent(onTypeFilterChange = { selected = it })
+                setControlsContent(onTypeFilterChange = { selected = it })
 
                 onNodeWithTag("typeFilterDropdown").performClick()
 
@@ -61,7 +45,7 @@ class EntryFiltersDialogTest : StringSpec({
     "shows the active type on the chip" {
         onTestMain {
             runComposeUiTest {
-                setDialogContent(typeFilter = EntryType.Income)
+                setControlsContent(typeFilter = EntryType.Income)
 
                 onNodeWithText("Income").assertIsDisplayed()
             }
@@ -71,7 +55,7 @@ class EntryFiltersDialogTest : StringSpec({
     "entries view offers the category, account and amount filters" {
         onTestMain {
             runComposeUiTest {
-                setDialogContent(showCategoryAndAccountFilters = true)
+                setControlsContent(showEntryFilters = true)
 
                 onNodeWithTag("categoryFilterDropdown").assertIsDisplayed()
                 onNodeWithTag("accountFilterDropdown").assertIsDisplayed()
@@ -85,7 +69,7 @@ class EntryFiltersDialogTest : StringSpec({
             runComposeUiTest {
                 var categoryId: Long? = null
                 var accountId: Long? = null
-                setDialogContent(
+                setControlsContent(
                     onCategoryFilterChange = { categoryId = it },
                     onAccountFilterChange = { accountId = it },
                 )
@@ -105,7 +89,7 @@ class EntryFiltersDialogTest : StringSpec({
     "shows the active category and account on their chips" {
         onTestMain {
             runComposeUiTest {
-                setDialogContent(categoryFilter = salary.id, accountFilter = mainAccount.id)
+                setControlsContent(categoryFilter = salary.id, accountFilter = mainAccount.id)
 
                 onNodeWithText("Salary").assertIsDisplayed()
                 onNodeWithText("Main").assertIsDisplayed()
@@ -116,7 +100,7 @@ class EntryFiltersDialogTest : StringSpec({
     "categories-only view hides the entry filters" {
         onTestMain {
             runComposeUiTest {
-                setDialogContent(showCategoryAndAccountFilters = false)
+                setControlsContent(showEntryFilters = false)
 
                 onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
                 onNodeWithTag("categoryFilterDropdown").assertDoesNotExist()
@@ -126,11 +110,28 @@ class EntryFiltersDialogTest : StringSpec({
         }
     }
 
+    "picking the All option reports a cleared type filter" {
+        onTestMain {
+            runComposeUiTest {
+                var selected: EntryType? = EntryType.Income
+                setControlsContent(
+                    typeFilter = EntryType.Income,
+                    onTypeFilterChange = { selected = it },
+                )
+
+                onNodeWithTag("typeFilterDropdown").performClick()
+                onNodeWithText("Types: All").performClick()
+
+                selected shouldBe null
+            }
+        }
+    }
+
     "applying an amount from the popover reports the filter" {
         onTestMain {
             runComposeUiTest {
                 var applied: AmountFilter? = null
-                setDialogContent(onAmountFilterChange = { applied = it })
+                setControlsContent(onAmountFilterChange = { applied = it })
 
                 onNodeWithTag("amountFilterChip").performClick()
                 onNodeWithText("Filter by amount").assertIsDisplayed()
@@ -147,7 +148,7 @@ class EntryFiltersDialogTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 var cleared = false
-                setDialogContent(
+                setControlsContent(
                     amountFilter = AmountFilter(AmountOperator.GreaterThan, 500),
                     onClearAmountFilter = { cleared = true },
                 )
@@ -161,45 +162,12 @@ class EntryFiltersDialogTest : StringSpec({
             }
         }
     }
-
-    "Clear is hidden while no filter is active" {
-        onTestMain {
-            runComposeUiTest {
-                setDialogContent()
-
-                onNodeWithTag("clearFiltersButton").assertDoesNotExist()
-            }
-        }
-    }
-
-    "Clear appears once any chip filter is active" {
-        onTestMain {
-            runComposeUiTest {
-                setDialogContent(categoryFilter = groceries.id)
-
-                onNodeWithTag("clearFiltersButton").assertIsDisplayed()
-            }
-        }
-    }
-
-    "Clear reports the reset of every chip filter" {
-        onTestMain {
-            runComposeUiTest {
-                var cleared = false
-                setDialogContent(typeFilter = EntryType.Income, onClearAll = { cleared = true })
-
-                onNodeWithTag("clearFiltersButton").performClick()
-
-                cleared shouldBe true
-            }
-        }
-    }
 })
 
-/** Renders the dialog with the shared fixture data; every callback defaults to a no-op. */
+/** Renders the inline filter row with the shared fixture data; every callback defaults to a no-op. */
 @OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.setDialogContent(
-    showCategoryAndAccountFilters: Boolean = true,
+private fun ComposeUiTest.setControlsContent(
+    showEntryFilters: Boolean = true,
     typeFilter: EntryType? = null,
     categoryFilter: Long? = null,
     accountFilter: Long? = null,
@@ -209,12 +177,10 @@ private fun ComposeUiTest.setDialogContent(
     onAccountFilterChange: (Long?) -> Unit = {},
     onAmountFilterChange: (AmountFilter?) -> Unit = {},
     onClearAmountFilter: () -> Unit = {},
-    onClearAll: () -> Unit = {},
-    onDismiss: () -> Unit = {},
 ) {
     setContent {
-        EntryFiltersDialog(
-            showCategoryAndAccountFilters = showCategoryAndAccountFilters,
+        LedgerFilterControls(
+            showEntryFilters = showEntryFilters,
             typeFilter = typeFilter,
             onTypeFilterChange = onTypeFilterChange,
             categories = listOf(groceries, salary),
@@ -226,8 +192,6 @@ private fun ComposeUiTest.setDialogContent(
             amountFilter = amountFilter,
             onAmountFilterChange = onAmountFilterChange,
             onClearAmountFilter = onClearAmountFilter,
-            onClearAll = onClearAll,
-            onDismiss = onDismiss,
         )
     }
 }

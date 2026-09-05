@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FilterChip
@@ -63,7 +64,13 @@ fun AmountFilterChip(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            // The chip now sits inline in a wrapping row of filters, so the popover
+            // caps its width instead of stretching to the screen.
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 300.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
                 Text(
                     text = "Filter by amount",
                     style = MaterialTheme.typography.labelLarge,
