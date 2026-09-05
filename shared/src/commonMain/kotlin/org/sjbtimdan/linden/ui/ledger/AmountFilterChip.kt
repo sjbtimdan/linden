@@ -99,10 +99,13 @@ fun AmountFilterChip(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     if (filter != null) {
-                        TextButton(onClick = {
-                            onClear()
-                            expanded = false
-                        }) {
+                        TextButton(
+                            onClick = {
+                                onClear()
+                                expanded = false
+                            },
+                            modifier = Modifier.testTag("clearAmountFilterButton"),
+                        ) {
                             Text("Clear")
                         }
                     }

@@ -5,6 +5,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
@@ -1271,6 +1273,44 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "Clear in the filters dialog resets every chip filter" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+
+            onNodeWithTag("filtersButton").performClick()
+            onNodeWithTag("typeFilterDropdown").performClick()
+            onNodeWithText("Income").performClick()
+            onNodeWithTag("categoryFilterDropdown").performClick()
+            onNodeWithText("Salary").performClick()
+            onNodeWithText("Done").performClick()
+
+            // Both filters apply: only the income entry in Salary is left.
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+
+            // Reopen the dialog and reset everything from inside it.
+            onNodeWithTag("filtersButton").performClick()
+            onNodeWithTag("clearFiltersButton").performClick()
+            onNodeWithText("Done").performClick()
+
+            onNodeWithText("Pay").assertIsDisplayed()
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
+            onNodeWithTag("categoryFilterChip").assertDoesNotExist()
+            onNodeWithTag("filtersButton").assertIsNotSelected()
+        }
+    }
+
     "search label describes what it filters in each view" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -1298,7 +1338,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "filters button counts the active filters" {
+    "filters control stays uncounted but highlights while filters are active" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -1311,13 +1351,18 @@ class LedgerScreenTest : StringSpec({
             expandFilters()
 
             onNodeWithText("Filters").assertIsDisplayed()
+            onNodeWithTag("filtersButton").assertIsNotSelected()
 
             onNodeWithTag("filtersButton").performClick()
             onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
             onNodeWithText("Done").performClick()
 
-            onNodeWithText("Filters (1)").assertIsDisplayed()
+            // The label never counts the active filters — the dialog shows which
+            // ones are set — so the control only highlights.
+            onNodeWithText("Filters").assertIsDisplayed()
+            onNodeWithText("Filters (1)").assertDoesNotExist()
+            onNodeWithTag("filtersButton").assertIsSelected()
         }
     }
 

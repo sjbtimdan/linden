@@ -155,7 +155,40 @@ class EntryFiltersDialogTest : StringSpec({
                 onNodeWithText("> 5").assertIsDisplayed()
 
                 onNodeWithTag("amountFilterChip").performClick()
-                onNodeWithText("Clear").performClick()
+                onNodeWithTag("clearAmountFilterButton").performClick()
+
+                cleared shouldBe true
+            }
+        }
+    }
+
+    "Clear is hidden while no filter is active" {
+        onTestMain {
+            runComposeUiTest {
+                setDialogContent()
+
+                onNodeWithTag("clearFiltersButton").assertDoesNotExist()
+            }
+        }
+    }
+
+    "Clear appears once any chip filter is active" {
+        onTestMain {
+            runComposeUiTest {
+                setDialogContent(categoryFilter = groceries.id)
+
+                onNodeWithTag("clearFiltersButton").assertIsDisplayed()
+            }
+        }
+    }
+
+    "Clear reports the reset of every chip filter" {
+        onTestMain {
+            runComposeUiTest {
+                var cleared = false
+                setDialogContent(typeFilter = EntryType.Income, onClearAll = { cleared = true })
+
+                onNodeWithTag("clearFiltersButton").performClick()
 
                 cleared shouldBe true
             }
@@ -176,6 +209,7 @@ private fun ComposeUiTest.setDialogContent(
     onAccountFilterChange: (Long?) -> Unit = {},
     onAmountFilterChange: (AmountFilter?) -> Unit = {},
     onClearAmountFilter: () -> Unit = {},
+    onClearAll: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
     setContent {
@@ -192,6 +226,7 @@ private fun ComposeUiTest.setDialogContent(
             amountFilter = amountFilter,
             onAmountFilterChange = onAmountFilterChange,
             onClearAmountFilter = onClearAmountFilter,
+            onClearAll = onClearAll,
             onDismiss = onDismiss,
         )
     }

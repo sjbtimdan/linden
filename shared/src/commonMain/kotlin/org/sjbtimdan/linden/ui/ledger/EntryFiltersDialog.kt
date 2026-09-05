@@ -26,8 +26,9 @@ import org.sjbtimdan.linden.ui.theme.DialogShape
  * current view is edited here — the type filter always, plus the category,
  * account and amount filters when [showCategoryAndAccountFilters] (the entries
  * view; category totals are only grouped per type). Changes apply immediately;
- * "Done" closes the dialog. Active filters keep their removable summary chips
- * below the period bar and their one-tap "Clear all".
+ * "Done" closes the dialog. "Clear" (shown while a filter is active) resets
+ * every chip filter to its "All" state and keeps the dialog open. Active
+ * filters keep their removable summary chips below the period bar.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -44,8 +45,14 @@ fun EntryFiltersDialog(
     amountFilter: AmountFilter?,
     onAmountFilterChange: (AmountFilter?) -> Unit,
     onClearAmountFilter: () -> Unit,
+    onClearAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // "Clear" resets the filters this dialog edits, so it only appears while
+    // at least one of them is set.
+    val entryFiltersActive = showCategoryAndAccountFilters &&
+        (categoryFilter != null || accountFilter != null || amountFilter != null)
+    val hasActiveFilters = typeFilter != null || entryFiltersActive
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
@@ -101,6 +108,16 @@ fun EntryFiltersDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Done", style = MaterialTheme.typography.labelLarge)
+            }
+        },
+        dismissButton = {
+            if (hasActiveFilters) {
+                TextButton(
+                    onClick = onClearAll,
+                    modifier = Modifier.testTag("clearFiltersButton"),
+                ) {
+                    Text("Clear", style = MaterialTheme.typography.labelLarge)
+                }
             }
         },
     )

@@ -116,7 +116,7 @@ class AmountFilterChipTest : StringSpec({
                 }
 
                 onNodeWithTag(chipTag).performClick()
-                onNodeWithText("Clear").performClick()
+                onNodeWithTag("clearAmountFilterButton").performClick()
 
                 cleared shouldBe true
             }

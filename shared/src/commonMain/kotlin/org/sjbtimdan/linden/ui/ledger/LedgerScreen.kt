@@ -134,12 +134,16 @@ fun LedgerScreen(
         LedgerViewMode.Accounts -> "Filter accounts"
         LedgerViewMode.Categories -> "Filter categories"
     }
-    // Number of chip filters applying to the current view, shown on the Filters
-    // control so active filters are visible even before opening the dialog.
-    val filterCount = when (viewMode) {
-        LedgerViewMode.Accounts -> 0
-        LedgerViewMode.Categories -> if (typeFilter != null) 1 else 0
-        LedgerViewMode.Entries -> listOfNotNull(typeFilter, categoryFilter, accountFilter, amountFilter).size
+    // Whether any chip filter applies to the current view. The Filters control
+    // stays highlighted while one does; the dialog itself shows which filters
+    // are set, so the control never counts them.
+    val hasActiveChipFilters = when (viewMode) {
+        LedgerViewMode.Accounts -> false
+
+        LedgerViewMode.Categories -> typeFilter != null
+
+        LedgerViewMode.Entries ->
+            typeFilter != null || categoryFilter != null || accountFilter != null || amountFilter != null
     }
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
@@ -231,12 +235,12 @@ fun LedgerScreen(
                 if (viewMode != LedgerViewMode.Accounts) {
                     Spacer(modifier = Modifier.height(8.dp))
                     FilterChip(
-                        selected = filterCount > 0,
+                        selected = hasActiveChipFilters,
                         onClick = { filtersOpen = true },
                         modifier = Modifier.testTag("filtersButton"),
                         label = {
                             Text(
-                                text = if (filterCount > 0) "Filters ($filterCount)" else "Filters",
+                                text = "Filters",
                                 style = MaterialTheme.typography.labelMedium,
                             )
                         },
@@ -576,6 +580,12 @@ fun LedgerScreen(
             amountFilter = amountFilter,
             onAmountFilterChange = viewModel::setAmountFilter,
             onClearAmountFilter = viewModel::clearAmountFilter,
+            onClearAll = {
+                viewModel.setTypeFilter(null)
+                viewModel.clearCategoryFilter()
+                viewModel.clearAccountFilter()
+                viewModel.clearAmountFilter()
+            },
             onDismiss = { filtersOpen = false },
         )
     }
