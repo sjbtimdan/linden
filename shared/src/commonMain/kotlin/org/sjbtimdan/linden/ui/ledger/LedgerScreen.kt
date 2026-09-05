@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -57,7 +58,6 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
-import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -119,11 +119,28 @@ fun LedgerScreen(
     // the mode tabs, the period bar and the list. Active filters stay visible
     // as removable summary chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
+    // The consolidated entry filters live in a dialog opened from the panel.
+    var filtersOpen by remember { mutableStateOf(false) }
     // Collapsing the spending insights hides the details behind a slim header for
     // the rest of the session; any period change re-expands them for the new window.
     var insightsCollapsed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(periodSelection) {
         insightsCollapsed = false
+    }
+    // The search field means different things per view: it narrows entry text in
+    // the entries view and account/category names in the other two. The label
+    // says which one is active, so a single field has no hidden personalities.
+    val searchLabel = when (viewMode) {
+        LedgerViewMode.Entries -> "Search entries"
+        LedgerViewMode.Accounts -> "Filter accounts"
+        LedgerViewMode.Categories -> "Filter categories"
+    }
+    // Number of chip filters applying to the current view, shown on the Filters
+    // control so active filters are visible even before opening the dialog.
+    val filterCount = when (viewMode) {
+        LedgerViewMode.Accounts -> 0
+        LedgerViewMode.Categories -> if (typeFilter != null) 1 else 0
+        LedgerViewMode.Entries -> listOfNotNull(typeFilter, categoryFilter, accountFilter, amountFilter).size
     }
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
@@ -145,6 +162,10 @@ fun LedgerScreen(
 
     BackHandler(enabled = dialogState != null) {
         viewModel.dismissDialog()
+    }
+
+    BackHandler(enabled = filtersOpen) {
+        filtersOpen = false
     }
 
     Column(
@@ -180,7 +201,7 @@ fun LedgerScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = viewModel::setSearchQuery,
-                        label = { Text("Search") },
+                        label = { Text(searchLabel) },
                         singleLine = true,
                         leadingIcon = {
                             Icon(
@@ -200,60 +221,33 @@ fun LedgerScreen(
                         shape = RoundedCornerShape(24.dp),
                         modifier = Modifier
                             .weight(1f)
-                            .focusRequester(searchFocusRequester),
+                            .focusRequester(searchFocusRequester)
+                            .testTag("searchField"),
                     )
                 }
 
-                // The type filter applies to the entries and categories views; it is
-                // hidden in the accounts view, where only period-end balances are shown.
+                // All chip filters are consolidated behind a single "Filters" control
+                // that opens the filter dialog. The accounts view has no chip filters:
+                // its search field is the only narrowing control there.
                 if (viewMode != LedgerViewMode.Accounts) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        ChipDropdown(
-                            selected = typeFilter,
-                            options = typeFilterOptions,
-                            optionLabel = { it?.displayName() ?: "Types: All" },
-                            onSelect = viewModel::setTypeFilter,
-                            modifier = Modifier.testTag("typeFilterDropdown"),
-                        )
-                    }
-                }
-
-                if (viewMode == LedgerViewMode.Entries) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        ChipDropdown(
-                            selected = categoryFilter,
-                            options = listOf(null) + categories.map { it.id },
-                            optionLabel = { id ->
-                                id?.let { cid -> categories.firstOrNull { it.id == cid }?.name }
-                                    ?: "Category: All"
-                            },
-                            onSelect = viewModel::setCategoryFilter,
-                            modifier = Modifier.testTag("categoryFilterDropdown"),
-                        )
-                        ChipDropdown(
-                            selected = accountFilter,
-                            options = listOf(null) + accounts.map { it.id },
-                            optionLabel = { id ->
-                                id?.let { aid -> accounts.firstOrNull { it.id == aid }?.name }
-                                    ?: "Account: All"
-                            },
-                            onSelect = viewModel::setAccountFilter,
-                            modifier = Modifier.testTag("accountFilterDropdown"),
-                        )
-                        AmountFilterChip(
-                            filter = amountFilter,
-                            onApply = viewModel::setAmountFilter,
-                            onClear = viewModel::clearAmountFilter,
-                        )
-                    }
+                    FilterChip(
+                        selected = filterCount > 0,
+                        onClick = { filtersOpen = true },
+                        modifier = Modifier.testTag("filtersButton"),
+                        label = {
+                            Text(
+                                text = if (filterCount > 0) "Filters ($filterCount)" else "Filters",
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                 }
             }
         }
@@ -586,6 +580,24 @@ fun LedgerScreen(
             },
         )
     }
+
+    if (filtersOpen) {
+        EntryFiltersDialog(
+            showCategoryAndAccountFilters = viewMode == LedgerViewMode.Entries,
+            typeFilter = typeFilter,
+            onTypeFilterChange = viewModel::setTypeFilter,
+            categories = categories,
+            categoryFilter = categoryFilter,
+            onCategoryFilterChange = viewModel::setCategoryFilter,
+            accounts = accounts,
+            accountFilter = accountFilter,
+            onAccountFilterChange = viewModel::setAccountFilter,
+            amountFilter = amountFilter,
+            onAmountFilterChange = viewModel::setAmountFilter,
+            onClearAmountFilter = viewModel::clearAmountFilter,
+            onDismiss = { filtersOpen = false },
+        )
+    }
 }
 
 /**
@@ -744,9 +756,6 @@ internal fun ledgerListItems(entries: List<Entry>): List<LedgerListItem> = build
         add(EntryListItem(entry))
     }
 }
-
-/** All options of the type filter dropdown: the "All" (no filter) state plus every entry type. */
-private val typeFilterOptions: List<EntryType?> = listOf(null) + EntryType.entries
 
 @Composable
 private fun TotalLabel(total: Long?, currency: Currency, hidden: Boolean = false) {

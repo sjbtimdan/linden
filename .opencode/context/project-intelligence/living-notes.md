@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
+<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-09-05 -->
 
 # Living Notes
 
@@ -76,6 +76,7 @@
 ## Patterns & Conventions
 
 ### Code Patterns Worth Preserving
+- **Each new class ships with a unit test** - Unless it is pure configuration (constants/values with no behavior), a new class is not done without its test
 - **Each Composable in its own file** - e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file
 - **Comment minimally** - Only add comments for obscure code
 - **Conventional commits** - Standard commit message format
