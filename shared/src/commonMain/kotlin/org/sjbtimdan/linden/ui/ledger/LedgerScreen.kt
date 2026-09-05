@@ -94,6 +94,7 @@ fun LedgerScreen(
     val typeFilter by viewModel.typeFilter.collectAsState()
     val amountFilter by viewModel.amountFilter.collectAsState()
     val showFuture by viewModel.showFuture.collectAsState()
+    val upcomingCount by viewModel.upcomingCount.collectAsState()
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
@@ -287,6 +288,20 @@ fun LedgerScreen(
             )
         }
 
+        // While future entries are shown, the notice next to the period bar
+        // explains what the calendar toggle did and offers to undo it.
+        if (showFuture) {
+            Spacer(modifier = Modifier.height(8.dp))
+            FutureEntriesNotice(
+                label = futureEntriesNoticeLabel(
+                    viewMode = viewMode,
+                    upcoming = upcomingCount,
+                    bounded = periodSelection.period != LedgerPeriod.All,
+                ),
+                onClick = { viewModel.setShowFuture(false) },
+            )
+        }
+
         // Active filters as removable chips — the passive signal that the list is
         // narrowed, whether the filter panel is expanded or collapsed.
         val activeTypeFilter = typeFilter
@@ -416,6 +431,9 @@ fun LedgerScreen(
 
                     categories.isEmpty() -> "No categories yet."
 
+                    // Spending exists but only after today, hidden by the show-future rule.
+                    !showFuture && upcomingCount > 0 -> "Spending after today is hidden."
+
                     // Categories exist but none of them was used in the period.
                     else -> "No spending yet."
                 },
@@ -436,8 +454,22 @@ fun LedgerScreen(
                 accountFilter == null &&
                 amountFilter == null
             val guided = nothingFiltered && !hasAnyEntries
+            // An empty list can hide upcoming entries: they exist in the window
+            // but are dated after today, so the empty state must say so and
+            // offer the show-future toggle instead of reporting no matches.
+            val upcomingHidden = !showFuture && upcomingCount > 0 && nothingFiltered
+            // Guided and upcoming-hidden states are mutually exclusive: guided
+            // needs an empty database, upcoming-hidden needs upcoming entries.
+            val revealUpcoming: () -> Unit = { viewModel.setShowFuture(true) }
+            val emptyStateAction: (() -> Unit)? = when {
+                guided -> onNavigateToEntry
+                upcomingHidden -> revealUpcoming
+                else -> null
+            }
             EmptyState(
                 message = when {
+                    upcomingHidden -> "Entries after today are hidden."
+
                     guided -> "No entries yet."
 
                     (categoryFilter != null || accountFilter != null) &&
@@ -450,8 +482,12 @@ fun LedgerScreen(
 
                     else -> "No entries match."
                 },
-                actionLabel = if (guided) "Add your first entry" else null,
-                onAction = if (guided) onNavigateToEntry else null,
+                actionLabel = when {
+                    guided -> "Add your first entry"
+                    upcomingHidden -> "Show entries after today"
+                    else -> null
+                },
+                onAction = emptyStateAction,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

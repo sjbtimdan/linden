@@ -495,6 +495,55 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "upcomingCount counts future entries inside the window only" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Past", main, 100, createdAt = Instant.parse("2026-08-01T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(
+                    0,
+                    groceries,
+                    "Later this month",
+                    main,
+                    100,
+                    createdAt = Instant.parse("2026-08-20T12:00:00Z"),
+                ),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Next month", main, 100, createdAt = Instant.parse("2026-09-02T12:00:00Z")),
+            )
+
+            // The harness starts on All: every future-dated entry counts.
+            viewModel.upcomingCount.value shouldBe 2
+
+            // The month window is anchored on 2026-08-15, so "Next month" falls outside it.
+            viewModel.setPeriod(LedgerPeriod.Month)
+            viewModel.upcomingCount.value shouldBe 1
+
+            // Last month has no entries at all, future or otherwise.
+            viewModel.goToPreviousPeriod()
+            viewModel.upcomingCount.value shouldBe 0
+        }
+    }
+
+    "upcomingCount is zero when future entries sit outside a bounded window" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 100, createdAt = Instant.parse("2026-08-20T12:00:00Z")),
+            )
+
+            // The Day window of 2026-08-15 excludes the entry dated after it.
+            viewModel.setPeriod(LedgerPeriod.Day)
+            viewModel.upcomingCount.value shouldBe 0
+        }
+    }
+
     "year period shows only entries in the year" {
         withLedgerViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

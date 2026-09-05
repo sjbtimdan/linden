@@ -219,6 +219,23 @@ class LedgerViewModel(
         .stateFlow(emptyList())
 
     /**
+     * Entries dated after today inside the selected window — the rows the
+     * show-future toggle would reveal. A null window ([LedgerPeriod.All])
+     * counts every future-dated entry; rows beyond the window end never count,
+     * matching [periodEntries].
+     */
+    val upcomingCount: StateFlow<Int> = combine(
+        entriesUpToPeriodEnd,
+        periodEnd,
+    ) { rows, end ->
+        val now = today()
+        rows.count { entry ->
+            val day = entry.dayInZone()
+            day > now && (end == null || day <= end)
+        }
+    }.stateFlow(0)
+
+    /**
      * Balance of each account at period end in its own currency: initial balance
      * plus entries through the period end, stopping at today unless future entries
      * are shown.
@@ -453,8 +470,11 @@ data class AmountFilter(
     }
 }
 
+/** The calendar day an entry is dated, in the zone it was created in. */
+private fun Entry.dayInZone(): LocalDate = createdAt.toLocalDateTime(createdZone).date
+
 private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate, showFuture: Boolean): Boolean {
-    val date = createdAt.toLocalDateTime(createdZone).date
+    val date = dayInZone()
     return (showFuture || date <= today) &&
         (start == null || date >= start) &&
         (end == null || date <= end)

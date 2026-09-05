@@ -185,6 +185,92 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "show-future notice explains what the toggle revealed and dismisses it" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("showFutureToggle").performClick()
+
+            onNodeWithText("Scheduled").assertIsDisplayed()
+            onNodeWithText("Showing 1 entry after today").assertIsDisplayed()
+
+            onNodeWithTag("showFutureNotice").performClick()
+
+            onNodeWithText("Scheduled").assertDoesNotExist()
+            onNodeWithText("Showing 1 entry after today").assertDoesNotExist()
+        }
+    }
+
+    "empty entries list explains when only future entries are hidden" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Entries after today are hidden.").assertIsDisplayed()
+
+            onNodeWithText("Show entries after today").performClick()
+
+            onNodeWithText("Scheduled").assertIsDisplayed()
+            onNodeWithText("Showing 1 entry after today").assertIsDisplayed()
+        }
+    }
+
+    "categories view names hidden future spending and explains totals once shown" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Categories").performClick()
+
+            onNodeWithText("Spending after today is hidden.").assertIsDisplayed()
+
+            onNodeWithTag("showFutureToggle").performClick()
+
+            onNodeWithText("Totals include entries after today").assertIsDisplayed()
+            onNodeWithText("Spending after today is hidden.").assertDoesNotExist()
+        }
+    }
+
+    "accounts view notice says balances include entries after today" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
+            )
+            viewModel.setShowFuture(true)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
+            onNodeWithText("Balances include entries after today").assertIsDisplayed()
+        }
+    }
+
     "type filter narrows the list" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
