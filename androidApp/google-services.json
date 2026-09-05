@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "818863731371",
+    "project_id": "linden-5c74b",
+    "storage_bucket": "linden-5c74b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818863731371:android:de16a56e2300320a9a7dee",
+        "android_client_info": {
+          "package_name": "org.sjbtimdan.linden"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvDeB2cNRDMXtORHBLguoxYhuH4oEhwbk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
