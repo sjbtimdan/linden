@@ -255,6 +255,22 @@ fun LedgerScreen(
             }
         }
 
+        // Spending insights sit right below the filters region, above the period
+        // bar: they summarize the current month, while the period selector and
+        // its total stay anchored to the list underneath. The card collapses to
+        // a slim header and re-expands in one tap (insightsCollapsed).
+        val insights = spendingInsights
+        if (viewMode == LedgerViewMode.Entries && insights != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            SpendingInsightsCard(
+                insights = insights,
+                currency = defaultCurrency,
+                collapsed = insightsCollapsed,
+                onToggleCollapsed = { insightsCollapsed = !insightsCollapsed },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
         Spacer(modifier = Modifier.height(4.dp))
 
         Row(
@@ -283,21 +299,6 @@ fun LedgerScreen(
                 },
                 currency = defaultCurrency,
                 hidden = hideTotal,
-            )
-        }
-
-        // Spending insights live with the content, not the filters: they sit between
-        // the period bar and the list while the entries view shows a month. They can
-        // be collapsed to a slim header and re-expanded in one tap (insightsCollapsed).
-        val insights = spendingInsights
-        if (viewMode == LedgerViewMode.Entries && insights != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            SpendingInsightsCard(
-                insights = insights,
-                currency = defaultCurrency,
-                collapsed = insightsCollapsed,
-                onToggleCollapsed = { insightsCollapsed = !insightsCollapsed },
-                modifier = Modifier.fillMaxWidth(),
             )
         }
 

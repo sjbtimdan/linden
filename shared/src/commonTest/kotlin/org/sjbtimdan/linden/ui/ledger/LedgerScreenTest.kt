@@ -1470,8 +1470,9 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            // Content-first: the card sits with the list, so expanding and
-            // collapsing the search/filter panel leaves it untouched.
+            // The card sits directly below the search/filter panel: expanding
+            // the panel pushes it down, collapsing tucks it under the header,
+            // and it stays on screen either way.
             onNodeWithTag("spendingInsightsCard").assertIsDisplayed()
 
             expandFilters()
