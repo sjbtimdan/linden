@@ -42,6 +42,18 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "hasAnyEntries is false while no entry exists and becomes true with the first one" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            viewModel.hasAnyEntries.value shouldBe false
+
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            entryDao.getAll().first().shouldHaveSize(1)
+            viewModel.hasAnyEntries.first { it } shouldBe true
+        }
+    }
+
     "defaults to the current month period" {
         onTestMain {
             runComposeUiTest {

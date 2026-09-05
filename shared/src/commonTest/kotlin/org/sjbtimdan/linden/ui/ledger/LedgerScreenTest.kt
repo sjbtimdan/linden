@@ -48,6 +48,98 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "empty entries view offers adding the first entry" {
+        withLedgerViewModel { viewModel ->
+            var navigatedToEntry = false
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToEntry = { navigatedToEntry = true },
+                )
+            }
+
+            onNodeWithText("No entries yet.").assertIsDisplayed()
+            onNodeWithText("Add your first entry").assertIsDisplayed()
+
+            onNodeWithText("Add your first entry").performClick()
+
+            navigatedToEntry shouldBe true
+        }
+    }
+
+    "accounts without entries still guide to the first entry" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+            var navigatedToEntry = false
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToEntry = { navigatedToEntry = true },
+                )
+            }
+
+            onNodeWithText("No entries yet.").assertIsDisplayed()
+            onNodeWithText("Add your first entry").assertIsDisplayed()
+        }
+    }
+
+    "accounts view empty state offers creating an account" {
+        withLedgerViewModel { viewModel ->
+            var navigatedToAccounts = false
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToAccounts = { navigatedToAccounts = true },
+                )
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
+            onNodeWithText("No accounts yet.").assertIsDisplayed()
+            onNodeWithText("Create an account").assertIsDisplayed()
+
+            onNodeWithText("Create an account").performClick()
+
+            navigatedToAccounts shouldBe true
+        }
+    }
+
+    "categories view empty state offers adding categories" {
+        withLedgerViewModel { viewModel ->
+            var navigatedToCategories = false
+            setContent {
+                LedgerScreen(
+                    viewModel = viewModel,
+                    onNavigateToCategories = { navigatedToCategories = true },
+                )
+            }
+
+            onNodeWithTag("viewModeTab-Categories").performClick()
+
+            onNodeWithText("No categories yet.").assertIsDisplayed()
+            onNodeWithText("Add categories").assertIsDisplayed()
+
+            onNodeWithText("Add categories").performClick()
+
+            navigatedToCategories shouldBe true
+        }
+    }
+
+    "defined categories without spending show a plain message" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Categories").performClick()
+
+            onNodeWithText("No spending yet.").assertIsDisplayed()
+            onNodeWithText("Add categories").assertDoesNotExist()
+        }
+    }
+
     "search narrows the list" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -129,6 +221,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Search").performTextInput("zzz")
 
             onNodeWithText("No entries match.").assertIsDisplayed()
+            onNodeWithText("Add your first entry").assertDoesNotExist()
         }
     }
 

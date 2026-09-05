@@ -30,27 +30,29 @@ import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 
-/** The account balances at the end of the selected period, or the empty state. */
+/**
+ * The account balances at the end of the selected period, or the empty state.
+ * [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided one:
+ * a button pointing at the next step for a brand-new user.
+ */
 @Composable
 fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
     emptyMessage: String = "No accounts yet.",
+    emptyActionLabel: String? = null,
+    onEmptyAction: (() -> Unit)? = null,
     canAdjustBalance: Boolean = true,
     onAdjustBalance: (AccountWithBalance) -> Unit,
     onAdjustBalanceUnavailable: (AccountWithBalance) -> Unit = {},
 ) {
     if (balances.isEmpty()) {
-        Box(
+        EmptyState(
+            message = emptyMessage,
             modifier = modifier,
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = emptyMessage,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+            actionLabel = emptyActionLabel,
+            onAction = onEmptyAction,
+        )
     } else {
         LazyColumn(
             modifier = modifier,

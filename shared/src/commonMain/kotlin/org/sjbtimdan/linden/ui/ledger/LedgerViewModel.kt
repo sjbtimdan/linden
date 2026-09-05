@@ -215,7 +215,17 @@ class LedgerViewModel(
         }
     }.stateFlow(0L)
 
-    /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */
+    /**
+     * Whether at least one entry exists anywhere, regardless of the selected
+     * period or of any filter. Lets the ledger distinguish "this app is brand
+     * new" (guided empty state with a call to action) from "entries exist but
+     * none match" (plain empty message).
+     */
+    val hasAnyEntries: StateFlow<Boolean> = entryDao.getAll().map { it.isNotEmpty() }.stateFlow(false)
+
+    /**
+     * Last day of the selected period (inclusive); null for [LedgerPeriod.All].
+     */
     private val periodEnd: StateFlow<LocalDate?> = periodWindow
         .map { it?.end }
         .stateFlow(null)

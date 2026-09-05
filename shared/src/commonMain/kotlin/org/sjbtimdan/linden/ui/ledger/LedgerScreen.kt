@@ -83,7 +83,13 @@ private data class AdjustBalanceDialogState(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = {}) {
+fun LedgerScreen(
+    viewModel: LedgerViewModel,
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToEntry: () -> Unit = {},
+    onNavigateToAccounts: () -> Unit = {},
+    onNavigateToCategories: () -> Unit = {},
+) {
     val accounts by viewModel.accounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -102,6 +108,7 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
     val categoryFilter by viewModel.categoryFilter.collectAsState()
     val accountFilter by viewModel.accountFilter.collectAsState()
     val displayedEntries by viewModel.displayedEntries.collectAsState()
+    val hasAnyEntries by viewModel.hasAnyEntries.collectAsState()
     val spendingInsights by viewModel.spendingInsights.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
@@ -391,13 +398,14 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             AccountsList(
                 balances = shownBalances,
                 emptyMessage =
-                if (accountFilter.isEmpty() ||
-                    accountBalances.isEmpty()
-                ) {
-                    "No accounts yet."
-                } else {
+                if (accountFilter.isNotEmpty() && accountBalances.isNotEmpty()) {
                     "No accounts match."
+                } else {
+                    "No accounts yet."
                 },
+                // With no accounts at all (and no search text), point at where accounts are created.
+                emptyActionLabel = if (accountFilter.isEmpty()) "Create an account" else null,
+                onEmptyAction = onNavigateToAccounts,
                 canAdjustBalance = canAdjustBalance,
                 onAdjustBalance = { item ->
                     val current = currentAccountBalances[item.account.id] ?: item.account.initialBalance
@@ -425,42 +433,52 @@ fun LedgerScreen(viewModel: LedgerViewModel, onNavigateToSettings: () -> Unit = 
             CategoryTotalsList(
                 categories = shownCategories,
                 currency = defaultCurrency,
-                emptyMessage =
-                if (categoryFilter.isEmpty() ||
-                    categoryTotals.isEmpty()
-                ) {
-                    "No categories yet."
-                } else {
-                    "No categories match."
+                emptyMessage = when {
+                    categoryFilter.isNotEmpty() && categoryTotals.isNotEmpty() -> "No categories match."
+
+                    categories.isEmpty() -> "No categories yet."
+
+                    // Categories exist but none of them was used in the period.
+                    else -> "No spending yet."
                 },
+                emptyActionLabel =
+                if (categoryFilter.isEmpty() && categories.isEmpty()) "Add categories" else null,
+                onEmptyAction = onNavigateToCategories,
                 onCategoryClick = { viewModel.openCategory(it.category?.id ?: 0L) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
             )
         } else if (displayedEntries.isEmpty()) {
-            Box(
+            // A brand-new dataset gets guided empty states with a call to action;
+            // once entries exist somewhere, the plain messages describe the filter
+            // or period narrowing that emptied the list.
+            val nothingFiltered = searchQuery.isBlank() &&
+                typeFilter == null &&
+                categoryFilter == null &&
+                accountFilter == null &&
+                amountFilter == null
+            val guided = nothingFiltered && !hasAnyEntries
+            EmptyState(
+                message = when {
+                    guided -> "No entries yet."
+
+                    (categoryFilter != null || accountFilter != null) &&
+                        searchQuery.isBlank() &&
+                        typeFilter == null &&
+                        periodSelection.period == LedgerPeriod.All -> "No entries match this filter."
+
+                    searchQuery.isBlank() && typeFilter == null && periodSelection.period == LedgerPeriod.All ->
+                        "No entries yet."
+
+                    else -> "No entries match."
+                },
+                actionLabel = if (guided) "Add your first entry" else null,
+                onAction = if (guided) onNavigateToEntry else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = when {
-                        (categoryFilter != null || accountFilter != null) &&
-                            searchQuery.isBlank() &&
-                            typeFilter == null &&
-                            periodSelection.period == LedgerPeriod.All -> "No entries match this filter."
-
-                        searchQuery.isBlank() && typeFilter == null && periodSelection.period == LedgerPeriod.All ->
-                            "No entries yet."
-
-                        else -> "No entries match."
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            )
         } else {
             LazyColumn(
                 modifier = Modifier

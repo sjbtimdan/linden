@@ -30,26 +30,28 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.accentColor
 
-/** Category totals at the end of the selected period, or the empty state. */
+/**
+ * Category totals at the end of the selected period, or the empty state.
+ * [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided one:
+ * a button pointing at the next step for a brand-new user.
+ */
 @Composable
 fun CategoryTotalsList(
     categories: List<CategoryWithTotal>,
     currency: Currency,
     modifier: Modifier,
     emptyMessage: String,
+    emptyActionLabel: String? = null,
+    onEmptyAction: (() -> Unit)? = null,
     onCategoryClick: (CategoryWithTotal) -> Unit,
 ) {
     if (categories.isEmpty()) {
-        Box(
+        EmptyState(
+            message = emptyMessage,
             modifier = modifier,
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = emptyMessage,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+            actionLabel = emptyActionLabel,
+            onAction = onEmptyAction,
+        )
     } else {
         LazyColumn(
             modifier = modifier,

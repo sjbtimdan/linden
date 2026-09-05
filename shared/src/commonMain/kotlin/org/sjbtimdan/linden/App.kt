@@ -132,6 +132,9 @@ fun App(dependencies: AppDependencies) {
                         Screen.Ledger -> LedgerScreen(
                             viewModel = ledgerViewModel,
                             onNavigateToSettings = { currentScreen = Screen.Settings },
+                            onNavigateToEntry = { currentScreen = Screen.Entry },
+                            onNavigateToAccounts = { currentScreen = Screen.AccountList },
+                            onNavigateToCategories = { currentScreen = Screen.CategoryList },
                         )
 
                         Screen.Settings -> SettingsScreen(

@@ -23,7 +23,9 @@ class AppTest : StringSpec({
             setContent { App(dependencies) }
 
             onNodeWithText("Ledger").performClick()
-            onNodeWithText("No entries match.").assertExists()
+            // A brand-new dataset is guided to its first entry.
+            onNodeWithText("No entries yet.").assertExists()
+            onNodeWithText("Add your first entry").assertExists()
 
             onNodeWithText("Settings").performClick()
             onNodeWithText("Import from Ivy").assertExists()
