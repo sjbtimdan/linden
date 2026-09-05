@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
 }
 
 // Release signing config, read from the git-ignored keystore.properties.
@@ -21,12 +23,12 @@ kotlin {
 }
 dependencies {
     implementation(project(":shared"))
-
     implementation(libs.androidx.activity.compose)
-
     implementation(libs.compose.uiToolingPreview)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
     debugImplementation(libs.compose.uiTooling)
-
     detektPlugins(libs.detekt.ktlint.wrapper)
 }
 
