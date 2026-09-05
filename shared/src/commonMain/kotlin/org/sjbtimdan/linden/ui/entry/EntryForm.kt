@@ -41,6 +41,18 @@ import kotlin.time.Instant
 /** Which field is expanded right now; while one is, the rest of the form collapses. */
 private enum class ActiveField { Description, From, To, Category, Account, Amount, ToAmount }
 
+/** One-line context for the keypad takeover: the field's purpose plus the accounts involved. */
+private fun calculatorContextLabel(purpose: String, from: Account?, to: Account?): String = when {
+    from != null && to != null ->
+        "$purpose · ${from.name} · ${from.currency.symbol} → ${to.name} · ${to.currency.symbol}"
+
+    from != null -> "$purpose · ${from.name} · ${from.currency.symbol}"
+
+    to != null -> "$purpose · ${to.name} · ${to.currency.symbol}"
+
+    else -> purpose
+}
+
 /**
  * The field section of the entry editor, shared between the inline form on the
  * entry screen and the edit dialog on the ledger screen.
@@ -313,6 +325,11 @@ fun EntryForm(
         AmountCalculator(
             initialMinor = state.amount,
             currencySymbol = fromAccount?.currency?.symbol,
+            contextLabel = calculatorContextLabel(
+                purpose = if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount",
+                from = fromAccount,
+                to = toAccount,
+            ),
             onEnter = { value ->
                 onAmountChange(value)
                 activeField = null
@@ -329,6 +346,11 @@ fun EntryForm(
         AmountCalculator(
             initialMinor = state.toAmount,
             currencySymbol = toAccount?.currency?.symbol,
+            contextLabel = calculatorContextLabel(
+                purpose = "Amount (received)",
+                from = fromAccount,
+                to = toAccount,
+            ),
             onEnter = { value ->
                 onToAmountChange(value)
                 activeField = null

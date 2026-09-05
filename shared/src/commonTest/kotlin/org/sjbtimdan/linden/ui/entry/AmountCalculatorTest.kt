@@ -8,6 +8,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -250,6 +251,44 @@ class AmountCalculatorTest : StringSpec({
                 onNodeWithText("3").performClick()
                 onNodeWithText("=").performClick()
                 onNodeWithText("13.00").assertIsDisplayed()
+            }
+        }
+    }
+
+    "shows the context label above the display when provided" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    AmountCalculator(
+                        initialMinor = null,
+                        currencySymbol = "CHF",
+                        contextLabel = "Amount (sent) · Main · CHF → Savings · EUR",
+                        onEnter = {},
+                        onInvalid = {},
+                        onCancel = {},
+                    )
+                }
+
+                onNodeWithTag("calculatorContextLabel")
+                    .assertTextEquals("Amount (sent) · Main · CHF → Savings · EUR")
+            }
+        }
+    }
+
+    "omits the context label when none is provided" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    AmountCalculator(
+                        initialMinor = null,
+                        currencySymbol = null,
+                        onEnter = {},
+                        onInvalid = {},
+                        onCancel = {},
+                    )
+                }
+
+                onNodeWithTag("calculatorContextLabel").assertDoesNotExist()
             }
         }
     }

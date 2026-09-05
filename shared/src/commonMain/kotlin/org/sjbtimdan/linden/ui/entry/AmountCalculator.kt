@@ -56,6 +56,7 @@ fun AmountCalculator(
     onEnter: (String) -> Unit,
     onInvalid: () -> Unit,
     onCancel: () -> Unit,
+    contextLabel: String? = null,
 ) {
     val model = remember(initialMinor) { CalculatorModel(initialMinor) }
     var display by remember { mutableStateOf(model.display) }
@@ -109,6 +110,20 @@ fun AmountCalculator(
                 ),
             verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
         ) {
+            contextLabel?.let { label ->
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                        .testTag("calculatorContextLabel"),
+                )
+            }
+
             Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

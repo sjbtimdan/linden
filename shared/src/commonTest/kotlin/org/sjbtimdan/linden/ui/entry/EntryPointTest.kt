@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -432,6 +433,80 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Added").assertIsDisplayed()
             entryDao.getAll().first().filterIsInstance<TransferEntry>().shouldHaveSize(1)
+        }
+    }
+
+    "calculator header falls back to the field purpose without an account" {
+        withEntryPoint { viewModel ->
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+
+            onNodeWithTag("calculatorContextLabel").assertTextEquals("Amount")
+        }
+    }
+
+    "calculator header shows the amount purpose and the account context" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            waitForText("Coffee")
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+
+            onNodeWithTag("calculatorContextLabel").assertTextEquals("Amount · Main · CHF")
+        }
+    }
+
+    "calculator header for a transfer sent amount shows both accounts" {
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+            onNodeWithText("Amount (sent)").performClick()
+            waitForIdle()
+
+            onNodeWithTag("calculatorContextLabel")
+                .assertTextEquals("Amount (sent) · Main · CHF → Savings · €")
+        }
+    }
+
+    "calculator header for the received amount shows both accounts" {
+        withEntryPoint { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+            onNodeWithText("Amount (received)").performClick()
+            waitForIdle()
+
+            onNodeWithTag("calculatorContextLabel")
+                .assertTextEquals("Amount (received) · Main · CHF → Savings · €")
         }
     }
 
