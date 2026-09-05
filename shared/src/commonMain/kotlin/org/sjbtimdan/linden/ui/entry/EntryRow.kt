@@ -53,8 +53,13 @@ private fun Entry.tintColor(): Color = when (type) {
     EntryType.Transfer -> lindenColors().transfer
 }
 
+/**
+ * A single entry row. [showTimestamp] controls the trailing date-and-time line:
+ * the ledger groups rows under day headers that already carry the date, so the
+ * timestamp only adds information when a single day is shown (the Day period).
+ */
 @Composable
-fun EntryRow(entry: Entry, onClick: () -> Unit) {
+fun EntryRow(entry: Entry, onClick: () -> Unit, showTimestamp: Boolean = true) {
     val tint = entry.tintColor()
     Row(
         modifier = Modifier
@@ -90,11 +95,13 @@ fun EntryRow(entry: Entry, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(
-                text = formatDateTime(entry.createdAt, entry.createdZone),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (showTimestamp) {
+                Text(
+                    text = formatDateTime(entry.createdAt, entry.createdZone),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(

@@ -423,6 +423,40 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "month view omits per-row timestamps under day headers, the day view shows them" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Morning", main, 100, createdAt = Instant.parse("2026-08-15T08:00:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Lunch", main, 200, createdAt = Instant.parse("2026-08-15T12:30:00Z")),
+            )
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Dinner", main, 300, createdAt = Instant.parse("2026-08-15T19:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // Month: the day header carries the date, so the rows stay timestamp-free.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithText("15 Aug 2026").assertIsDisplayed()
+            onNodeWithText("15 Aug 2026, 08:00").assertDoesNotExist()
+
+            // Day: the timestamp is the only thing telling the rows apart.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Day").performClick()
+
+            onNodeWithText("15 Aug 2026, 08:00").assertIsDisplayed()
+            onNodeWithText("15 Aug 2026, 12:30").assertIsDisplayed()
+            onNodeWithText("15 Aug 2026, 19:00").assertIsDisplayed()
+        }
+    }
+
     "shows the net total of the period next to the navigator" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

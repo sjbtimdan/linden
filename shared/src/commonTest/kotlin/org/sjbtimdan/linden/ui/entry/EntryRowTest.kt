@@ -74,6 +74,33 @@ class EntryRowTest : StringSpec({
         }
     }
 
+    "hides the date line when showTimestamp is false" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    EntryRow(
+                        entry = ExpenseEntry(
+                            id = 1,
+                            category = groceries,
+                            description = "Coffee",
+                            account = main,
+                            amount = 450,
+                            createdAt = atHalfPastTwo,
+                            createdZone = TimeZone.UTC,
+                        ),
+                        onClick = {},
+                        showTimestamp = false,
+                    )
+                }
+
+                onNodeWithText("Coffee").assertIsDisplayed()
+                onNodeWithText("Main").assertIsDisplayed()
+                onNodeWithText("1 Jan 1970, 14:30").assertDoesNotExist()
+                onNodeWithText("− 4.50 CHF").assertIsDisplayed()
+            }
+        }
+    }
+
     "income row shows a plus-signed amount with the account currency symbol" {
         onTestMain {
             runComposeUiTest {

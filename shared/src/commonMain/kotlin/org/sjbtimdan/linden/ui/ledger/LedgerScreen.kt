@@ -497,6 +497,9 @@ fun LedgerScreen(
                             EntryRow(
                                 entry = item.entry,
                                 onClick = { viewModel.openEditDialog(item.entry) },
+                                // Day headers above already carry the date; only the Day
+                                // period needs the per-row timestamp to tell entries apart.
+                                showTimestamp = periodSelection.period == LedgerPeriod.Day,
                             )
                         }
                     }
