@@ -44,7 +44,13 @@ data class LindenBackup(
 )
 
 @Serializable
-data class BackupAccount(val id: Long, val name: String, val currency: String, val initialBalance: Long)
+data class BackupAccount(
+    val id: Long,
+    val name: String,
+    val currency: String,
+    val initialBalance: Long,
+    val hidden: Boolean = false,
+)
 
 @Serializable
 data class BackupCategory(val id: Long, val name: String, val type: String, val icon: String? = null)
@@ -119,7 +125,13 @@ class LindenBackupManager(private val database: LindenDatabase) {
             database.fxRateQueries.deleteAll()
             database.budgetQueries.deleteAll()
             backup.accounts.forEach { account ->
-                database.accountQueries.insertWithId(account.id, account.name, account.currency, account.initialBalance)
+                database.accountQueries.insertWithId(
+                    account.id,
+                    account.name,
+                    account.currency,
+                    account.initialBalance,
+                    if (account.hidden) 1 else 0,
+                )
             }
             backup.categories.forEach { category ->
                 database.categoryQueries.insertWithId(category.id, category.name, category.type, category.icon)
@@ -204,7 +216,7 @@ class LindenBackupManager(private val database: LindenDatabase) {
 
     private suspend fun readBackup(): LindenBackup = LindenBackup(
         accounts = database.accountQueries.selectAll().awaitAsList().map { account ->
-            BackupAccount(account.id, account.name, account.currency, account.initialBalance)
+            BackupAccount(account.id, account.name, account.currency, account.initialBalance, account.hidden != 0L)
         },
         categories = database.categoryQueries.selectAll().awaitAsList().map { category ->
             BackupCategory(category.id, category.name, category.type, category.icon)

@@ -93,6 +93,9 @@ class SchemaMigrationTest : StringSpec({
             );
         """.trimIndent()
         driver.execute(null, createCategory, 0)
+        // A real v2 database already had the settings table, which the later
+        // migrations (3.sqm reads it for budgets) require.
+        driver.execute(null, "CREATE TABLE AppSettingsEntity (key TEXT PRIMARY KEY, value TEXT NOT NULL)", 0)
 
         driver.execute(null, "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Cash', 'CHF', 0)", 0)
         driver.execute(null, "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Cash', 'CHF', 0)", 0)
@@ -105,6 +108,10 @@ class SchemaMigrationTest : StringSpec({
         driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
 
         LindenDatabase.Schema.migrate(driver, 2, 3).await()
+        // The generated queries target the current schema, so the test database
+        // runs through the remaining migrations before it is queried.
+        LindenDatabase.Schema.migrate(driver, 3, 4).await()
+        LindenDatabase.Schema.migrate(driver, 4, 5).await()
 
         val db = LindenDatabase(driver)
         val accounts = db.accountQueries.selectAll().executeAsList()
@@ -147,5 +154,84 @@ class SchemaMigrationTest : StringSpec({
 
         // The settings key is removed.
         db.settingsQueries.selectAll().executeAsList().map { it.key } shouldBe emptyList()
+    }
+
+    "migrating from v4 to v5 adds the hidden account flag, defaulting to false" {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+        // Create the v4 AccountEntity (no hidden column) and seed two accounts.
+        val createAccount = """
+            CREATE TABLE AccountEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                currency TEXT NOT NULL,
+                initialBalance INTEGER NOT NULL DEFAULT 0
+            );
+        """.trimIndent()
+        driver.execute(null, createAccount, 0)
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Cash', 'CHF', 500)",
+            0,
+        )
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance) VALUES ('Savings', 'EUR', 0)",
+            0,
+        )
+
+        LindenDatabase.Schema.migrate(driver, 4, 5).await()
+
+        val db = LindenDatabase(driver)
+        // Rows survive and every account is visible by default.
+        db.accountQueries.selectAll().executeAsList().map { it.name to it.initialBalance to it.hidden } shouldBe
+            listOf(
+                "Cash" to 500L to 0L,
+                "Savings" to 0L to 0L,
+            )
+
+        // The flag can be set and read back.
+        db.accountQueries.updateHidden(1, 2)
+        db.accountQueries.selectAll().executeAsList().map { it.name to it.hidden } shouldBe
+            listOf("Cash" to 0L, "Savings" to 1L)
+    }
+
+    "replaying v4 to v5 on a table that already has the hidden column converges instead of failing" {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+        // A device that ran a v5 app and then an older one: the no-op onDowngrade
+        // keeps the newer `hidden` column but re-stamps user_version to 4, so the
+        // migration replays on a table that already has the column.
+        val createAccount = """
+            CREATE TABLE AccountEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                currency TEXT NOT NULL,
+                initialBalance INTEGER NOT NULL DEFAULT 0,
+                hidden INTEGER NOT NULL DEFAULT 0
+            );
+        """.trimIndent()
+        driver.execute(null, createAccount, 0)
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance, hidden) VALUES ('Cash', 'CHF', 500, 1)",
+            0,
+        )
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance, hidden) VALUES ('Savings', 'EUR', 0, 0)",
+            0,
+        )
+
+        // The rebuild tolerates the existing column instead of erroring with
+        // "duplicate column name: hidden"; data survives.
+        LindenDatabase.Schema.migrate(driver, 4, 5).await()
+
+        val db = LindenDatabase(driver)
+        db.accountQueries.selectAll().executeAsList().map { it.name to it.initialBalance to it.hidden } shouldBe
+            listOf(
+                "Cash" to 500L to 0L,
+                "Savings" to 0L to 0L,
+            )
     }
 })

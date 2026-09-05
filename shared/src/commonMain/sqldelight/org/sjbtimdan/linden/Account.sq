@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS AccountEntity (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     currency TEXT NOT NULL,
-    initialBalance INTEGER NOT NULL DEFAULT 0
+    initialBalance INTEGER NOT NULL DEFAULT 0,
+    hidden INTEGER NOT NULL DEFAULT 0
 );
 
 insert:
@@ -10,8 +11,8 @@ INSERT INTO AccountEntity (name, currency, initialBalance)
 VALUES (?, ?, ?);
 
 insertWithId:
-INSERT INTO AccountEntity (id, name, currency, initialBalance)
-VALUES (?, ?, ?, ?);
+INSERT INTO AccountEntity (id, name, currency, initialBalance, hidden)
+VALUES (?, ?, ?, ?, ?);
 
 update:
 UPDATE AccountEntity
@@ -21,6 +22,11 @@ WHERE id = ?;
 updateInitialBalance:
 UPDATE AccountEntity
 SET initialBalance = ?
+WHERE id = ?;
+
+updateHidden:
+UPDATE AccountEntity
+SET hidden = ?
 WHERE id = ?;
 
 selectAll:

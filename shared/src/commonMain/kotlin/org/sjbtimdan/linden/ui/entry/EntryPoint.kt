@@ -64,7 +64,9 @@ fun EntryPoint(
     onNavigateToRates: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
 ) {
-    val accounts by viewModel.accounts.collectAsState()
+    // Only visible accounts can back a new entry: pickers, suggestions and the
+    // seed all exclude hidden ones, so the form never offers an account to hide.
+    val accounts by viewModel.visibleAccounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
     val draft by viewModel.draft.collectAsState()

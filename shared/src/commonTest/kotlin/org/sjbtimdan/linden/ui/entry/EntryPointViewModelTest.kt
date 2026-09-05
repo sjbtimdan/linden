@@ -326,6 +326,68 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.totalMinor.first() shouldBe 10_000
         }
     }
+
+    "total balance excludes hidden accounts" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            accountDao.create("Old", Currency.CHF, initialBalance = 90_000)
+            categoryDao.create("Salary", CategoryType.Income)
+            val accounts = accountDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val old = accounts.first { it.name == "Old" }
+            val salary = categoryDao.getAll().first().first()
+
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
+            accountDao.setHidden(old.id, true)
+
+            // The hidden account's 900.00 still sits in the database, but the
+            // total (and thus the entry screen's balance card) no longer shows it.
+            viewModel.totalMinor.first() shouldBe 12_000
+        }
+    }
+
+    "seedDraft skips entries whose account is hidden" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Old", Currency.CHF)
+            val old = accountDao.getAll().first().first { it.name == "Old" }
+
+            // The most recent expense lives on a now-hidden account; seeding
+            // must fall back to the newest visible one instead.
+            entryDao.create(
+                ExpenseEntry(0, groceries, "Visible", main, 450, createdAt = Instant.fromEpochMilliseconds(1_000)),
+            )
+            entryDao.create(
+                ExpenseEntry(0, groceries, "Archived", old, 200, createdAt = Instant.fromEpochMilliseconds(2_000)),
+            )
+            accountDao.setHidden(old.id, true)
+
+            viewModel.seedDraft()
+
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.accountId shouldBe main.id
+                draft.description shouldBe "Visible"
+            }
+        }
+    }
+
+    "saveDraft refuses a draft that references a hidden account" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Old", Currency.CHF)
+            val old = accountDao.getAll().first().first { it.name == "Old" }
+            accountDao.setHidden(old.id, true)
+
+            viewModel.seedDraft()
+            viewModel.onAccountChange(old.id)
+            viewModel.onAmountChange("4.50")
+
+            viewModel.saveDraft() shouldBe false
+
+            entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

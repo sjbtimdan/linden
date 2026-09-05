@@ -34,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -53,6 +55,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
+import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.parseAmount
@@ -68,6 +71,7 @@ private data class AccountDialogState(
     val initialBalanceText: String,
     val nameError: String? = null,
     val initialBalanceError: String? = null,
+    val hidden: Boolean = false,
 )
 
 @Composable
@@ -75,8 +79,12 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     val accounts by viewModel.accounts.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
+    val allTimeBalances by viewModel.allTimeBalances.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
+    // Set when hiding an account with a non-zero all-time balance: the confirm
+    // dialog must be answered before the account is actually hidden.
+    var hideConfirmation by remember { mutableStateOf<AccountDialogState?>(null) }
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -171,6 +179,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                     name = account.name,
                                     currency = account.currency,
                                     initialBalanceText = formatAmount(account.initialBalance),
+                                    hidden = account.hidden,
                                 )
                             }
                             .padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
@@ -195,11 +204,28 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                 text = account.name,
                                 style = MaterialTheme.typography.bodyLarge,
                             )
-                            Text(
-                                text = account.currency.name,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = account.currency.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                if (account.hidden) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Icon(
+                                        imageVector = VisibilityOffIcon,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(
+                                        text = "Hidden",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
@@ -229,9 +255,21 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             isEditing = isEditing,
             canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
             canDelete = isEditing && state.account.id !in accountsWithEntries,
+            hidden = state.hidden,
             onNameChange = { dialogState = state.copy(name = it, nameError = null) },
             onCurrencyChange = { dialogState = state.copy(currency = it) },
             onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it, initialBalanceError = null) },
+            onHiddenChange = { wantHidden ->
+                val existing = state.account
+                if (existing == null) return@AccountDialog
+                if (wantHidden && (allTimeBalances[existing.id] ?: existing.initialBalance) != 0L) {
+                    // A non-zero account is about to leave the totals: ask first.
+                    hideConfirmation = state
+                } else {
+                    viewModel.setHidden(existing.id, wantHidden)
+                    dialogState = state.copy(hidden = wantHidden)
+                }
+            },
             onDelete = {
                 val existing = state.account
                 if (existing != null) {
@@ -274,6 +312,45 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             onDismiss = { dialogState = null },
         )
     }
+
+    hideConfirmation?.let { pending ->
+        val account = pending.account
+        val balance = account?.let { allTimeBalances[it.id] ?: it.initialBalance } ?: 0L
+        AlertDialog(
+            onDismissRequest = { hideConfirmation = null },
+            shape = DialogShape,
+            title = { Text("Hide account?") },
+            text = {
+                Text(
+                    "${account?.name} has a balance of ${formatAmount(balance)} " +
+                        "${account?.currency?.symbol}. Hiding it removes the account from the ledger, " +
+                        "the account pickers and the filters. Its entries stay in your history and it " +
+                        "can be shown again at any time.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val id = account?.id
+                        if (id != null) {
+                            viewModel.setHidden(id, true)
+                            dialogState = pending.copy(hidden = true)
+                        }
+                        hideConfirmation = null
+                    },
+                ) {
+                    Text("Hide")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { hideConfirmation = null },
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -286,9 +363,11 @@ private fun AccountDialog(
     isEditing: Boolean,
     canChangeCurrency: Boolean,
     canDelete: Boolean,
+    hidden: Boolean,
     onNameChange: (String) -> Unit,
     onCurrencyChange: (Currency) -> Unit,
     onInitialBalanceChange: (String) -> Unit,
+    onHiddenChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
@@ -371,6 +450,30 @@ private fun AccountDialog(
                 if (isEditing) {
                     Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Hidden",
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                            Text(
+                                text = "Keeps the entries, but removes the account from the ledger, " +
+                                    "the account pickers and the filters.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = hidden,
+                            onCheckedChange = onHiddenChange,
+                            modifier = Modifier.testTag("hiddenSwitch"),
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     if (!canDelete) {
                         Text(

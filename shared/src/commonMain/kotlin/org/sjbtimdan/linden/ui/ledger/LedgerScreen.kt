@@ -88,6 +88,7 @@ fun LedgerScreen(
     onNavigateToCategories: () -> Unit = {},
 ) {
     val accounts by viewModel.accounts.collectAsState()
+    val visibleAccounts by viewModel.visibleAccounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val typeFilter by viewModel.typeFilter.collectAsState()
@@ -212,7 +213,7 @@ fun LedgerScreen(
                         categories = categories,
                         categoryFilter = categoryFilter,
                         onCategoryFilterChange = viewModel::setCategoryFilter,
-                        accounts = accounts,
+                        accounts = visibleAccounts,
                         accountFilter = accountFilter,
                         onAccountFilterChange = viewModel::setAccountFilter,
                         amountFilter = amountFilter,
@@ -357,13 +358,21 @@ fun LedgerScreen(
             val canAdjustBalance = periodSelection.period.includes(viewModel.today(), periodSelection.anchor)
             AccountsList(
                 balances = shownBalances,
-                emptyMessage =
-                if (accountFilter.isNotEmpty() && accountBalances.isNotEmpty()) {
-                    "No accounts match."
-                } else {
-                    "No accounts yet."
+                emptyMessage = when {
+                    accountFilter.isNotEmpty() && accountBalances.isNotEmpty() -> "No accounts match."
+
+                    // No visible accounts at all: distinguish a brand-new app from
+                    // an app whose every account is hidden.
+                    accounts.isEmpty() -> "No accounts yet."
+
+                    else -> "All accounts are hidden."
                 },
-                emptyActionLabel = if (accountFilter.isEmpty()) "Create an account" else null,
+                emptyActionLabel = when {
+                    accountFilter.isNotEmpty() && accountBalances.isNotEmpty() -> null
+                    accountFilter.isEmpty() && accounts.isEmpty() -> "Create an account"
+                    accountFilter.isEmpty() -> "Manage accounts"
+                    else -> null
+                },
                 onEmptyAction = onNavigateToAccounts,
                 canAdjustBalance = canAdjustBalance,
                 onAccountClick = { viewModel.openAccount(it.account.id) },
@@ -488,9 +497,15 @@ fun LedgerScreen(
     }
 
     dialogState?.let { state ->
+        // Editing may open an entry that lives on a hidden account (its history is
+        // kept), so the account pickers also offer exactly the hidden accounts the
+        // draft references — switching onto any other hidden account stays impossible.
+        val dialogAccounts = accounts.filter { account ->
+            !account.hidden || account.id == state.accountId || account.id == state.toAccountId
+        }
         EntryDialog(
             state = state,
-            accounts = accounts,
+            accounts = dialogAccounts,
             categories = categories,
             onAmountChange = viewModel::onAmountChange,
             onCategoryChange = viewModel::onCategoryChange,

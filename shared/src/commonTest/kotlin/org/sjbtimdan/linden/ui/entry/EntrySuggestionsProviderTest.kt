@@ -121,6 +121,24 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "suggestions never propose entries on hidden accounts" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Old", Currency.CHF)
+            val old = accountDao.getAll().first().first { it.name == "Old" }
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Archived", old, 450, createdAt = Clock.System.now()))
+            accountDao.setHidden(old.id, true)
+            draft.value = EntryDraft.forNew(EntryType.Expense)
+                .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
+
+            // The hidden account's history feeds neither the account suggestions
+            // nor the description suggestions.
+            provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
+            provider.descriptionSuggestions.awaitNotEmpty() shouldContainExactly listOf("Coffee")
+        }
+    }
+
     "quick entries include entries beyond the prediction horizon" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)

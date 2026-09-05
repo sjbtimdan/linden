@@ -198,14 +198,14 @@ class LedgerViewModel(
     }.stateFlow(0)
 
     /**
-     * Balance of each account at period end in its own currency: initial balance
+     * Balance of each visible account at period end in its own currency: initial balance
      * plus entries through the period end, stopping at today unless future entries
-     * are shown.
+     * are shown. Hidden accounts never appear.
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
         entriesUpToPeriodEnd,
         periodEnd,
-        accounts,
+        visibleAccounts,
         _showFuture,
     ) { entries, end, accounts, showFuture ->
         val now = today()
@@ -227,11 +227,11 @@ class LedgerViewModel(
     }.stateFlow(null)
 
     /**
-     * Current balance of each account in its own currency (minor units), used for balance
+     * Current balance of each visible account in its own currency (minor units), used for balance
      * adjustments. Entries dated in the future never count, matching [accountBalancesAtPeriodEnd].
      */
     val currentAccountBalances: StateFlow<Map<Long, Long>> = combine(
-        accounts,
+        visibleAccounts,
         entryDao.accountDeltasUpTo(today().sqlUpperBound()),
     ) { accounts, deltas ->
         accountBalancesMinor(deltas, accounts)

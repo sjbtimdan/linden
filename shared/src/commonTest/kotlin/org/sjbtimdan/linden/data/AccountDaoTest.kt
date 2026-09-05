@@ -103,6 +103,38 @@ class AccountDaoTest : StringSpec({
         }
     }
 
+    "accounts are visible by default and setHidden round-trips the flag" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+        val main = dao.getAll().first().single()
+        main.hidden shouldBe false
+
+        dao.setHidden(main.id, true)
+        val hidden = dao.getAll().first().single()
+        hidden.hidden shouldBe true
+        hidden.copy(hidden = false) shouldBe main
+
+        dao.setHidden(main.id, false)
+        dao.getAll().first().single().hidden shouldBe false
+    }
+
+    "update leaves the hidden flag untouched" {
+        val database = lindenDatabase()
+        val dao = AccountDao(database.accountQueries)
+
+        dao.create("Main", Currency.CHF)
+        val main = dao.getAll().first().single()
+        dao.setHidden(main.id, true)
+
+        dao.update(main.copy(name = "Renamed", initialBalance = 1_000))
+
+        val updated = dao.getAll().first().single()
+        updated.name shouldBe "Renamed"
+        updated.hidden shouldBe true
+    }
+
     "Currency.fromCode returns the enum for a known code" {
         Currency.entries.forEach { currency ->
             Currency.fromCode(currency.name) shouldBe currency

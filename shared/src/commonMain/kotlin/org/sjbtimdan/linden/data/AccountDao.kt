@@ -22,6 +22,10 @@ class AccountDao(private val queries: AccountQueries) {
         queries.update(account.name, account.currency.name, account.initialBalance, account.id)
     }
 
+    suspend fun setHidden(id: Long, hidden: Boolean) {
+        queries.updateHidden(if (hidden) 1 else 0, id)
+    }
+
     fun getAll(): Flow<List<Account>> = queries.selectAll()
         .asFlow()
         .map { it.awaitAsList().map { row -> row.toAccount() } }
@@ -31,5 +35,6 @@ class AccountDao(private val queries: AccountQueries) {
         name = name,
         currency = Currency.fromCode(currency),
         initialBalance = initialBalance,
+        hidden = hidden != 0L,
     )
 }

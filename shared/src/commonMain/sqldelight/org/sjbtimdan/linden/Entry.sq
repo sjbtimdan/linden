@@ -58,6 +58,9 @@ ORDER BY EntryEntity.id DESC;
 
 -- All entries of one type, without a date cutoff: quick entry ranks by time
 -- of day, so entries outside the prediction horizon must still be considered.
+-- Rows on hidden accounts are excluded: suggestions and the entry-screen seed
+-- must never propose an account that is hidden (history queries selectAll/
+-- selectSince/selectUpTo intentionally still return them).
 selectAllByType:
 SELECT EntryEntity.id,
        EntryEntity.type,
@@ -81,6 +84,8 @@ JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
 LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
 LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
 WHERE EntryEntity.type = :type
+  AND AccountEntity.hidden = 0
+  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
 ORDER BY EntryEntity.id DESC;
 
 selectSince:
@@ -131,6 +136,8 @@ JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
 LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
 LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
 WHERE EntryEntity.type = :type AND EntryEntity.created_at >= :epochMs
+  AND AccountEntity.hidden = 0
+  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
 ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
 
 selectLatestByType:
@@ -156,6 +163,8 @@ JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
 LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
 LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
 WHERE EntryEntity.type = :type
+  AND AccountEntity.hidden = 0
+  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
 ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC
 LIMIT 1;
 

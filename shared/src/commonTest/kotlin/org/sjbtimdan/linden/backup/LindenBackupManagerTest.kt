@@ -173,6 +173,35 @@ class LindenBackupManagerTest : StringSpec({
         restored.entryQueries.selectAllRows().awaitAsList().map { it.description } shouldBe listOf("Coffee")
     }
 
+    "restoreFrom keeps accounts visible when the backup predates the hidden field" {
+        val backupJson = """
+            {
+              "formatVersion": 1,
+              "accounts": [{"id": 1, "name": "Cash", "currency": "CHF", "initialBalance": 500}]
+            }
+        """.trimIndent()
+
+        val restored = lindenDatabase()
+        LindenBackupManager(restored).restoreFrom(ByteArrayInputStream(buildBackupZip(backupJson)))
+
+        restored.accountQueries.selectAll().awaitAsList().single().hidden shouldBe 0L
+    }
+
+    "backup and restore round-trip the hidden flag" {
+        val source = lindenDatabase().apply {
+            accountQueries.insert("Cash", "CHF", 0)
+            accountQueries.insert("Old", "USD", 0)
+            accountQueries.updateHidden(1, 2)
+        }
+        val bytes = ByteArrayOutputStream().also { LindenBackupManager(source).backupTo(it) }.toByteArray()
+
+        val restored = lindenDatabase()
+        LindenBackupManager(restored).restoreFrom(ByteArrayInputStream(bytes))
+
+        restored.accountQueries.selectAll().awaitAsList().map { it.name to it.hidden } shouldBe
+            listOf("Cash" to 0L, "Old" to 1L)
+    }
+
     "restoreFrom rejects a zip archive without a JSON entry" {
         val zip = ByteArrayOutputStream().also { out ->
             ZipOutputStream(out).use { zos ->

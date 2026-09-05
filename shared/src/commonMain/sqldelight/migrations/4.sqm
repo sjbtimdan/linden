@@ -1,0 +1,24 @@
+-- Migrate schema from version 4 to 5: add AccountEntity.hidden, the per-account
+-- "hide from ledger/pickers" flag.
+--
+-- A plain ADD COLUMN is not idempotent: a device that ran a v5 build and then an
+-- older app keeps the column (the Android no-op onDowngrade preserves newer
+-- columns) while being re-stamped to user_version = 4, so replaying an ALTER
+-- fails with "duplicate column name: hidden". A table rebuild converges both
+-- shapes: the copy omits `hidden`, so every pre-existing account stays visible
+-- (a hidden flag set by an app that was then downgraded away is not preserved).
+
+ALTER TABLE AccountEntity RENAME TO AccountEntity_old;
+
+CREATE TABLE AccountEntity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    currency TEXT NOT NULL,
+    initialBalance INTEGER NOT NULL DEFAULT 0,
+    hidden INTEGER NOT NULL DEFAULT 0
+);
+
+INSERT INTO AccountEntity (id, name, currency, initialBalance)
+SELECT id, name, currency, initialBalance FROM AccountEntity_old;
+
+DROP TABLE AccountEntity_old;

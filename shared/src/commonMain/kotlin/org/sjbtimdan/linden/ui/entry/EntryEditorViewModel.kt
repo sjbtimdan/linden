@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -45,7 +46,13 @@ abstract class EntryEditorViewModel(
     /** FX rates that convert the default currency into each quote currency. */
     protected val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
 
+    /** Every account, hidden or not — resolves names, currency and edited entries. */
     val accounts: StateFlow<List<Account>> = accountDao.getAll().stateFlow(emptyList())
+
+    /** Accounts that are not hidden — the ones pickers, filters and balances may use. */
+    val visibleAccounts: StateFlow<List<Account>> = accounts
+        .map { list -> list.filterNot { it.hidden } }
+        .stateFlow(emptyList())
 
     val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
 

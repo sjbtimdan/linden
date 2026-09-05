@@ -1343,6 +1343,59 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "hidden accounts are excluded from balances, totals and adjust maps, but their entries stay in the ledger" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 5_000)
+            accountDao.create("Old", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val accounts = accountDao.getAll().first()
+            val main = accounts.first { it.name == "Main" }
+            val old = accounts.first { it.name == "Old" }
+            val groceries = categoryDao.getAll().first().first()
+
+            entryDao.create(ExpenseEntry(0, groceries, "Visible", main, 450, at(1_700_000_000_000), TimeZone.UTC))
+            entryDao.create(ExpenseEntry(0, groceries, "Archived", old, 900, at(1_700_000_000_000), TimeZone.UTC))
+            accountDao.setHidden(old.id, true)
+
+            // The Accounts tab shows only visible accounts...
+            viewModel.visibleAccounts.value.map { it.name } shouldBe listOf("Main")
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, 4_550L))
+            // ...so the period-end total excludes the hidden balance too.
+            viewModel.accountTotalAtPeriodEnd.value shouldBe 4_550L
+            // Current balances (Adjust Balance) have no key for the hidden account.
+            viewModel.currentAccountBalances.value shouldBe mapOf(main.id to 4_550L)
+
+            // History is kept: the hidden account's entries still appear in the
+            // entries list and still count toward the category totals.
+            viewModel.entries.value.map { it.description } shouldBe listOf("Archived", "Visible")
+            viewModel.categoryTotals.value.single().let { total ->
+                total.category shouldBe groceries
+                total.total shouldBe -1_350L
+            }
+        }
+    }
+
+    "entries of hidden accounts stay editable from the ledger" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            accountDao.setHidden(main.id, true)
+
+            // The entry is still listed (history is kept), so it can be opened,
+            // edited and saved without switching accounts.
+            entryDao.getAll().first().single().let { entry ->
+                viewModel.openEditDialog(entry)
+            }
+            viewModel.onDescriptionChange("Edited coffee")
+            viewModel.saveDialog() shouldBe true
+
+            entryDao.getAll().first().single().description shouldBe "Edited coffee"
+        }
+    }
+
     "currentAccountBalances excludes future-dated entries" {
         withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)

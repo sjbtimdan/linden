@@ -10,7 +10,9 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -419,6 +421,133 @@ class AccountListScreenTest : StringSpec({
             viewModel.accounts.value.map { it.name } shouldBe listOf("Savings")
             onNodeWithText("Savings").assertIsDisplayed()
             onNodeWithText("Main").assertDoesNotExist()
+        }
+    }
+
+    "hidden accounts stay listed with a Hidden badge" {
+        withAccountViewModel { accountDao, _, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Old", Currency.USD)
+            val old = accountDao.getAll().first().first { it.name == "Old" }
+            accountDao.setHidden(old.id, true)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Old").assertIsDisplayed()
+            onAllNodes(hasText("Hidden")).assertCountEquals(1)
+        }
+    }
+
+    "the Hidden switch appears when editing an account but not when creating one" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithTag("hiddenSwitch").assertIsDisplayed()
+
+            onNodeWithText("Cancel").performClick()
+            onNodeWithText("New Account").performClick()
+            onNodeWithTag("hiddenSwitch").assertDoesNotExist()
+            onNodeWithText("Cancel").performClick()
+        }
+    }
+
+    "hiding a zero-balance account takes effect immediately" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithTag("hiddenSwitch").performClick()
+
+            onNodeWithText("Hide account?").assertDoesNotExist()
+            viewModel.accounts.value.single().hidden shouldBe true
+        }
+    }
+
+    "hiding a non-zero account asks for confirmation before hiding" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 5_000)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithTag("hiddenSwitch").performClick()
+
+            onNodeWithText("Hide account?").assertIsDisplayed()
+            onNode(hasText("has a balance of 50.00 CHF", substring = true)).assertIsDisplayed()
+            onNodeWithText("Hide").performClick()
+
+            viewModel.accounts.value.single().hidden shouldBe true
+            onNodeWithText("Hide account?").assertDoesNotExist()
+        }
+    }
+
+    "cancelling the hide confirmation keeps the account visible" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 5_000)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithTag("hiddenSwitch").performClick()
+            onNodeWithText("Hide account?").assertIsDisplayed()
+            // The edit dialog behind the confirmation also has a Cancel; the
+            // confirmation (composed last) owns the second one.
+            onAllNodesWithText("Cancel")[1].performClick()
+
+            onNodeWithText("Hide account?").assertDoesNotExist()
+            viewModel.accounts.value.single().hidden shouldBe false
+        }
+    }
+
+    "unhiding an account needs no confirmation" {
+        withAccountViewModel { accountDao, _, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            accountDao.setHidden(main.id, true)
+            viewModel.accounts.first { it.single().hidden }
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onNodeWithTag("hiddenSwitch").performClick()
+
+            viewModel.accounts.value.single().hidden shouldBe false
         }
     }
 })

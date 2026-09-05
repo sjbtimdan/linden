@@ -40,13 +40,14 @@ class EntryPointViewModel(
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
 
     /**
-     * Total across all accounts in the default currency: initial balances plus
+     * Total across all visible accounts in the default currency: initial balances plus
      * the net of all entries dated on or before today (entries in the future
-     * never count). Null while a foreign currency has no stored rate.
+     * never count). Hidden accounts never count. Null while a foreign currency
+     * has no stored rate.
      */
     val totalMinor: StateFlow<Long?> = combine(
         entryDao.getAll(),
-        accounts,
+        visibleAccounts,
         defaultCurrency,
         rates,
     ) { entries, accounts, currency, rates ->
@@ -111,10 +112,14 @@ class EntryPointViewModel(
         draftState.value = EntryDraft.forNew(_selectedType.value)
     }
 
-    /** Saves the current draft and resets the form prefilled from the saved entry. */
+    /**
+     * Saves the current draft and resets the form prefilled from the saved entry.
+     * Drafts only resolve against visible accounts: an account hidden while a
+     * draft referenced it simply cannot be saved.
+     */
     fun saveDraft(): Boolean {
         val state = draftState.value ?: return false
-        val entry = state.toEntry(accounts.value, categories.value) ?: return false
+        val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
         createEntry(entry)
         draftState.value = EntryDraft.forNew(entry.type, entry)
         return true

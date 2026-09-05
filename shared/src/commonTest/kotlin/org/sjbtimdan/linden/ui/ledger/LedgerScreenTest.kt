@@ -106,6 +106,60 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "accounts view hides hidden accounts and explains when every account is hidden" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Old", Currency.CHF)
+            accountDao.create("Also Old", Currency.CHF)
+            val all = accountDao.getAll().first()
+            val main = all.first { it.name == "Main" }
+            val old = all.first { it.name == "Old" }
+            val alsoOld = all.first { it.name == "Also Old" }
+            accountDao.setHidden(old.id, true)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Also Old").assertIsDisplayed()
+            onNodeWithText("Old").assertDoesNotExist()
+
+            // Hiding the last visible account turns the empty state into an
+            // explanation with a route back to the account manager.
+            accountDao.setHidden(main.id, true)
+            accountDao.setHidden(alsoOld.id, true)
+            waitForIdle()
+
+            onNodeWithText("All accounts are hidden.").assertIsDisplayed()
+            onNodeWithText("Manage accounts").assertIsDisplayed()
+            onNodeWithText("Main").assertDoesNotExist()
+        }
+    }
+
+    "account filter dropdown offers only visible accounts" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Old", Currency.CHF)
+            val old = accountDao.getAll().first().first { it.name == "Old" }
+            accountDao.setHidden(old.id, true)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+            onNodeWithTag("accountFilterDropdown").performClick()
+
+            // The chip and the open menu both show the neutral label; only
+            // visible accounts appear as options.
+            onAllNodesWithText("Account: All").assertCountEquals(2)
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Old").assertDoesNotExist()
+        }
+    }
+
     "categories view empty state offers adding categories" {
         withLedgerViewModel { viewModel ->
             var navigatedToCategories = false

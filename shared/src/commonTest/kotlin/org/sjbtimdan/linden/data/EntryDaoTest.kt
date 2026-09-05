@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.data
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
@@ -396,5 +397,74 @@ class EntryDaoTest : StringSpec({
         entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = savings, toAmount = 9_500))
 
         entryDao.accountsWithEntries().first() shouldBe setOf(main.id, savings.id)
+    }
+
+    "suggestion queries skip hidden accounts while history queries keep them" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Old", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val old = accounts.first { it.name == "Old" }
+        val groceries = categoryDao.getAll().first().first()
+
+        entryDao.create(
+            ExpenseEntry(0, groceries, "Visible", main, 100, createdAt = Instant.fromEpochMilliseconds(1_000)),
+        )
+        entryDao.create(
+            ExpenseEntry(0, groceries, "Archived", old, 200, createdAt = Instant.fromEpochMilliseconds(2_000)),
+        )
+        accountDao.setHidden(old.id, true)
+
+        // History queries (ledger entries) still return the hidden account's entry.
+        entryDao.getAll().first().map { it.description } shouldBe listOf("Archived", "Visible")
+        entryDao.getSince(0).first().map { it.description } shouldBe listOf("Archived", "Visible")
+
+        // The suggestion/seed queries (quick entry, predictions, seed) skip it.
+        entryDao.getAllByType(EntryType.Expense).first().map { it.description } shouldBe listOf("Visible")
+        entryDao.getSinceByType(EntryType.Expense, 0).first().map { it.description } shouldBe listOf("Visible")
+        entryDao.latest(EntryType.Expense)!!.description shouldBe "Visible"
+    }
+
+    "suggestion queries skip transfers touching a hidden account on either side" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        accountDao.create("Savings", Currency.CHF)
+        accountDao.create("Old", Currency.CHF)
+        val accounts = accountDao.getAll().first()
+        val main = accounts.first { it.name == "Main" }
+        val savings = accounts.first { it.name == "Savings" }
+        val old = accounts.first { it.name == "Old" }
+
+        entryDao.create(TransferEntry(0, null, null, main, 10_000, toAccount = old, toAmount = null))
+        entryDao.create(TransferEntry(0, null, null, old, 5_000, toAccount = savings, toAmount = null))
+        entryDao.create(
+            TransferEntry(
+                0,
+                null,
+                null,
+                main,
+                1_000,
+                toAccount = savings,
+                toAmount = null,
+                createdAt = Instant.fromEpochMilliseconds(1_000),
+            ),
+        )
+        accountDao.setHidden(old.id, true)
+
+        // History keeps all three transfers; only the visible-to-visible one survives
+        // the suggestion queries.
+        entryDao.getAll().first().shouldHaveSize(3)
+        entryDao.getAllByType(EntryType.Transfer).first().map { it.amount } shouldBe listOf(1_000L)
+        entryDao.getSinceByType(EntryType.Transfer, 0).first().map { it.amount } shouldBe listOf(1_000L)
+        entryDao.latest(EntryType.Transfer)!!.amount shouldBe 1_000
     }
 })

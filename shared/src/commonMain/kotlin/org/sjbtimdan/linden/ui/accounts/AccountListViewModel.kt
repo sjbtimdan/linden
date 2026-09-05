@@ -55,8 +55,32 @@ class AccountListViewModel(
             initialValue = emptySet(),
         )
 
+    /**
+     * Total value of each account in its own currency (minor units) across all
+     * time, including future-dated entries: the initial balance plus the net of
+     * every entry. The amount a hidden account would remove from the totals.
+     */
+    val allTimeBalances: StateFlow<Map<Long, Long>> = combine(
+        accounts,
+        entryDao.getAll(),
+    ) { accounts, entries ->
+        val deltas = entryDeltas(entries)
+        accounts.associate { account -> account.id to account.initialBalance + (deltas[account.id] ?: 0) }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptyMap(),
+    )
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+
+    /** Hides or reveals [id]; hidden accounts stay in history but leave the ledger, pickers and filters. */
+    fun setHidden(id: Long, hidden: Boolean) {
+        viewModelScope.launch {
+            accountDao.setHidden(id, hidden)
+        }
     }
 
     /** Creates an account; returns false when the name is empty or already taken (case-insensitive). */
