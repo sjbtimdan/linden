@@ -38,8 +38,8 @@ class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
-    val initialHideEntryTotal: Boolean = false,
-    private val fxRatesSource: FxRatesSource? = null,
+    initialHideEntryTotal: Boolean = false,
+    fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
     val accountDao = AccountDao(database.accountQueries)

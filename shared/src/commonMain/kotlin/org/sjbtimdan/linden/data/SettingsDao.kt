@@ -63,8 +63,7 @@ class SettingsDao(private val queries: SettingsQueries) {
         .asFlow()
         .map { rows ->
             rows.awaitAsList()
-                .firstOrNull { it.key == HIDE_ENTRY_TOTAL_KEY }
-                ?.let { row -> row.value_.toBoolean() }
+                .firstOrNull { it.key == HIDE_ENTRY_TOTAL_KEY }?.value_?.toBoolean()
                 ?: false
         }
 
@@ -76,8 +75,7 @@ class SettingsDao(private val queries: SettingsQueries) {
         .asFlow()
         .map { rows ->
             rows.awaitAsList()
-                .firstOrNull { it.key == AUTO_UPDATE_RATES_KEY }
-                ?.let { row -> row.value_.toBoolean() }
+                .firstOrNull { it.key == AUTO_UPDATE_RATES_KEY }?.value_?.toBoolean()
                 ?: true
         }
 

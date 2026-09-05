@@ -73,11 +73,10 @@ class LedgerScreenTest : StringSpec({
     "accounts without entries still guide to the first entry" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
-            var navigatedToEntry = false
             setContent {
                 LedgerScreen(
                     viewModel = viewModel,
-                    onNavigateToEntry = { navigatedToEntry = true },
+                    onNavigateToEntry = { },
                 )
             }
 

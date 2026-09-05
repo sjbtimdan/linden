@@ -164,7 +164,7 @@ class LedgerViewModelTest : StringSpec({
 
     "search matches a transfer's to-account name" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
+            val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
@@ -233,7 +233,7 @@ class LedgerViewModelTest : StringSpec({
 
     "amount filter matches a transfer's to-amount" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
+            val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 

@@ -49,7 +49,7 @@ class LedgerViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     fxRatesRepository: FxRatesRepository,
-    private val budgetDao: BudgetDao,
+    budgetDao: BudgetDao,
     val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository) {
     private val _searchQuery = MutableStateFlow("")
@@ -133,7 +133,7 @@ class LedgerViewModel(
     /** Entries of both insight windows, fetched with one query from the earlier start. */
     private val insightEntries: StateFlow<Pair<List<Entry>, List<Entry>>> = insightWindows
         .flatMapLatest { windows ->
-            if (windows == null) return@flatMapLatest flowOf(emptyList<Entry>() to emptyList<Entry>())
+            if (windows == null) return@flatMapLatest flowOf(emptyList<Entry>() to emptyList())
             val (current, previous) = windows
             val source = entryDao.getSince(minOf(current.start, previous.start).sqlLowerBound())
             source.map { rows ->
@@ -141,7 +141,7 @@ class LedgerViewModel(
                 rows.inInsightWindow(current, now) to rows.inInsightWindow(previous, now)
             }
         }
-        .stateFlow(emptyList<Entry>() to emptyList<Entry>())
+        .stateFlow(emptyList<Entry>() to emptyList())
 
     /**
      * Spending insights for the selected month: month-to-date expenses vs the same

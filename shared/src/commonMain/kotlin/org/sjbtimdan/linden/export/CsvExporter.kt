@@ -36,7 +36,6 @@ fun entriesToCsv(entries: List<Entry>): String = buildString {
     }
 }
 
-/** Writes all entries to [output] as CSV. The caller owns and must close [output]. */
 class CsvExportManager(private val entryDao: EntryDao) {
     suspend fun exportTo(output: OutputStream) {
         val entries = entryDao.getAll().first()

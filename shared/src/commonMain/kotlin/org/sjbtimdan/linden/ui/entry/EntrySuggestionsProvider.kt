@@ -32,6 +32,7 @@ import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.predictions.predictQuickEntries
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
 
@@ -74,7 +75,7 @@ class EntrySuggestionsProvider(
             if (descriptionDebounceMillis <= 0) {
                 descriptions
             } else {
-                descriptions.debounce(descriptionDebounceMillis)
+                descriptions.debounce(descriptionDebounceMillis.milliseconds)
             }
         }
         .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = draft.value?.description.orEmpty())

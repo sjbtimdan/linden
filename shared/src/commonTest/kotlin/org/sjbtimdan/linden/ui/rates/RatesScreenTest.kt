@@ -19,6 +19,7 @@ import kotlinx.coroutines.withTimeout
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.withRatesViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTestApi::class)
 class RatesScreenTest : StringSpec({
@@ -36,7 +37,7 @@ class RatesScreenTest : StringSpec({
             onNodeWithContentDescription("Edit EUR rate").assertExists()
             onNodeWithText("Refresh").performClick()
 
-            withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            withTimeout(5_000.milliseconds) { viewModel.rates.first { it.isNotEmpty() } }
 
             onNodeWithText("Rates from 2026-08-13").assertExists()
             onNodeWithText("1 CHF = 1 €").assertExists()
@@ -57,7 +58,7 @@ class RatesScreenTest : StringSpec({
             onNode(hasSetTextAction()).performTextInput("1.25")
             onNodeWithText("Save").performClick()
 
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.rates.first { it.any { r -> r.quoteCurrency == Currency.EUR } }
             }
             onNodeWithText("1 CHF = 1.25 €").assertExists()
@@ -107,7 +108,7 @@ class RatesScreenTest : StringSpec({
 
             onNodeWithText("Refresh").performClick()
 
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
             }
             onNodeWithText("Refresh failed: network").assertExists()

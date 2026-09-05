@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTestApi::class)
 class SettingsScreenTest : StringSpec({
@@ -184,7 +185,7 @@ class SettingsScreenTest : StringSpec({
             """.trimIndent()
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
-            withTimeout(5_000) { viewModel.importState.first { it is ImportState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is ImportState.Success } }
 
             onNodeWithText(
                 "Note: 1 transaction(s) were in a different currency than their account " +
@@ -199,7 +200,7 @@ class SettingsScreenTest : StringSpec({
             setContent { SettingsScreen(viewModel) }
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
-            withTimeout(5_000) { viewModel.importState.first { it is ImportState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is ImportState.Success } }
 
             onNodeWithText("Imported 3 accounts, 3 categories, 5 transactions").assertExists()
             onAllNodesWithText("different currency", substring = true).assertCountEquals(0)
@@ -273,7 +274,7 @@ class SettingsScreenTest : StringSpec({
             source.accountQueries.insert("Cash", "CHF", 0)
             val bytes = ByteArrayOutputStream().also { LindenBackupManager(source).backupTo(it) }.toByteArray()
             viewModel.restoreFrom(ByteArrayInputStream(bytes))
-            withTimeout(5_000) { viewModel.restoreState.first { it is BackupState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.restoreState.first { it is BackupState.Success } }
 
             onNodeWithText("Restored 1 accounts, 0 categories, 0 entries").assertExists()
         }
@@ -284,7 +285,7 @@ class SettingsScreenTest : StringSpec({
             setContent { SettingsScreen(viewModel) }
 
             viewModel.backupTo(ByteArrayOutputStream())
-            withTimeout(5_000) { viewModel.backupState.first { it is BackupState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.backupState.first { it is BackupState.Success } }
 
             onNodeWithText("Backup saved.").assertExists()
         }
@@ -295,7 +296,7 @@ class SettingsScreenTest : StringSpec({
             setContent { SettingsScreen(viewModel) }
 
             viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
-            withTimeout(5_000) { viewModel.restoreState.first { it is BackupState.Error } }
+            withTimeout(5_000.milliseconds) { viewModel.restoreState.first { it is BackupState.Error } }
 
             onNodeWithText("Restore failed:", substring = true).assertExists()
         }

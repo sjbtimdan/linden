@@ -17,7 +17,7 @@ import org.sjbtimdan.linden.model.Currency
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
-    private val entryDao: EntryDao,
+    entryDao: EntryDao,
     settingsDao: SettingsDao,
 ) : ViewModel() {
     val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()

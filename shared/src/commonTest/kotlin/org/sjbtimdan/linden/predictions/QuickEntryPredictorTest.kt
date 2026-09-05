@@ -26,8 +26,6 @@ class QuickEntryPredictorTest : StringSpec({
     val savings = Account(2, "Savings", Currency.CHF)
     val credit = Account(3, "Credit", Currency.CHF)
     val food = Category(1, "Food", CategoryType.Expense)
-    val transport = Category(2, "Transport", CategoryType.Expense)
-    val leisure = Category(3, "Leisure", CategoryType.Expense)
     val timeZone = TimeZone.UTC
 
     fun predict(

@@ -24,6 +24,7 @@ import org.sjbtimdan.linden.ui.onTestMain
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import kotlin.time.Duration.Companion.milliseconds
 
 class SettingsViewModelTest : StringSpec({
     "setThemeMode(LIGHT) updates the database" {
@@ -103,7 +104,7 @@ class SettingsViewModelTest : StringSpec({
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
 
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.importState.first { it is ImportState.Success }
             }
 
@@ -151,7 +152,7 @@ class SettingsViewModelTest : StringSpec({
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
 
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.importState.first { it is ImportState.Success }
             }
 
@@ -175,7 +176,7 @@ class SettingsViewModelTest : StringSpec({
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip("this is not json")))
 
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.importState.first { it is ImportState.Error }
             }
 
@@ -197,7 +198,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.importState.first { it is ImportState.Success }
             }
 
@@ -222,7 +223,7 @@ class SettingsViewModelTest : StringSpec({
 
             val bytes = ByteArrayOutputStream()
             viewModel.backupTo(bytes)
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.backupState.first { it is BackupState.Success }
             }
 
@@ -257,7 +258,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.restoreFrom(ByteArrayInputStream(bytes))
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.restoreState.first { it is BackupState.Success }
             }
 
@@ -283,7 +284,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.restoreState.first { it is BackupState.Error }
             }
 
@@ -306,7 +307,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.restoreFrom(ByteArrayInputStream(buildBackupZip("""{"formatVersion": 1}""")))
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.restoreState.first { it is BackupState.Error }
             }
 
@@ -328,7 +329,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.restoreFrom(ByteArrayInputStream("garbage".encodeToByteArray()))
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.restoreState.first { it is BackupState.Error }
             }
 
@@ -351,7 +352,7 @@ class SettingsViewModelTest : StringSpec({
             )
 
             viewModel.backupTo(ByteArrayOutputStream())
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.backupState.first { it is BackupState.Success }
             }
 
@@ -379,7 +380,7 @@ class SettingsViewModelTest : StringSpec({
                 }
             }
             viewModel.backupTo(failingStream)
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.backupState.first { it is BackupState.Error }
             }
 

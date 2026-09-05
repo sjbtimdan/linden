@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.ui.ledger
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency

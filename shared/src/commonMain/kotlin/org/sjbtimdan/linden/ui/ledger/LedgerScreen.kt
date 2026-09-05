@@ -6,7 +6,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -81,7 +80,6 @@ private data class AdjustBalanceDialogState(
     val categoryQuery: String = "",
 )
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LedgerScreen(
     viewModel: LedgerViewModel,
@@ -295,14 +293,14 @@ fun LedgerScreen(
         val activeAmountFilter = amountFilter
         val activeFilterChips = listOfNotNull(
             searchQuery.takeIf { it.isNotBlank() },
-            activeTypeFilter?.let { it.displayName() },
+            activeTypeFilter?.displayName(),
             categoryFilter?.let { id ->
                 categories.firstOrNull { it.id == id }?.name ?: "Uncategorized"
             },
             accountFilter?.let { id ->
                 accounts.firstOrNull { it.id == id }?.name ?: "Unknown account"
             },
-            activeAmountFilter?.let { it.displayLabel() },
+            activeAmountFilter?.displayLabel(),
         )
         if (viewMode == LedgerViewMode.Entries && activeFilterChips.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))

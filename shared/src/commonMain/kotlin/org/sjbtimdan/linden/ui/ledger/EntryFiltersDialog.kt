@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,7 +29,6 @@ import org.sjbtimdan.linden.ui.theme.DialogShape
  * every chip filter to its "All" state and keeps the dialog open. Active
  * filters keep their removable summary chips below the period bar.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EntryFiltersDialog(
     showCategoryAndAccountFilters: Boolean,

@@ -111,7 +111,7 @@ class EntryPointViewModelTest : StringSpec({
 
     "seedDraft does not replace an existing draft" {
         withEntryPoint { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
+            val (_, _) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onDescriptionChange("Edited")
 
@@ -123,7 +123,7 @@ class EntryPointViewModelTest : StringSpec({
 
     "selectType carries over the common fields" {
         withEntryPoint { accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
+            val (_, _) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
             viewModel.onDescriptionChange("Coffee")
@@ -143,7 +143,7 @@ class EntryPointViewModelTest : StringSpec({
 
     "selectType to transfer prefills accounts from the latest transfer" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, groceries) = seed(accountDao, categoryDao)
+            val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
             entryDao.create(

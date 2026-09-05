@@ -15,6 +15,7 @@ import org.sjbtimdan.linden.model.FxRates
 import org.sjbtimdan.linden.ui.onTestMain
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 class RatesViewModelTest : StringSpec({
@@ -31,7 +32,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRates()
 
-            val rates = withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            val rates = withTimeout(5_000.milliseconds) { viewModel.rates.first { it.isNotEmpty() } }
             rates.size shouldBe Currency.entries.size - 1
             rates.all { it.baseCurrency == Currency.CHF } shouldBe true
             viewModel.ratesRefreshState.value shouldBe RatesRefreshState.Idle
@@ -49,7 +50,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRates(Currency.USD)
 
-            val rates = withTimeout(5_000) { dao.ratesFor(Currency.USD).first() }
+            val rates = withTimeout(5_000.milliseconds) { dao.ratesFor(Currency.USD).first() }
             rates.isNotEmpty() shouldBe true
             rates.all { it.baseCurrency == Currency.USD } shouldBe true
         }
@@ -68,7 +69,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRates()
 
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
             }
             (state as RatesRefreshState.Error).message shouldBe "network"
@@ -89,7 +90,7 @@ class RatesViewModelTest : StringSpec({
 
             settingsDao.setDefaultCurrency(Currency.EUR)
 
-            val rates = withTimeout(5_000) {
+            val rates = withTimeout(5_000.milliseconds) {
                 viewModel.rates.first { it.isNotEmpty() && it.first().baseCurrency == Currency.EUR }
             }
             rates.size shouldBe Currency.entries.size - 1
@@ -108,7 +109,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            val rates = withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            val rates = withTimeout(5_000.milliseconds) { viewModel.rates.first { it.isNotEmpty() } }
             rates.size shouldBe Currency.entries.size - 1
             source.fetchCount shouldBe 1
         }
@@ -127,7 +128,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            val refreshed = withTimeout(5_000) {
+            val refreshed = withTimeout(5_000.milliseconds) {
                 viewModel.rates.first { it.isNotEmpty() && it.first().rate == 1.0 }
             }
             refreshed.size shouldBe Currency.entries.size - 1
@@ -149,7 +150,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            val state = withTimeout(5_000) {
+            val state = withTimeout(5_000.milliseconds) {
                 viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
             }
             (state as RatesRefreshState.Error).message shouldBe "network"
@@ -170,7 +171,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            val warning = withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            val warning = withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it != null } }
             warning shouldBe RatesWarning.Missing
         }
     }
@@ -192,7 +193,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            val warning = withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            val warning = withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it != null } }
             warning shouldBe RatesWarning.Outdated
         }
     }
@@ -214,7 +215,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.refreshRatesIfStale()
 
-            withTimeout(5_000) {
+            withTimeout(5_000.milliseconds) {
                 viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
             }
             viewModel.ratesWarning.value shouldBe null
@@ -242,11 +243,11 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.refreshRatesIfStale()
-            withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it != null } }
 
             fail = false
             viewModel.refreshRates()
-            withTimeout(5_000) { viewModel.ratesWarning.first { it == null } }
+            withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it == null } }
             viewModel.ratesWarning.value shouldBe null
         }
     }
@@ -264,10 +265,10 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.refreshRatesIfStale()
-            withTimeout(5_000) { viewModel.ratesWarning.first { it != null } }
+            withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it != null } }
 
             viewModel.setRate(Currency.EUR, 1.5)
-            withTimeout(5_000) { viewModel.ratesWarning.first { it == null } }
+            withTimeout(5_000.milliseconds) { viewModel.ratesWarning.first { it == null } }
             viewModel.ratesWarning.value shouldBe null
         }
     }
@@ -285,7 +286,7 @@ class RatesViewModelTest : StringSpec({
 
             viewModel.setRate(Currency.EUR, 1.5)
 
-            val rate = withTimeout(5_000) {
+            val rate = withTimeout(5_000.milliseconds) {
                 viewModel.rates.first { it.any { r -> r.quoteCurrency == Currency.EUR } }
                     .first { it.quoteCurrency == Currency.EUR }
             }
@@ -304,7 +305,7 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.setAutoUpdateRates(false)
-            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+            withTimeout(5_000.milliseconds) { viewModel.autoUpdateRates.first { !it } }
 
             viewModel.refreshRatesIfStale()
 
@@ -322,15 +323,15 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.setAutoUpdateRates(false)
-            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+            withTimeout(5_000.milliseconds) { viewModel.autoUpdateRates.first { !it } }
             viewModel.refreshRatesIfStale()
             source.fetchCount shouldBe 0
 
             viewModel.setAutoUpdateRates(true)
-            withTimeout(5_000) { viewModel.autoUpdateRates.first { it } }
+            withTimeout(5_000.milliseconds) { viewModel.autoUpdateRates.first { it } }
             viewModel.refreshRatesIfStale()
 
-            withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            withTimeout(5_000.milliseconds) { viewModel.rates.first { it.isNotEmpty() } }
             source.fetchCount shouldBe 1
         }
     }
@@ -346,10 +347,10 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.setAutoUpdateRates(false)
-            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+            withTimeout(5_000.milliseconds) { viewModel.autoUpdateRates.first { !it } }
 
             settingsDao.setDefaultCurrency(Currency.EUR)
-            withTimeout(5_000) { viewModel.base.first { it == Currency.EUR } }
+            withTimeout(5_000.milliseconds) { viewModel.base.first { it == Currency.EUR } }
 
             source.fetchCount shouldBe 0
         }
@@ -365,11 +366,11 @@ class RatesViewModelTest : StringSpec({
             )
 
             viewModel.setAutoUpdateRates(false)
-            withTimeout(5_000) { viewModel.autoUpdateRates.first { !it } }
+            withTimeout(5_000.milliseconds) { viewModel.autoUpdateRates.first { !it } }
 
             viewModel.refreshRates()
 
-            withTimeout(5_000) { viewModel.rates.first { it.isNotEmpty() } }
+            withTimeout(5_000.milliseconds) { viewModel.rates.first { it.isNotEmpty() } }
             source.fetchCount shouldBe 1
         }
     }
