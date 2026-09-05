@@ -225,6 +225,56 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "the save hint names the missing fields in order" {
+        withEntryPoint { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Enter an amount").assertIsDisplayed()
+            onNodeWithText("Add").assertIsNotEnabled()
+
+            enterAmount("12.50")
+            onNodeWithText("Choose an account").assertIsDisplayed()
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Choose a category").assertIsDisplayed()
+
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Enter an amount").assertDoesNotExist()
+            onNodeWithText("Choose an account").assertDoesNotExist()
+            onNodeWithText("Choose a category").assertDoesNotExist()
+            onNodeWithText("Add").assertIsEnabled()
+        }
+    }
+
+    "the save hint asks for the received amount on a cross-currency transfer" {
+        withEntryPoint { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+
+            onNodeWithText("Enter an amount").assertIsDisplayed()
+            enterAmount("100", label = "Amount (sent)")
+
+            onNodeWithText("Enter the received amount").assertIsDisplayed()
+            onNodeWithText("Add").assertIsNotEnabled()
+        }
+    }
+
     "switching type keeps amount and description" {
         withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
@@ -518,6 +568,8 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Please enter category").assertIsDisplayed()
             onNodeWithText("Please enter account").assertIsDisplayed()
+            // The inline links already explain the blocker, so no generic hint.
+            onNodeWithText("Enter an amount").assertDoesNotExist()
 
             onNodeWithText("Please enter category").performClick()
             onNodeWithText("Please enter account").performClick()

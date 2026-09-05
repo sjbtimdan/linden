@@ -95,6 +95,44 @@ class EntryDraftTest : StringSpec({
             .isValid(accounts) shouldBe false
     }
 
+    "firstMissingRequirement names the first missing field of an expense" {
+        draft(amountText = "").firstMissingRequirement(accounts) shouldBe "Enter an amount"
+        draft(accountId = null).firstMissingRequirement(accounts) shouldBe "Choose an account"
+        draft(categoryId = null).firstMissingRequirement(accounts) shouldBe "Choose a category"
+        draft().firstMissingRequirement(accounts).shouldBeNull()
+    }
+
+    "firstMissingRequirement names the missing fields of a transfer in order" {
+        draft(type = EntryType.Transfer, amountText = "")
+            .firstMissingRequirement(accounts) shouldBe "Enter an amount"
+        draft(type = EntryType.Transfer, accountId = null)
+            .firstMissingRequirement(accounts) shouldBe "Choose where the money comes from"
+        draft(type = EntryType.Transfer, toAccountId = null)
+            .firstMissingRequirement(accounts) shouldBe "Choose where the money goes"
+        draft(type = EntryType.Transfer, toAccountId = main.id, toAmountText = "9.50")
+            .firstMissingRequirement(accounts) shouldBe "Choose a different destination account"
+        draft(type = EntryType.Transfer, toAccountId = savingsEur.id)
+            .firstMissingRequirement(accounts) shouldBe "Enter the received amount"
+        draft(type = EntryType.Transfer, toAccountId = savingsChf.id)
+            .firstMissingRequirement(accounts).shouldBeNull()
+    }
+
+    "firstMissingRequirement and isValid agree" {
+        val candidates = listOf(
+            draft(),
+            draft(amountText = "0"),
+            draft(type = EntryType.Income, categoryId = null),
+            draft(type = EntryType.Transfer, toAccountId = null),
+            draft(type = EntryType.Transfer, toAccountId = savingsChf.id),
+            draft(type = EntryType.Transfer, toAccountId = savingsEur.id, toAmountText = "9.50"),
+            draft(type = EntryType.Transfer, toAccountId = savingsEur.id, toAmountText = ""),
+            draft(type = EntryType.Transfer, accountId = 99, toAccountId = savingsChf.id),
+        )
+        candidates.forEach { candidate ->
+            candidate.isValid(accounts) shouldBe (candidate.firstMissingRequirement(accounts) == null)
+        }
+    }
+
     "expense drafts convert to an expense entry" {
         val entry = draft(amountText = "4.50", description = "  Coffee  ").toEntry(accounts, categories)
         entry shouldBe ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = createdAt, createdZone = createdZone)

@@ -204,12 +204,21 @@ fun EntryPoint(
             }
         }
 
+        // Explains why Add is disabled unless the form's own links already
+        // point at the blocker (missing accounts or categories).
+        val missingHint = missingRequirementHint(draft, accounts, categories)
+
         if (!fieldFocused) {
             Spacer(modifier = Modifier.height(8.dp))
 
             SnackbarHost(hostState = snackbarHostState)
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            missingHint?.let { hint ->
+                MissingRequirementHint(message = hint)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

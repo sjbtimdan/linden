@@ -31,23 +31,38 @@ data class EntryDraft(
     val amount: Long? get() = parseAmount(amountText)
     val toAmount: Long? get() = parseAmount(toAmountText)
 
-    fun isValid(accounts: List<Account>): Boolean {
-        val amountValue = amount ?: return false
-        if (amountValue <= 0) return false
-        if (accountId == null) return false
+    fun isValid(accounts: List<Account>): Boolean = firstMissingRequirement(accounts) == null
+
+    /**
+     * The first requirement this draft still misses, phrased as an instruction,
+     * or null when the draft is valid. Mirrors [isValid]: a hint exists exactly
+     * when saving is blocked.
+     */
+    fun firstMissingRequirement(accounts: List<Account>): String? {
+        val amountValue = amount
+        if (amountValue == null || amountValue <= 0) return "Enter an amount"
+        if (accountId == null) {
+            return when (type) {
+                EntryType.Expense, EntryType.Income -> "Choose an account"
+                EntryType.Transfer -> "Choose where the money comes from"
+            }
+        }
         return when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId != null
+            EntryType.Expense, EntryType.Income ->
+                if (categoryId == null) "Choose a category" else null
 
             EntryType.Transfer -> {
-                val toAccountIdValue = toAccountId ?: return false
-                if (toAccountIdValue == accountId) return false
-                val toAccount = accounts.firstOrNull { it.id == toAccountIdValue } ?: return false
-                val account = accounts.firstOrNull { it.id == accountId } ?: return false
+                val toAccountIdValue = toAccountId ?: return "Choose where the money goes"
+                if (toAccountIdValue == accountId) return "Choose a different destination account"
+                val toAccount = accounts.firstOrNull { it.id == toAccountIdValue }
+                    ?: return "Choose where the money goes"
+                val account = accounts.firstOrNull { it.id == accountId }
+                    ?: return "Choose where the money comes from"
                 if (account.currency == toAccount.currency) {
-                    true
+                    null
                 } else {
                     val toValue = toAmount
-                    toValue != null && toValue > 0
+                    if (toValue == null || toValue <= 0) "Enter the received amount" else null
                 }
             }
         }

@@ -1,11 +1,16 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -55,22 +60,30 @@ fun EntryDialog(
             )
         },
         text = {
-            EntryForm(
-                state = state,
-                accounts = accounts,
-                categories = categories,
-                onAmountChange = onAmountChange,
-                onCategoryChange = onCategoryChange,
-                onAccountChange = onAccountChange,
-                onToAccountChange = onToAccountChange,
-                onToAmountChange = onToAmountChange,
-                onDescriptionChange = onDescriptionChange,
-                onCreatedAtChange = onCreatedAtChange,
-                onNavigateToSettings = onNavigateToSettings,
-                descriptionSuggestions = descriptionSuggestions,
-                accountSuggestions = accountSuggestions,
-                categorySuggestions = categorySuggestions,
-            )
+            Column {
+                // Explains why Save is disabled unless the form's own links
+                // already point at the blocker (missing accounts or categories).
+                missingRequirementHint(state, accounts, categories)?.let { hint ->
+                    MissingRequirementHint(message = hint)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                EntryForm(
+                    state = state,
+                    accounts = accounts,
+                    categories = categories,
+                    onAmountChange = onAmountChange,
+                    onCategoryChange = onCategoryChange,
+                    onAccountChange = onAccountChange,
+                    onToAccountChange = onToAccountChange,
+                    onToAmountChange = onToAmountChange,
+                    onDescriptionChange = onDescriptionChange,
+                    onCreatedAtChange = onCreatedAtChange,
+                    onNavigateToSettings = onNavigateToSettings,
+                    descriptionSuggestions = descriptionSuggestions,
+                    accountSuggestions = accountSuggestions,
+                    categorySuggestions = categorySuggestions,
+                )
+            }
         },
         confirmButton = {
             Button(

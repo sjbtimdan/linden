@@ -134,6 +134,26 @@ class EntryDialogTest : StringSpec({
         }
     }
 
+    "explains why Save is disabled" {
+        onTestMain {
+            runComposeUiTest {
+                showDialog(draft(amountText = ""))
+                onNodeWithText("Enter an amount").assertIsDisplayed()
+                onNodeWithText("Save").assertIsNotEnabled()
+            }
+            runComposeUiTest {
+                showDialog(draft().copy(categoryId = null))
+                onNodeWithText("Choose a category").assertIsDisplayed()
+                onNodeWithText("Save").assertIsNotEnabled()
+            }
+            runComposeUiTest {
+                showDialog(draft())
+                onNodeWithText("Enter an amount").assertDoesNotExist()
+                onNodeWithText("Choose a category").assertDoesNotExist()
+            }
+        }
+    }
+
     "shows Delete only when editing an entry" {
         onTestMain {
             runComposeUiTest {
