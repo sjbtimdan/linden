@@ -18,19 +18,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RatesWarningBanner(warning: RatesWarning, onSetRates: () -> Unit, modifier: Modifier = Modifier) {
+fun RatesWarningBanner(
+    warning: RatesWarning,
+    onSetRates: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .testTag("ratesWarningBanner"),
+            .testTag(if (compact) "ratesWarningBannerCompact" else "ratesWarningBanner"),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = if (compact) 0.dp else 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -47,6 +53,8 @@ fun RatesWarningBanner(warning: RatesWarning, onSetRates: () -> Unit, modifier: 
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
+                maxLines = if (compact) 1 else Int.MAX_VALUE,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onSetRates) {

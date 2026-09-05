@@ -275,6 +275,72 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "the hero card compacts once the draft is touched and expands again on clear" {
+        withEntryPoint { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithTag("totalBalanceCard").assertIsDisplayed()
+            onNodeWithTag("totalBalanceCompact").assertDoesNotExist()
+
+            enterAmount("12.50")
+
+            onNodeWithTag("totalBalanceCompact").assertIsDisplayed()
+            onNodeWithTag("totalBalanceCard").assertDoesNotExist()
+            onNodeWithText("Total balance").assertIsDisplayed()
+
+            onNodeWithText("Clear").performClick()
+            waitForIdle()
+
+            onNodeWithTag("totalBalanceCard").assertIsDisplayed()
+            onNodeWithTag("totalBalanceCompact").assertDoesNotExist()
+        }
+    }
+
+    "chrome stays compact after adding an entry" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            enterAmount("12.50")
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            onNodeWithTag("totalBalanceCompact").assertIsDisplayed()
+            onNodeWithTag("totalBalanceCard").assertDoesNotExist()
+            onNodeWithText("Added").assertIsDisplayed()
+        }
+    }
+
+    "the rates banner compacts while a draft is in progress" {
+        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Missing)
+            }
+
+            onNodeWithTag("ratesWarningBanner").assertIsDisplayed()
+            onNodeWithTag("ratesWarningBannerCompact").assertDoesNotExist()
+
+            enterAmount("12.50")
+
+            onNodeWithTag("ratesWarningBannerCompact").assertIsDisplayed()
+            onNodeWithTag("ratesWarningBanner").assertDoesNotExist()
+            onNodeWithText("Set rates").assertIsDisplayed()
+        }
+    }
+
     "switching type keeps amount and description" {
         withEntryPoint { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)

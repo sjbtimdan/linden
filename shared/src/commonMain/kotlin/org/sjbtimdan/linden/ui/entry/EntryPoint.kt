@@ -89,6 +89,12 @@ fun EntryPoint(
 
     var fieldFocused by remember { mutableStateOf(false) }
 
+    // Once the user starts a draft the hero card and the rates banner shrink to
+    // slim rows so the form keeps the viewport; Clear restores them. A fresh
+    // prefill from the last entry does not count as a touch.
+    var draftTouched by remember { mutableStateOf(false) }
+    val markTouched: () -> Unit = { draftTouched = true }
+
     // The back arrow exits editing: clearFocus closes text fields and dropdowns,
     // bumping editEpoch closes EntryForm's calculators. The draft stays — Clear
     // is the full reset.
@@ -147,6 +153,7 @@ fun EntryPoint(
                 total = totalMinor,
                 currency = defaultCurrency,
                 hidden = hideTotal,
+                compact = draftTouched,
                 onToggleHidden = { viewModel.setHideTotal(!hideTotal) },
             )
 
@@ -156,6 +163,7 @@ fun EntryPoint(
                 RatesWarningBanner(
                     warning = warning,
                     onSetRates = onNavigateToRates,
+                    compact = draftTouched,
                 )
             }
         }
@@ -185,13 +193,34 @@ fun EntryPoint(
                     state = state,
                     accounts = accounts,
                     categories = categories,
-                    onAmountChange = viewModel::onAmountChange,
-                    onCategoryChange = viewModel::onCategoryChange,
-                    onAccountChange = viewModel::onAccountChange,
-                    onToAccountChange = viewModel::onToAccountChange,
-                    onToAmountChange = viewModel::onToAmountChange,
-                    onDescriptionChange = viewModel::onDescriptionChange,
-                    onCreatedAtChange = viewModel::onCreatedAtChange,
+                    onAmountChange = {
+                        viewModel.onAmountChange(it)
+                        markTouched()
+                    },
+                    onCategoryChange = {
+                        viewModel.onCategoryChange(it)
+                        markTouched()
+                    },
+                    onAccountChange = {
+                        viewModel.onAccountChange(it)
+                        markTouched()
+                    },
+                    onToAccountChange = {
+                        viewModel.onToAccountChange(it)
+                        markTouched()
+                    },
+                    onToAmountChange = {
+                        viewModel.onToAmountChange(it)
+                        markTouched()
+                    },
+                    onDescriptionChange = {
+                        viewModel.onDescriptionChange(it)
+                        markTouched()
+                    },
+                    onCreatedAtChange = {
+                        viewModel.onCreatedAtChange(it)
+                        markTouched()
+                    },
                     onNavigateToSettings = onNavigateToSettings,
                     onFieldFocusChange = { fieldFocused = it },
                     editEpoch = editEpoch,
@@ -199,7 +228,10 @@ fun EntryPoint(
                     accountSuggestions = accountSuggestions,
                     categorySuggestions = categorySuggestions,
                     quickEntries = quickEntries,
-                    onQuickEntry = viewModel::applyQuickEntry,
+                    onQuickEntry = {
+                        viewModel.applyQuickEntry(it)
+                        markTouched()
+                    },
                 )
             }
         }
@@ -227,6 +259,7 @@ fun EntryPoint(
                 Button(
                     onClick = {
                         if (viewModel.saveDraft()) {
+                            markTouched()
                             scope.launch { snackbarHostState.showSnackbar("Added") }
                         }
                     },
@@ -243,7 +276,10 @@ fun EntryPoint(
                 }
 
                 OutlinedButton(
-                    onClick = viewModel::clearDraft,
+                    onClick = {
+                        viewModel.clearDraft()
+                        draftTouched = false
+                    },
                     enabled = draft != null,
                     modifier = Modifier.weight(1f),
                 ) {
@@ -256,15 +292,23 @@ fun EntryPoint(
 
 /** Total across all accounts in the default currency; null while a rate is missing. */
 @Composable
-private fun TotalBalanceCard(total: Long?, currency: Currency, hidden: Boolean, onToggleHidden: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+private fun TotalBalanceCard(
+    total: Long?,
+    currency: Currency,
+    hidden: Boolean,
+    compact: Boolean,
+    onToggleHidden: () -> Unit,
+) {
+    val amountLabel = if (hidden) "••••••" else total?.let(::formatAmountCompact) ?: "–"
+    if (compact) {
+        // Slim one-line variant shown while a draft is being captured.
+        Surface(
+            modifier = Modifier.fillMaxWidth().testTag("totalBalanceCompact"),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.padding(start = 16.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -273,6 +317,18 @@ private fun TotalBalanceCard(total: Long?, currency: Currency, hidden: Boolean, 
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.weight(1f),
                 )
+                Text(
+                    text = amountLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 1,
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = currency.symbol,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
                 IconButton(onClick = onToggleHidden) {
                     Icon(
                         imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
@@ -280,20 +336,46 @@ private fun TotalBalanceCard(total: Long?, currency: Currency, hidden: Boolean, 
                     )
                 }
             }
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = if (hidden) "••••••" else total?.let(::formatAmountCompact) ?: "–",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 1,
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = currency.symbol,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(bottom = 6.dp),
-                )
+        }
+    } else {
+        Surface(
+            modifier = Modifier.fillMaxWidth().testTag("totalBalanceCard"),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "Total balance",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = onToggleHidden) {
+                        Icon(
+                            imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
+                            contentDescription = if (hidden) "Show total" else "Hide total",
+                        )
+                    }
+                }
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = amountLabel,
+                        style = MaterialTheme.typography.displaySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = currency.symbol,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(bottom = 6.dp),
+                    )
+                }
             }
         }
     }
