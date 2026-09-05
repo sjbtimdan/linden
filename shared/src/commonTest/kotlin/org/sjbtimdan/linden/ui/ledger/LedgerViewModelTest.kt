@@ -970,6 +970,27 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "openAccount filters the entries to the account and switches to the entries view" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+            viewModel.createEntry(TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null))
+
+            viewModel.setViewMode(LedgerViewMode.Accounts)
+            viewModel.openAccount(savings.id)
+
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
+            viewModel.accountFilter.value shouldBe savings.id
+            // The income on Savings and the transfer into it stay; Main's expense goes.
+            viewModel.displayedEntries.value.map { it.description } shouldBe listOf("Move", "Bonus")
+            viewModel.totalMinor.value shouldBe 2_500L
+        }
+    }
+
     "category filter follows the type filter" {
         withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

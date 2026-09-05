@@ -358,6 +358,12 @@ class LedgerViewModel(
         _viewMode.value = LedgerViewMode.Entries
     }
 
+    /** Drills into an account from the accounts view: narrows the entries to it and switches to the entries view. */
+    fun openAccount(accountId: Long) {
+        setAccountFilter(accountId)
+        _viewMode.value = LedgerViewMode.Entries
+    }
+
     /** Narrows the entries view to a single category; null restores all entries. */
     fun setCategoryFilter(categoryId: Long?) {
         _categoryFilter.value = categoryId

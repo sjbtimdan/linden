@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,14 +27,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 
 /**
  * The account balances at the end of the selected period, or the empty state.
- * [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided one:
- * a button pointing at the next step for a brand-new user.
+ * Tapping a row drills into its entries ([onAccountClick]); the overflow menu
+ * offers the same drill-in plus Adjust Balance, which is disabled with a
+ * reason while [canAdjustBalance] is false so the action never pretends to
+ * work. [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided
+ * one: a button pointing at the next step for a brand-new user.
  */
 @Composable
 fun AccountsList(
@@ -43,8 +48,8 @@ fun AccountsList(
     emptyActionLabel: String? = null,
     onEmptyAction: (() -> Unit)? = null,
     canAdjustBalance: Boolean = true,
+    onAccountClick: (AccountWithBalance) -> Unit,
     onAdjustBalance: (AccountWithBalance) -> Unit,
-    onAdjustBalanceUnavailable: (AccountWithBalance) -> Unit = {},
 ) {
     if (balances.isEmpty()) {
         EmptyState(
@@ -65,6 +70,7 @@ fun AccountsList(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.surface)
+                        .clickable(role = Role.Button) { onAccountClick(item) }
                         .padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -96,16 +102,28 @@ fun AccountsList(
                             onDismissRequest = { menuOpen = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Adjust Balance") },
+                                text = { Text("View entries") },
                                 onClick = {
                                     menuOpen = false
-                                    if (canAdjustBalance) {
-                                        onAdjustBalance(item)
-                                    } else {
-                                        onAdjustBalanceUnavailable(item)
-                                    }
+                                    onAccountClick(item)
                                 },
                             )
+                            DropdownMenuItem(
+                                text = { Text("Adjust Balance") },
+                                enabled = canAdjustBalance,
+                                onClick = {
+                                    menuOpen = false
+                                    onAdjustBalance(item)
+                                },
+                            )
+                            if (!canAdjustBalance) {
+                                Text(
+                                    text = "Only available when the latest period is shown.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                )
+                            }
                         }
                     }
                 }

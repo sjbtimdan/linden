@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -873,6 +874,51 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "tapping an account drills into its entries with a filter chip" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            onNodeWithText("Savings").performClick()
+
+            // The entries view is narrowed to Savings and the chip is visible.
+            onNodeWithText("Bonus").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("accountFilterChip").assertIsDisplayed()
+        }
+    }
+
+    "view entries in the overflow menu drills into the account" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            // Main is the first row; the overflow of the Savings row is the second.
+            onAllNodesWithContentDescription("More options")[1].performClick()
+            onNodeWithText("View entries").performClick()
+
+            onNodeWithText("Bonus").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("accountFilterChip").assertIsDisplayed()
+        }
+    }
+
     "accounts view hamburger menu opens the Adjust Balance dialog" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
@@ -1018,10 +1064,12 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Month").performClick()
             onNodeWithContentDescription("Previous period").performClick()
 
-            // The menu stays discoverable, but tapping Adjust Balance explains why it's unavailable.
+            // The action stays visible but disabled, with the reason right there —
+            // no dead-end dialog after the fact.
             onNodeWithContentDescription("More options").performClick()
-            onNodeWithText("Adjust Balance").performClick()
-            onNodeWithText("Adjust Balance can only be done when the period is the latest.").assertIsDisplayed()
+            onNodeWithText("Adjust Balance").assertIsNotEnabled()
+            onNodeWithText("Only available when the latest period is shown.").assertIsDisplayed()
+            onNodeWithText("Adjust Balance can only be done when the period is the latest.").assertDoesNotExist()
         }
     }
 
