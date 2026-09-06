@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell -->
+    <string name="nav_ledger">帳目</string>
+    <string name="nav_entry">記帳</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- Startup error -->
+    <string name="startup_error_title">Linden 無法啟動</string>
+    <string name="startup_error_message">開啟你的資料時發生錯誤。</string>
+    <string name="startup_error_retry">重試</string>
+
+    <!-- Common actions -->
+    <string name="common_back">返回</string>
+    <string name="common_save">儲存</string>
+    <string name="common_cancel">取消</string>
+    <string name="common_clear">清除</string>
+    <string name="common_ok">確定</string>
+    <string name="common_delete">刪除</string>
+    <string name="common_dismiss">關閉</string>
+    <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
+    <string name="common_unknown_error">未知錯誤</string>
+
+    <!-- Shared labels with identical copy across screens -->
+    <string name="common_accounts">戶口</string>
+    <string name="common_all">全部</string>
+    <string name="common_categories">分類</string>
+    <string name="common_category">分類</string>
+    <string name="common_invalid_amount">請輸入有效金額</string>
+    <string name="common_name">名稱</string>
+    <string name="common_search">搜尋</string>
+
+    <!-- Entry types; category type labels reuse the expense/income words -->
+    <string name="entry_type_expense">支出</string>
+    <string name="entry_type_income">收入</string>
+    <string name="entry_type_transfer">轉賬</string>
+
+    <!-- Entry point -->
+    <string name="entry_add">新增</string>
+    <string name="entry_added">已新增</string>
+    <string name="entry_total_balance">總結餘</string>
+    <string name="entry_show_total">顯示總額</string>
+    <string name="entry_hide_total">隱藏總額</string>
+
+    <!-- Entry form -->
+    <string name="entry_amount">金額</string>
+    <string name="entry_amount_sent">轉出金額</string>
+    <string name="entry_amount_received">轉入金額</string>
+    <string name="entry_from_account">轉出戶口</string>
+    <string name="entry_to_account">轉入戶口</string>
+    <string name="entry_account">戶口</string>
+    <string name="entry_description_optional">備註（可選）</string>
+    <string name="entry_ok">確定</string>
+    <string name="entry_quick_entry">快捷記帳</string>
+    <string name="entry_amount_positive">金額必須大於零</string>
+    <string name="entry_need_account">請先加入戶口</string>
+    <string name="entry_need_second_account">請再多加一個戶口</string>
+    <string name="entry_need_category">請先加入分類</string>
+    <string name="entry_date_time_section">日期和時間</string>
+    <string name="entry_select_time">選擇時間</string>
+
+    <!-- Entry dialog titles: %1$s is the localized entry type name -->
+    <string name="entry_title_new">新增%1$s</string>
+    <string name="entry_title_edit">編輯%1$s</string>
+
+    <!-- Draft validation hints (firstMissingRequirement) -->
+    <string name="entry_req_amount">請輸入金額</string>
+    <string name="entry_req_account">請選擇戶口</string>
+    <string name="entry_req_source">請選擇轉出戶口</string>
+    <string name="entry_req_category">請選擇分類</string>
+    <string name="entry_req_destination">請選擇轉入戶口</string>
+    <string name="entry_req_different_destination">請選擇其他轉入戶口</string>
+    <string name="entry_req_received">請輸入實際收到的金額</string>
+
+    <!-- Entry calculator and misc -->
+    <string name="entry_calculator">計算機</string>
+    <string name="entry_simple_keypad">簡單鍵盤</string>
+    <string name="entry_backspace">退格</string>
+    <string name="entry_enter">確定</string>
+    <string name="entry_recommended">推薦</string>
+
+    <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
+    <string name="ledger_mode_entries">記錄</string>
+
+    <!-- Ledger search & filters -->
+    <string name="ledger_search_entries">搜尋記錄</string>
+    <string name="ledger_filter_accounts">篩選戶口</string>
+    <string name="ledger_filter_categories">篩選分類</string>
+    <string name="ledger_filters_header">篩選與搜尋</string>
+    <string name="ledger_expand_filters">展開篩選</string>
+    <string name="ledger_collapse_filters">收起篩選</string>
+    <string name="ledger_remove_filter">移除篩選條件</string>
+    <string name="ledger_clear_all">全部清除</string>
+    <string name="ledger_uncategorized">未分類</string>
+    <string name="ledger_unknown_account">未知戶口</string>
+    <string name="ledger_amount_all">金額：全部</string>
+    <string name="ledger_filter_by_amount">按金額篩選</string>
+    <string name="ledger_apply">套用</string>
+
+    <!-- Period navigator -->
+    <string name="ledger_period_day">日</string>
+    <string name="ledger_period_week">週</string>
+    <string name="ledger_period_month">月</string>
+    <string name="ledger_period_year">年</string>
+    <!-- The "All" option uses the shared common_all -->
+    <string name="ledger_previous_period">上一期間</string>
+    <string name="ledger_next_period">下一期間</string>
+    <string name="ledger_show_future_entries">顯示未來記錄</string>
+    <string name="ledger_hide_future_entries">隱藏未來記錄</string>
+
+    <!-- Future-entries notice -->
+    <string name="ledger_future_none_bounded">本期今日之後沒有記錄</string>
+    <string name="ledger_future_none">今日之後沒有記錄</string>
+    <string name="ledger_future_balances">結餘包括今日之後的記錄</string>
+    <string name="ledger_future_totals">總計包括今日之後的記錄</string>
+    <plurals name="ledger_future_entries"><item quantity="other">顯示今日之後的 %1$d 筆記錄</item></plurals>
+
+    <!-- Ledger empty states: entries view -->
+    <string name="ledger_empty_future_hidden">今日之後的記錄已隱藏。</string>
+    <string name="ledger_empty_no_entries">尚未有記錄。</string>
+    <string name="ledger_empty_no_match_filter">沒有符合此篩選條件的記錄。</string>
+    <string name="ledger_empty_no_match">沒有相符的記錄。</string>
+    <string name="ledger_action_add_first_entry">新增第一筆記錄</string>
+    <string name="ledger_action_show_future_entries">顯示今日之後的記錄</string>
+
+    <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
+    <string name="ledger_accounts_no_match">沒有相符的戶口。</string>
+    <string name="ledger_accounts_all_hidden">所有戶口均已隱藏。</string>
+    <string name="ledger_action_create_account">建立戶口</string>
+    <string name="ledger_action_manage_accounts">管理戶口</string>
+
+    <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
+    <string name="ledger_categories_no_match">沒有相符的分類。</string>
+    <string name="ledger_categories_future_hidden">今日之後的支出已隱藏。</string>
+    <string name="ledger_categories_no_spending">本期尚未有支出。</string>
+    <string name="ledger_action_add_categories">新增分類</string>
+
+    <!-- Category totals list -->
+    <plurals name="ledger_entry_count"><item quantity="other">%1$d 筆</item></plurals>
+    <string name="ledger_budget_progress">已用 %1$s，上限 %2$s</string>
+
+    <!-- Accounts list overflow menu -->
+    <string name="ledger_more_options">更多選項</string>
+    <string name="ledger_view_entries">查看記錄</string>
+    <string name="ledger_adjust_balance">調整結餘</string>
+    <string name="ledger_adjust_latest_period_only">僅顯示最新期間時可用。</string>
+
+    <!-- Adjust Balance dialog -->
+    <string name="ledger_adjust_current_balance">目前結餘：%1$s %2$s</string>
+    <string name="ledger_adjust_bank_balance">銀行結餘</string>
+    <string name="ledger_adjust_add_income">將把 %1$s 記為收入。</string>
+    <string name="ledger_adjust_add_expense">將把 %1$s 記為支出。</string>
+    <string name="ledger_adjust_confirm">調整</string>
+
+    <!-- Accounts screen -->
+    <string name="accounts_new">新增戶口</string>
+    <string name="accounts_edit">編輯戶口</string>
+    <string name="accounts_empty_none">尚未有戶口。</string>
+    <string name="accounts_empty_no_match">沒有相符的戶口。</string>
+    <string name="accounts_initial_balance">初始結餘</string>
+    <string name="accounts_currency">貨幣</string>
+    <string name="accounts_currency_locked">無法更改貨幣：此戶口已有記錄。</string>
+    <string name="accounts_hidden">已隱藏</string>
+    <string name="accounts_hidden_help">保留記錄，但將該戶口從帳目、戶口選擇和篩選中移除。</string>
+    <string name="accounts_delete_locked">無法刪除此戶口：它已有記錄。</string>
+    <string name="accounts_delete">刪除戶口</string>
+    <string name="accounts_duplicate_name">已存在同名戶口</string>
+    <string name="accounts_hide_title">隱藏此戶口？</string>
+    <string name="accounts_hide_confirm">隱藏</string>
+    <string name="accounts_hide_body">%1$s 的結餘為 %2$s %3$s。隱藏後，該戶口將從帳目、戶口選擇和篩選中移除，記錄仍保留在歷史中，之後可隨時重新顯示。</string>
+
+    <!-- Categories screen -->
+    <string name="categories_new">新增分類</string>
+    <string name="categories_edit">編輯分類</string>
+    <string name="categories_empty_none">尚未有分類。</string>
+    <string name="categories_empty_no_match">沒有相符的分類。</string>
+    <string name="categories_icon">圖示</string>
+    <string name="categories_type">類型</string>
+    <string name="categories_duplicate_name">已存在同名分類</string>
+    <string name="categories_delete_locked">無法刪除此分類：它已有記錄。</string>
+    <string name="categories_delete">刪除分類</string>
+    <string name="category_type_both">兩者</string>
+    <string name="category_type_both_row">可作收入或支出</string>
+    <string name="category_icon_restaurant">飲食</string>
+    <string name="category_icon_movie">娛樂</string>
+    <string name="category_icon_shopping_cart">食品雜貨</string>
+    <string name="category_icon_account_balance">銀行與理財</string>
+    <string name="category_icon_savings">儲蓄與薪金</string>
+    <string name="category_icon_shopping_bag">購物</string>
+    <string name="category_icon_home">家居</string>
+    <string name="category_icon_local_hospital">健康</string>
+    <string name="category_icon_favorite_border">禮物與捐款</string>
+    <string name="category_icon_pets">寵物</string>
+    <string name="category_icon_school">教育</string>
+    <string name="category_icon_flight">旅行</string>
+    <string name="category_icon_spa">個人護理</string>
+
+    <!-- Settings screen -->
+    <string name="settings_language">語言</string>
+    <string name="settings_theme">主題</string>
+    <string name="settings_theme_system">跟隨系統</string>
+    <string name="settings_theme_light">淺色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_default_currency">預設貨幣</string>
+    <string name="settings_privacy">私隱</string>
+    <string name="settings_hide_totals">隱藏總額</string>
+    <string name="settings_nav_rates">匯率</string>
+    <string name="settings_nav_budgets">預算</string>
+    <string name="settings_import_ivy">從 Ivy 匯入</string>
+    <string name="settings_backup">備份</string>
+    <string name="settings_backup_db">備份資料庫</string>
+    <string name="settings_restore_backup">從備份還原</string>
+    <string name="settings_export_csv">匯出為 CSV</string>
+    <string name="settings_working_import">正在匯入…</string>
+    <string name="settings_working_backup">正在備份…</string>
+    <string name="settings_working_restore">正在還原…</string>
+    <string name="settings_working_export">正在匯出…</string>
+    <string name="settings_import_summary">已匯入 %1$d 個戶口、%2$d 個分類和 %3$d 筆交易</string>
+    <string name="settings_import_split_note">\n注意：有 %1$d 筆交易的貨幣與戶口不同，已匯入到新的“IVY: …”戶口中。</string>
+    <string name="settings_import_failed">匯入失敗：%1$s</string>
+    <string name="settings_backup_saved">備份已儲存。</string>
+    <string name="settings_backup_failed">備份失敗：%1$s</string>
+    <string name="settings_restore_summary">已還原 %1$d 個戶口、%2$d 個分類和 %3$d 筆記錄</string>
+    <string name="settings_restore_failed">還原失敗：%1$s</string>
+    <string name="settings_export_done">CSV 已匯出。</string>
+    <string name="settings_export_failed">匯出失敗：%1$s</string>
+    <string name="settings_import_confirm_body">此操作將取代所有現有戶口、分類和交易記錄。是否繼續？</string>
+    <string name="settings_restore_confirm_body">此操作將取代所有現有戶口、分類、交易記錄和設定。是否繼續？</string>
+    <string name="settings_import_confirm">匯入</string>
+    <string name="settings_restore_confirm">還原</string>
+
+    <!-- Rates screen -->
+    <string name="rates_refresh">重新整理</string>
+    <string name="rates_refresh_failed">重新整理失敗：%1$s</string>
+    <string name="rates_from_date">匯率日期：%1$s</string>
+    <string name="rates_update_automatically">自動更新</string>
+    <string name="rates_auto_update_help">快取的匯率超過一天未更新時自動下載最新匯率。關閉可保留手動設定的匯率。</string>
+    <string name="rates_edit_rate">編輯 %1$s 的匯率</string>
+    <string name="rates_set">設定匯率</string>
+    <string name="rates_missing">暫無可用匯率。你可以手動設定。</string>
+    <string name="rates_outdated">匯率已超過一星期未更新。你可以手動設定。</string>
+    <string name="rates_rate_label">匯率</string>
+    <string name="rates_positive_number">請輸入正數。</string>
+
+    <!-- Budgets -->
+    <string name="budget_new">新增預算</string>
+    <string name="budget_edit">編輯預算</string>
+    <string name="budget_delete">刪除預算</string>
+    <string name="budget_choose_category">選擇分類</string>
+    <string name="budget_monthly_limit">每月上限</string>
+    <string name="budget_empty">尚未有預算。新增一個預算，即可追蹤分類的每月開支。</string>
+</resources>
