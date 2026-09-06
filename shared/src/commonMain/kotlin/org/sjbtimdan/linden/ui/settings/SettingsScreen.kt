@@ -82,7 +82,6 @@ import org.sjbtimdan.linden.resources.settings_import_ivy
 import org.sjbtimdan.linden.resources.settings_import_split_note
 import org.sjbtimdan.linden.resources.settings_import_summary
 import org.sjbtimdan.linden.resources.settings_language
-import org.sjbtimdan.linden.resources.settings_language_system
 import org.sjbtimdan.linden.resources.settings_nav_budgets
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
@@ -101,6 +100,7 @@ import org.sjbtimdan.linden.resources.settings_working_import
 import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
+import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.screenInsets
 import org.sjbtimdan.linden.ui.theme.DialogShape
 
@@ -151,6 +151,11 @@ fun SettingsScreen(
             modifier = Modifier.padding(bottom = 8.dp),
         )
 
+        // No "follow system" option: the selected chip is the concrete language
+        // in effect, which resolves from the platform locale until the user
+        // pins one (unsupported system languages fall back to English).
+        val effectiveLanguage = AppLanguage.resolve(language, platformLocaleTag())
+
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -158,7 +163,7 @@ fun SettingsScreen(
         ) {
             languageOptions.forEach { option ->
                 FilterChip(
-                    selected = language == option,
+                    selected = effectiveLanguage == option,
                     onClick = { viewModel.setLanguage(option) },
                     label = { Text(option.label()) },
                     modifier = Modifier.testTag("language-${option.name}"),
@@ -559,22 +564,26 @@ private fun ThemeMode.displayName(): String = stringResource(
     },
 )
 
-/** The language options, System first. */
+/** The language options. */
 private val languageOptions = listOf(
-    AppLanguage.SYSTEM,
     AppLanguage.ENGLISH,
     AppLanguage.ITALIAN,
     AppLanguage.CHINESE_SIMPLIFIED,
     AppLanguage.CHINESE_TRADITIONAL_HK,
 )
 
-/** Picker label: the translated "System default", or each language's own name for itself. */
+/** Picker label: each language's own name for itself. */
 @Composable
 private fun AppLanguage.label(): String = when (this) {
-    AppLanguage.SYSTEM -> stringResource(Res.string.settings_language_system)
+    // SYSTEM is never offered: the picker resolves it before selecting.
+    AppLanguage.SYSTEM -> ""
+
     AppLanguage.ENGLISH -> "English"
+
     AppLanguage.ITALIAN -> "Italiano"
+
     AppLanguage.CHINESE_SIMPLIFIED -> "简体中文"
+
     AppLanguage.CHINESE_TRADITIONAL_HK -> "繁體中文（香港）"
 }
 

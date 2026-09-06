@@ -41,17 +41,29 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
-    "clicking a language chip sets the app language" {
+    "the resolved system language is selected and picking another pins it" {
+        // Test JVM is pinned to en-US, so the effective language is English.
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
-            onNodeWithText("System default").assertIsSelected()
+            onNodeWithText("English").assertIsSelected()
             onNodeWithText("简体中文").assertExists()
+            onNodeWithText("繁體中文（香港）").assertExists()
 
             onNodeWithText("Italiano").performClick()
             onNodeWithText("Italiano").assertIsSelected()
-            onNodeWithText("System default").assertIsNotSelected()
+            onNodeWithText("English").assertIsNotSelected()
 
             viewModel.language.value shouldBe AppLanguage.ITALIAN
+        }
+    }
+
+    "a pinned language shows selected in the picker" {
+        withSettingsViewModel(initialLanguage = AppLanguage.CHINESE_TRADITIONAL_HK) { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("繁體中文（香港）").assertIsSelected()
+            onNodeWithText("English").assertIsNotSelected()
+
+            viewModel.language.value shouldBe AppLanguage.CHINESE_TRADITIONAL_HK
         }
     }
 

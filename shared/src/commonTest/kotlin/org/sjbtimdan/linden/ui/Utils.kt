@@ -26,6 +26,7 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
@@ -135,6 +136,7 @@ fun withBudgetViewModel(block: suspend ComposeUiTest.(CategoryDao, BudgetViewMod
 fun withSettingsViewModel(
     initialTheme: ThemeMode = ThemeMode.SYSTEM,
     initialCurrency: Currency = Currency.CHF,
+    initialLanguage: AppLanguage = AppLanguage.SYSTEM,
     block: suspend ComposeUiTest.(SettingsViewModel) -> Unit,
 ) {
     onTestMain {
@@ -148,6 +150,7 @@ fun withSettingsViewModel(
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = initialTheme,
                 initialCurrency = initialCurrency,
+                initialLanguage = initialLanguage,
             )
             block(viewModel)
         }
