@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.ui.settings
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
@@ -18,6 +19,7 @@ import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
@@ -36,6 +38,20 @@ class SettingsScreenTest : StringSpec({
             onNodeWithText("Light").assertIsSelected()
 
             viewModel.themeMode.value shouldBe ThemeMode.LIGHT
+        }
+    }
+
+    "clicking a language chip sets the app language" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("System default").assertIsSelected()
+            onNodeWithText("简体中文").assertExists()
+
+            onNodeWithText("Italiano").performClick()
+            onNodeWithText("Italiano").assertIsSelected()
+            onNodeWithText("System default").assertIsNotSelected()
+
+            viewModel.language.value shouldBe AppLanguage.ITALIAN
         }
     }
 

@@ -18,6 +18,7 @@ import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
@@ -88,6 +89,48 @@ class SettingsViewModelTest : StringSpec({
             viewModel.setHideEntryTotal(true)
 
             dao.getHideEntryTotal() shouldBe true
+        }
+    }
+
+    "setLanguage(ITALIAN) updates the database and the flow" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = SettingsDao(database.settingsQueries)
+            val viewModel = SettingsViewModel(
+                dao,
+                IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            viewModel.language.value shouldBe AppLanguage.SYSTEM
+
+            viewModel.setLanguage(AppLanguage.ITALIAN)
+
+            viewModel.language.value shouldBe AppLanguage.ITALIAN
+            dao.getLanguage() shouldBe AppLanguage.ITALIAN
+        }
+    }
+
+    "a persisted language override loads as the initial value" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = SettingsDao(database.settingsQueries)
+            dao.setLanguage(AppLanguage.CHINESE_SIMPLIFIED)
+
+            val viewModel = SettingsViewModel(
+                dao,
+                IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+                initialLanguage = dao.getLanguage(),
+            )
+
+            viewModel.language.value shouldBe AppLanguage.CHINESE_SIMPLIFIED
         }
     }
 

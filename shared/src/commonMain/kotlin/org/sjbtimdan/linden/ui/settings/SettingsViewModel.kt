@@ -18,6 +18,7 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImportResult
 import org.sjbtimdan.linden.imports.IvyImporter
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import java.io.InputStream
@@ -46,12 +47,16 @@ class SettingsViewModel(
     initialTheme: ThemeMode,
     initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
+    initialLanguage: AppLanguage = AppLanguage.SYSTEM,
 ) : ViewModel() {
     private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
     private val _defaultCurrency = MutableStateFlow(initialCurrency)
     val defaultCurrency: StateFlow<Currency> = _defaultCurrency.asStateFlow()
+
+    private val _language = MutableStateFlow(initialLanguage)
+    val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
     val hideEntryTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, initialHideEntryTotal)
@@ -79,6 +84,13 @@ class SettingsViewModel(
         _defaultCurrency.value = currency
         viewModelScope.launch {
             settingsDao.setDefaultCurrency(currency)
+        }
+    }
+
+    fun setLanguage(language: AppLanguage) {
+        _language.value = language
+        viewModelScope.launch {
+            settingsDao.setLanguage(language)
         }
     }
 
@@ -139,10 +151,11 @@ class SettingsViewModel(
         }
     }
 
-    /** Re-reads theme and currency so the UI reflects a restored backup. */
+    /** Re-reads theme, currency and language so the UI reflects a restored backup. */
     private suspend fun reloadSettings() {
         _themeMode.value = settingsDao.getTheme()
         _defaultCurrency.value = settingsDao.getDefaultCurrency()
+        _language.value = settingsDao.getLanguage()
     }
 
     fun exportCsv(output: OutputStream) {

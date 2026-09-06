@@ -17,6 +17,7 @@ import org.sjbtimdan.linden.data.createLindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
@@ -39,6 +40,7 @@ class AppDependencies(
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
+    initialLanguage: AppLanguage = AppLanguage.SYSTEM,
     fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
@@ -68,6 +70,7 @@ class AppDependencies(
         initialTheme,
         initialCurrency,
         initialHideEntryTotal,
+        initialLanguage,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
@@ -90,5 +93,6 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val initialTheme = settingsDao.getTheme()
     val initialCurrency = settingsDao.getDefaultCurrency()
     val initialHideEntryTotal = settingsDao.getHideEntryTotal()
-    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal)
+    val initialLanguage = settingsDao.getLanguage()
+    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal, initialLanguage)
 }

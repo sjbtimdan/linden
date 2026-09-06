@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,7 @@ import org.sjbtimdan.linden.backup.rememberDatabaseBackupPicker
 import org.sjbtimdan.linden.backup.rememberDatabaseRestorePicker
 import org.sjbtimdan.linden.export.rememberCsvExportPicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
@@ -79,6 +81,8 @@ import org.sjbtimdan.linden.resources.settings_import_failed
 import org.sjbtimdan.linden.resources.settings_import_ivy
 import org.sjbtimdan.linden.resources.settings_import_split_note
 import org.sjbtimdan.linden.resources.settings_import_summary
+import org.sjbtimdan.linden.resources.settings_language
+import org.sjbtimdan.linden.resources.settings_language_system
 import org.sjbtimdan.linden.resources.settings_nav_budgets
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
@@ -114,6 +118,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val language by viewModel.language.collectAsState()
     val hideEntryTotal by viewModel.hideEntryTotal.collectAsState()
     val importState by viewModel.importState.collectAsState()
     val backupState by viewModel.backupState.collectAsState()
@@ -141,9 +146,30 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState()),
     ) {
         Text(
-            text = stringResource(Res.string.settings_theme),
+            text = stringResource(Res.string.settings_language),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp),
+        )
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            languageOptions.forEach { option ->
+                FilterChip(
+                    selected = language == option,
+                    onClick = { viewModel.setLanguage(option) },
+                    label = { Text(option.label()) },
+                    modifier = Modifier.testTag("language-${option.name}"),
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(Res.string.settings_theme),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
         )
 
         SingleChoiceSegmentedButtonRow(
@@ -532,6 +558,27 @@ private fun ThemeMode.displayName(): String = stringResource(
         ThemeMode.DARK -> Res.string.settings_theme_dark
     },
 )
+
+/** The language options, System first. */
+private val languageOptions = listOf(
+    AppLanguage.SYSTEM,
+    AppLanguage.ENGLISH,
+    AppLanguage.ITALIAN,
+    AppLanguage.CHINESE_SIMPLIFIED,
+    AppLanguage.CHINESE_TRADITIONAL_TW,
+    AppLanguage.CHINESE_TRADITIONAL_HK,
+)
+
+/** Picker label: the translated "System default", or each language's own name for itself. */
+@Composable
+private fun AppLanguage.label(): String = when (this) {
+    AppLanguage.SYSTEM -> stringResource(Res.string.settings_language_system)
+    AppLanguage.ENGLISH -> "English"
+    AppLanguage.ITALIAN -> "Italiano"
+    AppLanguage.CHINESE_SIMPLIFIED -> "简体中文"
+    AppLanguage.CHINESE_TRADITIONAL_TW -> "繁體中文（台灣）"
+    AppLanguage.CHINESE_TRADITIONAL_HK -> "繁體中文（香港）"
+}
 
 private fun buildVersionLabel(): String {
     val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""

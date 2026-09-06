@@ -6,6 +6,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.sjbtimdan.linden.SettingsQueries
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 
@@ -13,6 +14,7 @@ const val THEME_KEY = "theme"
 const val CURRENCY_KEY = "currency"
 const val HIDE_ENTRY_TOTAL_KEY = "hideEntryTotal"
 const val AUTO_UPDATE_RATES_KEY = "autoUpdateRates"
+const val LANGUAGE_KEY = "language"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {
@@ -69,6 +71,15 @@ class SettingsDao(private val queries: SettingsQueries) {
 
     suspend fun setAutoUpdateRates(enabled: Boolean) {
         queries.insertOrReplace(AUTO_UPDATE_RATES_KEY, enabled.toString())
+    }
+
+    suspend fun getLanguage(): AppLanguage {
+        val entity = queries.selectByKey(LANGUAGE_KEY).awaitAsOneOrNull() ?: return AppLanguage.SYSTEM
+        return AppLanguage.fromTag(entity.value_)
+    }
+
+    suspend fun setLanguage(language: AppLanguage) {
+        queries.insertOrReplace(LANGUAGE_KEY, language.tag ?: "system")
     }
 
     fun autoUpdateRatesFlow(): Flow<Boolean> = queries.selectAll()

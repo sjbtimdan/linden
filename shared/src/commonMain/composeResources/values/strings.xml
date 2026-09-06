@@ -202,6 +202,8 @@
     <string name="category_icon_spa">Personal Care</string>
 
     <!-- Settings screen -->
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System default</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
