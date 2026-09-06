@@ -1,45 +1,85 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.onTestMain
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerFilterControlsTest : StringSpec({
-    "type dropdown lists every type and reports the selection" {
+    "type chips offer All and every type and report the selection" {
         onTestMain {
             runComposeUiTest {
-                var selected: EntryType? = null
+                var selected: EntryType? = EntryType.Expense
                 setControlsContent(onTypeFilterChange = { selected = it })
 
-                onNodeWithTag("typeFilterDropdown").performClick()
+                onNodeWithTag("typeFilter-All").assertIsDisplayed()
+                onNodeWithTag("typeFilter-Expense").assertIsDisplayed()
+                onNodeWithTag("typeFilter-Income").assertIsDisplayed()
+                onNodeWithTag("typeFilter-Transfer").assertIsDisplayed()
 
-                onNodeWithText("Expense").assertIsDisplayed()
-                onNodeWithText("Income").assertIsDisplayed()
-                onNodeWithText("Transfer").assertIsDisplayed()
-
-                onNodeWithText("Transfer").performClick()
+                onNodeWithTag("typeFilter-Transfer").performClick()
 
                 selected shouldBe EntryType.Transfer
             }
         }
     }
 
-    "shows the active type on the chip" {
+    "All is the default type selection" {
+        onTestMain {
+            runComposeUiTest {
+                setControlsContent()
+
+                onNodeWithTag("typeFilter-All").assertIsSelected()
+                onNodeWithTag("typeFilter-Expense").assertIsNotSelected()
+            }
+        }
+    }
+
+    "type chips run All, Expense, Income, Transfer left to right" {
+        onTestMain {
+            runComposeUiTest {
+                setControlsContent(showAmountFilter = false)
+
+                val all = onNodeWithTag("typeFilter-All").getUnclippedBoundsInRoot()
+                val expense = onNodeWithTag("typeFilter-Expense").getUnclippedBoundsInRoot()
+                val income = onNodeWithTag("typeFilter-Income").getUnclippedBoundsInRoot()
+                val transfer = onNodeWithTag("typeFilter-Transfer").getUnclippedBoundsInRoot()
+
+                // The chips share one row, ordered like the entry screen's type selector.
+                expense.top shouldBe all.top
+                income.top shouldBe all.top
+                transfer.top shouldBe all.top
+                expense.left shouldBeGreaterThan all.left
+                income.left shouldBeGreaterThan expense.left
+                transfer.left shouldBeGreaterThan income.left
+            }
+        }
+    }
+
+    "the active type reads back as the selected chip" {
         onTestMain {
             runComposeUiTest {
                 setControlsContent(typeFilter = EntryType.Income)
 
-                onNodeWithText("Income").assertIsDisplayed()
+                onNodeWithTag("typeFilter-Income").assertIsSelected()
+                onNodeWithTag("typeFilter-All").assertIsNotSelected()
             }
         }
     }
@@ -59,13 +99,13 @@ class LedgerFilterControlsTest : StringSpec({
             runComposeUiTest {
                 setControlsContent(showAmountFilter = false)
 
-                onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
+                onNodeWithTag("typeFilter-All").assertIsDisplayed()
                 onNodeWithTag("amountFilterChip").assertDoesNotExist()
             }
         }
     }
 
-    "picking the All option reports a cleared type filter" {
+    "picking All reports a cleared type filter" {
         onTestMain {
             runComposeUiTest {
                 var selected: EntryType? = EntryType.Income
@@ -74,10 +114,10 @@ class LedgerFilterControlsTest : StringSpec({
                     onTypeFilterChange = { selected = it },
                 )
 
-                onNodeWithTag("typeFilterDropdown").performClick()
-                onNodeWithText("Types: All").performClick()
+                onNodeWithTag("typeFilter-All").performClick()
 
                 selected shouldBe null
+                onNodeWithTag("typeFilter-All").assertIsSelected()
             }
         }
     }
@@ -130,9 +170,15 @@ private fun ComposeUiTest.setControlsContent(
     onClearAmountFilter: () -> Unit = {},
 ) {
     setContent {
+        // The controls are stateless; the fixture hoists the type like the
+        // screen's ViewModel does, so chips reflect a change immediately.
+        var type by remember { mutableStateOf(typeFilter) }
         LedgerFilterControls(
-            typeFilter = typeFilter,
-            onTypeFilterChange = onTypeFilterChange,
+            typeFilter = type,
+            onTypeFilterChange = {
+                type = it
+                onTypeFilterChange(it)
+            },
             showAmountFilter = showAmountFilter,
             amountFilter = amountFilter,
             onAmountFilterChange = onAmountFilterChange,

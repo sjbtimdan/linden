@@ -3,6 +3,8 @@ package org.sjbtimdan.linden.ui.ledger
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -11,12 +13,18 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.entry.displayName
 
 /**
+ * Same order as the type selector on the entry screen; EntryType.entries itself
+ * is declared Income, Transfer, Expense.
+ */
+private val typeOrder = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
+
+/**
  * The chip filters of the current view, laid out inline under the search field —
- * no dialog. Every filter applies immediately and carries an explicit "All"
- * option to reset it. The type filter always shows (it narrows both the entries
- * list and the category totals); the amount filter only applies to the entries
- * list ([showAmountFilter]). Category and account narrowing is done from the
- * search field's suggestion chips instead of dropdowns. Changes apply
+ * no dialog. The type filter is a single-select chip row (All by default, then
+ * Expense/Income/Transfer) and narrows both the entries list and the category
+ * totals; the amount filter only applies to the entries list
+ * ([showAmountFilter]). Category and account narrowing is done from the search
+ * field's suggestion chips instead of dropdowns. Every filter applies
  * immediately; the removable summary chips below the period bar keep reporting
  * active filters.
  */
@@ -35,13 +43,20 @@ fun LedgerFilterControls(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        ChipDropdown(
-            selected = typeFilter,
-            options = listOf(null) + EntryType.entries,
-            optionLabel = { it?.displayName() ?: "Types: All" },
-            onSelect = onTypeFilterChange,
-            modifier = Modifier.testTag("typeFilterDropdown"),
+        FilterChip(
+            selected = typeFilter == null,
+            onClick = { onTypeFilterChange(null) },
+            label = { Text("All") },
+            modifier = Modifier.testTag("typeFilter-All"),
         )
+        typeOrder.forEach { type ->
+            FilterChip(
+                selected = typeFilter == type,
+                onClick = { onTypeFilterChange(type) },
+                label = { Text(type.displayName()) },
+                modifier = Modifier.testTag("typeFilter-${type.name}"),
+            )
+        }
         if (showAmountFilter) {
             AmountFilterChip(
                 filter = amountFilter,
