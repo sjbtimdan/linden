@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.BuildInfo
 import org.sjbtimdan.linden.backup.rememberDatabaseBackupPicker
 import org.sjbtimdan.linden.backup.rememberDatabaseRestorePicker
@@ -57,6 +58,42 @@ import org.sjbtimdan.linden.export.rememberCsvExportPicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_dismiss
+import org.sjbtimdan.linden.resources.settings_backup
+import org.sjbtimdan.linden.resources.settings_backup_db
+import org.sjbtimdan.linden.resources.settings_backup_failed
+import org.sjbtimdan.linden.resources.settings_backup_saved
+import org.sjbtimdan.linden.resources.settings_default_currency
+import org.sjbtimdan.linden.resources.settings_export_csv
+import org.sjbtimdan.linden.resources.settings_export_done
+import org.sjbtimdan.linden.resources.settings_export_failed
+import org.sjbtimdan.linden.resources.settings_hide_totals
+import org.sjbtimdan.linden.resources.settings_import_confirm
+import org.sjbtimdan.linden.resources.settings_import_confirm_body
+import org.sjbtimdan.linden.resources.settings_import_failed
+import org.sjbtimdan.linden.resources.settings_import_ivy
+import org.sjbtimdan.linden.resources.settings_import_split_note
+import org.sjbtimdan.linden.resources.settings_import_summary
+import org.sjbtimdan.linden.resources.settings_nav_accounts
+import org.sjbtimdan.linden.resources.settings_nav_budgets
+import org.sjbtimdan.linden.resources.settings_nav_categories
+import org.sjbtimdan.linden.resources.settings_nav_rates
+import org.sjbtimdan.linden.resources.settings_privacy
+import org.sjbtimdan.linden.resources.settings_restore_backup
+import org.sjbtimdan.linden.resources.settings_restore_confirm
+import org.sjbtimdan.linden.resources.settings_restore_confirm_body
+import org.sjbtimdan.linden.resources.settings_restore_failed
+import org.sjbtimdan.linden.resources.settings_restore_summary
+import org.sjbtimdan.linden.resources.settings_theme
+import org.sjbtimdan.linden.resources.settings_theme_dark
+import org.sjbtimdan.linden.resources.settings_theme_light
+import org.sjbtimdan.linden.resources.settings_theme_system
+import org.sjbtimdan.linden.resources.settings_working_backup
+import org.sjbtimdan.linden.resources.settings_working_export
+import org.sjbtimdan.linden.resources.settings_working_import
+import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
@@ -103,7 +140,7 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState()),
     ) {
         Text(
-            text = "Theme",
+            text = stringResource(Res.string.settings_theme),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -128,7 +165,7 @@ fun SettingsScreen(
         }
 
         Text(
-            text = "Default currency",
+            text = stringResource(Res.string.settings_default_currency),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
         )
@@ -148,7 +185,7 @@ fun SettingsScreen(
         }
 
         Text(
-            text = "Privacy",
+            text = stringResource(Res.string.settings_privacy),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
         )
@@ -159,7 +196,7 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Hide Totals",
+                text = stringResource(Res.string.settings_hide_totals),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Switch(
@@ -184,7 +221,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Categories")
+                Text(stringResource(Res.string.settings_nav_categories))
             }
             Button(onClick = onNavigateToAccounts) {
                 Icon(
@@ -193,7 +230,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Accounts")
+                Text(stringResource(Res.string.settings_nav_accounts))
             }
             Button(onClick = onNavigateToRates) {
                 Icon(
@@ -202,7 +239,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Currency rates")
+                Text(stringResource(Res.string.settings_nav_rates))
             }
             Button(onClick = onNavigateToBudgets) {
                 Icon(
@@ -211,7 +248,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Budgets")
+                Text(stringResource(Res.string.settings_nav_budgets))
             }
             FilledTonalButton(
                 onClick = { showImportConfirmation = true },
@@ -223,33 +260,36 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Import from Ivy")
+                Text(stringResource(Res.string.settings_import_ivy))
             }
         }
 
         when (val state = importState) {
             ImportState.Idle -> Unit
 
-            ImportState.Importing -> WorkingRow(text = "Importing…")
+            ImportState.Importing -> WorkingRow(text = stringResource(Res.string.settings_working_import))
 
             is ImportState.Success -> {
                 val result = state.result
+                val summary = stringResource(
+                    Res.string.settings_import_summary,
+                    result.accounts,
+                    result.categories,
+                    result.transactions,
+                )
                 val note = if (result.splitTransactions > 0) {
-                    "\nNote: ${result.splitTransactions} transaction(s) were in a different currency " +
-                        "than their account and were imported into new \"IVY: …\" accounts."
+                    stringResource(Res.string.settings_import_split_note, result.splitTransactions)
                 } else {
                     ""
                 }
                 ImportResultRow(
-                    text = "Imported ${result.accounts} accounts, " +
-                        "${result.categories} categories, " +
-                        "${result.transactions} transactions" + note,
+                    text = summary + note,
                     onDismiss = viewModel::clearImportState,
                 )
             }
 
             is ImportState.Error -> ImportResultRow(
-                text = "Import failed: ${state.message}",
+                text = stringResource(Res.string.settings_import_failed, state.message),
                 onDismiss = viewModel::clearImportState,
             )
         }
@@ -259,7 +299,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Backup",
+            text = stringResource(Res.string.settings_backup),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -279,7 +319,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Back up database")
+                Text(stringResource(Res.string.settings_backup_db))
             }
             OutlinedButton(
                 onClick = { showRestoreConfirmation = true },
@@ -291,7 +331,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Restore from backup")
+                Text(stringResource(Res.string.settings_restore_backup))
             }
             OutlinedButton(
                 onClick = { exportFilePicker() },
@@ -303,22 +343,22 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Export to CSV")
+                Text(stringResource(Res.string.settings_export_csv))
             }
         }
 
         when (val state = backupState) {
             BackupState.Idle -> Unit
 
-            BackupState.Working -> WorkingRow(text = "Backing up…")
+            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_backup))
 
             is BackupState.Success -> ImportResultRow(
-                text = "Backup saved.",
+                text = stringResource(Res.string.settings_backup_saved),
                 onDismiss = viewModel::clearBackupState,
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = "Backup failed: ${state.message}",
+                text = stringResource(Res.string.settings_backup_failed, state.message),
                 onDismiss = viewModel::clearBackupState,
             )
         }
@@ -326,17 +366,20 @@ fun SettingsScreen(
         when (val state = restoreState) {
             BackupState.Idle -> Unit
 
-            BackupState.Working -> WorkingRow(text = "Restoring…")
+            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_restore))
 
             is BackupState.Success -> ImportResultRow(
-                text = "Restored ${state.value.accounts} accounts, " +
-                    "${state.value.categories} categories, " +
-                    "${state.value.entries} entries",
+                text = stringResource(
+                    Res.string.settings_restore_summary,
+                    state.value.accounts,
+                    state.value.categories,
+                    state.value.entries,
+                ),
                 onDismiss = viewModel::clearRestoreState,
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = "Restore failed: ${state.message}",
+                text = stringResource(Res.string.settings_restore_failed, state.message),
                 onDismiss = viewModel::clearRestoreState,
             )
         }
@@ -344,15 +387,15 @@ fun SettingsScreen(
         when (val state = exportState) {
             BackupState.Idle -> Unit
 
-            BackupState.Working -> WorkingRow(text = "Exporting…")
+            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_export))
 
             is BackupState.Success -> ImportResultRow(
-                text = "CSV exported.",
+                text = stringResource(Res.string.settings_export_done),
                 onDismiss = viewModel::clearExportState,
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = "Export failed: ${state.message}",
+                text = stringResource(Res.string.settings_export_failed, state.message),
                 onDismiss = viewModel::clearExportState,
             )
         }
@@ -373,8 +416,8 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showImportConfirmation = false },
                 shape = DialogShape,
-                title = { Text("Import from Ivy") },
-                text = { Text("This will replace all your current accounts, categories and transactions. Continue?") },
+                title = { Text(stringResource(Res.string.settings_import_ivy)) },
+                text = { Text(stringResource(Res.string.settings_import_confirm_body)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -382,14 +425,14 @@ fun SettingsScreen(
                             importFilePicker()
                         },
                     ) {
-                        Text("Import")
+                        Text(stringResource(Res.string.settings_import_confirm))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showImportConfirmation = false },
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.common_cancel))
                     }
                 },
             )
@@ -399,12 +442,8 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showRestoreConfirmation = false },
                 shape = DialogShape,
-                title = { Text("Restore from backup") },
-                text = {
-                    Text(
-                        "This will replace all your current accounts, categories, transactions and settings. Continue?",
-                    )
-                },
+                title = { Text(stringResource(Res.string.settings_restore_backup)) },
+                text = { Text(stringResource(Res.string.settings_restore_confirm_body)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -412,14 +451,14 @@ fun SettingsScreen(
                             restoreFilePicker()
                         },
                     ) {
-                        Text("Restore")
+                        Text(stringResource(Res.string.settings_restore_confirm))
                     }
                 },
                 dismissButton = {
                     TextButton(
                         onClick = { showRestoreConfirmation = false },
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.common_cancel))
                     }
                 },
             )
@@ -465,18 +504,21 @@ private fun ImportResultRow(text: String, onDismiss: () -> Unit) {
         )
         Icon(
             imageVector = Icons.Filled.Close,
-            contentDescription = "Dismiss",
+            contentDescription = stringResource(Res.string.common_dismiss),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(20.dp),
         )
     }
 }
 
-private fun ThemeMode.displayName(): String = when (this) {
-    ThemeMode.SYSTEM -> "System"
-    ThemeMode.LIGHT -> "Light"
-    ThemeMode.DARK -> "Dark"
-}
+@Composable
+private fun ThemeMode.displayName(): String = stringResource(
+    when (this) {
+        ThemeMode.SYSTEM -> Res.string.settings_theme_system
+        ThemeMode.LIGHT -> Res.string.settings_theme_light
+        ThemeMode.DARK -> Res.string.settings_theme_dark
+    },
+)
 
 private fun buildVersionLabel(): String {
     val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""

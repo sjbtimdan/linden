@@ -40,7 +40,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.common_dismiss
+import org.sjbtimdan.linden.resources.rates_auto_update_help
+import org.sjbtimdan.linden.resources.rates_edit_rate
+import org.sjbtimdan.linden.resources.rates_from_date
+import org.sjbtimdan.linden.resources.rates_refresh
+import org.sjbtimdan.linden.resources.rates_refresh_failed
+import org.sjbtimdan.linden.resources.rates_update_automatically
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.screenInsets
@@ -65,7 +75,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.common_back),
             )
         }
 
@@ -83,7 +93,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
                 )
                 rates.firstOrNull()?.date?.let { date ->
                     Text(
-                        text = "Rates from $date",
+                        text = stringResource(Res.string.rates_from_date, date.toString()),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -105,7 +115,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Refresh")
+                    Text(stringResource(Res.string.rates_refresh))
                 }
             }
         }
@@ -116,7 +126,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             RatesRefreshState.Refreshing -> Unit
 
             is RatesRefreshState.Error -> ErrorRow(
-                text = "Refresh failed: ${state.message}",
+                text = stringResource(Res.string.rates_refresh_failed, state.message),
                 onDismiss = viewModel::clearRatesError,
             )
         }
@@ -132,12 +142,11 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
                 modifier = Modifier.weight(1f),
             ) {
                 Text(
-                    text = "Update automatically",
+                    text = stringResource(Res.string.rates_update_automatically),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
-                    text = "Downloads fresh rates when the cached ones are more than a day old. " +
-                        "Turn off to keep manually entered rates.",
+                    text = stringResource(Res.string.rates_auto_update_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -210,7 +219,7 @@ private fun RateRow(base: Currency, quote: Currency, rate: Double?, onEdit: () -
         ) {
             Icon(
                 imageVector = Icons.Filled.Edit,
-                contentDescription = "Edit ${quote.name} rate",
+                contentDescription = stringResource(Res.string.rates_edit_rate, quote.name),
             )
         }
     }
@@ -234,7 +243,7 @@ private fun ErrorRow(text: String, onDismiss: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "Dismiss",
+            text = stringResource(Res.string.common_dismiss),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
         )

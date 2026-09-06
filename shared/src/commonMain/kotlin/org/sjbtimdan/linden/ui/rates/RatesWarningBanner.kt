@@ -20,6 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.rates_missing
+import org.sjbtimdan.linden.resources.rates_outdated
+import org.sjbtimdan.linden.resources.rates_set
 
 @Composable
 fun RatesWarningBanner(
@@ -48,8 +53,8 @@ fun RatesWarningBanner(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = when (warning) {
-                    RatesWarning.Missing -> "No exchange rates available. You can set them manually."
-                    RatesWarning.Outdated -> "Exchange rates are over a week old. You can set them manually."
+                    RatesWarning.Missing -> stringResource(Res.string.rates_missing)
+                    RatesWarning.Outdated -> stringResource(Res.string.rates_outdated)
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
@@ -58,7 +63,7 @@ fun RatesWarningBanner(
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onSetRates) {
-                Text("Set rates")
+                Text(stringResource(Res.string.rates_set))
             }
         }
     }

@@ -13,7 +13,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.resources.rates_edit_rate
+import org.sjbtimdan.linden.resources.rates_positive_number
+import org.sjbtimdan.linden.resources.rates_rate_label
 import org.sjbtimdan.linden.ui.theme.DialogShape
 
 @Composable
@@ -24,17 +31,17 @@ fun RateEditorDialog(quoteCurrency: Currency, currentRate: Double?, onSave: (Dou
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
-        title = { Text("Edit ${quoteCurrency.name} rate") },
+        title = { Text(stringResource(Res.string.rates_edit_rate, quoteCurrency.name)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                label = { Text("Rate") },
+                label = { Text(stringResource(Res.string.rates_rate_label)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 isError = text.isNotEmpty() && parsed == null,
                 supportingText = if (text.isNotEmpty() && parsed == null) {
-                    { Text("Enter a positive number.") }
+                    { Text(stringResource(Res.string.rates_positive_number)) }
                 } else {
                     null
                 },
@@ -47,12 +54,12 @@ fun RateEditorDialog(quoteCurrency: Currency, currentRate: Double?, onSave: (Dou
                 onClick = { parsed?.let(onSave) },
                 enabled = parsed != null,
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.common_cancel))
             }
         },
     )
