@@ -1,0 +1,32 @@
+-- Migrate schema from version 5 to 6: extract the entry + account + category
+-- projection shared by the ledger/suggestion reads into the EntryView view.
+-- A plain table change is not needed — only the view is added, and the read
+-- queries are rewritten to select from it. IF NOT EXISTS keeps a replay safe:
+-- a device that ran a v6 build and then an older one keeps the view (the
+-- Android no-op onDowngrade preserves newer objects) while being re-stamped to
+-- user_version = 5.
+
+CREATE VIEW IF NOT EXISTS EntryView AS
+SELECT EntryEntity.id,
+       EntryEntity.type,
+       EntryEntity.category_id AS categoryId,
+       EntryEntity.description,
+       EntryEntity.account_id AS accountId,
+       EntryEntity.amount,
+       EntryEntity.to_account_id AS toAccountId,
+       EntryEntity.to_amount AS toAmount,
+       EntryEntity.created_at AS createdAt,
+       EntryEntity.created_zone AS createdZone,
+       AccountEntity.name AS accountName,
+       AccountEntity.currency AS accountCurrency,
+       CategoryEntity.name AS categoryName,
+       CategoryEntity.type AS categoryType,
+       CategoryEntity.icon AS categoryIcon,
+       ToAccountEntity.name AS toAccountName,
+       ToAccountEntity.currency AS toAccountCurrency,
+       AccountEntity.hidden AS accountHidden,
+       ToAccountEntity.hidden AS toAccountHidden
+FROM EntryEntity
+JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
+LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
+LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id;

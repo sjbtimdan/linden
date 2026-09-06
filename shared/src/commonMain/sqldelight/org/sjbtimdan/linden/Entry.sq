@@ -11,6 +11,36 @@ CREATE TABLE IF NOT EXISTS EntryEntity (
     created_zone TEXT NOT NULL
 );
 
+-- Single source of the entry row shape shared by every read query: the entry
+-- plus its account, category and transfer-target account. Queries below only
+-- filter and order these columns, so adding a column touches the view alone.
+-- accountHidden/toAccountHidden expose the account hidden flags so suggestion
+-- reads can exclude rows on hidden accounts in SQL.
+CREATE VIEW IF NOT EXISTS EntryView AS
+SELECT EntryEntity.id,
+       EntryEntity.type,
+       EntryEntity.category_id AS categoryId,
+       EntryEntity.description,
+       EntryEntity.account_id AS accountId,
+       EntryEntity.amount,
+       EntryEntity.to_account_id AS toAccountId,
+       EntryEntity.to_amount AS toAmount,
+       EntryEntity.created_at AS createdAt,
+       EntryEntity.created_zone AS createdZone,
+       AccountEntity.name AS accountName,
+       AccountEntity.currency AS accountCurrency,
+       CategoryEntity.name AS categoryName,
+       CategoryEntity.type AS categoryType,
+       CategoryEntity.icon AS categoryIcon,
+       ToAccountEntity.name AS toAccountName,
+       ToAccountEntity.currency AS toAccountCurrency,
+       AccountEntity.hidden AS accountHidden,
+       ToAccountEntity.hidden AS toAccountHidden
+FROM EntryEntity
+JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
+LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
+LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id;
+
 insert:
 INSERT INTO EntryEntity (
     type, category_id, description, account_id, amount,
@@ -33,28 +63,9 @@ SELECT *
 FROM EntryEntity;
 
 selectAll:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-ORDER BY EntryEntity.id DESC;
+SELECT *
+FROM EntryView
+ORDER BY id DESC;
 
 -- All entries of one type, without a date cutoff: quick entry ranks by time
 -- of day, so entries outside the prediction horizon must still be considered.
@@ -62,136 +73,41 @@ ORDER BY EntryEntity.id DESC;
 -- must never propose an account that is hidden (history queries selectAll/
 -- selectSince/selectUpTo intentionally still return them).
 selectAllByType:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-WHERE EntryEntity.type = :type
-  AND AccountEntity.hidden = 0
-  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
-ORDER BY EntryEntity.id DESC;
+SELECT *
+FROM EntryView
+WHERE type = :type
+  AND accountHidden = 0
+  AND (toAccountHidden IS NULL OR toAccountHidden = 0)
+ORDER BY id DESC;
 
 selectSince:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-WHERE EntryEntity.created_at >= :epochMs
-ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
+SELECT *
+FROM EntryView
+WHERE createdAt >= :epochMs
+ORDER BY createdAt DESC, id DESC;
 
 selectSinceByType:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-WHERE EntryEntity.type = :type AND EntryEntity.created_at >= :epochMs
-  AND AccountEntity.hidden = 0
-  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
-ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
+SELECT *
+FROM EntryView
+WHERE type = :type AND createdAt >= :epochMs
+  AND accountHidden = 0
+  AND (toAccountHidden IS NULL OR toAccountHidden = 0)
+ORDER BY createdAt DESC, id DESC;
 
 selectLatestByType:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-WHERE EntryEntity.type = :type
-  AND AccountEntity.hidden = 0
-  AND (EntryEntity.to_account_id IS NULL OR ToAccountEntity.hidden = 0)
-ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC
+SELECT *
+FROM EntryView
+WHERE type = :type
+  AND accountHidden = 0
+  AND (toAccountHidden IS NULL OR toAccountHidden = 0)
+ORDER BY createdAt DESC, id DESC
 LIMIT 1;
 
 selectUpTo:
-SELECT EntryEntity.id,
-       EntryEntity.type,
-       EntryEntity.category_id AS categoryId,
-       EntryEntity.description,
-       EntryEntity.account_id AS accountId,
-       EntryEntity.amount,
-       EntryEntity.to_account_id AS toAccountId,
-       EntryEntity.to_amount AS toAmount,
-       EntryEntity.created_at AS createdAt,
-       EntryEntity.created_zone AS createdZone,
-       AccountEntity.name AS accountName,
-       AccountEntity.currency AS accountCurrency,
-       CategoryEntity.name AS categoryName,
-       CategoryEntity.type AS categoryType,
-       CategoryEntity.icon AS categoryIcon,
-       ToAccountEntity.name AS toAccountName,
-       ToAccountEntity.currency AS toAccountCurrency
-FROM EntryEntity
-JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
-LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
-LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id
-WHERE EntryEntity.created_at <= :epochMs
-ORDER BY EntryEntity.created_at DESC, EntryEntity.id DESC;
+SELECT *
+FROM EntryView
+WHERE createdAt <= :epochMs
+ORDER BY createdAt DESC, id DESC;
 
 deleteById:
 DELETE FROM EntryEntity WHERE id = :id;

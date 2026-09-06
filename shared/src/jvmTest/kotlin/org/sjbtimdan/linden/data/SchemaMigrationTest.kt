@@ -106,12 +106,23 @@ class SchemaMigrationTest : StringSpec({
         )
         driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
         driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
+        // The final migration (5.sqm) creates the EntryView over the entry tables,
+        // so a real v2 database also had EntryEntity for it to reference.
+        driver.execute(
+            null,
+            "CREATE TABLE EntryEntity (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, " +
+                "category_id INTEGER, description TEXT, account_id INTEGER NOT NULL, amount INTEGER NOT NULL " +
+                "CHECK (amount >= 0), to_account_id INTEGER, to_amount INTEGER " +
+                "CHECK (to_amount IS NULL OR to_amount >= 0), created_at INTEGER NOT NULL, created_zone TEXT NOT NULL)",
+            0,
+        )
 
         LindenDatabase.Schema.migrate(driver, 2, 3).await()
         // The generated queries target the current schema, so the test database
         // runs through the remaining migrations before it is queried.
         LindenDatabase.Schema.migrate(driver, 3, 4).await()
         LindenDatabase.Schema.migrate(driver, 4, 5).await()
+        LindenDatabase.Schema.migrate(driver, 5, 6).await()
 
         val db = LindenDatabase(driver)
         val accounts = db.accountQueries.selectAll().executeAsList()
@@ -233,5 +244,83 @@ class SchemaMigrationTest : StringSpec({
                 "Cash" to 500L to 0L,
                 "Savings" to 0L to 0L,
             )
+    }
+
+    "migrating from v5 to v6 creates the EntryView behind the ledger reads" {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+
+        // Create the v5 schema (AccountEntity already has the hidden column).
+        val createAccount = """
+            CREATE TABLE AccountEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                currency TEXT NOT NULL,
+                initialBalance INTEGER NOT NULL DEFAULT 0,
+                hidden INTEGER NOT NULL DEFAULT 0
+            );
+        """.trimIndent()
+        driver.execute(null, createAccount, 0)
+        val createCategory = """
+            CREATE TABLE CategoryEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                type TEXT NOT NULL,
+                icon TEXT
+            );
+        """.trimIndent()
+        driver.execute(null, createCategory, 0)
+        val createEntry = """
+            CREATE TABLE EntryEntity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                type TEXT NOT NULL,
+                category_id INTEGER,
+                description TEXT,
+                account_id INTEGER NOT NULL,
+                amount INTEGER NOT NULL CHECK (amount >= 0),
+                to_account_id INTEGER,
+                to_amount INTEGER CHECK (to_amount IS NULL OR to_amount >= 0),
+                created_at INTEGER NOT NULL,
+                created_zone TEXT NOT NULL
+            );
+        """.trimIndent()
+        driver.execute(null, createEntry, 0)
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance, hidden) VALUES ('Cash', 'CHF', 500, 0)",
+            0,
+        )
+        driver.execute(
+            null,
+            "INSERT INTO AccountEntity (name, currency, initialBalance, hidden) VALUES ('Savings', 'EUR', 0, 1)",
+            0,
+        )
+        driver.execute(null, "INSERT INTO CategoryEntity (name, type, icon) VALUES ('Food', 'Expense', NULL)", 0)
+        driver.execute(
+            null,
+            "INSERT INTO EntryEntity (type, category_id, description, account_id, amount, " +
+                "to_account_id, to_amount, created_at, created_zone) VALUES " +
+                "('Expense', 1, 'Coffee', 1, 450, NULL, NULL, 1700000000000, 'Europe/Zurich')",
+            0,
+        )
+        driver.execute(
+            null,
+            "INSERT INTO EntryEntity (type, category_id, description, account_id, amount, " +
+                "to_account_id, to_amount, created_at, created_zone) VALUES " +
+                "('Expense', 1, 'Hidden spend', 2, 100, NULL, NULL, 1700000001000, 'Europe/Zurich')",
+            0,
+        )
+
+        LindenDatabase.Schema.migrate(driver, 5, 6).await()
+
+        val db = LindenDatabase(driver)
+        // The history read surfaces every entry, hidden accounts included...
+        db.entryQueries.selectAll().executeAsList().map { it.accountName to it.amount } shouldBe
+            listOf(
+                "Savings" to 100L,
+                "Cash" to 450L,
+            )
+        // ...while the suggestion read hides rows on hidden accounts.
+        db.entryQueries.selectAllByType("Expense").executeAsList().map { it.accountName } shouldBe
+            listOf("Cash")
     }
 })

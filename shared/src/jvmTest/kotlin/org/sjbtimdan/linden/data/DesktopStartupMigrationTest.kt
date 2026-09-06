@@ -105,7 +105,7 @@ class DesktopStartupMigrationTest : StringSpec({
 
         // The file is stamped with the current schema version, so the next boot
         // skips the migration instead of replaying it.
-        userVersionOf(dbFile) shouldBe 5L
+        userVersionOf(dbFile) shouldBe 6L
     }
 })
 

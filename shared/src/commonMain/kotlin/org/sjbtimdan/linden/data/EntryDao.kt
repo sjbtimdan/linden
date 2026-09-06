@@ -130,6 +130,10 @@ class EntryDao(private val queries: EntryQueries) {
         categoryIcon: String?,
         toAccountName: String?,
         toAccountCurrency: String?,
+        // Hidden flags are part of the shared EntryView row shape and are only
+        // consumed by the SQL WHERE clauses of the suggestion reads.
+        @Suppress("UNUSED_PARAMETER") accountHidden: Long,
+        @Suppress("UNUSED_PARAMETER") toAccountHidden: Long?,
     ): Entry {
         val account = Account(
             id = accountId,
