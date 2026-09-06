@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
+import org.sjbtimdan.linden.ui.entry.DateLanguage
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.All
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Day
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod.Month
@@ -21,8 +22,10 @@ class LedgerPeriodTest : StringSpec({
         Day.previousAnchor(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 12)
     }
 
-    "day label shows the date" {
-        Day.windowLabel(LocalDate(2026, 8, 13)) shouldBe "13 Aug 2026"
+    "day label shows the localized date" {
+        Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "Aug 13, 2026"
+        Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Italian) shouldBe "13 ago 2026"
+        Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月13日"
     }
 
     "week window is Monday to Sunday around the anchor" {
@@ -85,25 +88,52 @@ class LedgerPeriodTest : StringSpec({
         All.previousAnchor(LocalDate(2026, 8, 13)) shouldBe LocalDate(2026, 8, 13)
     }
 
-    "week label shows a single month range" {
-        Week.windowLabel(LocalDate(2026, 8, 13)) shouldBe "10–16 Aug 2026"
+    "week label shows a single month range in English" {
+        Week.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "Aug 10–16, 2026"
     }
 
-    "week label spans months" {
-        Week.windowLabel(LocalDate(2026, 9, 2)) shouldBe "31 Aug – 6 Sep 2026"
+    "week label spans months in English" {
+        Week.windowLabel(LocalDate(2026, 9, 2), DateLanguage.English) shouldBe "Aug 31 – Sep 6, 2026"
     }
 
-    "week label spans years" {
-        Week.windowLabel(LocalDate(2026, 12, 31)) shouldBe "28 Dec 2026 – 3 Jan 2027"
+    "week label spans years in English" {
+        Week.windowLabel(LocalDate(2026, 12, 31), DateLanguage.English) shouldBe "Dec 28, 2026 – Jan 3, 2027"
     }
 
-    "month and year labels" {
-        Month.windowLabel(LocalDate(2026, 8, 13)) shouldBe "Aug 2026"
-        Year.windowLabel(LocalDate(2026, 8, 13)) shouldBe "2026"
+    "week label shows a single month range in Italian" {
+        Week.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Italian) shouldBe "10–16 ago 2026"
+    }
+
+    "week label spans months in Italian" {
+        Week.windowLabel(LocalDate(2026, 9, 2), DateLanguage.Italian) shouldBe "31 ago – 6 set 2026"
+    }
+
+    "week label spans years in Italian" {
+        Week.windowLabel(LocalDate(2026, 12, 31), DateLanguage.Italian) shouldBe "28 dic 2026 – 3 gen 2027"
+    }
+
+    "week label shows a single month range in Chinese" {
+        Week.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月10日–16日"
+    }
+
+    "week label spans months in Chinese" {
+        Week.windowLabel(LocalDate(2026, 9, 2), DateLanguage.Chinese) shouldBe "2026年8月31日 – 9月6日"
+    }
+
+    "week label spans years in Chinese" {
+        Week.windowLabel(LocalDate(2026, 12, 31), DateLanguage.Chinese) shouldBe "2026年12月28日 – 2027年1月3日"
+    }
+
+    "month and year labels follow the language" {
+        Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "Aug 2026"
+        Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Italian) shouldBe "ago 2026"
+        Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月"
+        Year.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "2026"
+        Year.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026"
     }
 
     "All has no label" {
-        All.windowLabel(LocalDate(2026, 8, 13)).shouldBeNull()
+        All.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English).shouldBeNull()
     }
 
     "All includes every date" {

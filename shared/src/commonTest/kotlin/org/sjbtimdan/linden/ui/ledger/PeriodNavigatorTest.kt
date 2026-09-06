@@ -46,7 +46,7 @@ class PeriodNavigatorTest : StringSpec({
                     )
                 }
 
-                onNodeWithText("15 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 15, 2026").assertIsDisplayed()
             }
         }
     }

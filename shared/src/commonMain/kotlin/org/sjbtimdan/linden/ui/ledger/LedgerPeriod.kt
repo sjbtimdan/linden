@@ -6,7 +6,9 @@ import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
-import org.sjbtimdan.linden.ui.entry.MONTHS
+import org.sjbtimdan.linden.ui.entry.DateLanguage
+import org.sjbtimdan.linden.ui.entry.dateLanguage
+import org.sjbtimdan.linden.ui.entry.platformLanguageCode
 
 enum class LedgerPeriod {
     Day,
@@ -55,14 +57,20 @@ fun LedgerPeriod.nextAnchor(anchor: LocalDate): LocalDate {
     return anchor.plus(amount, unit)
 }
 
-/** Navigator label, e.g. "15 Aug 2026", "10–16 Aug 2026", "Aug 2026" or "2026"; null for [LedgerPeriod.All]. */
-fun LedgerPeriod.windowLabel(anchor: LocalDate): String? {
+/**
+ * Navigator label per the active language, e.g. "Aug 15, 2026", "Aug 10–16, 2026",
+ * "Aug 2026" or "2026"; null for [LedgerPeriod.All].
+ */
+fun LedgerPeriod.windowLabel(anchor: LocalDate): String? = windowLabel(anchor, dateLanguage(platformLanguageCode()))
+
+/** Language-explicit variant of [windowLabel], for tests and callers that resolved the language. */
+internal fun LedgerPeriod.windowLabel(anchor: LocalDate, language: DateLanguage): String? {
     val start = windowStart(anchor) ?: return null
     val end = windowEnd(anchor) ?: return null
     return when (this) {
-        LedgerPeriod.Day -> "${start.day} ${MONTHS[start.month.number - 1]} ${start.year}"
-        LedgerPeriod.Week -> weekLabel(start, end)
-        LedgerPeriod.Month -> "${MONTHS[start.month.number - 1]} ${start.year}"
+        LedgerPeriod.Day -> language.dateText(start.day, start.month.number, start.year)
+        LedgerPeriod.Week -> weekLabel(start, end, language)
+        LedgerPeriod.Month -> language.monthYearText(start.month.number, start.year)
         LedgerPeriod.Year -> "${start.year}"
         LedgerPeriod.All -> null
     }
@@ -76,16 +84,41 @@ private fun LedgerPeriod.step(): Pair<Int, DateTimeUnit.DateBased>? = when (this
     LedgerPeriod.All -> null
 }
 
-private fun weekLabel(start: LocalDate, end: LocalDate): String {
-    val startMonth = MONTHS[start.month.number - 1]
-    val endMonth = MONTHS[end.month.number - 1]
+private fun weekLabel(start: LocalDate, end: LocalDate, language: DateLanguage): String {
+    val startMonth = language.monthShort(start.month.number)
+    val endMonth = language.monthShort(end.month.number)
     return when {
-        start.year != end.year ->
-            "${start.day} $startMonth ${start.year} – ${end.day} $endMonth ${end.year}"
+        start.year != end.year -> when (language) {
+            DateLanguage.English ->
+                "$startMonth ${start.day}, ${start.year} – $endMonth ${end.day}, ${end.year}"
 
-        start.month != end.month ->
-            "${start.day} $startMonth – ${end.day} $endMonth ${start.year}"
+            DateLanguage.Italian ->
+                "${start.day} $startMonth ${start.year} – ${end.day} $endMonth ${end.year}"
 
-        else -> "${start.day}–${end.day} $startMonth ${start.year}"
+            DateLanguage.Chinese ->
+                "${start.year}年$startMonth${start.day}日 – ${end.year}年$endMonth${end.day}日"
+        }
+
+        start.month != end.month -> when (language) {
+            DateLanguage.English ->
+                "$startMonth ${start.day} – $endMonth ${end.day}, ${start.year}"
+
+            DateLanguage.Italian ->
+                "${start.day} $startMonth – ${end.day} $endMonth ${start.year}"
+
+            DateLanguage.Chinese ->
+                "${start.year}年$startMonth${start.day}日 – $endMonth${end.day}日"
+        }
+
+        else -> when (language) {
+            DateLanguage.English ->
+                "$startMonth ${start.day}–${end.day}, ${start.year}"
+
+            DateLanguage.Italian ->
+                "${start.day}–${end.day} $startMonth ${start.year}"
+
+            DateLanguage.Chinese ->
+                "${start.year}年$startMonth${start.day}日–${end.day}日"
+        }
     }
 }

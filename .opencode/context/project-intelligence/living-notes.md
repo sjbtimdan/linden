@@ -89,7 +89,7 @@
 - Key naming: `screen_purpose` (e.g. `ledger_empty_no_match`); verbs/actions shared across screens are `common_*` (`common_save`, `common_cancel`…). `testTag` strings and user data are never resources; Ivy importer keyword tables and `"initial balance"`/`"adjust balance"` matching must NOT be translated.
 - Copy produced by pure helpers is modeled as pure *enums* (e.g. `MissingRequirement` in `ui/entry`) whose localized wording is resolved by a `@Composable` extension (`text()`) mapping to resources — the "each new class ships with a test" rule applies to those mappings (`MissingRequirementTest` locks enum → English copy).
 - Never call `stringResource` from non-composable lambdas (validation `onSave` handlers etc.): resolve the string into a `val` earlier in the composable and capture it.
-- Date labels still use the English `MONTHS` table in `ui/entry/DateTimeFormat.kt` — Phase 2 of the i18n plan (expect/actual locale-aware formatter) will replace it.
+- **Dates are language-driven, never raw-locale** (`DateLanguage` in `ui/entry/DateLanguage.kt`, since 2026-09-06): `formatDate`/period labels render from per-language month tables and layouts (`English` US-styled "Aug 13, 2026" / `Italian` "13 ago 2026" / `Chinese` "2026年8月13日"; unsupported locales fall back to English), so numeric formats like `08/23/2026` can never appear. Resolve the language via `dateLanguage(platformLanguageCode())` (pure, language-explicit overloads exist for tests — never mutate the JVM locale); the in-app override will feed the same enum. `formatTime` stays `HH:mm`.
 
 ### Gotchas for Maintainers
 - **`formatAmountCompact`** - Never use it to pre-fill edit fields; `parseAmount` can't parse the suffix
