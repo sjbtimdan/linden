@@ -565,7 +565,6 @@ private val languageOptions = listOf(
     AppLanguage.ENGLISH,
     AppLanguage.ITALIAN,
     AppLanguage.CHINESE_SIMPLIFIED,
-    AppLanguage.CHINESE_TRADITIONAL_TW,
     AppLanguage.CHINESE_TRADITIONAL_HK,
 )
 
@@ -576,7 +575,6 @@ private fun AppLanguage.label(): String = when (this) {
     AppLanguage.ENGLISH -> "English"
     AppLanguage.ITALIAN -> "Italiano"
     AppLanguage.CHINESE_SIMPLIFIED -> "简体中文"
-    AppLanguage.CHINESE_TRADITIONAL_TW -> "繁體中文（台灣）"
     AppLanguage.CHINESE_TRADITIONAL_HK -> "繁體中文（香港）"
 }
 
