@@ -23,6 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.entry_amount
+import org.sjbtimdan.linden.resources.ledger_amount_all
+import org.sjbtimdan.linden.resources.ledger_apply
+import org.sjbtimdan.linden.resources.ledger_filter_by_amount
 import org.sjbtimdan.linden.ui.entry.parseAmount
 
 /**
@@ -55,7 +62,7 @@ fun AmountFilterChip(
             modifier = modifier.testTag("amountFilterChip"),
             label = {
                 Text(
-                    text = filter?.displayLabel() ?: "Amount: All",
+                    text = filter?.displayLabel() ?: stringResource(Res.string.ledger_amount_all),
                     style = MaterialTheme.typography.labelMedium,
                 )
             },
@@ -72,7 +79,7 @@ fun AmountFilterChip(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 Text(
-                    text = "Filter by amount",
+                    text = stringResource(Res.string.ledger_filter_by_amount),
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Row(
@@ -92,7 +99,7 @@ fun AmountFilterChip(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it },
-                    label = { Text("Amount") },
+                    label = { Text(stringResource(Res.string.entry_amount)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,7 +120,7 @@ fun AmountFilterChip(
                             },
                             modifier = Modifier.testTag("clearAmountFilterButton"),
                         ) {
-                            Text("Clear")
+                            Text(stringResource(Res.string.common_clear))
                         }
                     }
                     Button(
@@ -125,7 +132,7 @@ fun AmountFilterChip(
                         },
                         enabled = parseAmount(amountText) != null,
                     ) {
-                        Text("Apply")
+                        Text(stringResource(Res.string.ledger_apply))
                     }
                 }
             }

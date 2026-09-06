@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_remove_filter
 
 /**
  * Chip shown while the entries view is narrowed to a category or account.
@@ -48,7 +51,7 @@ internal fun EntryFilterChip(
         trailingIcon = {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Remove filter",
+                contentDescription = stringResource(Res.string.ledger_remove_filter),
                 modifier = Modifier.size(16.dp),
             )
         },

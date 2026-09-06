@@ -27,6 +27,17 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_hide_future_entries
+import org.sjbtimdan.linden.resources.ledger_next_period
+import org.sjbtimdan.linden.resources.ledger_period_all
+import org.sjbtimdan.linden.resources.ledger_period_day
+import org.sjbtimdan.linden.resources.ledger_period_month
+import org.sjbtimdan.linden.resources.ledger_period_week
+import org.sjbtimdan.linden.resources.ledger_period_year
+import org.sjbtimdan.linden.resources.ledger_previous_period
+import org.sjbtimdan.linden.resources.ledger_show_future_entries
 
 /**
  * The selected period with arrows and a dropdown to switch granularity. When
@@ -53,7 +64,7 @@ fun PeriodNavigator(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Previous period",
+                contentDescription = stringResource(Res.string.ledger_previous_period),
             )
         }
         Box {
@@ -62,7 +73,7 @@ fun PeriodNavigator(
                 modifier = Modifier.testTag("periodLabel"),
             ) {
                 Text(
-                    text = period.windowLabel(anchor) ?: "All",
+                    text = period.windowLabel(anchor) ?: stringResource(Res.string.ledger_period_all),
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
@@ -78,7 +89,7 @@ fun PeriodNavigator(
             ) {
                 LedgerPeriod.entries.forEach { option ->
                     DropdownMenuItem(
-                        text = { Text(option.name) },
+                        text = { Text(option.displayName()) },
                         onClick = {
                             onPeriodChange(option)
                             expanded = false
@@ -93,7 +104,7 @@ fun PeriodNavigator(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Next period",
+                contentDescription = stringResource(Res.string.ledger_next_period),
             )
         }
         if (onToggleShowFuture != null) {
@@ -105,9 +116,24 @@ fun PeriodNavigator(
             ) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
-                    contentDescription = if (showFuture) "Hide future entries" else "Show future entries",
+                    contentDescription = if (showFuture) {
+                        stringResource(Res.string.ledger_hide_future_entries)
+                    } else {
+                        stringResource(Res.string.ledger_show_future_entries)
+                    },
                 )
             }
         }
     }
 }
+
+@Composable
+private fun LedgerPeriod.displayName(): String = stringResource(
+    when (this) {
+        LedgerPeriod.Day -> Res.string.ledger_period_day
+        LedgerPeriod.Week -> Res.string.ledger_period_week
+        LedgerPeriod.Month -> Res.string.ledger_period_month
+        LedgerPeriod.Year -> Res.string.ledger_period_year
+        LedgerPeriod.All -> Res.string.ledger_period_all
+    },
+)

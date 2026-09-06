@@ -9,6 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_mode_accounts
+import org.sjbtimdan.linden.resources.ledger_mode_categories
+import org.sjbtimdan.linden.resources.ledger_mode_entries
 
 /**
  * Always-visible switch between the three ledger views (entries, period-end
@@ -42,8 +47,11 @@ fun LedgerViewModeTabs(viewMode: LedgerViewMode, onSelect: (LedgerViewMode) -> U
     }
 }
 
-private fun LedgerViewMode.displayName(): String = when (this) {
-    LedgerViewMode.Entries -> "Entries"
-    LedgerViewMode.Accounts -> "Accounts"
-    LedgerViewMode.Categories -> "Categories"
-}
+@Composable
+private fun LedgerViewMode.displayName(): String = stringResource(
+    when (this) {
+        LedgerViewMode.Entries -> Res.string.ledger_mode_entries
+        LedgerViewMode.Accounts -> Res.string.ledger_mode_accounts
+        LedgerViewMode.Categories -> Res.string.ledger_mode_categories
+    },
+)

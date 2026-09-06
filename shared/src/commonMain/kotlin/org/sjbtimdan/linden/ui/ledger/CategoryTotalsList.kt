@@ -26,7 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_budget_progress
+import org.sjbtimdan.linden.resources.ledger_entry_count
+import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.accentColor
 
@@ -58,7 +64,8 @@ fun CategoryTotalsList(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             items(categories, key = { it.category?.id ?: 0L }) { item ->
-                val categoryName = item.category?.name ?: "Uncategorized"
+                val categoryName = item.category?.name
+                    ?: stringResource(Res.string.ledger_uncategorized)
                 val accent = item.category?.let { accentColor(it.name) }
                     ?: MaterialTheme.colorScheme.onSurfaceVariant
                 Column(
@@ -103,7 +110,9 @@ fun CategoryTotalsList(
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             Text(
-                                text = "${item.count} ${if (item.count == 1) "entry" else "entries"}",
+                                // The quantity selects the plural category; the same value
+                                // must be passed again as the %1$d format argument.
+                                text = pluralStringResource(Res.plurals.ledger_entry_count, item.count, item.count),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -149,7 +158,11 @@ private fun BudgetProgressBar(spent: Long, limit: Long, modifier: Modifier = Mod
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "${formatAmount(absoluteSpent)} of ${formatAmount(limit)}",
+            text = stringResource(
+                Res.string.ledger_budget_progress,
+                formatAmount(absoluteSpent),
+                formatAmount(limit),
+            ),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

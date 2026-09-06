@@ -9,7 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_filter_all
 import org.sjbtimdan.linden.ui.entry.displayName
 
 /**
@@ -49,7 +52,7 @@ fun LedgerFilterControls(
         FilterChip(
             selected = typeFilter == null || typeFilter !in typeOptions,
             onClick = { onTypeFilterChange(null) },
-            label = { Text("All") },
+            label = { Text(stringResource(Res.string.ledger_filter_all)) },
             modifier = Modifier.testTag("typeFilter-All"),
         )
         typeOptions.forEach { type ->

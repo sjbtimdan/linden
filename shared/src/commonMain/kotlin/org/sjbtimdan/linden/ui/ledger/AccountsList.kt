@@ -29,6 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_adjust_balance
+import org.sjbtimdan.linden.resources.ledger_adjust_latest_period_only
+import org.sjbtimdan.linden.resources.ledger_more_options
+import org.sjbtimdan.linden.resources.ledger_view_entries
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 
@@ -44,7 +50,7 @@ import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
-    emptyMessage: String = "No accounts yet.",
+    emptyMessage: String,
     emptyActionLabel: String? = null,
     onEmptyAction: (() -> Unit)? = null,
     canAdjustBalance: Boolean = true,
@@ -94,7 +100,7 @@ fun AccountsList(
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options",
+                                contentDescription = stringResource(Res.string.ledger_more_options),
                             )
                         }
                         DropdownMenu(
@@ -102,14 +108,14 @@ fun AccountsList(
                             onDismissRequest = { menuOpen = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("View entries") },
+                                text = { Text(stringResource(Res.string.ledger_view_entries)) },
                                 onClick = {
                                     menuOpen = false
                                     onAccountClick(item)
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Adjust Balance") },
+                                text = { Text(stringResource(Res.string.ledger_adjust_balance)) },
                                 enabled = canAdjustBalance,
                                 onClick = {
                                     menuOpen = false
@@ -118,7 +124,7 @@ fun AccountsList(
                             )
                             if (!canAdjustBalance) {
                                 Text(
-                                    text = "Only available when the latest period is shown.",
+                                    text = stringResource(Res.string.ledger_adjust_latest_period_only),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
