@@ -568,7 +568,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "month view omits per-row timestamps under day headers, the day view shows them" {
+    "every period view shows only the time on its rows, the date stays in the day headers" {
         withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
@@ -585,20 +585,24 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            // Month: the day header carries the date, so the rows stay timestamp-free.
+            // Month: the day header carries the date, the rows only the time.
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
 
             onNodeWithText("15 Aug 2026").assertIsDisplayed()
+            onNodeWithText("08:00").assertIsDisplayed()
+            onNodeWithText("12:30").assertIsDisplayed()
+            onNodeWithText("19:00").assertIsDisplayed()
             onNodeWithText("15 Aug 2026, 08:00").assertDoesNotExist()
 
-            // Day: the timestamp is the only thing telling the rows apart.
+            // Day: same split — header carries the date, rows only the time.
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Day").performClick()
 
-            onNodeWithText("15 Aug 2026, 08:00").assertIsDisplayed()
-            onNodeWithText("15 Aug 2026, 12:30").assertIsDisplayed()
-            onNodeWithText("15 Aug 2026, 19:00").assertIsDisplayed()
+            onNodeWithText("08:00").assertIsDisplayed()
+            onNodeWithText("12:30").assertIsDisplayed()
+            onNodeWithText("19:00").assertIsDisplayed()
+            onNodeWithText("15 Aug 2026, 08:00").assertDoesNotExist()
         }
     }
 

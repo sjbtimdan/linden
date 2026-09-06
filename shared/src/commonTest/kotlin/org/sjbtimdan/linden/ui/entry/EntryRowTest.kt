@@ -27,7 +27,7 @@ class EntryRowTest : StringSpec({
     val salary = Category(2, "Salary", CategoryType.Income)
     val atHalfPastTwo = Instant.fromEpochMilliseconds(14 * 3_600_000 + 30 * 60_000)
 
-    "expense row shows description, account, date and a minus-signed amount" {
+    "expense row shows description, account, time and a minus-signed amount" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -47,7 +47,7 @@ class EntryRowTest : StringSpec({
 
                 onNodeWithText("Coffee").assertIsDisplayed()
                 onNodeWithText("Main").assertIsDisplayed()
-                onNodeWithText("1 Jan 1970, 14:30").assertIsDisplayed()
+                onNodeWithText("14:30").assertIsDisplayed()
                 onNodeWithText("− 4.50 CHF").assertIsDisplayed()
             }
         }
@@ -74,7 +74,7 @@ class EntryRowTest : StringSpec({
         }
     }
 
-    "hides the date line when showTimestamp is false" {
+    "hides the time line when showTime is false" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -89,13 +89,13 @@ class EntryRowTest : StringSpec({
                             createdZone = TimeZone.UTC,
                         ),
                         onClick = {},
-                        showTimestamp = false,
+                        showTime = false,
                     )
                 }
 
                 onNodeWithText("Coffee").assertIsDisplayed()
                 onNodeWithText("Main").assertIsDisplayed()
-                onNodeWithText("1 Jan 1970, 14:30").assertDoesNotExist()
+                onNodeWithText("14:30").assertDoesNotExist()
                 onNodeWithText("− 4.50 CHF").assertIsDisplayed()
             }
         }
