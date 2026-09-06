@@ -48,9 +48,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.categories_delete
+import org.sjbtimdan.linden.resources.categories_delete_locked
+import org.sjbtimdan.linden.resources.categories_duplicate_name
+import org.sjbtimdan.linden.resources.categories_edit
+import org.sjbtimdan.linden.resources.categories_empty_no_match
+import org.sjbtimdan.linden.resources.categories_empty_none
+import org.sjbtimdan.linden.resources.categories_icon
+import org.sjbtimdan.linden.resources.categories_name
+import org.sjbtimdan.linden.resources.categories_new
+import org.sjbtimdan.linden.resources.categories_search
+import org.sjbtimdan.linden.resources.categories_type
+import org.sjbtimdan.linden.resources.category_icon_account_balance
+import org.sjbtimdan.linden.resources.category_icon_favorite_border
+import org.sjbtimdan.linden.resources.category_icon_flight
+import org.sjbtimdan.linden.resources.category_icon_home
+import org.sjbtimdan.linden.resources.category_icon_local_hospital
+import org.sjbtimdan.linden.resources.category_icon_movie
+import org.sjbtimdan.linden.resources.category_icon_pets
+import org.sjbtimdan.linden.resources.category_icon_restaurant
+import org.sjbtimdan.linden.resources.category_icon_savings
+import org.sjbtimdan.linden.resources.category_icon_school
+import org.sjbtimdan.linden.resources.category_icon_shopping_bag
+import org.sjbtimdan.linden.resources.category_icon_shopping_cart
+import org.sjbtimdan.linden.resources.category_icon_spa
+import org.sjbtimdan.linden.resources.category_type_both
+import org.sjbtimdan.linden.resources.category_type_both_row
+import org.sjbtimdan.linden.resources.category_type_expense
+import org.sjbtimdan.linden.resources.category_type_income
+import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -73,6 +107,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoriesWithEntries by viewModel.categoriesWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
+    val duplicateNameError = stringResource(Res.string.categories_duplicate_name)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -88,7 +123,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.common_back),
             )
         }
 
@@ -97,7 +132,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::setSearchQuery,
-            label = { Text("Search") },
+            label = { Text(stringResource(Res.string.categories_search)) },
             singleLine = true,
             leadingIcon = {
                 Icon(
@@ -109,7 +144,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 {
                     IconButton(
                         onClick = { viewModel.setSearchQuery("") },
-                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
                 }
             } else {
                 null
@@ -131,7 +166,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("New Category")
+            Text(stringResource(Res.string.categories_new))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -144,7 +179,11 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (searchQuery.isBlank()) "No categories yet." else "No matching categories.",
+                    text = if (searchQuery.isBlank()) {
+                        stringResource(Res.string.categories_empty_none)
+                    } else {
+                        stringResource(Res.string.categories_empty_no_match)
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -230,7 +269,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                     if (saved) {
                         dialogState = null
                     } else {
-                        dialogState = state.copy(nameError = "A category with this name already exists")
+                        dialogState = state.copy(nameError = duplicateNameError)
                     }
                 }
             },
@@ -251,7 +290,7 @@ private fun CategoryIconBox(icon: CategoryIcon?, categoryName: String, accent: a
         if (icon != null) {
             Icon(
                 imageVector = icon.imageVector(),
-                contentDescription = icon.label,
+                contentDescription = icon.a11yLabel(),
                 tint = accent,
                 modifier = Modifier.size(22.dp),
             )
@@ -284,14 +323,20 @@ private fun CategoryDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
         title = {
-            Text(if (isEditing) "Edit Category" else "New Category")
+            Text(
+                if (isEditing) {
+                    stringResource(Res.string.categories_edit)
+                } else {
+                    stringResource(Res.string.categories_new)
+                },
+            )
         },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Name") },
+                    label = { Text(stringResource(Res.string.categories_name)) },
                     singleLine = true,
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },
@@ -299,7 +344,12 @@ private fun CategoryDialog(
                         {
                             IconButton(
                                 onClick = { onNameChange("") },
-                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.common_clear),
+                                )
+                            }
                         }
                     } else {
                         null
@@ -308,7 +358,7 @@ private fun CategoryDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Icon",
+                    text = stringResource(Res.string.categories_icon),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
@@ -318,7 +368,7 @@ private fun CategoryDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Type",
+                    text = stringResource(Res.string.categories_type),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
@@ -344,7 +394,7 @@ private fun CategoryDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     if (!canDelete) {
                         Text(
-                            text = "This category cannot be deleted: it has entries.",
+                            text = stringResource(Res.string.categories_delete_locked),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -361,19 +411,19 @@ private fun CategoryDialog(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Delete Category")
+                        Text(stringResource(Res.string.categories_delete))
                     }
                 }
             }
         },
         confirmButton = {
             Button(onClick = onSave) {
-                Text("Save")
+                Text(stringResource(Res.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.common_cancel))
             }
         },
     )
@@ -404,7 +454,7 @@ private fun IconPicker(selected: CategoryIcon?, onSelect: (CategoryIcon?) -> Uni
                             )
                             .clickable(
                                 role = Role.Button,
-                                onClickLabel = iconOption.label,
+                                onClickLabel = iconOption.a11yLabel(),
                             ) {
                                 onSelect(if (isSelected) null else iconOption)
                             },
@@ -412,7 +462,7 @@ private fun IconPicker(selected: CategoryIcon?, onSelect: (CategoryIcon?) -> Uni
                     ) {
                         Icon(
                             imageVector = iconOption.imageVector(),
-                            contentDescription = iconOption.label,
+                            contentDescription = iconOption.a11yLabel(),
                             tint = accent,
                             modifier = Modifier.size(24.dp),
                         )
@@ -427,14 +477,39 @@ private fun IconPicker(selected: CategoryIcon?, onSelect: (CategoryIcon?) -> Uni
     }
 }
 
-private fun CategoryType.displayName(): String = when (this) {
-    CategoryType.Expense -> "Expense"
-    CategoryType.Income -> "Income"
-    CategoryType.Both -> "As Income/Expense"
-}
+@Composable
+private fun CategoryType.displayName(): String = stringResource(
+    when (this) {
+        CategoryType.Expense -> Res.string.category_type_expense
+        CategoryType.Income -> Res.string.category_type_income
+        CategoryType.Both -> Res.string.category_type_both_row
+    },
+)
 
-private fun CategoryType.dialogLabel(): String = when (this) {
-    CategoryType.Expense -> "Expense"
-    CategoryType.Income -> "Income"
-    CategoryType.Both -> "Both"
-}
+@Composable
+private fun CategoryType.dialogLabel(): String = stringResource(
+    when (this) {
+        CategoryType.Expense -> Res.string.category_type_expense
+        CategoryType.Income -> Res.string.category_type_income
+        CategoryType.Both -> Res.string.category_type_both
+    },
+)
+
+@Composable
+private fun CategoryIcon.a11yLabel(): String = stringResource(
+    when (this) {
+        CategoryIcon.Restaurant -> Res.string.category_icon_restaurant
+        CategoryIcon.Movie -> Res.string.category_icon_movie
+        CategoryIcon.ShoppingCart -> Res.string.category_icon_shopping_cart
+        CategoryIcon.AccountBalance -> Res.string.category_icon_account_balance
+        CategoryIcon.Savings -> Res.string.category_icon_savings
+        CategoryIcon.ShoppingBag -> Res.string.category_icon_shopping_bag
+        CategoryIcon.Home -> Res.string.category_icon_home
+        CategoryIcon.LocalHospital -> Res.string.category_icon_local_hospital
+        CategoryIcon.FavoriteBorder -> Res.string.category_icon_favorite_border
+        CategoryIcon.Pets -> Res.string.category_icon_pets
+        CategoryIcon.School -> Res.string.category_icon_school
+        CategoryIcon.Flight -> Res.string.category_icon_flight
+        CategoryIcon.Spa -> Res.string.category_icon_spa
+    },
+)

@@ -50,8 +50,32 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.accounts_currency
+import org.sjbtimdan.linden.resources.accounts_currency_locked
+import org.sjbtimdan.linden.resources.accounts_delete
+import org.sjbtimdan.linden.resources.accounts_delete_locked
+import org.sjbtimdan.linden.resources.accounts_duplicate_name
+import org.sjbtimdan.linden.resources.accounts_edit
+import org.sjbtimdan.linden.resources.accounts_empty_no_match
+import org.sjbtimdan.linden.resources.accounts_empty_none
+import org.sjbtimdan.linden.resources.accounts_hidden
+import org.sjbtimdan.linden.resources.accounts_hidden_help
+import org.sjbtimdan.linden.resources.accounts_hide_body
+import org.sjbtimdan.linden.resources.accounts_hide_confirm
+import org.sjbtimdan.linden.resources.accounts_hide_title
+import org.sjbtimdan.linden.resources.accounts_initial_balance
+import org.sjbtimdan.linden.resources.accounts_invalid_amount
+import org.sjbtimdan.linden.resources.accounts_name
+import org.sjbtimdan.linden.resources.accounts_new
+import org.sjbtimdan.linden.resources.accounts_search
+import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -85,6 +109,9 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     // Set when hiding an account with a non-zero all-time balance: the confirm
     // dialog must be answered before the account is actually hidden.
     var hideConfirmation by remember { mutableStateOf<AccountDialogState?>(null) }
+    // Error copy for the dialog's plain save lambda, resolved in composition.
+    val invalidAmountError = stringResource(Res.string.accounts_invalid_amount)
+    val duplicateNameError = stringResource(Res.string.accounts_duplicate_name)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -100,7 +127,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.common_back),
             )
         }
 
@@ -109,7 +136,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::setSearchQuery,
-            label = { Text("Search") },
+            label = { Text(stringResource(Res.string.accounts_search)) },
             singleLine = true,
             leadingIcon = {
                 Icon(
@@ -121,7 +148,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 {
                     IconButton(
                         onClick = { viewModel.setSearchQuery("") },
-                    ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                    ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
                 }
             } else {
                 null
@@ -143,7 +170,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("New Account")
+            Text(stringResource(Res.string.accounts_new))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -156,7 +183,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = if (searchQuery.isBlank()) "No accounts yet." else "No matching accounts.",
+                    text = if (searchQuery.isBlank()) {
+                        stringResource(Res.string.accounts_empty_none)
+                    } else {
+                        stringResource(Res.string.accounts_empty_no_match)
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -220,7 +251,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                     )
                                     Spacer(modifier = Modifier.width(2.dp))
                                     Text(
-                                        text = "Hidden",
+                                        text = stringResource(Res.string.accounts_hidden),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -233,7 +264,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                text = "Initial balance",
+                                text = stringResource(Res.string.accounts_initial_balance),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -287,7 +318,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         parseAmount(state.initialBalanceText)
                     }
                     if (initialBalance == null) {
-                        dialogState = state.copy(initialBalanceError = "Enter a valid amount")
+                        dialogState = state.copy(initialBalanceError = invalidAmountError)
                     } else {
                         val existing = state.account
                         val saved = if (existing != null) {
@@ -304,7 +335,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         if (saved) {
                             dialogState = null
                         } else {
-                            dialogState = state.copy(nameError = "An account with this name already exists")
+                            dialogState = state.copy(nameError = duplicateNameError)
                         }
                     }
                 }
@@ -319,13 +350,15 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         AlertDialog(
             onDismissRequest = { hideConfirmation = null },
             shape = DialogShape,
-            title = { Text("Hide account?") },
+            title = { Text(stringResource(Res.string.accounts_hide_title)) },
             text = {
                 Text(
-                    "${account?.name} has a balance of ${formatAmount(balance)} " +
-                        "${account?.currency?.symbol}. Hiding it removes the account from the ledger, " +
-                        "the account pickers and the filters. Its entries stay in your history and it " +
-                        "can be shown again at any time.",
+                    stringResource(
+                        Res.string.accounts_hide_body,
+                        account?.name.orEmpty(),
+                        formatAmount(balance),
+                        account?.currency?.symbol.orEmpty(),
+                    ),
                 )
             },
             confirmButton = {
@@ -339,14 +372,14 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         hideConfirmation = null
                     },
                 ) {
-                    Text("Hide")
+                    Text(stringResource(Res.string.accounts_hide_confirm))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { hideConfirmation = null },
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.common_cancel))
                 }
             },
         )
@@ -376,14 +409,20 @@ private fun AccountDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
         title = {
-            Text(if (isEditing) "Edit Account" else "New Account")
+            Text(
+                if (isEditing) {
+                    stringResource(Res.string.accounts_edit)
+                } else {
+                    stringResource(Res.string.accounts_new)
+                },
+            )
         },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Name") },
+                    label = { Text(stringResource(Res.string.accounts_name)) },
                     singleLine = true,
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },
@@ -391,7 +430,12 @@ private fun AccountDialog(
                         {
                             IconButton(
                                 onClick = { onNameChange("") },
-                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.common_clear),
+                                )
+                            }
                         }
                     } else {
                         null
@@ -402,7 +446,7 @@ private fun AccountDialog(
                 OutlinedTextField(
                     value = initialBalanceText,
                     onValueChange = onInitialBalanceChange,
-                    label = { Text("Initial balance") },
+                    label = { Text(stringResource(Res.string.accounts_initial_balance)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = initialBalanceError != null,
@@ -411,7 +455,12 @@ private fun AccountDialog(
                         {
                             IconButton(
                                 onClick = { onInitialBalanceChange("") },
-                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.common_clear),
+                                )
+                            }
                         }
                     } else {
                         null
@@ -421,13 +470,13 @@ private fun AccountDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Currency",
+                    text = stringResource(Res.string.accounts_currency),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
                 if (!canChangeCurrency) {
                     Text(
-                        text = "Currency cannot be changed: this account has entries.",
+                        text = stringResource(Res.string.accounts_currency_locked),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp),
@@ -458,12 +507,11 @@ private fun AccountDialog(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Hidden",
+                                text = stringResource(Res.string.accounts_hidden),
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             Text(
-                                text = "Keeps the entries, but removes the account from the ledger, " +
-                                    "the account pickers and the filters.",
+                                text = stringResource(Res.string.accounts_hidden_help),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -477,7 +525,7 @@ private fun AccountDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     if (!canDelete) {
                         Text(
-                            text = "This account cannot be deleted: it has entries.",
+                            text = stringResource(Res.string.accounts_delete_locked),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -494,19 +542,19 @@ private fun AccountDialog(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Delete Account")
+                        Text(stringResource(Res.string.accounts_delete))
                     }
                 }
             }
         },
         confirmButton = {
             Button(onClick = onSave) {
-                Text("Save")
+                Text(stringResource(Res.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.common_cancel))
             }
         },
     )
