@@ -82,6 +82,15 @@
 - **Version catalog** - `gradle/libs.versions.toml`
 - **Kotlin source files use PascalCase** - e.g. `EntryDao.kt`, not `entry_dao.kt`
 
+### UI strings (i18n, since 2026-09-06)
+- All UI copy lives in `shared/src/commonMain/composeResources/values/strings.xml` (English = default). Per-locale variants come later as `values-<lang>/` dirs (see `.tmp/INTERNATIONALIZATION.md`).
+- In composables: `stringResource(Res.string.key)`; plurals: `pluralStringResource(Res.plurals.key, quantity, quantity)` — **the quantity must be repeated as the `%1$d` format arg** (CMP selects the plural category from the first quantity but does not substitute placeholders automatically).
+- The generated accessors are **top-level extension properties on `Res.string`/`Res.plurals`**: every key needs its own explicit import (`import org.sjbtimdan.linden.resources.<key>`; no wildcard imports — detekt `NoWildcardImports`). `Res` itself is `internal` in package `org.sjbtimdan.linden.resources` (set via `compose.resources { packageOfResClass }` in `shared/build.gradle.kts`).
+- Key naming: `screen_purpose` (e.g. `ledger_empty_no_match`); verbs/actions shared across screens are `common_*` (`common_save`, `common_cancel`…). `testTag` strings and user data are never resources; Ivy importer keyword tables and `"initial balance"`/`"adjust balance"` matching must NOT be translated.
+- Copy produced by pure helpers is modeled as pure *enums* (e.g. `MissingRequirement` in `ui/entry`) whose localized wording is resolved by a `@Composable` extension (`text()`) mapping to resources — the "each new class ships with a test" rule applies to those mappings (`MissingRequirementTest` locks enum → English copy).
+- Never call `stringResource` from non-composable lambdas (validation `onSave` handlers etc.): resolve the string into a `val` earlier in the composable and capture it.
+- Date labels still use the English `MONTHS` table in `ui/entry/DateTimeFormat.kt` — Phase 2 of the i18n plan (expect/actual locale-aware formatter) will replace it.
+
 ### Gotchas for Maintainers
 - **`formatAmountCompact`** - Never use it to pre-fill edit fields; `parseAmount` can't parse the suffix
 - **`accountsWithEntries`** - Blocks changing the currency of an account that has entries
