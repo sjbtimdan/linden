@@ -21,14 +21,22 @@
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">unknown error</string>
 
-    <!-- Entry types -->
+    <!-- Shared labels with identical copy across screens -->
+    <string name="common_accounts">Accounts</string>
+    <string name="common_all">All</string>
+    <string name="common_categories">Categories</string>
+    <string name="common_category">Category</string>
+    <string name="common_invalid_amount">Enter a valid amount</string>
+    <string name="common_name">Name</string>
+    <string name="common_search">Search</string>
+
+    <!-- Entry types; category type labels reuse the expense/income words -->
     <string name="entry_type_expense">Expense</string>
     <string name="entry_type_income">Income</string>
     <string name="entry_type_transfer">Transfer</string>
 
     <!-- Entry point -->
     <string name="entry_add">Add</string>
-    <string name="entry_clear">Clear</string>
     <string name="entry_added">Added</string>
     <string name="entry_total_balance">Total balance</string>
     <string name="entry_show_total">Show total</string>
@@ -40,7 +48,6 @@
     <string name="entry_amount_received">Amount (received)</string>
     <string name="entry_from_account">From account</string>
     <string name="entry_to_account">To account</string>
-    <string name="entry_category">Category</string>
     <string name="entry_account">Account</string>
     <string name="entry_description_optional">Description (optional)</string>
     <string name="entry_ok">Ok</string>
@@ -72,20 +79,16 @@
     <string name="entry_enter">Enter</string>
     <string name="entry_recommended">Recommended</string>
 
-    <!-- Ledger view modes -->
+    <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">Entries</string>
-    <string name="ledger_mode_accounts">Accounts</string>
-    <string name="ledger_mode_categories">Categories</string>
 
     <!-- Ledger search & filters -->
     <string name="ledger_search_entries">Search entries</string>
     <string name="ledger_filter_accounts">Filter accounts</string>
     <string name="ledger_filter_categories">Filter categories</string>
-    <string name="ledger_search_action">Search</string>
     <string name="ledger_filters_header">Filters &amp; search</string>
     <string name="ledger_expand_filters">Expand filters</string>
     <string name="ledger_collapse_filters">Collapse filters</string>
-    <string name="ledger_filter_all">All</string>
     <string name="ledger_remove_filter">Remove filter</string>
     <string name="ledger_clear_all">Clear all</string>
     <string name="ledger_uncategorized">Uncategorized</string>
@@ -99,7 +102,7 @@
     <string name="ledger_period_week">Week</string>
     <string name="ledger_period_month">Month</string>
     <string name="ledger_period_year">Year</string>
-    <string name="ledger_period_all">All</string>
+    <!-- The "All" option uses the shared common_all -->
     <string name="ledger_previous_period">Previous period</string>
     <string name="ledger_next_period">Next period</string>
     <string name="ledger_show_future_entries">Show future entries</string>
@@ -123,16 +126,14 @@
     <string name="ledger_action_add_first_entry">Add your first entry</string>
     <string name="ledger_action_show_future_entries">Show entries after today</string>
 
-    <!-- Ledger empty states: accounts view -->
+    <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
     <string name="ledger_accounts_no_match">No accounts match.</string>
-    <string name="ledger_accounts_none">No accounts yet.</string>
     <string name="ledger_accounts_all_hidden">All accounts are hidden.</string>
     <string name="ledger_action_create_account">Create an account</string>
     <string name="ledger_action_manage_accounts">Manage accounts</string>
 
-    <!-- Ledger empty states: categories view -->
+    <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
     <string name="ledger_categories_no_match">No categories match.</string>
-    <string name="ledger_categories_none">No categories yet.</string>
     <string name="ledger_categories_future_hidden">Spending after today is hidden.</string>
     <string name="ledger_categories_no_spending">No spending yet.</string>
     <string name="ledger_action_add_categories">Add categories</string>
@@ -153,18 +154,15 @@
     <!-- Adjust Balance dialog -->
     <string name="ledger_adjust_current_balance">Current balance: %1$s %2$s</string>
     <string name="ledger_adjust_bank_balance">Bank balance</string>
-    <string name="ledger_adjust_category">Category</string>
     <string name="ledger_adjust_add_income">Will add %1$s as income.</string>
     <string name="ledger_adjust_add_expense">Will add %1$s as expense.</string>
     <string name="ledger_adjust_confirm">Adjust</string>
 
     <!-- Accounts screen -->
-    <string name="accounts_search">Search</string>
     <string name="accounts_new">New Account</string>
     <string name="accounts_edit">Edit Account</string>
     <string name="accounts_empty_none">No accounts yet.</string>
     <string name="accounts_empty_no_match">No matching accounts.</string>
-    <string name="accounts_name">Name</string>
     <string name="accounts_initial_balance">Initial balance</string>
     <string name="accounts_currency">Currency</string>
     <string name="accounts_currency_locked">Currency cannot be changed: this account has entries.</string>
@@ -172,26 +170,21 @@
     <string name="accounts_hidden_help">Keeps the entries, but removes the account from the ledger, the account pickers and the filters.</string>
     <string name="accounts_delete_locked">This account cannot be deleted: it has entries.</string>
     <string name="accounts_delete">Delete Account</string>
-    <string name="accounts_invalid_amount">Enter a valid amount</string>
     <string name="accounts_duplicate_name">An account with this name already exists</string>
     <string name="accounts_hide_title">Hide account?</string>
     <string name="accounts_hide_confirm">Hide</string>
     <string name="accounts_hide_body">%1$s has a balance of %2$s %3$s. Hiding it removes the account from the ledger, the account pickers and the filters. Its entries stay in your history and it can be shown again at any time.</string>
 
     <!-- Categories screen -->
-    <string name="categories_search">Search</string>
     <string name="categories_new">New Category</string>
     <string name="categories_edit">Edit Category</string>
     <string name="categories_empty_none">No categories yet.</string>
     <string name="categories_empty_no_match">No matching categories.</string>
-    <string name="categories_name">Name</string>
     <string name="categories_icon">Icon</string>
     <string name="categories_type">Type</string>
     <string name="categories_duplicate_name">A category with this name already exists</string>
     <string name="categories_delete_locked">This category cannot be deleted: it has entries.</string>
     <string name="categories_delete">Delete Category</string>
-    <string name="category_type_expense">Expense</string>
-    <string name="category_type_income">Income</string>
     <string name="category_type_both">Both</string>
     <string name="category_type_both_row">As Income/Expense</string>
     <string name="category_icon_restaurant">Food &amp; Dining</string>
@@ -216,8 +209,6 @@
     <string name="settings_default_currency">Default currency</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_hide_totals">Hide Totals</string>
-    <string name="settings_nav_categories">Categories</string>
-    <string name="settings_nav_accounts">Accounts</string>
     <string name="settings_nav_rates">Currency rates</string>
     <string name="settings_nav_budgets">Budgets</string>
     <string name="settings_import_ivy">Import from Ivy</string>
@@ -260,9 +251,7 @@
     <string name="budget_new">New Budget</string>
     <string name="budget_edit">Edit Budget</string>
     <string name="budget_delete">Delete Budget</string>
-    <string name="budget_category">Category</string>
     <string name="budget_choose_category">Choose category</string>
     <string name="budget_monthly_limit">Monthly limit</string>
     <string name="budget_empty">No budgets yet. Add one to track a category's monthly spending.</string>
-    <string name="budget_invalid_amount">Enter a valid amount</string>
 </resources>

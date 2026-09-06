@@ -61,11 +61,14 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.accounts_empty_none
+import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_search
 import org.sjbtimdan.linden.resources.ledger_accounts_all_hidden
 import org.sjbtimdan.linden.resources.ledger_accounts_no_match
-import org.sjbtimdan.linden.resources.ledger_accounts_none
 import org.sjbtimdan.linden.resources.ledger_action_add_categories
 import org.sjbtimdan.linden.resources.ledger_action_add_first_entry
 import org.sjbtimdan.linden.resources.ledger_action_create_account
@@ -75,13 +78,11 @@ import org.sjbtimdan.linden.resources.ledger_adjust_add_expense
 import org.sjbtimdan.linden.resources.ledger_adjust_add_income
 import org.sjbtimdan.linden.resources.ledger_adjust_balance
 import org.sjbtimdan.linden.resources.ledger_adjust_bank_balance
-import org.sjbtimdan.linden.resources.ledger_adjust_category
 import org.sjbtimdan.linden.resources.ledger_adjust_confirm
 import org.sjbtimdan.linden.resources.ledger_adjust_current_balance
 import org.sjbtimdan.linden.resources.ledger_categories_future_hidden
 import org.sjbtimdan.linden.resources.ledger_categories_no_match
 import org.sjbtimdan.linden.resources.ledger_categories_no_spending
-import org.sjbtimdan.linden.resources.ledger_categories_none
 import org.sjbtimdan.linden.resources.ledger_clear_all
 import org.sjbtimdan.linden.resources.ledger_collapse_filters
 import org.sjbtimdan.linden.resources.ledger_empty_future_hidden
@@ -92,7 +93,6 @@ import org.sjbtimdan.linden.resources.ledger_expand_filters
 import org.sjbtimdan.linden.resources.ledger_filter_accounts
 import org.sjbtimdan.linden.resources.ledger_filter_categories
 import org.sjbtimdan.linden.resources.ledger_filters_header
-import org.sjbtimdan.linden.resources.ledger_search_action
 import org.sjbtimdan.linden.resources.ledger_search_entries
 import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
@@ -461,7 +461,7 @@ fun LedgerScreen(
 
                     // No visible accounts at all: distinguish a brand-new app from
                     // an app whose every account is hidden.
-                    accounts.isEmpty() -> stringResource(Res.string.ledger_accounts_none)
+                    accounts.isEmpty() -> stringResource(Res.string.accounts_empty_none)
 
                     else -> stringResource(Res.string.ledger_accounts_all_hidden)
                 },
@@ -507,7 +507,7 @@ fun LedgerScreen(
                     categoryFilter.isNotEmpty() && categoryTotals.isNotEmpty() ->
                         stringResource(Res.string.ledger_categories_no_match)
 
-                    categories.isEmpty() -> stringResource(Res.string.ledger_categories_none)
+                    categories.isEmpty() -> stringResource(Res.string.categories_empty_none)
 
                     // Spending exists but only after today, hidden by the show-future rule.
                     !showFuture && upcomingCount > 0 ->
@@ -703,7 +703,7 @@ private fun FiltersHeader(expanded: Boolean, onToggle: () -> Unit, onSearchClick
             IconButton(onClick = onSearchClick) {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = stringResource(Res.string.ledger_search_action),
+                    contentDescription = stringResource(Res.string.common_search),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -763,7 +763,7 @@ private fun AdjustBalanceDialog(
                 OutlinedTextField(
                     value = categoryQuery,
                     onValueChange = onCategoryQueryChange,
-                    label = { Text(stringResource(Res.string.ledger_adjust_category)) },
+                    label = { Text(stringResource(Res.string.common_category)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )

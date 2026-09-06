@@ -51,9 +51,9 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.entry_add
 import org.sjbtimdan.linden.resources.entry_added
-import org.sjbtimdan.linden.resources.entry_clear
 import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
@@ -295,7 +295,7 @@ fun EntryPoint(
                     enabled = draft != null,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text(stringResource(Res.string.entry_clear))
+                    Text(stringResource(Res.string.common_clear))
                 }
             }
         }

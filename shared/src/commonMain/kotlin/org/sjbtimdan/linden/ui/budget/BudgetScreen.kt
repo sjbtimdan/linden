@@ -52,17 +52,17 @@ import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.budget_category
 import org.sjbtimdan.linden.resources.budget_choose_category
 import org.sjbtimdan.linden.resources.budget_delete
 import org.sjbtimdan.linden.resources.budget_edit
 import org.sjbtimdan.linden.resources.budget_empty
-import org.sjbtimdan.linden.resources.budget_invalid_amount
 import org.sjbtimdan.linden.resources.budget_monthly_limit
 import org.sjbtimdan.linden.resources.budget_new
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
@@ -196,7 +196,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
 
     dialogState?.let { state ->
         val isEditing = state.budget != null
-        val invalidLimitError = stringResource(Res.string.budget_invalid_amount)
+        val invalidLimitError = stringResource(Res.string.common_invalid_amount)
         BudgetDialog(
             categoryName = state.categoryName,
             limitText = state.limitText,
@@ -249,7 +249,7 @@ private fun BudgetDialog(
         text = {
             Column {
                 Text(
-                    text = stringResource(Res.string.budget_category),
+                    text = stringResource(Res.string.common_category),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
@@ -257,7 +257,7 @@ private fun BudgetDialog(
                     OutlinedTextField(
                         value = categoryName,
                         onValueChange = onCategoryChange,
-                        label = { Text(stringResource(Res.string.budget_category)) },
+                        label = { Text(stringResource(Res.string.common_category)) },
                         singleLine = true,
                         readOnly = true,
                         trailingIcon = {

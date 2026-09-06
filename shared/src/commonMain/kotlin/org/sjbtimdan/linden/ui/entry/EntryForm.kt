@@ -37,13 +37,13 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.entry_account
 import org.sjbtimdan.linden.resources.entry_amount
 import org.sjbtimdan.linden.resources.entry_amount_positive
 import org.sjbtimdan.linden.resources.entry_amount_received
 import org.sjbtimdan.linden.resources.entry_amount_sent
-import org.sjbtimdan.linden.resources.entry_category
 import org.sjbtimdan.linden.resources.entry_description_optional
 import org.sjbtimdan.linden.resources.entry_from_account
 import org.sjbtimdan.linden.resources.entry_need_account
@@ -221,7 +221,7 @@ fun EntryForm(
             if (!editing || activeField == ActiveField.Category) {
                 Spacer(modifier = Modifier.height(16.dp))
                 FieldDropdown(
-                    label = stringResource(Res.string.entry_category),
+                    label = stringResource(Res.string.common_category),
                     selected = visibleCategories.firstOrNull { it.id == state.categoryId },
                     options = visibleCategories,
                     optionLabel = { it.name },

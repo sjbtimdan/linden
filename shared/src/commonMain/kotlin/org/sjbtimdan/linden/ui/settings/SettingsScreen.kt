@@ -59,7 +59,9 @@ import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_accounts
 import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.common_unknown_error
 import org.sjbtimdan.linden.resources.settings_backup
@@ -77,9 +79,7 @@ import org.sjbtimdan.linden.resources.settings_import_failed
 import org.sjbtimdan.linden.resources.settings_import_ivy
 import org.sjbtimdan.linden.resources.settings_import_split_note
 import org.sjbtimdan.linden.resources.settings_import_summary
-import org.sjbtimdan.linden.resources.settings_nav_accounts
 import org.sjbtimdan.linden.resources.settings_nav_budgets
-import org.sjbtimdan.linden.resources.settings_nav_categories
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
 import org.sjbtimdan.linden.resources.settings_restore_backup
@@ -222,7 +222,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_nav_categories))
+                Text(stringResource(Res.string.common_categories))
             }
             Button(onClick = onNavigateToAccounts) {
                 Icon(
@@ -231,7 +231,7 @@ fun SettingsScreen(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_nav_accounts))
+                Text(stringResource(Res.string.common_accounts))
             }
             Button(onClick = onNavigateToRates) {
                 Icon(

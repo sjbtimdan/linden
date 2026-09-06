@@ -29,9 +29,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_all
 import org.sjbtimdan.linden.resources.ledger_hide_future_entries
 import org.sjbtimdan.linden.resources.ledger_next_period
-import org.sjbtimdan.linden.resources.ledger_period_all
 import org.sjbtimdan.linden.resources.ledger_period_day
 import org.sjbtimdan.linden.resources.ledger_period_month
 import org.sjbtimdan.linden.resources.ledger_period_week
@@ -73,7 +73,7 @@ fun PeriodNavigator(
                 modifier = Modifier.testTag("periodLabel"),
             ) {
                 Text(
-                    text = period.windowLabel(anchor) ?: stringResource(Res.string.ledger_period_all),
+                    text = period.windowLabel(anchor) ?: stringResource(Res.string.common_all),
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
@@ -134,6 +134,6 @@ private fun LedgerPeriod.displayName(): String = stringResource(
         LedgerPeriod.Week -> Res.string.ledger_period_week
         LedgerPeriod.Month -> Res.string.ledger_period_month
         LedgerPeriod.Year -> Res.string.ledger_period_year
-        LedgerPeriod.All -> Res.string.ledger_period_all
+        LedgerPeriod.All -> Res.string.common_all
     },
 )

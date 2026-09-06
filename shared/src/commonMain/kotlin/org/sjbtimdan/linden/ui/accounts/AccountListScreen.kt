@@ -68,14 +68,14 @@ import org.sjbtimdan.linden.resources.accounts_hide_body
 import org.sjbtimdan.linden.resources.accounts_hide_confirm
 import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
-import org.sjbtimdan.linden.resources.accounts_invalid_amount
-import org.sjbtimdan.linden.resources.accounts_name
 import org.sjbtimdan.linden.resources.accounts_new
-import org.sjbtimdan.linden.resources.accounts_search
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_invalid_amount
+import org.sjbtimdan.linden.resources.common_name
 import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.resources.common_search
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -110,7 +110,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     // dialog must be answered before the account is actually hidden.
     var hideConfirmation by remember { mutableStateOf<AccountDialogState?>(null) }
     // Error copy for the dialog's plain save lambda, resolved in composition.
-    val invalidAmountError = stringResource(Res.string.accounts_invalid_amount)
+    val invalidAmountError = stringResource(Res.string.common_invalid_amount)
     val duplicateNameError = stringResource(Res.string.accounts_duplicate_name)
 
     BackHandler(enabled = dialogState != null) {
@@ -136,7 +136,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::setSearchQuery,
-            label = { Text(stringResource(Res.string.accounts_search)) },
+            label = { Text(stringResource(Res.string.common_search)) },
             singleLine = true,
             leadingIcon = {
                 Icon(
@@ -422,7 +422,7 @@ private fun AccountDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text(stringResource(Res.string.accounts_name)) },
+                    label = { Text(stringResource(Res.string.common_name)) },
                     singleLine = true,
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },

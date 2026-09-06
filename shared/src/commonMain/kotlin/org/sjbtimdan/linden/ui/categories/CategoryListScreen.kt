@@ -60,9 +60,7 @@ import org.sjbtimdan.linden.resources.categories_edit
 import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_icon
-import org.sjbtimdan.linden.resources.categories_name
 import org.sjbtimdan.linden.resources.categories_new
-import org.sjbtimdan.linden.resources.categories_search
 import org.sjbtimdan.linden.resources.categories_type
 import org.sjbtimdan.linden.resources.category_icon_account_balance
 import org.sjbtimdan.linden.resources.category_icon_favorite_border
@@ -79,12 +77,14 @@ import org.sjbtimdan.linden.resources.category_icon_shopping_cart
 import org.sjbtimdan.linden.resources.category_icon_spa
 import org.sjbtimdan.linden.resources.category_type_both
 import org.sjbtimdan.linden.resources.category_type_both_row
-import org.sjbtimdan.linden.resources.category_type_expense
-import org.sjbtimdan.linden.resources.category_type_income
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_name
 import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.resources.common_search
+import org.sjbtimdan.linden.resources.entry_type_expense
+import org.sjbtimdan.linden.resources.entry_type_income
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -132,7 +132,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
         OutlinedTextField(
             value = searchQuery,
             onValueChange = viewModel::setSearchQuery,
-            label = { Text(stringResource(Res.string.categories_search)) },
+            label = { Text(stringResource(Res.string.common_search)) },
             singleLine = true,
             leadingIcon = {
                 Icon(
@@ -336,7 +336,7 @@ private fun CategoryDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text(stringResource(Res.string.categories_name)) },
+                    label = { Text(stringResource(Res.string.common_name)) },
                     singleLine = true,
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },
@@ -480,8 +480,8 @@ private fun IconPicker(selected: CategoryIcon?, onSelect: (CategoryIcon?) -> Uni
 @Composable
 private fun CategoryType.displayName(): String = stringResource(
     when (this) {
-        CategoryType.Expense -> Res.string.category_type_expense
-        CategoryType.Income -> Res.string.category_type_income
+        CategoryType.Expense -> Res.string.entry_type_expense
+        CategoryType.Income -> Res.string.entry_type_income
         CategoryType.Both -> Res.string.category_type_both_row
     },
 )
@@ -489,8 +489,8 @@ private fun CategoryType.displayName(): String = stringResource(
 @Composable
 private fun CategoryType.dialogLabel(): String = stringResource(
     when (this) {
-        CategoryType.Expense -> Res.string.category_type_expense
-        CategoryType.Income -> Res.string.category_type_income
+        CategoryType.Expense -> Res.string.entry_type_expense
+        CategoryType.Income -> Res.string.entry_type_income
         CategoryType.Both -> Res.string.category_type_both
     },
 )
