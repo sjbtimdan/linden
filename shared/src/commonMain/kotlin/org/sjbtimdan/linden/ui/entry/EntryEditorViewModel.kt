@@ -15,6 +15,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
@@ -56,19 +57,16 @@ abstract class EntryEditorViewModel(
 
     val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
 
+    private val hideEntryTotalSetting = HideEntryTotalSetting(settingsDao, initialHideTotal, viewModelScope)
+
     /**
      * Whether the totals shown by the screen are masked. Mirrors the "Hide totals"
-     * setting via the database flow; seeded with [initialHideTotal] so a masked
-     * total never flashes at startup.
+     * setting; seeded with [initialHideTotal] so a masked total never flashes at startup.
      */
-    val hideTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow().stateFlow(initialHideTotal)
+    val hideTotal: StateFlow<Boolean> get() = hideEntryTotalSetting.state
 
     /** Persists the masked-total setting; the database flow propagates it back. */
-    fun setHideTotal(hidden: Boolean) {
-        viewModelScope.launch {
-            settingsDao.setHideEntryTotal(hidden)
-        }
-    }
+    fun setHideTotal(hidden: Boolean) = hideEntryTotalSetting.set(hidden)
 
     /** In-progress entry being created or edited, or null when no editor is shown. */
     protected val draftState = MutableStateFlow<EntryDraft?>(null)

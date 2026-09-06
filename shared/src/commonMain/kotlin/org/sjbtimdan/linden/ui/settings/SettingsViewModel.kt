@@ -5,15 +5,14 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.backup.RestoreResult
+import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImportResult
@@ -58,8 +57,9 @@ class SettingsViewModel(
     private val _language = MutableStateFlow(initialLanguage)
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
-    val hideEntryTotal: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, initialHideEntryTotal)
+    private val hideEntryTotalSetting = HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope)
+
+    val hideEntryTotal: StateFlow<Boolean> = hideEntryTotalSetting.state
 
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState: StateFlow<ImportState> = _importState.asStateFlow()
@@ -94,11 +94,7 @@ class SettingsViewModel(
         }
     }
 
-    fun setHideEntryTotal(hidden: Boolean) {
-        viewModelScope.launch {
-            settingsDao.setHideEntryTotal(hidden)
-        }
-    }
+    fun setHideEntryTotal(hidden: Boolean) = hideEntryTotalSetting.set(hidden)
 
     fun importIvy(input: InputStream) {
         viewModelScope.launch {
