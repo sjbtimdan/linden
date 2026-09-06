@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell -->
+    <string name="nav_ledger">Ledger</string>
+    <string name="nav_entry">Entry</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Startup error -->
+    <string name="startup_error_title">Linden failed to start</string>
+    <string name="startup_error_message">An error occurred while opening your data.</string>
+    <string name="startup_error_retry">Retry</string>
+
+    <!-- Common actions -->
+    <string name="common_back">Back</string>
+    <string name="common_save">Save</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_clear">Clear</string>
+    <string name="common_ok">OK</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_dismiss">Dismiss</string>
+
+    <!-- Entry types -->
+    <string name="entry_type_expense">Expense</string>
+    <string name="entry_type_income">Income</string>
+    <string name="entry_type_transfer">Transfer</string>
+
+    <!-- Entry point -->
+    <string name="entry_add">Add</string>
+    <string name="entry_clear">Clear</string>
+    <string name="entry_added">Added</string>
+    <string name="entry_total_balance">Total balance</string>
+    <string name="entry_show_total">Show total</string>
+    <string name="entry_hide_total">Hide total</string>
+
+    <!-- Entry form -->
+    <string name="entry_amount">Amount</string>
+    <string name="entry_amount_sent">Amount (sent)</string>
+    <string name="entry_amount_received">Amount (received)</string>
+    <string name="entry_from_account">From account</string>
+    <string name="entry_to_account">To account</string>
+    <string name="entry_category">Category</string>
+    <string name="entry_account">Account</string>
+    <string name="entry_description_optional">Description (optional)</string>
+    <string name="entry_ok">Ok</string>
+    <string name="entry_quick_entry">Quick entry</string>
+    <string name="entry_amount_positive">Amount must be greater than zero</string>
+    <string name="entry_need_account">Please enter account</string>
+    <string name="entry_need_second_account">Please add a second account</string>
+    <string name="entry_need_category">Please enter category</string>
+    <string name="entry_date_time_section">Date &amp; time</string>
+    <string name="entry_select_time">Select time</string>
+
+    <!-- Entry dialog titles: %1$s is the localized entry type name -->
+    <string name="entry_title_new">New %1$s</string>
+    <string name="entry_title_edit">Edit %1$s</string>
+
+    <!-- Draft validation hints (firstMissingRequirement) -->
+    <string name="entry_req_amount">Enter an amount</string>
+    <string name="entry_req_account">Choose an account</string>
+    <string name="entry_req_source">Choose where the money comes from</string>
+    <string name="entry_req_category">Choose a category</string>
+    <string name="entry_req_destination">Choose where the money goes</string>
+    <string name="entry_req_different_destination">Choose a different destination account</string>
+    <string name="entry_req_received">Enter the received amount</string>
+
+    <!-- Entry calculator and misc -->
+    <string name="entry_calculator">Calculator</string>
+    <string name="entry_simple_keypad">Simple keypad</string>
+    <string name="entry_backspace">Backspace</string>
+    <string name="entry_enter">Enter</string>
+    <string name="entry_recommended">Recommended</string>
+
+    <!-- Ledger view modes -->
+    <string name="ledger_mode_entries">Entries</string>
+    <string name="ledger_mode_accounts">Accounts</string>
+    <string name="ledger_mode_categories">Categories</string>
+
+    <!-- Ledger search & filters -->
+    <string name="ledger_search_entries">Search entries</string>
+    <string name="ledger_filter_accounts">Filter accounts</string>
+    <string name="ledger_filter_categories">Filter categories</string>
+    <string name="ledger_search_action">Search</string>
+    <string name="ledger_filters_header">Filters &amp; search</string>
+    <string name="ledger_expand_filters">Expand filters</string>
+    <string name="ledger_collapse_filters">Collapse filters</string>
+    <string name="ledger_filter_all">All</string>
+    <string name="ledger_remove_filter">Remove filter</string>
+    <string name="ledger_clear_all">Clear all</string>
+    <string name="ledger_uncategorized">Uncategorized</string>
+    <string name="ledger_unknown_account">Unknown account</string>
+    <string name="ledger_amount_all">Amount: All</string>
+    <string name="ledger_filter_by_amount">Filter by amount</string>
+    <string name="ledger_apply">Apply</string>
+
+    <!-- Period navigator -->
+    <string name="ledger_period_day">Day</string>
+    <string name="ledger_period_week">Week</string>
+    <string name="ledger_period_month">Month</string>
+    <string name="ledger_period_year">Year</string>
+    <string name="ledger_period_all">All</string>
+    <string name="ledger_previous_period">Previous period</string>
+    <string name="ledger_next_period">Next period</string>
+    <string name="ledger_show_future_entries">Show future entries</string>
+    <string name="ledger_hide_future_entries">Hide future entries</string>
+
+    <!-- Future-entries notice -->
+    <string name="ledger_future_none_bounded">No entries after today in this period</string>
+    <string name="ledger_future_none">No entries after today</string>
+    <string name="ledger_future_balances">Balances include entries after today</string>
+    <string name="ledger_future_totals">Totals include entries after today</string>
+    <plurals name="ledger_future_entries">
+        <item quantity="one">Showing %1$d entry after today</item>
+        <item quantity="other">Showing %1$d entries after today</item>
+    </plurals>
+
+    <!-- Ledger empty states: entries view -->
+    <string name="ledger_empty_future_hidden">Entries after today are hidden.</string>
+    <string name="ledger_empty_no_entries">No entries yet.</string>
+    <string name="ledger_empty_no_match_filter">No entries match this filter.</string>
+    <string name="ledger_empty_no_match">No entries match.</string>
+    <string name="ledger_action_add_first_entry">Add your first entry</string>
+    <string name="ledger_action_show_future_entries">Show entries after today</string>
+
+    <!-- Ledger empty states: accounts view -->
+    <string name="ledger_accounts_no_match">No accounts match.</string>
+    <string name="ledger_accounts_none">No accounts yet.</string>
+    <string name="ledger_accounts_all_hidden">All accounts are hidden.</string>
+    <string name="ledger_action_create_account">Create an account</string>
+    <string name="ledger_action_manage_accounts">Manage accounts</string>
+
+    <!-- Ledger empty states: categories view -->
+    <string name="ledger_categories_no_match">No categories match.</string>
+    <string name="ledger_categories_none">No categories yet.</string>
+    <string name="ledger_categories_future_hidden">Spending after today is hidden.</string>
+    <string name="ledger_categories_no_spending">No spending yet.</string>
+    <string name="ledger_action_add_categories">Add categories</string>
+
+    <!-- Category totals list -->
+    <plurals name="ledger_entry_count">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+    <string name="ledger_budget_progress">%1$s of %2$s</string>
+
+    <!-- Accounts list overflow menu -->
+    <string name="ledger_more_options">More options</string>
+    <string name="ledger_view_entries">View entries</string>
+    <string name="ledger_adjust_balance">Adjust Balance</string>
+    <string name="ledger_adjust_latest_period_only">Only available when the latest period is shown.</string>
+
+    <!-- Adjust Balance dialog -->
+    <string name="ledger_adjust_current_balance">Current balance: %1$s %2$s</string>
+    <string name="ledger_adjust_bank_balance">Bank balance</string>
+    <string name="ledger_adjust_category">Category</string>
+    <string name="ledger_adjust_add_income">Will add %1$s as income.</string>
+    <string name="ledger_adjust_add_expense">Will add %1$s as expense.</string>
+    <string name="ledger_adjust_confirm">Adjust</string>
+
+    <!-- Accounts screen -->
+    <string name="accounts_search">Search</string>
+    <string name="accounts_new">New Account</string>
+    <string name="accounts_edit">Edit Account</string>
+    <string name="accounts_empty_none">No accounts yet.</string>
+    <string name="accounts_empty_no_match">No matching accounts.</string>
+    <string name="accounts_name">Name</string>
+    <string name="accounts_initial_balance">Initial balance</string>
+    <string name="accounts_currency">Currency</string>
+    <string name="accounts_currency_locked">Currency cannot be changed: this account has entries.</string>
+    <string name="accounts_hidden">Hidden</string>
+    <string name="accounts_hidden_help">Keeps the entries, but removes the account from the ledger, the account pickers and the filters.</string>
+    <string name="accounts_delete_locked">This account cannot be deleted: it has entries.</string>
+    <string name="accounts_delete">Delete Account</string>
+    <string name="accounts_invalid_amount">Enter a valid amount</string>
+    <string name="accounts_duplicate_name">An account with this name already exists</string>
+    <string name="accounts_hide_title">Hide account?</string>
+    <string name="accounts_hide_confirm">Hide</string>
+    <string name="accounts_hide_body">%1$s has a balance of %2$s %3$s. Hiding it removes the account from the ledger, the account pickers and the filters. Its entries stay in your history and it can be shown again at any time.</string>
+
+    <!-- Categories screen -->
+    <string name="categories_search">Search</string>
+    <string name="categories_new">New Category</string>
+    <string name="categories_edit">Edit Category</string>
+    <string name="categories_empty_none">No categories yet.</string>
+    <string name="categories_empty_no_match">No matching categories.</string>
+    <string name="categories_name">Name</string>
+    <string name="categories_icon">Icon</string>
+    <string name="categories_type">Type</string>
+    <string name="categories_duplicate_name">A category with this name already exists</string>
+    <string name="categories_delete_locked">This category cannot be deleted: it has entries.</string>
+    <string name="categories_delete">Delete Category</string>
+    <string name="category_type_expense">Expense</string>
+    <string name="category_type_income">Income</string>
+    <string name="category_type_both">Both</string>
+    <string name="category_type_both_row">As Income/Expense</string>
+    <string name="category_icon_restaurant">Food &amp; Dining</string>
+    <string name="category_icon_movie">Entertainment</string>
+    <string name="category_icon_shopping_cart">Groceries</string>
+    <string name="category_icon_account_balance">Bank &amp; Finance</string>
+    <string name="category_icon_savings">Savings &amp; Salary</string>
+    <string name="category_icon_shopping_bag">Shopping</string>
+    <string name="category_icon_home">Home</string>
+    <string name="category_icon_local_hospital">Health</string>
+    <string name="category_icon_favorite_border">Gifts &amp; Donations</string>
+    <string name="category_icon_pets">Pets</string>
+    <string name="category_icon_school">Education</string>
+    <string name="category_icon_flight">Travel</string>
+    <string name="category_icon_spa">Personal Care</string>
+
+    <!-- Settings screen -->
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_default_currency">Default currency</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_hide_totals">Hide Totals</string>
+    <string name="settings_nav_categories">Categories</string>
+    <string name="settings_nav_accounts">Accounts</string>
+    <string name="settings_nav_rates">Currency rates</string>
+    <string name="settings_nav_budgets">Budgets</string>
+    <string name="settings_import_ivy">Import from Ivy</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_db">Back up database</string>
+    <string name="settings_restore_backup">Restore from backup</string>
+    <string name="settings_export_csv">Export to CSV</string>
+    <string name="settings_working_import">Importing…</string>
+    <string name="settings_working_backup">Backing up…</string>
+    <string name="settings_working_restore">Restoring…</string>
+    <string name="settings_working_export">Exporting…</string>
+    <string name="settings_import_summary">Imported %1$d accounts, %2$d categories, %3$d transactions</string>
+    <string name="settings_import_split_note">\nNote: %1$d transaction(s) were in a different currency than their account and were imported into new "IVY: …" accounts.</string>
+    <string name="settings_import_failed">Import failed: %1$s</string>
+    <string name="settings_backup_saved">Backup saved.</string>
+    <string name="settings_backup_failed">Backup failed: %1$s</string>
+    <string name="settings_restore_summary">Restored %1$d accounts, %2$d categories, %3$d entries</string>
+    <string name="settings_restore_failed">Restore failed: %1$s</string>
+    <string name="settings_export_done">CSV exported.</string>
+    <string name="settings_export_failed">Export failed: %1$s</string>
+    <string name="settings_import_confirm_body">This will replace all your current accounts, categories and transactions. Continue?</string>
+    <string name="settings_restore_confirm_body">This will replace all your current accounts, categories, transactions and settings. Continue?</string>
+    <string name="settings_import_confirm">Import</string>
+    <string name="settings_restore_confirm">Restore</string>
+
+    <!-- Rates screen -->
+    <string name="rates_refresh">Refresh</string>
+    <string name="rates_refresh_failed">Refresh failed: %1$s</string>
+    <string name="rates_from_date">Rates from %1$s</string>
+    <string name="rates_update_automatically">Update automatically</string>
+    <string name="rates_auto_update_help">Downloads fresh rates when the cached ones are more than a day old. Turn off to keep manually entered rates.</string>
+    <string name="rates_edit_rate">Edit %1$s rate</string>
+    <string name="rates_set">Set rates</string>
+    <string name="rates_missing">No exchange rates available. You can set them manually.</string>
+    <string name="rates_outdated">Exchange rates are over a week old. You can set them manually.</string>
+    <string name="rates_rate_label">Rate</string>
+    <string name="rates_positive_number">Enter a positive number.</string>
+
+    <!-- Budgets -->
+    <string name="budget_new">New Budget</string>
+    <string name="budget_edit">Edit Budget</string>
+    <string name="budget_delete">Delete Budget</string>
+    <string name="budget_category">Category</string>
+    <string name="budget_choose_category">Choose category</string>
+    <string name="budget_monthly_limit">Monthly limit</string>
+    <string name="budget_empty">No budgets yet. Add one to track a category's monthly spending.</string>
+    <string name="budget_invalid_amount">Enter a valid amount</string>
+</resources>

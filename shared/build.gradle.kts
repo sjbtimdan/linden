@@ -87,6 +87,12 @@ kotlin.sourceSets.getByName("commonMain").kotlin.srcDir(
     layout.buildDirectory.dir("generated/buildInfo/kotlin"),
 )
 
+compose.resources {
+    // Short, stable package for the generated Res class (default would embed
+    // the module name: org.sjbtimdan.linden.shared.generated.resources).
+    packageOfResClass = "org.sjbtimdan.linden.resources"
+}
+
 sqldelight {
     databases {
         create("LindenDatabase") {
