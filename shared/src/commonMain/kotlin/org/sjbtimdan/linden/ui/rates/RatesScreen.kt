@@ -94,7 +94,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
                 )
                 rates.firstOrNull()?.date?.let { date ->
                     Text(
-                        text = stringResource(Res.string.rates_from_date, date.toString()),
+                        text = stringResource(Res.string.rates_from_date, date),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
