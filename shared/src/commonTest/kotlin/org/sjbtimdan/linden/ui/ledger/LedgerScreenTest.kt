@@ -138,7 +138,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "account filter dropdown offers only visible accounts" {
+    "search suggestions offer only visible accounts" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Old", Currency.CHF)
@@ -150,13 +150,17 @@ class LedgerScreenTest : StringSpec({
             }
 
             expandFilters()
-            onNodeWithTag("accountFilterDropdown").performClick()
+            onNodeWithTag("searchField").performTextInput("old")
 
-            // The chip and the open menu both show the neutral label; only
-            // visible accounts appear as options.
-            onAllNodesWithText("Account: All").assertCountEquals(2)
-            onNodeWithText("Main").assertIsDisplayed()
+            // Hidden accounts are never offered as filter suggestions.
             onNodeWithText("Old").assertDoesNotExist()
+            onNodeWithTag("filterSuggestions").assertDoesNotExist()
+
+            onNodeWithTag("searchField").performTextClearance()
+            onNodeWithTag("searchField").performTextInput("main")
+
+            onNodeWithTag("filterSuggestions").assertIsDisplayed()
+            onNodeWithText("Main").assertIsDisplayed()
         }
     }
 
@@ -834,7 +838,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertIsDisplayed()
             onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
-            onNodeWithTag("categoryFilterDropdown").assertDoesNotExist()
+            onNodeWithTag("amountFilterChip").assertDoesNotExist()
 
             onNodeWithTag("viewModeTab-Entries").performClick()
 
@@ -956,7 +960,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "category dropdown filters the entries and shows the chip" {
+    "category suggestion applies the filter and shows the chip" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
@@ -969,8 +973,10 @@ class LedgerScreenTest : StringSpec({
             }
 
             expandFilters()
+            onNodeWithTag("searchField").performTextInput("salary")
 
-            onNodeWithTag("categoryFilterDropdown").performClick()
+            // The suggestion chip pins the category; the free text is cleared so
+            // it cannot keep narrowing descriptions on top of the filter.
             onNodeWithText("Salary").performClick()
 
             onNodeWithText("Pay").assertIsDisplayed()
@@ -979,7 +985,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "account dropdown filters the entries and shows the chip" {
+    "account suggestion applies the filter and shows the chip" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
@@ -990,8 +996,7 @@ class LedgerScreenTest : StringSpec({
             }
 
             expandFilters()
-
-            onNodeWithTag("accountFilterDropdown").performClick()
+            onNodeWithTag("searchField").performTextInput("savings")
             onNodeWithText("Savings").performClick()
 
             onNodeWithText("No entries match this filter.").assertIsDisplayed()
@@ -1250,9 +1255,8 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertIsDisplayed()
             onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
-            onNodeWithTag("categoryFilterDropdown").assertIsDisplayed()
-            onNodeWithTag("accountFilterDropdown").assertIsDisplayed()
             onNodeWithTag("amountFilterChip").assertIsDisplayed()
+            onNodeWithTag("filterSuggestions").assertDoesNotExist()
             onNodeWithTag("periodLabel").assertIsDisplayed()
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
         }
@@ -1370,7 +1374,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("typeFilterDropdown").performClick()
             onNodeWithText("Income").performClick()
 
-            onNodeWithTag("categoryFilterDropdown").performClick()
+            onNodeWithTag("searchField").performTextInput("salary")
             onNodeWithText("Salary").performClick()
 
             // Both filters apply: only the income entry in Salary is left.
@@ -1388,7 +1392,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "choosing All in the inline dropdowns clears the applied filters" {
+    "picking a different category suggestion replaces the applied filter" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
@@ -1401,26 +1405,19 @@ class LedgerScreenTest : StringSpec({
             }
 
             expandFilters()
-
-            onNodeWithTag("typeFilterDropdown").performClick()
-            onNodeWithText("Income").performClick()
-            onNodeWithTag("categoryFilterDropdown").performClick()
+            onNodeWithTag("searchField").performTextInput("salary")
             onNodeWithText("Salary").performClick()
 
-            // Both filters apply: only the income entry in Salary is left.
             onNodeWithText("Pay").assertIsDisplayed()
             onNodeWithText("Coffee").assertDoesNotExist()
 
-            // Each dropdown resets its own filter to All — no dialog.
-            onNodeWithTag("typeFilterDropdown").performClick()
-            onNodeWithText("Types: All").performClick()
-            onNodeWithTag("categoryFilterDropdown").performClick()
-            onNodeWithText("Category: All").performClick()
+            // A new suggestion swaps the category filter rather than stacking it.
+            onNodeWithTag("searchField").performTextInput("groc")
+            onNodeWithText("Groceries").performClick()
 
-            onNodeWithText("Pay").assertIsDisplayed()
             onNodeWithText("Coffee").assertIsDisplayed()
-            onNodeWithTag("activeTypeFilterChip").assertDoesNotExist()
-            onNodeWithTag("categoryFilterChip").assertDoesNotExist()
+            onNodeWithText("Pay").assertDoesNotExist()
+            onNodeWithTag("categoryFilterChip").assertIsDisplayed()
         }
     }
 
@@ -1488,9 +1485,13 @@ class LedgerScreenTest : StringSpec({
             expandFilters()
 
             onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
-            onNodeWithTag("categoryFilterDropdown").assertDoesNotExist()
-            onNodeWithTag("accountFilterDropdown").assertDoesNotExist()
             onNodeWithTag("amountFilterChip").assertDoesNotExist()
+
+            // Suggestions only narrow the entries view; the categories view
+            // filters names with the plain text field.
+            onNodeWithTag("searchField").performTextInput("gro")
+            onNodeWithTag("filterSuggestions").assertDoesNotExist()
+            onNodeWithText("Groceries").assertIsDisplayed()
         }
     }
 

@@ -10,16 +10,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.CategoryType
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.onTestMain
-
-private val groceries = Category(1, "Groceries", CategoryType.Expense, null)
-private val salary = Category(2, "Salary", CategoryType.Income, null)
-private val mainAccount = Account(1, "Main", Currency.CHF)
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerFilterControlsTest : StringSpec({
@@ -52,59 +44,22 @@ class LedgerFilterControlsTest : StringSpec({
         }
     }
 
-    "entries view offers the category, account and amount filters" {
+    "entries view offers the amount filter; other views hide it" {
         onTestMain {
             runComposeUiTest {
-                setControlsContent(showEntryFilters = true)
+                setControlsContent(showAmountFilter = true)
 
-                onNodeWithTag("categoryFilterDropdown").assertIsDisplayed()
-                onNodeWithTag("accountFilterDropdown").assertIsDisplayed()
                 onNodeWithTag("amountFilterChip").assertIsDisplayed()
             }
         }
     }
 
-    "category and account dropdowns report their selections" {
+    "categories view hides the amount filter" {
         onTestMain {
             runComposeUiTest {
-                var categoryId: Long? = null
-                var accountId: Long? = null
-                setControlsContent(
-                    onCategoryFilterChange = { categoryId = it },
-                    onAccountFilterChange = { accountId = it },
-                )
-
-                onNodeWithTag("categoryFilterDropdown").performClick()
-                onNodeWithText("Groceries").performClick()
-
-                onNodeWithTag("accountFilterDropdown").performClick()
-                onNodeWithText("Main").performClick()
-
-                categoryId shouldBe groceries.id
-                accountId shouldBe mainAccount.id
-            }
-        }
-    }
-
-    "shows the active category and account on their chips" {
-        onTestMain {
-            runComposeUiTest {
-                setControlsContent(categoryFilter = salary.id, accountFilter = mainAccount.id)
-
-                onNodeWithText("Salary").assertIsDisplayed()
-                onNodeWithText("Main").assertIsDisplayed()
-            }
-        }
-    }
-
-    "categories-only view hides the entry filters" {
-        onTestMain {
-            runComposeUiTest {
-                setControlsContent(showEntryFilters = false)
+                setControlsContent(showAmountFilter = false)
 
                 onNodeWithTag("typeFilterDropdown").assertIsDisplayed()
-                onNodeWithTag("categoryFilterDropdown").assertDoesNotExist()
-                onNodeWithTag("accountFilterDropdown").assertDoesNotExist()
                 onNodeWithTag("amountFilterChip").assertDoesNotExist()
             }
         }
@@ -167,28 +122,18 @@ class LedgerFilterControlsTest : StringSpec({
 /** Renders the inline filter row with the shared fixture data; every callback defaults to a no-op. */
 @OptIn(ExperimentalTestApi::class)
 private fun ComposeUiTest.setControlsContent(
-    showEntryFilters: Boolean = true,
+    showAmountFilter: Boolean = true,
     typeFilter: EntryType? = null,
-    categoryFilter: Long? = null,
-    accountFilter: Long? = null,
     amountFilter: AmountFilter? = null,
     onTypeFilterChange: (EntryType?) -> Unit = {},
-    onCategoryFilterChange: (Long?) -> Unit = {},
-    onAccountFilterChange: (Long?) -> Unit = {},
     onAmountFilterChange: (AmountFilter?) -> Unit = {},
     onClearAmountFilter: () -> Unit = {},
 ) {
     setContent {
         LedgerFilterControls(
-            showEntryFilters = showEntryFilters,
             typeFilter = typeFilter,
             onTypeFilterChange = onTypeFilterChange,
-            categories = listOf(groceries, salary),
-            categoryFilter = categoryFilter,
-            onCategoryFilterChange = onCategoryFilterChange,
-            accounts = listOf(mainAccount),
-            accountFilter = accountFilter,
-            onAccountFilterChange = onAccountFilterChange,
+            showAmountFilter = showAmountFilter,
             amountFilter = amountFilter,
             onAmountFilterChange = onAmountFilterChange,
             onClearAmountFilter = onClearAmountFilter,

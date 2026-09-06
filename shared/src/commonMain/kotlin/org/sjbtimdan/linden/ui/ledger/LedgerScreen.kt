@@ -20,6 +20,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -63,6 +65,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
+import org.sjbtimdan.linden.ui.entry.OptionChipRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatDate
@@ -201,21 +204,56 @@ fun LedgerScreen(
                     )
                 }
 
+                // Typing a category or account name in the entries view offers
+                // structural filter chips; tapping one pins the exact entity and
+                // clears the free text so the two never combine. Chips carry a
+                // kind-specific icon so a mixed row still reads clearly.
+                if (viewMode == LedgerViewMode.Entries) {
+                    val suggestions = rankFilterSuggestions(
+                        query = searchQuery,
+                        categories = categories,
+                        accounts = visibleAccounts,
+                        activeCategoryId = categoryFilter,
+                        activeAccountId = accountFilter,
+                    )
+                    if (suggestions.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OptionChipRow(
+                            options = suggestions,
+                            optionLabel = { it.name },
+                            optionIcon = { suggestion ->
+                                when (suggestion.kind) {
+                                    FilterSuggestionKind.Account -> Icons.Filled.AccountBalanceWallet
+
+                                    FilterSuggestionKind.Category ->
+                                        categories.firstOrNull { it.id == suggestion.id }
+                                            ?.icon?.imageVector() ?: Icons.Filled.Category
+                                }
+                            },
+                            onSelect = { suggestion ->
+                                when (suggestion.kind) {
+                                    FilterSuggestionKind.Account ->
+                                        viewModel.setAccountFilter(suggestion.id)
+
+                                    FilterSuggestionKind.Category ->
+                                        viewModel.setCategoryFilter(suggestion.id)
+                                }
+                                viewModel.setSearchQuery("")
+                            },
+                            modifier = Modifier.testTag("filterSuggestions"),
+                        )
+                    }
+                }
+
                 // The accounts view has no chip filters: a balance mixes every
                 // entry type, so its panel only holds the search field. The other
                 // views edit their filters inline — no dialog.
                 if (viewMode != LedgerViewMode.Accounts) {
                     Spacer(modifier = Modifier.height(8.dp))
                     LedgerFilterControls(
-                        showEntryFilters = viewMode == LedgerViewMode.Entries,
                         typeFilter = typeFilter,
                         onTypeFilterChange = viewModel::setTypeFilter,
-                        categories = categories,
-                        categoryFilter = categoryFilter,
-                        onCategoryFilterChange = viewModel::setCategoryFilter,
-                        accounts = visibleAccounts,
-                        accountFilter = accountFilter,
-                        onAccountFilterChange = viewModel::setAccountFilter,
+                        showAmountFilter = viewMode == LedgerViewMode.Entries,
                         amountFilter = amountFilter,
                         onAmountFilterChange = viewModel::setAmountFilter,
                         onClearAmountFilter = viewModel::clearAmountFilter,
