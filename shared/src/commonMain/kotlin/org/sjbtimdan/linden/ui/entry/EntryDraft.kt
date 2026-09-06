@@ -34,35 +34,35 @@ data class EntryDraft(
     fun isValid(accounts: List<Account>): Boolean = firstMissingRequirement(accounts) == null
 
     /**
-     * The first requirement this draft still misses, phrased as an instruction,
-     * or null when the draft is valid. Mirrors [isValid]: a hint exists exactly
-     * when saving is blocked.
+     * The first requirement this draft still misses, or null when the draft is
+     * valid. Mirrors [isValid]: a requirement exists exactly when saving is
+     * blocked. The wording is localized in the UI via [MissingRequirement.text].
      */
-    fun firstMissingRequirement(accounts: List<Account>): String? {
+    fun firstMissingRequirement(accounts: List<Account>): MissingRequirement? {
         val amountValue = amount
-        if (amountValue == null || amountValue <= 0) return "Enter an amount"
+        if (amountValue == null || amountValue <= 0) return MissingRequirement.AMOUNT
         if (accountId == null) {
             return when (type) {
-                EntryType.Expense, EntryType.Income -> "Choose an account"
-                EntryType.Transfer -> "Choose where the money comes from"
+                EntryType.Expense, EntryType.Income -> MissingRequirement.ACCOUNT
+                EntryType.Transfer -> MissingRequirement.SOURCE_ACCOUNT
             }
         }
         return when (type) {
             EntryType.Expense, EntryType.Income ->
-                if (categoryId == null) "Choose a category" else null
+                if (categoryId == null) MissingRequirement.CATEGORY else null
 
             EntryType.Transfer -> {
-                val toAccountIdValue = toAccountId ?: return "Choose where the money goes"
-                if (toAccountIdValue == accountId) return "Choose a different destination account"
+                val toAccountIdValue = toAccountId ?: return MissingRequirement.DESTINATION_ACCOUNT
+                if (toAccountIdValue == accountId) return MissingRequirement.DIFFERENT_DESTINATION
                 val toAccount = accounts.firstOrNull { it.id == toAccountIdValue }
-                    ?: return "Choose where the money goes"
+                    ?: return MissingRequirement.DESTINATION_ACCOUNT
                 val account = accounts.firstOrNull { it.id == accountId }
-                    ?: return "Choose where the money comes from"
+                    ?: return MissingRequirement.SOURCE_ACCOUNT
                 if (account.currency == toAccount.currency) {
                     null
                 } else {
                     val toValue = toAmount
-                    if (toValue == null || toValue <= 0) "Enter the received amount" else null
+                    if (toValue == null || toValue <= 0) MissingRequirement.RECEIVED_AMOUNT else null
                 }
             }
         }

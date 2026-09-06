@@ -46,8 +46,17 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.entry_add
+import org.sjbtimdan.linden.resources.entry_added
+import org.sjbtimdan.linden.resources.entry_clear
+import org.sjbtimdan.linden.resources.entry_hide_total
+import org.sjbtimdan.linden.resources.entry_show_total
+import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -177,7 +186,7 @@ fun EntryPoint(
                 IconButton(onClick = cancelEditing) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(Res.string.common_back),
                     )
                 }
             }
@@ -240,7 +249,8 @@ fun EntryPoint(
 
         // Explains why Add is disabled unless the form's own links already
         // point at the blocker (missing accounts or categories).
-        val missingHint = missingRequirementHint(draft, accounts, categories)
+        val missingHint = missingRequirement(draft, accounts, categories)
+        val addedMessage = stringResource(Res.string.entry_added)
 
         if (!fieldFocused) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -250,7 +260,7 @@ fun EntryPoint(
             Spacer(modifier = Modifier.height(8.dp))
 
             missingHint?.let { hint ->
-                MissingRequirementHint(message = hint)
+                MissingRequirementHint(message = hint.text())
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
@@ -262,7 +272,7 @@ fun EntryPoint(
                     onClick = {
                         if (viewModel.saveDraft()) {
                             markTouched()
-                            scope.launch { snackbarHostState.showSnackbar("Added") }
+                            scope.launch { snackbarHostState.showSnackbar(addedMessage) }
                         }
                     },
                     enabled = draft?.isValid(accounts) == true,
@@ -274,7 +284,7 @@ fun EntryPoint(
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Add")
+                    Text(stringResource(Res.string.entry_add))
                 }
 
                 OutlinedButton(
@@ -285,7 +295,7 @@ fun EntryPoint(
                     enabled = draft != null,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("Clear")
+                    Text(stringResource(Res.string.entry_clear))
                 }
             }
         }
@@ -314,7 +324,7 @@ private fun TotalBalanceCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Total balance",
+                    text = stringResource(Res.string.entry_total_balance),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.weight(1f),
@@ -334,7 +344,11 @@ private fun TotalBalanceCard(
                 IconButton(onClick = onToggleHidden) {
                     Icon(
                         imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
-                        contentDescription = if (hidden) "Show total" else "Hide total",
+                        contentDescription = if (hidden) {
+                            stringResource(Res.string.entry_show_total)
+                        } else {
+                            stringResource(Res.string.entry_hide_total)
+                        },
                     )
                 }
             }
@@ -351,7 +365,7 @@ private fun TotalBalanceCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "Total balance",
+                        text = stringResource(Res.string.entry_total_balance),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.weight(1f),
@@ -359,7 +373,11 @@ private fun TotalBalanceCard(
                     IconButton(onClick = onToggleHidden) {
                         Icon(
                             imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
-                            contentDescription = if (hidden) "Show total" else "Hide total",
+                            contentDescription = if (hidden) {
+                                stringResource(Res.string.entry_show_total)
+                            } else {
+                                stringResource(Res.string.entry_hide_total)
+                            },
                         )
                     }
                 }

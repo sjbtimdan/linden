@@ -38,8 +38,8 @@ private fun draft(type: EntryType = EntryType.Expense, accountId: Long? = main.i
 class MissingRequirementHintTest : StringSpec({
 
     "hidden when the form is valid or there is no draft" {
-        missingRequirementHint(null, listOf(main), listOf(groceries)).shouldBeNull()
-        missingRequirementHint(
+        missingRequirement(null, listOf(main), listOf(groceries)).shouldBeNull()
+        missingRequirement(
             draft(accountId = main.id).copy(amountText = "4.50"),
             listOf(main),
             listOf(groceries),
@@ -47,28 +47,28 @@ class MissingRequirementHintTest : StringSpec({
     }
 
     "names the first missing requirement when the fields can be satisfied" {
-        missingRequirementHint(draft(), listOf(main), listOf(groceries)) shouldBe "Enter an amount"
-        missingRequirementHint(
+        missingRequirement(draft(), listOf(main), listOf(groceries)) shouldBe MissingRequirement.AMOUNT
+        missingRequirement(
             draft(accountId = null).copy(amountText = "4.50"),
             listOf(main),
             listOf(groceries),
         ) shouldBe
-            "Choose an account"
+            MissingRequirement.ACCOUNT
     }
 
     "hidden when the missing fields are links instead of pickers" {
         // No accounts: the form shows "Please enter account" links.
-        missingRequirementHint(draft(), emptyList(), listOf(groceries)).shouldBeNull()
+        missingRequirement(draft(), emptyList(), listOf(groceries)).shouldBeNull()
         // Only income categories exist, so an expense has no category picker.
-        missingRequirementHint(draft(), listOf(main), listOf(salary)).shouldBeNull()
+        missingRequirement(draft(), listOf(main), listOf(salary)).shouldBeNull()
         // A transfer needs two accounts; with one the form shows the second-account link.
-        missingRequirementHint(draft(type = EntryType.Transfer), listOf(main), listOf(groceries)).shouldBeNull()
+        missingRequirement(draft(type = EntryType.Transfer), listOf(main), listOf(groceries)).shouldBeNull()
         // Two accounts: the transfer blocker is now the missing destination account.
-        missingRequirementHint(
+        missingRequirement(
             draft(type = EntryType.Transfer).copy(amountText = "100"),
             listOf(main, savings),
             listOf(groceries),
-        ) shouldBe "Choose where the money goes"
+        ) shouldBe MissingRequirement.DESTINATION_ACCOUNT
     }
 
     "renders the message in error styling" {

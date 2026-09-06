@@ -39,6 +39,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.entry_backspace
+import org.sjbtimdan.linden.resources.entry_calculator
+import org.sjbtimdan.linden.resources.entry_enter
+import org.sjbtimdan.linden.resources.entry_simple_keypad
 
 /**
  * Amount entry keypad with a simple numeric mode (default) and a full
@@ -132,7 +139,11 @@ fun AmountCalculator(
                     ) {
                         Icon(
                             imageVector = if (calculatorMode) Icons.Filled.Dialpad else Icons.Filled.Calculate,
-                            contentDescription = if (calculatorMode) "Simple keypad" else "Calculator",
+                            contentDescription = if (calculatorMode) {
+                                stringResource(Res.string.entry_simple_keypad)
+                            } else {
+                                stringResource(Res.string.entry_calculator)
+                            },
                         )
                     }
                     Text(
@@ -172,7 +183,7 @@ fun AmountCalculator(
                 onClick = { enter() },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
             ) {
-                Text("Enter")
+                Text(stringResource(Res.string.entry_enter))
             }
         }
     }
@@ -183,7 +194,7 @@ private val keyHeight = 56.dp
 
 private class KeySpec(
     val label: String,
-    val contentDescription: String? = null,
+    val contentDescription: StringResource? = null,
     val onPress: CalculatorModel.() -> Unit,
 )
 
@@ -216,7 +227,7 @@ private val keypad = listOf(
         KeySpec("+") { onOperator(CalculatorOp.Add) },
     ),
     listOf(
-        KeySpec("⌫", contentDescription = "Backspace") { onBackspace() },
+        KeySpec("⌫", contentDescription = Res.string.entry_backspace) { onBackspace() },
         KeySpec("=") { onEquals() },
     ),
 )
@@ -230,7 +241,7 @@ private val simpleKeypad = listOf(
         KeySpec(".") { onDot() },
         digit('0'),
         KeySpec("C") { onClear() },
-        KeySpec("⌫", contentDescription = "Backspace") { onBackspace() },
+        KeySpec("⌫", contentDescription = Res.string.entry_backspace) { onBackspace() },
     ),
 )
 
@@ -244,9 +255,10 @@ private fun keyRow(modifier: Modifier, content: @Composable RowScope.() -> Unit)
 }
 
 @Composable
-private fun RowScope.CalculatorKey(label: String, onClick: () -> Unit, description: String? = null) {
-    val modifier = if (description != null) {
-        Modifier.weight(1f).fillMaxHeight().semantics { contentDescription = description }
+private fun RowScope.CalculatorKey(label: String, onClick: () -> Unit, description: StringResource? = null) {
+    val resolvedDescription = description?.let { stringResource(it) }
+    val modifier = if (resolvedDescription != null) {
+        Modifier.weight(1f).fillMaxHeight().semantics { contentDescription = resolvedDescription }
     } else {
         Modifier.weight(1f).fillMaxHeight()
     }

@@ -12,17 +12,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_delete
+import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.resources.entry_title_edit
+import org.sjbtimdan.linden.resources.entry_title_new
+import org.sjbtimdan.linden.resources.entry_type_expense
+import org.sjbtimdan.linden.resources.entry_type_income
+import org.sjbtimdan.linden.resources.entry_type_transfer
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import kotlin.time.Instant
 
-fun EntryType.displayName(): String = when (this) {
-    EntryType.Expense -> "Expense"
-    EntryType.Income -> "Income"
-    EntryType.Transfer -> "Transfer"
-}
+/** Localized display name of an entry type, e.g. for segmented buttons and dialog titles. */
+@Composable
+fun EntryType.displayName(): String = stringResource(
+    when (this) {
+        EntryType.Expense -> Res.string.entry_type_expense
+        EntryType.Income -> Res.string.entry_type_income
+        EntryType.Transfer -> Res.string.entry_type_transfer
+    },
+)
 
 @Composable
 fun EntryDialog(
@@ -51,11 +65,12 @@ fun EntryDialog(
         // discard an in-progress entry.
         properties = DialogProperties(dismissOnClickOutside = false),
         title = {
+            val typeName = state.type.displayName()
             Text(
                 if (state.editing != null) {
-                    "Edit ${state.type.displayName()}"
+                    stringResource(Res.string.entry_title_edit, typeName)
                 } else {
-                    "New ${state.type.displayName()}"
+                    stringResource(Res.string.entry_title_new, typeName)
                 },
             )
         },
@@ -63,8 +78,8 @@ fun EntryDialog(
             Column {
                 // Explains why Save is disabled unless the form's own links
                 // already point at the blocker (missing accounts or categories).
-                missingRequirementHint(state, accounts, categories)?.let { hint ->
-                    MissingRequirementHint(message = hint)
+                missingRequirement(state, accounts, categories)?.let { requirement ->
+                    MissingRequirementHint(message = requirement.text())
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 EntryForm(
@@ -90,18 +105,18 @@ fun EntryDialog(
                 onClick = onSave,
                 enabled = state.isValid(accounts),
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.common_save))
             }
         },
         dismissButton = {
             Row {
                 onDelete?.let { delete ->
                     TextButton(onClick = delete) {
-                        Text("Delete")
+                        Text(stringResource(Res.string.common_delete))
                     }
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.common_cancel))
                 }
             }
         },

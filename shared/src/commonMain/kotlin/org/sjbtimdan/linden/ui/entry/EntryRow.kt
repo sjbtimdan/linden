@@ -21,16 +21,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.entry_type_transfer
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
+@Composable
 private fun Entry.title(): String {
     val description = description?.takeIf { it.isNotBlank() }
     return when (this) {
-        is TransferEntry -> description ?: "Transfer"
+        is TransferEntry -> description ?: stringResource(Res.string.entry_type_transfer)
         else -> description ?: requireNotNull(category).name
     }
 }

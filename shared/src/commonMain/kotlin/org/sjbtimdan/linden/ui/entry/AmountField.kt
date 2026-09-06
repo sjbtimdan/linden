@@ -12,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_clear
 
 /** Amount input that opens the calculator on focus. */
 @Composable
@@ -36,7 +39,7 @@ fun AmountField(
             {
                 IconButton(
                     onClick = { onValueChange("") },
-                ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
             }
         } else {
             null

@@ -30,11 +30,28 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.entry_account
+import org.sjbtimdan.linden.resources.entry_amount
+import org.sjbtimdan.linden.resources.entry_amount_positive
+import org.sjbtimdan.linden.resources.entry_amount_received
+import org.sjbtimdan.linden.resources.entry_amount_sent
+import org.sjbtimdan.linden.resources.entry_category
+import org.sjbtimdan.linden.resources.entry_description_optional
+import org.sjbtimdan.linden.resources.entry_from_account
+import org.sjbtimdan.linden.resources.entry_need_account
+import org.sjbtimdan.linden.resources.entry_need_category
+import org.sjbtimdan.linden.resources.entry_need_second_account
+import org.sjbtimdan.linden.resources.entry_ok
+import org.sjbtimdan.linden.resources.entry_quick_entry
+import org.sjbtimdan.linden.resources.entry_to_account
 import org.sjbtimdan.linden.ui.BackHandler
 import kotlin.time.Instant
 
@@ -89,6 +106,19 @@ fun EntryForm(
         fromAccount != null && toAccount != null &&
         fromAccount.currency != toAccount.currency
 
+    // Localized copy for this form; resolved once per composition so plain
+    // lambdas (onInvalid, dropdown "missing" texts) can capture the strings.
+    val amountLabel = if (state.type == EntryType.Transfer) {
+        stringResource(Res.string.entry_amount_sent)
+    } else {
+        stringResource(Res.string.entry_amount)
+    }
+    val receivedAmountLabel = stringResource(Res.string.entry_amount_received)
+    val amountPositiveWarning = stringResource(Res.string.entry_amount_positive)
+    val needAccountText = stringResource(Res.string.entry_need_account)
+    val needSecondAccountText = stringResource(Res.string.entry_need_second_account)
+    val needCategoryText = stringResource(Res.string.entry_need_category)
+
     // While a field is focused the form collapses so that field and its options
     // get the whole area above the keyboard. The focused field must stay mounted
     // (unmounting drops focus), so sections hide only while another is active.
@@ -130,7 +160,7 @@ fun EntryForm(
         if (!editing) {
             AmountField(
                 value = state.amountText,
-                label = if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount",
+                label = amountLabel,
                 suffix = fromAccount?.currency?.symbol,
                 warning = amountWarning,
                 onValueChange = {
@@ -146,27 +176,27 @@ fun EntryForm(
             if (!editing || activeField == ActiveField.From) {
                 Spacer(modifier = Modifier.height(16.dp))
                 FieldDropdown(
-                    label = "From account",
+                    label = stringResource(Res.string.entry_from_account),
                     selected = accounts.firstOrNull { it.id == state.accountId },
                     options = accounts,
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.From else null },
-                    missing = if (accounts.isEmpty()) "Please enter account" else null,
+                    missing = if (accounts.isEmpty()) needAccountText else null,
                     onNavigateToSettings = onNavigateToSettings,
                 )
             }
             if (!editing || activeField == ActiveField.To) {
                 Spacer(modifier = Modifier.height(16.dp))
                 FieldDropdown(
-                    label = "To account",
+                    label = stringResource(Res.string.entry_to_account),
                     selected = accounts.firstOrNull { it.id == state.toAccountId },
                     options = accounts.filter { it.id != state.accountId },
                     optionLabel = { it.name },
                     onSelect = { onToAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.To else null },
                     missing = if (accounts.size < 2) {
-                        if (accounts.isEmpty()) "Please enter account" else "Please add a second account"
+                        if (accounts.isEmpty()) needAccountText else needSecondAccountText
                     } else {
                         null
                     },
@@ -177,7 +207,7 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 AmountField(
                     value = state.toAmountText,
-                    label = "Amount (received)",
+                    label = receivedAmountLabel,
                     suffix = toAccount.currency.symbol,
                     warning = toAmountWarning,
                     onValueChange = {
@@ -191,7 +221,7 @@ fun EntryForm(
             if (!editing || activeField == ActiveField.Category) {
                 Spacer(modifier = Modifier.height(16.dp))
                 FieldDropdown(
-                    label = "Category",
+                    label = stringResource(Res.string.entry_category),
                     selected = visibleCategories.firstOrNull { it.id == state.categoryId },
                     options = visibleCategories,
                     optionLabel = { it.name },
@@ -200,7 +230,7 @@ fun EntryForm(
                     predicted = categorySuggestions
                         .filterNot { it == state.categoryId }
                         .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
-                    missing = if (visibleCategories.isEmpty()) "Please enter category" else null,
+                    missing = if (visibleCategories.isEmpty()) needCategoryText else null,
                     onNavigateToSettings = onNavigateToSettings,
                     optionIcon = { it.icon?.imageVector() },
                 )
@@ -208,7 +238,7 @@ fun EntryForm(
             if (!editing || activeField == ActiveField.Account) {
                 Spacer(modifier = Modifier.height(16.dp))
                 FieldDropdown(
-                    label = "Account",
+                    label = stringResource(Res.string.entry_account),
                     selected = accounts.firstOrNull { it.id == state.accountId },
                     options = accounts,
                     optionLabel = { it.name },
@@ -217,7 +247,7 @@ fun EntryForm(
                     predicted = accountSuggestions
                         .filterNot { it == state.accountId }
                         .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
-                    missing = if (accounts.isEmpty()) "Please enter account" else null,
+                    missing = if (accounts.isEmpty()) needAccountText else null,
                     onNavigateToSettings = onNavigateToSettings,
                 )
             }
@@ -239,13 +269,13 @@ fun EntryForm(
             OutlinedTextField(
                 value = state.description,
                 onValueChange = onDescriptionChange,
-                label = { Text("Description (optional)") },
+                label = { Text(stringResource(Res.string.entry_description_optional)) },
                 singleLine = true,
                 trailingIcon = if (state.description.isNotEmpty()) {
                     {
                         IconButton(
                             onClick = { onDescriptionChange("") },
-                        ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                        ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
                     }
                 } else {
                     null
@@ -280,7 +310,7 @@ fun EntryForm(
                             focusManager.clearFocus()
                         },
                     ) {
-                        Text("Ok")
+                        Text(stringResource(Res.string.entry_ok))
                     }
                 }
             }
@@ -298,7 +328,7 @@ fun EntryForm(
             if (quickEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Quick entry",
+                    text = stringResource(Res.string.entry_quick_entry),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
@@ -316,7 +346,7 @@ fun EntryForm(
             initialMinor = state.amount,
             currencySymbol = fromAccount?.currency?.symbol,
             contextLabel = calculatorContextLabel(
-                purpose = if (state.type == EntryType.Transfer) "Amount (sent)" else "Amount",
+                purpose = amountLabel,
                 from = fromAccount,
                 to = toAccount,
             ),
@@ -325,7 +355,7 @@ fun EntryForm(
                 activeField = null
             },
             onInvalid = {
-                amountWarning = "Amount must be greater than zero"
+                amountWarning = amountPositiveWarning
                 activeField = null
             },
             onCancel = { activeField = null },
@@ -337,7 +367,7 @@ fun EntryForm(
             initialMinor = state.toAmount,
             currencySymbol = toAccount?.currency?.symbol,
             contextLabel = calculatorContextLabel(
-                purpose = "Amount (received)",
+                purpose = receivedAmountLabel,
                 from = fromAccount,
                 to = toAccount,
             ),
@@ -346,7 +376,7 @@ fun EntryForm(
                 activeField = null
             },
             onInvalid = {
-                toAmountWarning = "Amount must be greater than zero"
+                toAmountWarning = amountPositiveWarning
                 activeField = null
             },
             onCancel = { activeField = null },

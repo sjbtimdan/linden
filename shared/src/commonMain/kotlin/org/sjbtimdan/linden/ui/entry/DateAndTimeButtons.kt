@@ -26,6 +26,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_ok
+import org.sjbtimdan.linden.resources.entry_date_time_section
+import org.sjbtimdan.linden.resources.entry_select_time
 import kotlin.time.Instant
 
 /** Date and time buttons with their picker dialogs. */
@@ -36,7 +42,7 @@ fun DateAndTimeButtons(createdAt: Instant, createdZone: TimeZone, onChange: (Ins
     var showTimePicker by remember { mutableStateOf(false) }
 
     Text(
-        text = "Date & time",
+        text = stringResource(Res.string.entry_date_time_section),
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(bottom = 8.dp),
     )
@@ -65,12 +71,12 @@ fun DateAndTimeButtons(createdAt: Instant, createdZone: TimeZone, onChange: (Ins
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.common_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.common_cancel))
                 }
             },
         ) {
@@ -99,15 +105,15 @@ fun DateAndTimeButtons(createdAt: Instant, createdZone: TimeZone, onChange: (Ins
                     onChange(newInstant)
                     showTimePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(Res.string.common_ok))
                 }
             },
             title = {
-                Text("Select time")
+                Text(stringResource(Res.string.entry_select_time))
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.common_cancel))
                 }
             },
         ) {

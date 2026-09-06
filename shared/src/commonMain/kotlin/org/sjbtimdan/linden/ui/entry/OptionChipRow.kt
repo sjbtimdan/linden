@@ -18,6 +18,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.entry_recommended
 
 @Composable
 fun <T> OptionChipRow(
@@ -37,6 +40,8 @@ fun <T> OptionChipRow(
         options.forEach { option ->
             val isSelectedChip = isSelected(option)
             val isPredictedChip = !isSelectedChip && isPredicted(option)
+            // Semantics blocks are not composable, so resolve the label up front.
+            val recommendedLabel = stringResource(Res.string.entry_recommended)
             // A bare tap handler, not a Material chip: focusable chip internals steal
             // focus on press, unmounting this row mid-gesture before the click ends.
             Surface(
@@ -55,7 +60,7 @@ fun <T> OptionChipRow(
                     .semantics(mergeDescendants = true) {
                         selected = isSelectedChip
                         if (isPredictedChip) {
-                            contentDescription = "Recommended"
+                            contentDescription = recommendedLabel
                         }
                     }
                     .pointerInput(option) {

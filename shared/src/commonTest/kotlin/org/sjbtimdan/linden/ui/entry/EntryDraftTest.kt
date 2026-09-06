@@ -96,23 +96,23 @@ class EntryDraftTest : StringSpec({
     }
 
     "firstMissingRequirement names the first missing field of an expense" {
-        draft(amountText = "").firstMissingRequirement(accounts) shouldBe "Enter an amount"
-        draft(accountId = null).firstMissingRequirement(accounts) shouldBe "Choose an account"
-        draft(categoryId = null).firstMissingRequirement(accounts) shouldBe "Choose a category"
+        draft(amountText = "").firstMissingRequirement(accounts) shouldBe MissingRequirement.AMOUNT
+        draft(accountId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
+        draft(categoryId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.CATEGORY
         draft().firstMissingRequirement(accounts).shouldBeNull()
     }
 
     "firstMissingRequirement names the missing fields of a transfer in order" {
         draft(type = EntryType.Transfer, amountText = "")
-            .firstMissingRequirement(accounts) shouldBe "Enter an amount"
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.AMOUNT
         draft(type = EntryType.Transfer, accountId = null)
-            .firstMissingRequirement(accounts) shouldBe "Choose where the money comes from"
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.SOURCE_ACCOUNT
         draft(type = EntryType.Transfer, toAccountId = null)
-            .firstMissingRequirement(accounts) shouldBe "Choose where the money goes"
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.DESTINATION_ACCOUNT
         draft(type = EntryType.Transfer, toAccountId = main.id, toAmountText = "9.50")
-            .firstMissingRequirement(accounts) shouldBe "Choose a different destination account"
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.DIFFERENT_DESTINATION
         draft(type = EntryType.Transfer, toAccountId = savingsEur.id)
-            .firstMissingRequirement(accounts) shouldBe "Enter the received amount"
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.RECEIVED_AMOUNT
         draft(type = EntryType.Transfer, toAccountId = savingsChf.id)
             .firstMissingRequirement(accounts).shouldBeNull()
     }
