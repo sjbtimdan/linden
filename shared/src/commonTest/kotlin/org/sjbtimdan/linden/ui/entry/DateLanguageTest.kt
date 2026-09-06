@@ -16,7 +16,7 @@ class DateLanguageTest : StringSpec({
         dateLanguage("zh") shouldBe DateLanguage.Chinese
         dateLanguage("zh-CN") shouldBe DateLanguage.Chinese
         dateLanguage("zh-Hans-CN") shouldBe DateLanguage.Chinese
-        dateLanguage("zh-TW") shouldBe DateLanguage.Chinese
+        dateLanguage("zh-Hant") shouldBe DateLanguage.Chinese
         dateLanguage("zh-Hant-HK") shouldBe DateLanguage.Chinese
     }
 
