@@ -58,6 +58,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -81,6 +82,13 @@ private data class AdjustBalanceDialogState(
     val targetBalanceText: String,
     val categoryQuery: String = "",
 )
+
+/**
+ * Type options offered by the categories view: transfers never have a category,
+ * so a Transfer type filter is not offered there (the ViewModel treats one as
+ * All anyway).
+ */
+private val categoryTypeOptions = listOf(EntryType.Expense, EntryType.Income)
 
 @Composable
 fun LedgerScreen(
@@ -253,6 +261,11 @@ fun LedgerScreen(
                     LedgerFilterControls(
                         typeFilter = typeFilter,
                         onTypeFilterChange = viewModel::setTypeFilter,
+                        typeOptions = if (viewMode == LedgerViewMode.Categories) {
+                            categoryTypeOptions
+                        } else {
+                            typeOrder
+                        },
                         showAmountFilter = viewMode == LedgerViewMode.Entries,
                         amountFilter = amountFilter,
                         onAmountFilterChange = viewModel::setAmountFilter,

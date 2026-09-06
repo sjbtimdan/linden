@@ -16,22 +16,25 @@ import org.sjbtimdan.linden.ui.entry.displayName
  * Same order as the type selector on the entry screen; EntryType.entries itself
  * is declared Income, Transfer, Expense.
  */
-private val typeOrder = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
+internal val typeOrder = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
 /**
  * The chip filters of the current view, laid out inline under the search field —
  * no dialog. The type filter is a single-select chip row (All by default, then
- * Expense/Income/Transfer) and narrows both the entries list and the category
- * totals; the amount filter only applies to the entries list
- * ([showAmountFilter]). Category and account narrowing is done from the search
- * field's suggestion chips instead of dropdowns. Every filter applies
- * immediately; the removable summary chips below the period bar keep reporting
- * active filters.
+ * [typeOptions], normally Expense/Income/Transfer) and narrows both the entries
+ * list and the category totals; the categories view passes [typeOptions]
+ * without Transfer, which never has a category. All stays selected whenever the
+ * current filter is not among the offered types. The amount filter only applies
+ * to the entries list ([showAmountFilter]). Category and account narrowing is
+ * done from the search field's suggestion chips instead of dropdowns. Every
+ * filter applies immediately; the removable summary chips below the period bar
+ * keep reporting active filters.
  */
 @Composable
 fun LedgerFilterControls(
     typeFilter: EntryType?,
     onTypeFilterChange: (EntryType?) -> Unit,
+    typeOptions: List<EntryType> = typeOrder,
     showAmountFilter: Boolean,
     amountFilter: AmountFilter?,
     onAmountFilterChange: (AmountFilter?) -> Unit,
@@ -44,12 +47,12 @@ fun LedgerFilterControls(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         FilterChip(
-            selected = typeFilter == null,
+            selected = typeFilter == null || typeFilter !in typeOptions,
             onClick = { onTypeFilterChange(null) },
             label = { Text("All") },
             modifier = Modifier.testTag("typeFilter-All"),
         )
-        typeOrder.forEach { type ->
+        typeOptions.forEach { type ->
             FilterChip(
                 selected = typeFilter == type,
                 onClick = { onTypeFilterChange(type) },

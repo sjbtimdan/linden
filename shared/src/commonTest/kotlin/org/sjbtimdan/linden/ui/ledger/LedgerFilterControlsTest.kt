@@ -73,6 +73,38 @@ class LedgerFilterControlsTest : StringSpec({
         }
     }
 
+    "without the transfer chip a Transfer filter reads back as All selected" {
+        onTestMain {
+            runComposeUiTest {
+                setControlsContent(
+                    typeOptions = listOf(EntryType.Expense, EntryType.Income),
+                    typeFilter = EntryType.Transfer,
+                )
+
+                onNodeWithTag("typeFilter-All").assertIsSelected()
+                onNodeWithTag("typeFilter-Expense").assertIsNotSelected()
+                onNodeWithTag("typeFilter-Income").assertIsNotSelected()
+                onNodeWithTag("typeFilter-Transfer").assertDoesNotExist()
+            }
+        }
+    }
+
+    "without the transfer chip the offered types still report their selection" {
+        onTestMain {
+            runComposeUiTest {
+                var selected: EntryType? = null
+                setControlsContent(
+                    typeOptions = listOf(EntryType.Expense, EntryType.Income),
+                    onTypeFilterChange = { selected = it },
+                )
+
+                onNodeWithTag("typeFilter-Income").performClick()
+
+                selected shouldBe EntryType.Income
+            }
+        }
+    }
+
     "the active type reads back as the selected chip" {
         onTestMain {
             runComposeUiTest {
@@ -164,6 +196,7 @@ class LedgerFilterControlsTest : StringSpec({
 private fun ComposeUiTest.setControlsContent(
     showAmountFilter: Boolean = true,
     typeFilter: EntryType? = null,
+    typeOptions: List<EntryType> = typeOrder,
     amountFilter: AmountFilter? = null,
     onTypeFilterChange: (EntryType?) -> Unit = {},
     onAmountFilterChange: (AmountFilter?) -> Unit = {},
@@ -179,6 +212,7 @@ private fun ComposeUiTest.setControlsContent(
                 type = it
                 onTypeFilterChange(it)
             },
+            typeOptions = typeOptions,
             showAmountFilter = showAmountFilter,
             amountFilter = amountFilter,
             onAmountFilterChange = onAmountFilterChange,

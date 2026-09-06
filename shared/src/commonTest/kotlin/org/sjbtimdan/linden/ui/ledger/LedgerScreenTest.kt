@@ -36,6 +36,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
@@ -1480,6 +1481,10 @@ class LedgerScreenTest : StringSpec({
             expandFilters()
 
             onNodeWithTag("typeFilter-All").assertIsDisplayed()
+            onNodeWithTag("typeFilter-Expense").assertIsDisplayed()
+            onNodeWithTag("typeFilter-Income").assertIsDisplayed()
+            // Transfers never have a category, so the categories view offers no Transfer chip.
+            onNodeWithTag("typeFilter-Transfer").assertDoesNotExist()
             onNodeWithTag("amountFilterChip").assertDoesNotExist()
 
             // Suggestions only narrow the entries view; the categories view
@@ -1487,6 +1492,44 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("searchField").performTextInput("gro")
             onNodeWithTag("filterSuggestions").assertDoesNotExist()
             onNodeWithText("Groceries").assertIsDisplayed()
+        }
+    }
+
+    "a transfer type filter is ignored by the categories view and preserved for entries" {
+        withLedgerViewModel { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(
+                TransferEntry(0, null, "Move", main, 10_000, toAccount = savings, toAmount = null),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+            onNodeWithTag("typeFilter-Transfer").performClick()
+
+            // The entries view narrows to transfers only.
+            onNodeWithText("Move").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+
+            // The categories view never offers Transfer: the filter reads as All
+            // and the category totals stay visible instead of emptying.
+            onNodeWithTag("viewModeTab-Categories").performClick()
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithTag("typeFilter-All").assertIsSelected()
+            onNodeWithTag("typeFilter-Transfer").assertDoesNotExist()
+
+            // Switching back keeps the Transfer filter on the entries view.
+            onNodeWithTag("viewModeTab-Entries").performClick()
+
+            onNodeWithText("Move").assertIsDisplayed()
+            onNodeWithText("Coffee").assertDoesNotExist()
+            onNodeWithTag("typeFilter-Transfer").assertIsSelected()
         }
     }
 

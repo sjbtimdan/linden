@@ -103,10 +103,20 @@ class LedgerViewModel(
         }
         .stateFlow(emptyList())
 
-    val entries: StateFlow<List<Entry>> = combine(
+    /** The type filter as the categories view applies it: Transfer counts as All. */
+    private val typeFilterForCategories: StateFlow<EntryType?> = _typeFilter
+        .map { type -> type?.takeUnless { it == EntryType.Transfer } }
+        .stateFlow(null)
+
+    /**
+     * Entries matching the search text and the amount filter, narrowed by the
+     * given type filter. The categories view feeds [typeFilterForCategories]
+     * here because transfers carry no category and would only empty its totals.
+     */
+    private fun filteredEntries(typeFilter: StateFlow<EntryType?>): StateFlow<List<Entry>> = combine(
         periodEntries,
         _searchQuery,
-        _typeFilter,
+        typeFilter,
         _amountFilter,
     ) { periodEntries, query, type, amountFilter ->
         val normalized = query.trim().lowercase()
@@ -117,6 +127,14 @@ class LedgerViewModel(
             .map { it.entry }
             .toList()
     }.stateFlow(emptyList())
+
+    val entries: StateFlow<List<Entry>> = filteredEntries(_typeFilter)
+
+    /**
+     * Same narrowing as [entries] but a Transfer type filter counts as no filter
+     * at all, so switching to the categories view with one set never empties it.
+     */
+    val categoryEntries: StateFlow<List<Entry>> = filteredEntries(typeFilterForCategories)
 
     /**
      * Entries shown by the entries view, narrowed to a category and/or account
@@ -239,7 +257,7 @@ class LedgerViewModel(
 
     /** Net total per category in the default currency derived from the filtered entries. */
     val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
-        entries,
+        categoryEntries,
         defaultCurrency,
         rates,
         budgetDao.budgetsFlow(),
@@ -265,7 +283,7 @@ class LedgerViewModel(
 
     /** Net total of all categories in the default currency; null when a rate is missing. */
     val categoryTotal: StateFlow<Long?> = combine(
-        entries,
+        categoryEntries,
         defaultCurrency,
         rates,
     ) { entries, currency, rates ->
