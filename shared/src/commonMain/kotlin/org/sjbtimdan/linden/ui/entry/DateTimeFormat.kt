@@ -15,8 +15,7 @@ fun formatDateTime(instant: Instant, zone: TimeZone): String =
     "${formatDate(instant, zone)}, ${formatTime(instant, zone)}"
 
 /** Formats an instant's date in [zone] per the active [DateLanguage], e.g. "Aug 10, 2026". */
-fun formatDate(instant: Instant, zone: TimeZone): String =
-    formatDate(instant, zone, dateLanguage(platformLanguageCode()))
+fun formatDate(instant: Instant, zone: TimeZone): String = formatDate(instant, zone, dateLanguage(platformLocaleTag()))
 
 /** Language-explicit variant of [formatDate], for callers that already resolved the language. */
 internal fun formatDate(instant: Instant, zone: TimeZone, language: DateLanguage): String {

@@ -52,5 +52,10 @@ internal fun dateLanguage(languageCode: String?): DateLanguage = when {
     else -> DateLanguage.English
 }
 
-/** Language code of the platform's active locale, e.g. "en", "it", "zh". */
-internal expect fun platformLanguageCode(): String
+/**
+ * Full BCP-47 tag of the platform's active locale, e.g. "en-US", "it-CH",
+ * "zh-HK". [dateLanguage] only needs the language, while the app-language
+ * resolution ([org.sjbtimdan.linden.model.AppLanguage.fromSystemLanguage])
+ * needs the region/script to split Simplified from Traditional Chinese.
+ */
+internal expect fun platformLocaleTag(): String

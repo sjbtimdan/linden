@@ -8,7 +8,7 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import org.sjbtimdan.linden.ui.entry.DateLanguage
 import org.sjbtimdan.linden.ui.entry.dateLanguage
-import org.sjbtimdan.linden.ui.entry.platformLanguageCode
+import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 
 enum class LedgerPeriod {
     Day,
@@ -61,7 +61,7 @@ fun LedgerPeriod.nextAnchor(anchor: LocalDate): LocalDate {
  * Navigator label per the active language, e.g. "Aug 15, 2026", "Aug 10–16, 2026",
  * "Aug 2026" or "2026"; null for [LedgerPeriod.All].
  */
-fun LedgerPeriod.windowLabel(anchor: LocalDate): String? = windowLabel(anchor, dateLanguage(platformLanguageCode()))
+fun LedgerPeriod.windowLabel(anchor: LocalDate): String? = windowLabel(anchor, dateLanguage(platformLocaleTag()))
 
 /** Language-explicit variant of [windowLabel], for tests and callers that resolved the language. */
 internal fun LedgerPeriod.windowLabel(anchor: LocalDate, language: DateLanguage): String? {
