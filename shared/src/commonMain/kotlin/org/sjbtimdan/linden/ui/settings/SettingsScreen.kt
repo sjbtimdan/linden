@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
@@ -83,6 +84,7 @@ import org.sjbtimdan.linden.resources.settings_import_split_note
 import org.sjbtimdan.linden.resources.settings_import_summary
 import org.sjbtimdan.linden.resources.settings_language
 import org.sjbtimdan.linden.resources.settings_nav_budgets
+import org.sjbtimdan.linden.resources.settings_nav_insights
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
 import org.sjbtimdan.linden.resources.settings_restore_backup
@@ -111,6 +113,7 @@ fun SettingsScreen(
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
     onNavigateToBudgets: () -> Unit = {},
+    onNavigateToInsights: () -> Unit = {},
     pickImportFile: (() -> Unit)? = null,
     pickBackupFile: (() -> Unit)? = null,
     pickRestoreFile: (() -> Unit)? = null,
@@ -281,6 +284,15 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(stringResource(Res.string.settings_nav_budgets))
+            }
+            Button(onClick = onNavigateToInsights) {
+                Icon(
+                    imageVector = Icons.Filled.BarChart,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(Res.string.settings_nav_insights))
             }
             FilledTonalButton(
                 onClick = { showImportConfirmation = true },

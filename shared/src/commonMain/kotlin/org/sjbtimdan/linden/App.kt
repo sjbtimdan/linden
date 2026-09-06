@@ -39,6 +39,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.entry.EntryPoint
+import org.sjbtimdan.linden.ui.insights.InsightsScreen
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.rates.RatesScreen
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
@@ -52,6 +53,7 @@ sealed class Screen {
     data object AccountList : Screen()
     data object Rates : Screen()
     data object Budgets : Screen()
+    data object Insights : Screen()
 }
 
 @Composable
@@ -62,6 +64,7 @@ fun App(dependencies: AppDependencies) {
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
     val budgetViewModel = dependencies.budgetViewModel
+    val insightsViewModel = dependencies.insightsViewModel
     val entryViewModel = dependencies.entryViewModel
     val ledgerViewModel = dependencies.ledgerViewModel
     DisposableEffect(dependencies.httpClient) {
@@ -155,6 +158,7 @@ fun App(dependencies: AppDependencies) {
                                 onNavigateToAccounts = { currentScreen = Screen.AccountList },
                                 onNavigateToRates = { currentScreen = Screen.Rates },
                                 onNavigateToBudgets = { currentScreen = Screen.Budgets },
+                                onNavigateToInsights = { currentScreen = Screen.Insights },
                             )
 
                             Screen.CategoryList -> CategoryListScreen(
@@ -174,6 +178,11 @@ fun App(dependencies: AppDependencies) {
 
                             Screen.Budgets -> BudgetScreen(
                                 viewModel = budgetViewModel,
+                                onNavigateBack = { currentScreen = Screen.Settings },
+                            )
+
+                            Screen.Insights -> InsightsScreen(
+                                viewModel = insightsViewModel,
                                 onNavigateBack = { currentScreen = Screen.Settings },
                             )
                         }

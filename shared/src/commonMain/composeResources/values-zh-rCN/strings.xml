@@ -206,6 +206,12 @@
     <string name="settings_hide_totals">隐藏总额</string>
     <string name="settings_nav_rates">汇率</string>
     <string name="settings_nav_budgets">预算</string>
+    <string name="settings_nav_insights">统计</string>
+    <string name="insights_vs_previous">较%1$s：%2$s</string>
+    <string name="insights_expenses">支出</string>
+    <string name="insights_income">收入</string>
+    <string name="insights_previous_period">前十二个月</string>
+    <string name="insights_next_period">后十二个月</string>
     <string name="settings_import_ivy">从 Ivy 导入</string>
     <string name="settings_backup">备份</string>
     <string name="settings_backup_db">备份数据库</string>

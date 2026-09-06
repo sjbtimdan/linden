@@ -34,6 +34,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
+import org.sjbtimdan.linden.ui.insights.InsightsViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
@@ -308,3 +309,34 @@ fun withLedgerViewModel(
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
 ) = withLedgerViewModel(defaultCurrency = defaultCurrency, rates = rates) { _, _, _, _, viewModel -> block(viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withInsightsViewModel(
+    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    defaultCurrency: Currency = Currency.CHF,
+    rates: List<FxRate> = emptyList(),
+    hideEntryTotal: Boolean = false,
+    block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryDao, InsightsViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val accountDao = AccountDao(database.accountQueries)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val entryDao = EntryDao(database.entryQueries)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
+            if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
+            val fxRateDao = FxRateDao(database.fxRateQueries)
+            if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
+            val viewModel = InsightsViewModel(
+                entryDao,
+                settingsDao,
+                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                initialHideEntryTotal = hideEntryTotal,
+                today = today,
+            )
+            block(accountDao, categoryDao, entryDao, viewModel)
+        }
+    }
+}
