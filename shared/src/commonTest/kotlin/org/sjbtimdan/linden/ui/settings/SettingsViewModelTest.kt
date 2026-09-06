@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -385,6 +386,30 @@ class SettingsViewModelTest : StringSpec({
             }
 
             (state as BackupState.Error).message shouldContain "stream exploded"
+        }
+    }
+
+    "restoreFrom keeps a null message when the failure has none" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = SettingsViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                importer = IvyImporter(database),
+                backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+            )
+
+            val failingInput = object : InputStream() {
+                override fun read(): Int = throw RuntimeException()
+            }
+            viewModel.restoreFrom(failingInput)
+            val state = withTimeout(5_000.milliseconds) {
+                viewModel.restoreState.first { it is BackupState.Error }
+            }
+
+            (state as BackupState.Error).message shouldBe null
         }
     }
 })

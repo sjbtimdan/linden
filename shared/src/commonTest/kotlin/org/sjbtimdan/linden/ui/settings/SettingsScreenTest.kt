@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.withSettingsViewModel
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTestApi::class)
@@ -299,6 +300,20 @@ class SettingsScreenTest : StringSpec({
             withTimeout(5_000.milliseconds) { viewModel.restoreState.first { it is BackupState.Error } }
 
             onNodeWithText("Restore failed:", substring = true).assertExists()
+        }
+    }
+
+    "restore error without an exception message shows the localized fallback" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+
+            val failingInput = object : InputStream() {
+                override fun read(): Int = throw RuntimeException()
+            }
+            viewModel.restoreFrom(failingInput)
+            withTimeout(5_000.milliseconds) { viewModel.restoreState.first { it is BackupState.Error } }
+
+            onNodeWithText("Restore failed: unknown error").assertExists()
         }
     }
 })

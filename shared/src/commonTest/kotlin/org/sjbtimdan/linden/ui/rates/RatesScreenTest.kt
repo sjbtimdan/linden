@@ -118,6 +118,24 @@ class RatesScreenTest : StringSpec({
         }
     }
 
+    "a failed refresh without an exception message shows the localized fallback" {
+        withRatesViewModel(fxRatesSource = FakeFxRatesSource { throw RuntimeException() }) { _, viewModel ->
+            setContent {
+                RatesScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Refresh").performClick()
+
+            withTimeout(5_000.milliseconds) {
+                viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+            }
+            onNodeWithText("Refresh failed: unknown error").assertExists()
+        }
+    }
+
     "clicking back triggers navigation" {
         withRatesViewModel { _, viewModel ->
             var navigatedBack = false

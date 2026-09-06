@@ -27,7 +27,7 @@ sealed interface ImportState {
     data object Idle : ImportState
     data object Importing : ImportState
     data class Success(val result: IvyImportResult) : ImportState
-    data class Error(val message: String) : ImportState
+    data class Error(val message: String?) : ImportState
 }
 
 /** State of a backup or restore operation; [T] is the success payload. */
@@ -35,7 +35,7 @@ sealed interface BackupState<out T> {
     data object Idle : BackupState<Nothing>
     data object Working : BackupState<Nothing>
     data class Success<T>(val value: T) : BackupState<T>
-    data class Error(val message: String) : BackupState<Nothing>
+    data class Error(val message: String?) : BackupState<Nothing>
 }
 
 class SettingsViewModel(
@@ -97,7 +97,7 @@ class SettingsViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    ImportState.Error(e.message ?: "Import failed")
+                    ImportState.Error(e.message)
                 }
             }
         }
@@ -117,7 +117,7 @@ class SettingsViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    BackupState.Error(e.message ?: "Backup failed")
+                    BackupState.Error(e.message)
                 }
             }
         }
@@ -133,7 +133,7 @@ class SettingsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                BackupState.Error(e.message ?: "Restore failed")
+                BackupState.Error(e.message)
             }
             _restoreState.update { state }
         }
@@ -155,7 +155,7 @@ class SettingsViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    BackupState.Error(e.message ?: "Export failed")
+                    BackupState.Error(e.message)
                 }
             }
         }

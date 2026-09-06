@@ -61,6 +61,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_dismiss
+import org.sjbtimdan.linden.resources.common_unknown_error
 import org.sjbtimdan.linden.resources.settings_backup
 import org.sjbtimdan.linden.resources.settings_backup_db
 import org.sjbtimdan.linden.resources.settings_backup_failed
@@ -289,7 +290,10 @@ fun SettingsScreen(
             }
 
             is ImportState.Error -> ImportResultRow(
-                text = stringResource(Res.string.settings_import_failed, state.message),
+                text = stringResource(
+                    Res.string.settings_import_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
                 onDismiss = viewModel::clearImportState,
             )
         }
@@ -358,7 +362,10 @@ fun SettingsScreen(
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = stringResource(Res.string.settings_backup_failed, state.message),
+                text = stringResource(
+                    Res.string.settings_backup_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
                 onDismiss = viewModel::clearBackupState,
             )
         }
@@ -379,7 +386,10 @@ fun SettingsScreen(
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = stringResource(Res.string.settings_restore_failed, state.message),
+                text = stringResource(
+                    Res.string.settings_restore_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
                 onDismiss = viewModel::clearRestoreState,
             )
         }
@@ -395,7 +405,10 @@ fun SettingsScreen(
             )
 
             is BackupState.Error -> ImportResultRow(
-                text = stringResource(Res.string.settings_export_failed, state.message),
+                text = stringResource(
+                    Res.string.settings_export_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
                 onDismiss = viewModel::clearExportState,
             )
         }

@@ -45,6 +45,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_dismiss
+import org.sjbtimdan.linden.resources.common_unknown_error
 import org.sjbtimdan.linden.resources.rates_auto_update_help
 import org.sjbtimdan.linden.resources.rates_edit_rate
 import org.sjbtimdan.linden.resources.rates_from_date
@@ -126,7 +127,10 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             RatesRefreshState.Refreshing -> Unit
 
             is RatesRefreshState.Error -> ErrorRow(
-                text = stringResource(Res.string.rates_refresh_failed, state.message),
+                text = stringResource(
+                    Res.string.rates_refresh_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
                 onDismiss = viewModel::clearRatesError,
             )
         }

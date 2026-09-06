@@ -18,6 +18,8 @@
     <string name="common_ok">OK</string>
     <string name="common_delete">Delete</string>
     <string name="common_dismiss">Dismiss</string>
+    <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
+    <string name="common_unknown_error">unknown error</string>
 
     <!-- Entry types -->
     <string name="entry_type_expense">Expense</string>

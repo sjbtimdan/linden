@@ -76,6 +76,26 @@ class RatesViewModelTest : StringSpec({
         }
     }
 
+    "refreshRates keeps a null message when the source throws without one" {
+        onTestMain {
+            val database = lindenDatabase()
+            val viewModel = RatesViewModel(
+                settingsDao = SettingsDao(database.settingsQueries),
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource { throw RuntimeException() },
+                ),
+            )
+
+            viewModel.refreshRates()
+
+            val state = withTimeout(5_000.milliseconds) {
+                viewModel.ratesRefreshState.first { it is RatesRefreshState.Error }
+            }
+            (state as RatesRefreshState.Error).message shouldBe null
+        }
+    }
+
     "a default currency change refreshes rates for the new base" {
         onTestMain {
             val database = lindenDatabase()

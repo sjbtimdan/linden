@@ -24,7 +24,7 @@ import kotlin.time.Instant
 sealed interface RatesRefreshState {
     data object Idle : RatesRefreshState
     data object Refreshing : RatesRefreshState
-    data class Error(val message: String) : RatesRefreshState
+    data class Error(val message: String?) : RatesRefreshState
 }
 
 sealed interface RatesWarning {
@@ -86,7 +86,7 @@ class RatesViewModel(
                 throw e
             } catch (e: Exception) {
                 evaluateRatesWarning(currency)
-                _ratesRefreshState.update { RatesRefreshState.Error(e.message ?: "Failed to refresh rates") }
+                _ratesRefreshState.update { RatesRefreshState.Error(e.message) }
             }
         }
     }
@@ -116,7 +116,7 @@ class RatesViewModel(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    RatesRefreshState.Error(e.message ?: "Failed to refresh rates")
+                    RatesRefreshState.Error(e.message)
                 }
             }
             if (_ratesRefreshState.value is RatesRefreshState.Idle) {
