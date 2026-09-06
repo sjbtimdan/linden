@@ -109,6 +109,14 @@ FROM EntryView
 WHERE createdAt <= :epochMs
 ORDER BY createdAt DESC, id DESC;
 
+-- Whether any entry exists at all, regardless of period or filters: drives the
+-- guided empty state (new app) vs the plain empty-match message. A LIMIT 1
+-- probe avoids loading and mapping every row just to test emptiness.
+entryExists:
+SELECT id
+FROM EntryEntity
+LIMIT 1;
+
 deleteById:
 DELETE FROM EntryEntity WHERE id = :id;
 

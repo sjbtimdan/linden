@@ -183,7 +183,7 @@ class LedgerViewModel(
 
     /** Whether any entry exists at all, regardless of period or filters — drives the
      * guided empty state for a new app vs the plain message for an empty match. */
-    val hasAnyEntries: StateFlow<Boolean> = entryDao.getAll().map { it.isNotEmpty() }.stateFlow(false)
+    val hasAnyEntries: StateFlow<Boolean> = entryDao.entryExists().stateFlow(false)
 
     /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */
     private val periodEnd: StateFlow<LocalDate?> = periodWindow

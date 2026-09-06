@@ -70,6 +70,9 @@ class EntryDao(private val queries: EntryQueries) {
     fun getUpTo(epochMs: Long): Flow<List<Entry>> =
         queries.selectUpTo(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
 
+    /** Whether any entry exists at all — a LIMIT 1 probe, far cheaper than [getAll]. */
+    fun entryExists(): Flow<Boolean> = queries.entryExists().asFlow().map { it.awaitAsOneOrNull() != null }
+
     suspend fun latest(type: EntryType): Entry? = queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
     /** Categories used on entries in [accountId], most-used first (top 5). */
