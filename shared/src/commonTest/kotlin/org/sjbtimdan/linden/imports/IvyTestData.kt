@@ -1,24 +1,10 @@
 package org.sjbtimdan.linden.imports
 
-import java.io.ByteArrayOutputStream
+import org.sjbtimdan.linden.backup.buildJsonZip
 import java.nio.charset.Charset
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
-internal fun buildIvyZip(json: String, charset: Charset = Charsets.UTF_16BE): ByteArray {
-    val jsonBytes = charset.encode(json).let { buffer ->
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        bytes
-    }
-    val bos = ByteArrayOutputStream()
-    ZipOutputStream(bos).use { zos ->
-        zos.putNextEntry(ZipEntry("backup.json"))
-        zos.write(jsonBytes)
-        zos.closeEntry()
-    }
-    return bos.toByteArray()
-}
+internal fun buildIvyZip(json: String, charset: Charset = Charsets.UTF_16BE): ByteArray =
+    buildJsonZip(json, "backup.json", charset)
 
 internal val minimalIvyJson: String
     get() = """
