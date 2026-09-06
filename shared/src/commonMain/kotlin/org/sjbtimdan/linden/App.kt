@@ -28,6 +28,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.nav_entry
+import org.sjbtimdan.linden.resources.nav_ledger
+import org.sjbtimdan.linden.resources.nav_settings
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
@@ -80,7 +85,7 @@ fun App(dependencies: AppDependencies) {
                                 contentDescription = null,
                             )
                         },
-                        label = { Text("Ledger") },
+                        label = { Text(stringResource(Res.string.nav_ledger)) },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Entry,
@@ -91,7 +96,7 @@ fun App(dependencies: AppDependencies) {
                                 contentDescription = null,
                             )
                         },
-                        label = { Text("Entry") },
+                        label = { Text(stringResource(Res.string.nav_entry)) },
                     )
                     NavigationBarItem(
                         selected = currentScreen == Screen.Settings,
@@ -102,7 +107,7 @@ fun App(dependencies: AppDependencies) {
                                 contentDescription = null,
                             )
                         },
-                        label = { Text("Settings") },
+                        label = { Text(stringResource(Res.string.nav_settings)) },
                     )
                 }
             },

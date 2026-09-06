@@ -47,9 +47,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.budget_category
+import org.sjbtimdan.linden.resources.budget_choose_category
+import org.sjbtimdan.linden.resources.budget_delete
+import org.sjbtimdan.linden.resources.budget_edit
+import org.sjbtimdan.linden.resources.budget_empty
+import org.sjbtimdan.linden.resources.budget_invalid_amount
+import org.sjbtimdan.linden.resources.budget_monthly_limit
+import org.sjbtimdan.linden.resources.budget_new
+import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.common_cancel
+import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
@@ -87,7 +101,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
         IconButton(onClick = onNavigateBack) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(Res.string.common_back),
             )
         }
 
@@ -105,7 +119,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(6.dp))
-            Text("New Budget")
+            Text(stringResource(Res.string.budget_new))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +132,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "No budgets yet. Add one to track a category's monthly spending.",
+                    text = stringResource(Res.string.budget_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -165,7 +179,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                             Text(
-                                text = "Monthly limit",
+                                text = stringResource(Res.string.budget_monthly_limit),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -182,6 +196,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
 
     dialogState?.let { state ->
         val isEditing = state.budget != null
+        val invalidLimitError = stringResource(Res.string.budget_invalid_amount)
         BudgetDialog(
             categoryName = state.categoryName,
             limitText = state.limitText,
@@ -200,7 +215,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
             onSave = {
                 val limit = parseAmount(state.limitText)
                 if (limit == null || limit <= 0) {
-                    dialogState = state.copy(limitError = "Enter a valid amount")
+                    dialogState = state.copy(limitError = invalidLimitError)
                 } else if (viewModel.saveBudget(state.categoryName, limit)) {
                     dialogState = null
                 }
@@ -229,12 +244,12 @@ private fun BudgetDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
         title = {
-            Text(if (isEditing) "Edit Budget" else "New Budget")
+            Text(if (isEditing) stringResource(Res.string.budget_edit) else stringResource(Res.string.budget_new))
         },
         text = {
             Column {
                 Text(
-                    text = "Category",
+                    text = stringResource(Res.string.budget_category),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
@@ -242,14 +257,14 @@ private fun BudgetDialog(
                     OutlinedTextField(
                         value = categoryName,
                         onValueChange = onCategoryChange,
-                        label = { Text("Category") },
+                        label = { Text(stringResource(Res.string.budget_category)) },
                         singleLine = true,
                         readOnly = true,
                         trailingIcon = {
                             IconButton(onClick = { menuExpanded = true }) {
                                 Icon(
                                     imageVector = Icons.Filled.ArrowDropDown,
-                                    contentDescription = "Choose category",
+                                    contentDescription = stringResource(Res.string.budget_choose_category),
                                 )
                             }
                         },
@@ -274,7 +289,7 @@ private fun BudgetDialog(
                 OutlinedTextField(
                     value = limitText,
                     onValueChange = onLimitChange,
-                    label = { Text("Monthly limit") },
+                    label = { Text(stringResource(Res.string.budget_monthly_limit)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = limitError != null,
@@ -283,7 +298,12 @@ private fun BudgetDialog(
                         {
                             IconButton(
                                 onClick = { onLimitChange("") },
-                            ) { Icon(Icons.Default.Close, contentDescription = "Clear") }
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(Res.string.common_clear),
+                                )
+                            }
                         }
                     } else {
                         null
@@ -302,7 +322,7 @@ private fun BudgetDialog(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Delete Budget")
+                        Text(stringResource(Res.string.budget_delete))
                     }
                 }
             }
@@ -312,12 +332,12 @@ private fun BudgetDialog(
                 onClick = onSave,
                 enabled = categoryName.isNotBlank(),
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.common_cancel))
             }
         },
     )

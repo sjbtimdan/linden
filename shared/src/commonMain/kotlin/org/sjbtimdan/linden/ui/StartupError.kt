@@ -12,6 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.startup_error_message
+import org.sjbtimdan.linden.resources.startup_error_retry
+import org.sjbtimdan.linden.resources.startup_error_title
 
 @Composable
 fun StartupError(onRetry: () -> Unit) {
@@ -23,15 +28,15 @@ fun StartupError(onRetry: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "Linden failed to start",
+                text = stringResource(Res.string.startup_error_title),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
-                text = "An error occurred while opening your data.",
+                text = stringResource(Res.string.startup_error_message),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Button(onClick = onRetry, modifier = Modifier.testTag("retry")) {
-                Text("Retry")
+                Text(stringResource(Res.string.startup_error_retry))
             }
         }
     }
