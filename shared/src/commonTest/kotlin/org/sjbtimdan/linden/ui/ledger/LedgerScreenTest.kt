@@ -444,8 +444,8 @@ class LedgerScreenTest : StringSpec({
                 LedgerScreen(viewModel = viewModel)
             }
 
-            onNodeWithText("10 Sep 2001").assertIsDisplayed()
-            onNodeWithText("9 Sep 2001").assertIsDisplayed()
+            onNodeWithText("Sep 10, 2001").assertIsDisplayed()
+            onNodeWithText("Sep 9, 2001").assertIsDisplayed()
         }
     }
 
@@ -478,7 +478,7 @@ class LedgerScreenTest : StringSpec({
             var pinnedTop: Dp? = null
             for (day in 8..12) {
                 runCatching {
-                    val top = onNodeWithText("$day Sep 2001").getUnclippedBoundsInRoot().top
+                    val top = onNodeWithText("Sep $day, 2001").getUnclippedBoundsInRoot().top
                     if (pinnedTop == null || top < pinnedTop) pinnedTop = top
                 }
             }
@@ -589,11 +589,11 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Month").performClick()
 
-            onNodeWithText("15 Aug 2026").assertIsDisplayed()
+            onNodeWithText("Aug 15, 2026").assertIsDisplayed()
             onNodeWithText("08:00").assertIsDisplayed()
             onNodeWithText("12:30").assertIsDisplayed()
             onNodeWithText("19:00").assertIsDisplayed()
-            onNodeWithText("15 Aug 2026, 08:00").assertDoesNotExist()
+            onNodeWithText("Aug 15, 2026, 08:00").assertDoesNotExist()
 
             // Day: same split — header carries the date, rows only the time.
             onNodeWithTag("periodLabel").performClick()
@@ -602,7 +602,7 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("08:00").assertIsDisplayed()
             onNodeWithText("12:30").assertIsDisplayed()
             onNodeWithText("19:00").assertIsDisplayed()
-            onNodeWithText("15 Aug 2026, 08:00").assertDoesNotExist()
+            onNodeWithText("Aug 15, 2026, 08:00").assertDoesNotExist()
         }
     }
 

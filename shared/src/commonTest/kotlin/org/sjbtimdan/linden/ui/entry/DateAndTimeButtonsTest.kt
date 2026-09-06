@@ -31,7 +31,7 @@ class DateAndTimeButtonsTest : StringSpec({
                 }
 
                 onNodeWithText("Date & time").assertIsDisplayed()
-                onNodeWithText("10 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 10, 2026").assertIsDisplayed()
                 onNodeWithText("14:30").assertIsDisplayed()
             }
         }
@@ -49,7 +49,7 @@ class DateAndTimeButtonsTest : StringSpec({
                     )
                 }
 
-                onNodeWithText("10 Aug 2026").performClick()
+                onNodeWithText("Aug 10, 2026").performClick()
                 waitForIdle()
                 onNodeWithText("Saturday, August 15, 2026").performClick()
                 onNodeWithText("OK").performClick()
@@ -72,7 +72,7 @@ class DateAndTimeButtonsTest : StringSpec({
                     )
                 }
 
-                onNodeWithText("10 Aug 2026").performClick()
+                onNodeWithText("Aug 10, 2026").performClick()
                 waitForIdle()
                 onNodeWithText("Cancel").performClick()
                 waitForIdle()

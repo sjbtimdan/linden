@@ -7,19 +7,21 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
-internal val MONTHS = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-)
-
-/** Formats an instant as "10 Aug 2026, 14:30" in the given zone. */
+/**
+ * Formats an instant as a localized date plus "HH:mm" in [zone], e.g.
+ * "Aug 10, 2026, 14:30" for English. The date half follows [DateLanguage].
+ */
 fun formatDateTime(instant: Instant, zone: TimeZone): String =
     "${formatDate(instant, zone)}, ${formatTime(instant, zone)}"
 
-/** Formats an instant's date as "10 Aug 2026" in the given zone. */
-fun formatDate(instant: Instant, zone: TimeZone): String {
+/** Formats an instant's date in [zone] per the active [DateLanguage], e.g. "Aug 10, 2026". */
+fun formatDate(instant: Instant, zone: TimeZone): String =
+    formatDate(instant, zone, dateLanguage(platformLanguageCode()))
+
+/** Language-explicit variant of [formatDate], for callers that already resolved the language. */
+internal fun formatDate(instant: Instant, zone: TimeZone, language: DateLanguage): String {
     val local = instant.toLocalDateTime(zone)
-    return "${local.day} ${MONTHS[local.month.number - 1]} ${local.year}"
+    return language.dateText(local.day, local.month.number, local.year)
 }
 
 /** Formats an instant's time as "14:30" in the given zone. */

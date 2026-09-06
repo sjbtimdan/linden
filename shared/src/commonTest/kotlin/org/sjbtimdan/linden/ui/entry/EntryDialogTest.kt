@@ -173,14 +173,14 @@ class EntryDialogTest : StringSpec({
                 var changedTo: Instant? = null
                 showForm(draft(), onCreatedAtChange = { changedTo = it })
 
-                onNodeWithText("10 Aug 2026").performClick()
+                onNodeWithText("Aug 10, 2026").performClick()
                 waitForIdle()
                 onNodeWithText("Saturday, August 15, 2026").performClick()
                 onNodeWithText("OK").performClick()
                 waitForIdle()
 
                 changedTo shouldBe Instant.parse("2026-08-15T14:30:00Z")
-                onNodeWithText("15 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 15, 2026").assertIsDisplayed()
                 onNodeWithText("14:30").assertIsDisplayed()
             }
         }
@@ -195,7 +195,7 @@ class EntryDialogTest : StringSpec({
                     onCreatedAtChange = { changedTo = it },
                 )
 
-                onNodeWithText("10 Aug 2026").performClick()
+                onNodeWithText("Aug 10, 2026").performClick()
                 waitForIdle()
                 onNodeWithText("Saturday, August 15, 2026").performClick()
                 onNodeWithText("OK").performClick()
@@ -214,13 +214,13 @@ class EntryDialogTest : StringSpec({
                 var changedTo: Instant? = null
                 showForm(draft(), onCreatedAtChange = { changedTo = it })
 
-                onNodeWithText("10 Aug 2026").performClick()
+                onNodeWithText("Aug 10, 2026").performClick()
                 waitForIdle()
                 onNodeWithText("Cancel").performClick()
                 waitForIdle()
 
                 changedTo.shouldBeNull()
-                onNodeWithText("10 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 10, 2026").assertIsDisplayed()
                 onNodeWithText("14:30").assertIsDisplayed()
             }
         }
@@ -243,7 +243,7 @@ class EntryDialogTest : StringSpec({
 
                 changedTo shouldBe Instant.parse("2026-08-10T15:30:00Z")
                 onNodeWithText("15:30").assertIsDisplayed()
-                onNodeWithText("10 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 10, 2026").assertIsDisplayed()
             }
         }
     }
@@ -286,7 +286,7 @@ class EntryDialogTest : StringSpec({
 
                 changedTo.shouldBeNull()
                 onNodeWithText("14:30").assertIsDisplayed()
-                onNodeWithText("10 Aug 2026").assertIsDisplayed()
+                onNodeWithText("Aug 10, 2026").assertIsDisplayed()
             }
         }
     }

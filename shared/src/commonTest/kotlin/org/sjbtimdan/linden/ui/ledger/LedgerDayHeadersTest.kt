@@ -36,7 +36,7 @@ class LedgerDayHeadersTest : StringSpec({
             listOf(expense(1, 0), expense(2, day - 1)),
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L)
-        items.first().shouldBeInstanceOf<DayHeaderItem>().label shouldBe "1 Jan 1970"
+        items.first().shouldBeInstanceOf<DayHeaderItem>().label shouldBe "Jan 1, 1970"
     }
 
     "entries on multiple days produce a header per day" {
