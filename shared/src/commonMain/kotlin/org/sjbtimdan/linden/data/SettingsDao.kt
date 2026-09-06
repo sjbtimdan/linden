@@ -1,6 +1,5 @@
 package org.sjbtimdan.linden.data
 
-import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
@@ -43,14 +42,8 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(CURRENCY_KEY, currency.name)
     }
 
-    fun defaultCurrencyFlow(): Flow<Currency> = queries.selectAll()
-        .asFlow()
-        .map { rows ->
-            rows.awaitAsList()
-                .firstOrNull { it.key == CURRENCY_KEY }
-                ?.let { row -> parseCurrency(row.value_) }
-                ?: Currency.CHF
-        }
+    fun defaultCurrencyFlow(): Flow<Currency> = valueFlow(CURRENCY_KEY)
+        .map { value -> value?.let(::parseCurrency) ?: Currency.CHF }
 
     suspend fun getHideEntryTotal(): Boolean {
         val entity = queries.selectByKey(HIDE_ENTRY_TOTAL_KEY).awaitAsOneOrNull()
@@ -61,13 +54,8 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(HIDE_ENTRY_TOTAL_KEY, hidden.toString())
     }
 
-    fun hideEntryTotalFlow(): Flow<Boolean> = queries.selectAll()
-        .asFlow()
-        .map { rows ->
-            rows.awaitAsList()
-                .firstOrNull { it.key == HIDE_ENTRY_TOTAL_KEY }?.value_?.toBoolean()
-                ?: false
-        }
+    fun hideEntryTotalFlow(): Flow<Boolean> = valueFlow(HIDE_ENTRY_TOTAL_KEY)
+        .map { it?.toBoolean() == true }
 
     suspend fun setAutoUpdateRates(enabled: Boolean) {
         queries.insertOrReplace(AUTO_UPDATE_RATES_KEY, enabled.toString())
@@ -82,13 +70,13 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(LANGUAGE_KEY, language.tag ?: "system")
     }
 
-    fun autoUpdateRatesFlow(): Flow<Boolean> = queries.selectAll()
+    fun autoUpdateRatesFlow(): Flow<Boolean> = valueFlow(AUTO_UPDATE_RATES_KEY)
+        .map { it?.toBoolean() ?: true }
+
+    /** Reactive value of a single settings key; null while the key is absent. */
+    private fun valueFlow(key: String): Flow<String?> = queries.selectByKey(key)
         .asFlow()
-        .map { rows ->
-            rows.awaitAsList()
-                .firstOrNull { it.key == AUTO_UPDATE_RATES_KEY }?.value_?.toBoolean()
-                ?: true
-        }
+        .map { rows -> rows.awaitAsOneOrNull()?.value_ }
 
     private fun parseCurrency(code: String): Currency? = try {
         Currency.fromCode(code)
