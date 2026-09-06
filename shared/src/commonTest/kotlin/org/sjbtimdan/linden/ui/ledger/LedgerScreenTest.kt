@@ -330,6 +330,140 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "show-future toggle is hidden when the shown period does not include today" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // The default All period and the current month both include today.
+            onNodeWithTag("showFutureToggle").assertIsDisplayed()
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+            onNodeWithText("Sep 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertIsDisplayed()
+
+            // A wholly past month has nothing dated after today to hide.
+            onNodeWithContentDescription("Previous period").performClick()
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+
+            // A wholly future month shows its scheduled entries on their own.
+            onNodeWithContentDescription("Next period").performClick()
+            onNodeWithContentDescription("Next period").performClick()
+            onNodeWithText("Oct 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+        }
+    }
+
+    "scheduled entries in a wholly future month are shown without the toggle" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-10-05T12:00:00Z")),
+            )
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // All hides the entry until the toggle is on.
+            onNodeWithText("Scheduled").assertDoesNotExist()
+
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+            onNodeWithContentDescription("Next period").performClick()
+
+            // The wholly-future month shows its scheduled entry with no toggle needed.
+            onNodeWithText("Oct 2026").assertIsDisplayed()
+            onNodeWithText("Scheduled").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+        }
+    }
+
+    "show-future notice hides once the shown period no longer includes today" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-09-20T12:00:00Z")),
+            )
+            viewModel.setShowFuture(true)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Scheduled").assertIsDisplayed()
+            onNodeWithText("Showing 1 entry after today").assertIsDisplayed()
+
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+            onNodeWithContentDescription("Previous period").performClick()
+
+            // August is wholly past: rows show as-is, and the future-entries toggle
+            // with its notice is gone even though the setting is still on.
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+            onNodeWithTag("showFutureNotice").assertDoesNotExist()
+        }
+    }
+
+    "show-future toggle is hidden for a week that closes today" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 6) }) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // Sunday, Sep 6, 2026: this week (Aug 31 - Sep 6) ends today, so there
+            // is no future slice inside the window for the toggle to reveal.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Week").performClick()
+
+            onNodeWithText("Aug 31 – Sep 6, 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+        }
+    }
+
+    "show-future toggle appears for a mid-week window that still has days ahead" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 9) }) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // Wednesday, Sep 9: this week runs through Sunday, so future-dated
+            // entries inside it can still be hidden and revealed.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Week").performClick()
+
+            onNodeWithText("Sep 7–13, 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertIsDisplayed()
+        }
+    }
+
+    "show-future toggle is hidden when today closes the shown month" {
+        withLedgerViewModel(today = { LocalDate(2026, 8, 31) }) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            // Aug 31 is the last day of August: the window ends today, so the
+            // toggle has nothing left to reveal inside it.
+            onNodeWithTag("periodLabel").performClick()
+            onNodeWithText("Month").performClick()
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithTag("showFutureToggle").assertDoesNotExist()
+        }
+    }
+
     "type filter narrows the list" {
         withLedgerViewModel { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-09-05 -->
+<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-09-06 -->
 
 # Living Notes
 
@@ -105,6 +105,7 @@
 - **SQLDelight async** - Schema creation must be awaited; DB ops are `suspend`
 - **No pre-commit hook** - Run `./gradlew detekt --auto-correct` after edits
 - **JVM tests pin locale** - `user.language=en` / `user.country=US` so `formatAmount` assertions are deterministic
+- **Ledger show-future rule is window-relative (since 2026-09-06)** - Entries dated after today are hidden only while the shown window still *ends after today* (or is the unbounded `All`). A wholly past window never contains them and a wholly future window was opened to see exactly those scheduled entries, so both show all their rows with no toggle; a window that closes today — this week on a Sunday, a `Day` view, a month/year seen on its last day — likewise hides nothing. `LedgerViewModel.hideFutureBound(start, end, today)` is the single source of the date cutoff (used by the entries filter and `accountBalancesAtPeriodEnd`). The show-future toggle and its notice appear only when `windowStart <= today < windowEnd` or the window is unbounded (`LedgerScreen.showFutureRelevant`); Adjust Balance separately stays available whenever `LedgerPeriod.includes(today)` (today ≤ window end).
 
 ## Active Projects
 

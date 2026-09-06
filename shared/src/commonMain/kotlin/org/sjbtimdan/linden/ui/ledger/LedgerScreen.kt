@@ -159,6 +159,21 @@ fun LedgerScreen(
     val dialogState by viewModel.dialogState.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
+    val todayDate = viewModel.today()
+    val periodStart = periodSelection.period.windowStart(periodSelection.anchor)
+    val periodEnd = periodSelection.period.windowEnd(periodSelection.anchor)
+
+    // Adjust Balance targets today's balance, so it is only offered while the shown
+    // window contains today.
+    val periodSpansToday = periodSelection.period.includes(todayDate, periodSelection.anchor)
+    // The show-future toggle only matters while the shown window still holds days
+    // after today to reveal: its end lies strictly after today (or it is the
+    // unbounded All). A window closing today — a Week on its last day, a Day view,
+    // a period seen on its final day — never hides anything, so the toggle would be
+    // a no-op there.
+    val showFutureRelevant = periodEnd == null ||
+        (periodStart != null && periodStart <= todayDate && todayDate < periodEnd)
+
     var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
     // Starts collapsed so the tabs, period bar and list lead; active filters stay
     // visible as removable chips below the period bar.
@@ -336,7 +351,11 @@ fun LedgerScreen(
                     onPrevious = viewModel::goToPreviousPeriod,
                     onNext = viewModel::goToNextPeriod,
                     showFuture = showFuture,
-                    onToggleShowFuture = { viewModel.setShowFuture(!showFuture) },
+                    onToggleShowFuture = if (showFutureRelevant) {
+                        { viewModel.setShowFuture(!showFuture) }
+                    } else {
+                        null
+                    },
                 )
             }
             TotalLabel(
@@ -351,8 +370,10 @@ fun LedgerScreen(
         }
 
         // While future entries are shown, the notice next to the period bar
-        // explains what the calendar toggle did and offers to undo it.
-        if (showFuture) {
+        // explains what the calendar toggle did and offers to undo it. It only
+        // appears while the window still holds days after today to reveal —
+        // elsewhere the toggle is hidden and no entry is kept out of view.
+        if (showFuture && showFutureRelevant) {
             Spacer(modifier = Modifier.height(8.dp))
             FutureEntriesNotice(
                 label = futureEntriesNoticeLabel(
@@ -450,9 +471,10 @@ fun LedgerScreen(
                 } else {
                     accountBalances.filter { it.account.name.contains(accountFilter, ignoreCase = true) }
                 }
-            // Adjust Balance targets today's balance; for a historical period the list
-            // shows a period-end balance, so the action is disabled there.
-            val canAdjustBalance = periodSelection.period.includes(viewModel.today(), periodSelection.anchor)
+            // Adjust Balance targets today's balance; for a period that does not
+            // include today the list shows a period-end balance, so the action is
+            // disabled there.
+            val canAdjustBalance = periodSpansToday
             AccountsList(
                 balances = shownBalances,
                 emptyMessage = when {

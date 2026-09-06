@@ -217,21 +217,19 @@ class LedgerViewModel(
 
     /**
      * Balance of each visible account at period end in its own currency: initial balance
-     * plus entries through the period end, stopping at today unless future entries
-     * are shown. Hidden accounts never appear.
+     * plus entries through the period end, stopping at today unless the window spans
+     * today and future entries are not shown. Hidden accounts never appear.
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
         entriesUpToPeriodEnd,
-        periodEnd,
+        periodWindow,
         visibleAccounts,
         _showFuture,
-    ) { entries, end, accounts, showFuture ->
+    ) { entries, window, accounts, showFuture ->
         val now = today()
-        // Entries dated after today count only when future entries are shown.
-        val cutoff = when {
-            showFuture -> end
-            else -> end?.let { minOf(it, now) } ?: now
-        }
+        // Entries dated after today count only when the window spans today and the
+        // toggle is off; past and wholly-future windows count through their own end.
+        val cutoff = if (showFuture) window?.end else hideFutureBound(window?.start, window?.end, now)
         accountBalancesAtEnd(entries, cutoff, accounts)
     }.stateFlow(emptyList())
 
@@ -453,11 +451,22 @@ data class AmountFilter(
 /** The calendar day an entry is dated, in the zone it was created in. */
 private fun Entry.dayInZone(): LocalDate = createdAt.toLocalDateTime(createdZone).date
 
+/**
+ * Last date whose entries count while the show-future toggle is off, or null for
+ * [LedgerPeriod.All] with the toggle on (no bound). Rows dated after [today] are
+ * hidden only while the window spans today: a wholly past window never contains
+ * them, and a wholly future window was opened to see exactly those entries.
+ */
+private fun hideFutureBound(start: LocalDate?, end: LocalDate?, today: LocalDate): LocalDate? {
+    if (start == null || end == null) return today
+    return if (today >= start && today <= end) today else end
+}
+
 private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate, showFuture: Boolean): Boolean {
     val date = dayInZone()
-    return (showFuture || date <= today) &&
-        (start == null || date >= start) &&
-        (end == null || date <= end)
+    val bound = if (showFuture) end else hideFutureBound(start, end, today)
+    return (bound == null || date <= bound) &&
+        (start == null || date >= start)
 }
 
 /**

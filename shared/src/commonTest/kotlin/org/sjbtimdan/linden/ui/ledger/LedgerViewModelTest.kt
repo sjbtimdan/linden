@@ -544,6 +544,44 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "a wholly future period shows its entries without the show-future toggle" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-10-05T12:00:00Z")),
+            )
+
+            // The window after today's month is entirely in the future: its scheduled
+            // entries are the point of the window, so none of them are hidden.
+            viewModel.setPeriod(LedgerPeriod.Month)
+            viewModel.goToNextPeriod()
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Scheduled")
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -200L))
+            viewModel.categoryTotals.value.first().total shouldBe -200L
+        }
+    }
+
+    "a wholly past period keeps its entries visible regardless of the toggle" {
+        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(
+                ExpenseEntry(0, groceries, "Past", main, 100, createdAt = Instant.parse("2026-08-05T12:00:00Z")),
+            )
+
+            // Nothing inside a past window is dated after today, so hiding future
+            // entries can never remove a row there: the toggle would be inert.
+            viewModel.setPeriod(LedgerPeriod.Month)
+            viewModel.goToPreviousPeriod()
+
+            viewModel.entries.value.map { it.description } shouldBe listOf("Past")
+            viewModel.accountBalancesAtPeriodEnd.value shouldBe listOf(AccountWithBalance(main, -100L))
+
+            viewModel.setShowFuture(true)
+            viewModel.entries.value.map { it.description } shouldBe listOf("Past")
+        }
+    }
+
     "year period shows only entries in the year" {
         withLedgerViewModel(today = { LocalDate(2026, 6, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
