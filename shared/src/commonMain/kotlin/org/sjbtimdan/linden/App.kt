@@ -24,6 +24,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,6 +34,7 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.nav_entry
 import org.sjbtimdan.linden.resources.nav_ledger
 import org.sjbtimdan.linden.resources.nav_settings
+import org.sjbtimdan.linden.ui.ApplyLanguageOverride
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
@@ -69,105 +71,112 @@ fun App(dependencies: AppDependencies) {
         ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
+    val language by settingsViewModel.language.collectAsState()
     val ratesWarning by ratesViewModel.ratesWarning.collectAsState()
 
-    LindenTheme(themeMode = themeMode) {
-        Scaffold(
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.Ledger,
-                        onClick = { currentScreen = Screen.Ledger },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                            )
+    // The override must land before the subtree composes, and key(language)
+    // forces a full recomposition on change so dates, money and (on desktop)
+    // strings re-resolve under the new locale.
+    ApplyLanguageOverride(language)
+    key(language) {
+        LindenTheme(themeMode = themeMode) {
+            Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                bottomBar = {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                        NavigationBarItem(
+                            selected = currentScreen == Screen.Ledger,
+                            onClick = { currentScreen = Screen.Ledger },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = null,
+                                )
+                            },
+                            label = { Text(stringResource(Res.string.nav_ledger)) },
+                        )
+                        NavigationBarItem(
+                            selected = currentScreen == Screen.Entry,
+                            onClick = { currentScreen = Screen.Entry },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.List,
+                                    contentDescription = null,
+                                )
+                            },
+                            label = { Text(stringResource(Res.string.nav_entry)) },
+                        )
+                        NavigationBarItem(
+                            selected = currentScreen == Screen.Settings,
+                            onClick = { currentScreen = Screen.Settings },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = null,
+                                )
+                            },
+                            label = { Text(stringResource(Res.string.nav_settings)) },
+                        )
+                    }
+                },
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize(),
+                ) {
+                    AnimatedContent(
+                        targetState = currentScreen,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(220)) togetherWith
+                                fadeOut(animationSpec = tween(120))
                         },
-                        label = { Text(stringResource(Res.string.nav_ledger)) },
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.Entry,
-                        onClick = { currentScreen = Screen.Entry },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.List,
-                                contentDescription = null,
+                        label = "screenTransition",
+                    ) { screen ->
+                        when (screen) {
+                            Screen.Entry -> EntryPoint(
+                                viewModel = entryViewModel,
+                                onNavigateToSettings = { currentScreen = Screen.Settings },
+                                onNavigateToRates = { currentScreen = Screen.Rates },
+                                ratesWarning = ratesWarning,
                             )
-                        },
-                        label = { Text(stringResource(Res.string.nav_entry)) },
-                    )
-                    NavigationBarItem(
-                        selected = currentScreen == Screen.Settings,
-                        onClick = { currentScreen = Screen.Settings },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = null,
+
+                            Screen.Ledger -> LedgerScreen(
+                                viewModel = ledgerViewModel,
+                                onNavigateToSettings = { currentScreen = Screen.Settings },
+                                onNavigateToEntry = { currentScreen = Screen.Entry },
+                                onNavigateToAccounts = { currentScreen = Screen.AccountList },
+                                onNavigateToCategories = { currentScreen = Screen.CategoryList },
                             )
-                        },
-                        label = { Text(stringResource(Res.string.nav_settings)) },
-                    )
-                }
-            },
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-            ) {
-                AnimatedContent(
-                    targetState = currentScreen,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(220)) togetherWith
-                            fadeOut(animationSpec = tween(120))
-                    },
-                    label = "screenTransition",
-                ) { screen ->
-                    when (screen) {
-                        Screen.Entry -> EntryPoint(
-                            viewModel = entryViewModel,
-                            onNavigateToSettings = { currentScreen = Screen.Settings },
-                            onNavigateToRates = { currentScreen = Screen.Rates },
-                            ratesWarning = ratesWarning,
-                        )
 
-                        Screen.Ledger -> LedgerScreen(
-                            viewModel = ledgerViewModel,
-                            onNavigateToSettings = { currentScreen = Screen.Settings },
-                            onNavigateToEntry = { currentScreen = Screen.Entry },
-                            onNavigateToAccounts = { currentScreen = Screen.AccountList },
-                            onNavigateToCategories = { currentScreen = Screen.CategoryList },
-                        )
+                            Screen.Settings -> SettingsScreen(
+                                viewModel = settingsViewModel,
+                                onNavigateToCategories = { currentScreen = Screen.CategoryList },
+                                onNavigateToAccounts = { currentScreen = Screen.AccountList },
+                                onNavigateToRates = { currentScreen = Screen.Rates },
+                                onNavigateToBudgets = { currentScreen = Screen.Budgets },
+                            )
 
-                        Screen.Settings -> SettingsScreen(
-                            viewModel = settingsViewModel,
-                            onNavigateToCategories = { currentScreen = Screen.CategoryList },
-                            onNavigateToAccounts = { currentScreen = Screen.AccountList },
-                            onNavigateToRates = { currentScreen = Screen.Rates },
-                            onNavigateToBudgets = { currentScreen = Screen.Budgets },
-                        )
+                            Screen.CategoryList -> CategoryListScreen(
+                                viewModel = categoryListViewModel,
+                                onNavigateBack = { currentScreen = Screen.Settings },
+                            )
 
-                        Screen.CategoryList -> CategoryListScreen(
-                            viewModel = categoryListViewModel,
-                            onNavigateBack = { currentScreen = Screen.Settings },
-                        )
+                            Screen.AccountList -> AccountListScreen(
+                                viewModel = accountListViewModel,
+                                onNavigateBack = { currentScreen = Screen.Settings },
+                            )
 
-                        Screen.AccountList -> AccountListScreen(
-                            viewModel = accountListViewModel,
-                            onNavigateBack = { currentScreen = Screen.Settings },
-                        )
+                            Screen.Rates -> RatesScreen(
+                                viewModel = ratesViewModel,
+                                onNavigateBack = { currentScreen = Screen.Settings },
+                            )
 
-                        Screen.Rates -> RatesScreen(
-                            viewModel = ratesViewModel,
-                            onNavigateBack = { currentScreen = Screen.Settings },
-                        )
-
-                        Screen.Budgets -> BudgetScreen(
-                            viewModel = budgetViewModel,
-                            onNavigateBack = { currentScreen = Screen.Settings },
-                        )
+                            Screen.Budgets -> BudgetScreen(
+                                viewModel = budgetViewModel,
+                                onNavigateBack = { currentScreen = Screen.Settings },
+                            )
+                        }
                     }
                 }
             }
