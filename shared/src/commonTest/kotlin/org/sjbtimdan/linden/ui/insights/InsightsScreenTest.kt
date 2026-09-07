@@ -39,11 +39,14 @@ class InsightsScreenTest : StringSpec({
             }
 
             onNodeWithText("Aug 2026").assertIsDisplayed()
-            onNodeWithText("Expenses").assertIsDisplayed()
             onNodeWithText("Income").assertIsDisplayed()
-            onNodeWithText("4.50 CHF").assertIsDisplayed()
+            onNodeWithText("Expenses").assertIsDisplayed()
+            onNodeWithText("Net").assertIsDisplayed()
             onNodeWithText("50.00 CHF").assertIsDisplayed()
+            onNodeWithText("4.50 CHF").assertIsDisplayed()
+            onNodeWithText("+ 45.50 CHF").assertIsDisplayed()
             onNodeWithText("vs Jul 2026: + 3.50 CHF").assertIsDisplayed()
+            onNodeWithText("12-month average: 0.46 CHF").assertIsDisplayed()
             onNodeWithTag(MONTHLY_TREND_CHART_TAG).assertIsDisplayed()
         }
     }
@@ -65,6 +68,7 @@ class InsightsScreenTest : StringSpec({
 
             onNodeWithText("Jul 2026").assertIsDisplayed()
             onNodeWithText("1.00 CHF").assertIsDisplayed()
+            onNodeWithText("− 1.00 CHF").assertIsDisplayed()
             onNodeWithText("vs Jun 2026: + 1.00 CHF").assertIsDisplayed()
         }
     }
@@ -85,7 +89,7 @@ class InsightsScreenTest : StringSpec({
             onNodeWithTag("insightsPrevious").performClick()
 
             onNodeWithText("Aug 2025").assertIsDisplayed()
-            onAllNodesWithText("0.00 CHF").assertCountEquals(2)
+            onAllNodesWithText("0.00 CHF").assertCountEquals(3)
 
             onNodeWithTag("insightsNext").performClick()
 
@@ -108,12 +112,26 @@ class InsightsScreenTest : StringSpec({
                 InsightsScreen(viewModel = viewModel, onNavigateBack = {})
             }
 
-            onNodeWithText("Expenses").assertIsDisplayed()
             onNodeWithText("Income").assertIsDisplayed()
-            onAllNodesWithText("••••••").assertCountEquals(2)
+            onNodeWithText("Expenses").assertIsDisplayed()
+            onNodeWithText("Net").assertIsDisplayed()
+            onAllNodesWithText("••••••").assertCountEquals(3)
             onNodeWithText("4.50 CHF").assertDoesNotExist()
             onNodeWithText("50.00 CHF").assertDoesNotExist()
             onNodeWithText("vs ", substring = true).assertDoesNotExist()
+            onNodeWithText("average", substring = true).assertDoesNotExist()
+        }
+    }
+
+    "shows a no-entries hint instead of the chart when the database is empty" {
+        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { _, _, _, viewModel ->
+            setContent {
+                InsightsScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            onNodeWithText("Add an entry to start seeing monthly trends").assertIsDisplayed()
+            onNodeWithTag(MONTHLY_TREND_CHART_TAG).assertDoesNotExist()
+            onNodeWithText("Aug 2026").assertDoesNotExist()
         }
     }
 })

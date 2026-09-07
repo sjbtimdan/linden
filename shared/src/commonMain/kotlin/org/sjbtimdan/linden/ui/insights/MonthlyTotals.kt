@@ -120,17 +120,43 @@ internal fun deltaToPrevious(current: MonthTotal?, previous: MonthTotal?): Long?
 
 /**
  * Converts the [MonthlyTrendChart] inputs: each month contributes one value
- * per series, in expense-then-income order; a null [MonthTotal] series value
- * charts as no bar (zero), since the chart has no "unknown" value.
+ * per series, income first (it renders as the left bar of the pair); a null
+ * [MonthTotal] series value charts as no bar (zero), since the chart has no
+ * "unknown" value. January bars carry the year, so a window crossing a year
+ * boundary never shows two bare "Jan" labels.
  */
 internal fun monthlyTrendBars(months: List<MonthTotal>, language: DateLanguage): List<MonthlyTrendBar> =
     months.map { month ->
         MonthlyTrendBar(
-            label = language.monthShort(month.monthNumber),
-            values = listOf(month.expenseMinor ?: 0L, month.incomeMinor ?: 0L),
+            label = monthBarLabel(month.year, month.monthNumber, language),
+            values = listOf(month.incomeMinor ?: 0L, month.expenseMinor ?: 0L),
             isCurrent = month.isCurrent,
         )
     }
+
+/**
+ * Short label under a bar, e.g. "Jul"; January gets the year appended so
+ * months from different years stay distinguishable ("Jan '26", "2026年1月").
+ */
+internal fun monthBarLabel(year: Int, monthNumber: Int, language: DateLanguage): String {
+    if (monthNumber != 1) return language.monthShort(monthNumber)
+    return when (language) {
+        DateLanguage.English, DateLanguage.Italian ->
+            "${language.monthShort(1)} '${(year % 100).toString().padStart(2, '0')}"
+
+        DateLanguage.Chinese -> language.monthYearText(1, year)
+    }
+}
+
+/**
+ * Mean of the window's complete monthly expense totals, rounded to the
+ * nearest minor unit; null when no month of the window has a usable total.
+ */
+internal fun averageMonthlyExpense(months: List<MonthTotal>): Long? {
+    val totals = months.mapNotNull { it.expenseMinor }
+    if (totals.isEmpty()) return null
+    return (totals.sum().toDouble() / totals.size).roundToLong()
+}
 
 /**
  * Converts [amount] from [from] into [defaultCurrency] minor units via

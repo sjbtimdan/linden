@@ -208,11 +208,60 @@ class MonthlyTotalsTest : StringSpec({
 
         bars shouldHaveSize 2
         bars[0].label shouldBe "Jul"
-        bars[0].values shouldBe listOf(1_000L, 500L)
+        bars[0].values shouldBe listOf(500L, 1_000L)
         bars[0].isCurrent shouldBe false
         bars[1].label shouldBe "Aug"
-        bars[1].values shouldBe listOf(0L, 5_000L)
+        bars[1].values shouldBe listOf(5_000L, 0L)
         bars[1].isCurrent shouldBe true
+    }
+
+    "January bars carry the year so crossing a year boundary stays readable" {
+        val months = listOf(
+            MonthTotal(2025, 1, expenseMinor = 100, incomeMinor = null, isCurrent = false),
+            MonthTotal(2026, 1, expenseMinor = 100, incomeMinor = null, isCurrent = false),
+            MonthTotal(2026, 2, expenseMinor = 100, incomeMinor = null, isCurrent = false),
+        )
+
+        val bars = monthlyTrendBars(months, DateLanguage.English)
+
+        bars[0].label shouldBe "Jan '25"
+        bars[1].label shouldBe "Jan '26"
+        bars[2].label shouldBe "Feb"
+    }
+
+    "month bar labels are language-aware" {
+        monthBarLabel(2026, 1, DateLanguage.English) shouldBe "Jan '26"
+        monthBarLabel(2026, 1, DateLanguage.Italian) shouldBe "gen '26"
+        monthBarLabel(2026, 1, DateLanguage.Chinese) shouldBe "2026年1月"
+        monthBarLabel(2025, 12, DateLanguage.English) shouldBe "Dec"
+        monthBarLabel(2000, 1, DateLanguage.English) shouldBe "Jan '00"
+    }
+
+    "averageMonthlyExpense averages the window's complete months" {
+        val months = listOf(
+            MonthTotal(2026, 6, expenseMinor = 100, incomeMinor = null, isCurrent = false),
+            MonthTotal(2026, 7, expenseMinor = 200, incomeMinor = null, isCurrent = false),
+            MonthTotal(2026, 8, expenseMinor = 300, incomeMinor = null, isCurrent = true),
+        )
+
+        averageMonthlyExpense(months) shouldBe 200
+    }
+
+    "averageMonthlyExpense rounds and skips incomplete months" {
+        val months = listOf(
+            MonthTotal(2026, 6, expenseMinor = 100, incomeMinor = null, isCurrent = false),
+            MonthTotal(2026, 7, expenseMinor = null, incomeMinor = 5_000, isCurrent = false),
+            MonthTotal(2026, 8, expenseMinor = 100, incomeMinor = null, isCurrent = true),
+        )
+
+        averageMonthlyExpense(months) shouldBe 100
+    }
+
+    "averageMonthlyExpense is null when no month has a usable total" {
+        averageMonthlyExpense(emptyList()).shouldBeNull()
+        averageMonthlyExpense(
+            listOf(MonthTotal(2026, 7, expenseMinor = null, incomeMinor = null, isCurrent = false)),
+        ).shouldBeNull()
     }
 
     "month indexes advance by month and year" {

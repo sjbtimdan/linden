@@ -33,7 +33,7 @@ import kotlin.time.Clock
  * calendar without any timer.
  */
 class InsightsViewModel(
-    entryDao: EntryDao,
+    private val entryDao: EntryDao,
     settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     initialHideEntryTotal: Boolean = false,
@@ -45,6 +45,9 @@ class InsightsViewModel(
     /** Whether totals are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =
         HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
+
+    /** Whether any entry exists at all — drives the screen's no-data hint. */
+    val hasEntries: StateFlow<Boolean> = entryDao.entryExists().stateFlow(false)
 
     /** First day of the month the 12-month window ends with. */
     private val _windowEnd = MutableStateFlow(currentMonthStart(today()))

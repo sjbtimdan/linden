@@ -100,6 +100,7 @@ class InsightsViewModelTest : StringSpec({
                 months.last().isCurrent shouldBe true
                 months.all { it.expenseMinor == 0L && it.incomeMinor == 0L } shouldBe true
                 fixture.viewModel.canStepForward.value shouldBe false
+                fixture.viewModel.hasEntries.value shouldBe false
             }
         }
     }
@@ -116,6 +117,7 @@ class InsightsViewModelTest : StringSpec({
                 fixture.expense(groceries, main, 250, "2026-06-01T12:00:00Z")
                 fixture.income(groceries, main, 5_000, "2026-08-01T09:00:00Z")
 
+                fixture.viewModel.hasEntries.first { it } shouldBe true
                 val months = fixture.viewModel.months.first { it.last().expenseMinor == 450L }
                 months shouldHaveSize 12
                 months.last().year shouldBe 2026

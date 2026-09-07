@@ -212,6 +212,9 @@
     <string name="insights_income">Entrate</string>
     <string name="insights_previous_period">12 mesi precedenti</string>
     <string name="insights_next_period">12 mesi successivi</string>
+    <string name="insights_net">Netto</string>
+    <string name="insights_no_entries">Aggiungi una voce per iniziare a vedere gli andamenti mensili</string>
+    <string name="insights_average">Media su 12 mesi: %1$s</string>
     <string name="settings_import_ivy">Importa da Ivy</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_db">Esegui backup del database</string>

@@ -42,9 +42,12 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.insights_average
 import org.sjbtimdan.linden.resources.insights_expenses
 import org.sjbtimdan.linden.resources.insights_income
+import org.sjbtimdan.linden.resources.insights_net
 import org.sjbtimdan.linden.resources.insights_next_period
+import org.sjbtimdan.linden.resources.insights_no_entries
 import org.sjbtimdan.linden.resources.insights_previous_period
 import org.sjbtimdan.linden.resources.insights_vs_previous
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
@@ -66,6 +69,7 @@ import org.sjbtimdan.linden.ui.theme.lindenColors
 @Composable
 fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
     val months by viewModel.months.collectAsState()
+    val hasEntries by viewModel.hasEntries.collectAsState()
     val windowEnd by viewModel.windowEnd.collectAsState()
     val canStepForward by viewModel.canStepForward.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
@@ -98,10 +102,22 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
             )
         }
 
-        if (months.isNotEmpty()) {
+        if (months.isNotEmpty() && !hasEntries) {
+            Spacer(modifier = Modifier.height(48.dp))
+            Text(
+                text = stringResource(Res.string.insights_no_entries),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        if (months.isNotEmpty() && hasEntries) {
             val selectedMonth = months[effectiveIndex]
             val previousMonth = months.getOrNull(effectiveIndex - 1)
             val delta = deltaToPrevious(selectedMonth, previousMonth)
+            val average = averageMonthlyExpense(months)
 
             Spacer(modifier = Modifier.height(16.dp))
             Row(
@@ -138,6 +154,16 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                    if (!hideTotal && average != null) {
+                        Text(
+                            text = stringResource(
+                                Res.string.insights_average,
+                                amountLabel(average, defaultCurrency),
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
                 IconButton(
                     onClick = viewModel::stepForward,
@@ -153,14 +179,6 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
             AmountRow(
-                label = stringResource(Res.string.insights_expenses),
-                dotColor = colors.expense,
-                amountColor = colors.expense,
-                valueMinor = selectedMonth.expenseMinor,
-                currency = defaultCurrency,
-                hideTotal = hideTotal,
-            )
-            AmountRow(
                 label = stringResource(Res.string.insights_income),
                 dotColor = colors.income,
                 amountColor = colors.income,
@@ -168,11 +186,26 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
                 currency = defaultCurrency,
                 hideTotal = hideTotal,
             )
+            AmountRow(
+                label = stringResource(Res.string.insights_expenses),
+                dotColor = colors.expense,
+                amountColor = colors.expense,
+                valueMinor = selectedMonth.expenseMinor,
+                currency = defaultCurrency,
+                hideTotal = hideTotal,
+            )
+            NetRow(
+                label = stringResource(Res.string.insights_net),
+                incomeMinor = selectedMonth.incomeMinor,
+                expenseMinor = selectedMonth.expenseMinor,
+                currency = defaultCurrency,
+                hideTotal = hideTotal,
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
             MonthlyTrendChart(
                 bars = monthlyTrendBars(months, language),
-                seriesColors = listOf(colors.expense, colors.income),
+                seriesColors = listOf(colors.income, colors.expense),
                 selectedIndex = effectiveIndex,
                 onSelect = { selectedIndex = it },
             )
@@ -224,6 +257,40 @@ private fun AmountRow(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = amountColor,
+            textAlign = TextAlign.End,
+        )
+    }
+}
+
+/**
+ * The month's net (income minus expenses), signed, without a series dot.
+ * Hidden entirely while either side is unknown (missing FX rate).
+ */
+@Composable
+private fun NetRow(label: String, incomeMinor: Long?, expenseMinor: Long?, currency: Currency, hideTotal: Boolean) {
+    val income = incomeMinor ?: return
+    val expense = expenseMinor ?: return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Aligns the label with the dotted series rows above it.
+            Spacer(modifier = Modifier.width(18.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = if (hideTotal) "••••••" else formatTotal(income - expense, currency),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.End,
         )
     }

@@ -212,6 +212,9 @@
     <string name="insights_income">收入</string>
     <string name="insights_previous_period">前十二个月</string>
     <string name="insights_next_period">后十二个月</string>
+    <string name="insights_net">净额</string>
+    <string name="insights_no_entries">添加一条记录即可查看每月趋势</string>
+    <string name="insights_average">12个月平均：%1$s</string>
     <string name="settings_import_ivy">从 Ivy 导入</string>
     <string name="settings_backup">备份</string>
     <string name="settings_backup_db">备份数据库</string>

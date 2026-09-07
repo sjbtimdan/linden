@@ -218,6 +218,9 @@
     <string name="insights_income">Income</string>
     <string name="insights_previous_period">Previous 12 months</string>
     <string name="insights_next_period">Next 12 months</string>
+    <string name="insights_net">Net</string>
+    <string name="insights_no_entries">Add an entry to start seeing monthly trends</string>
+    <string name="insights_average">12-month average: %1$s</string>
     <string name="settings_import_ivy">Import from Ivy</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_db">Back up database</string>
