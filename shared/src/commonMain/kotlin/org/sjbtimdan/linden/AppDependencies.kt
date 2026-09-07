@@ -3,6 +3,9 @@ package org.sjbtimdan.linden
 import app.cash.sqldelight.db.SqlDriver
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
@@ -12,6 +15,7 @@ import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.FxRatesFetcher
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.FxRatesSource
+import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
@@ -61,6 +65,17 @@ class AppDependencies(
         }
     }
     val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
+
+    /** App-wide scope for the shared [ratesProvider]; lives as long as the dependencies. */
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    /**
+     * The default currency and its FX rates as state flows, shared by every screen
+     * that converts amounts, so they observe one subscription instead of each
+     * screen querying the settings and rates tables independently.
+     */
+    val ratesProvider = RatesFlowProvider(settingsDao, fxRatesRepository, appScope)
+
     val backupManager = LindenBackupManager(database)
     val csvExportManager = CsvExportManager(entryDao)
     val settingsViewModel = SettingsViewModel(
@@ -82,14 +97,21 @@ class AppDependencies(
         accountDao,
         categoryDao,
         settingsDao,
-        fxRatesRepository,
-        initialHideEntryTotal,
+        ratesProvider,
+        initialHideEntryTotal = initialHideEntryTotal,
     )
-    val ledgerViewModel = LedgerViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository, budgetDao)
+    val ledgerViewModel = LedgerViewModel(
+        entryDao,
+        accountDao,
+        categoryDao,
+        settingsDao,
+        budgetDao,
+        ratesProvider,
+    )
     val insightsViewModel = InsightsViewModel(
         entryDao,
         settingsDao,
-        fxRatesRepository,
+        ratesProvider,
         initialHideEntryTotal = initialHideEntryTotal,
     )
 }

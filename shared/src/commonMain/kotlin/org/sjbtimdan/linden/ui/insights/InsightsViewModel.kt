@@ -19,7 +19,6 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
@@ -36,14 +35,12 @@ import kotlin.time.Clock
 class InsightsViewModel(
     entryDao: EntryDao,
     settingsDao: SettingsDao,
-    fxRatesRepository: FxRatesRepository,
+    private val ratesProvider: RatesFlowProvider,
     initialHideEntryTotal: Boolean = false,
     private val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : ViewModel() {
-    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
-
     /** The currency totals are displayed in, from the settings. */
-    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
+    val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
     /** Whether totals are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =
@@ -56,8 +53,8 @@ class InsightsViewModel(
     /** 12-month expense/income window ending with [windowEnd]. */
     val months: StateFlow<List<MonthTotal>> = combine(
         entryDao.getAll(),
-        ratesFlow.defaultCurrency,
-        ratesFlow.rates,
+        ratesProvider.defaultCurrency,
+        ratesProvider.rates,
         _windowEnd,
     ) { entries, currency, rates, windowEnd ->
         monthlyTotals(entries, windowEnd, currentMonthStart(today()), currency, rates)

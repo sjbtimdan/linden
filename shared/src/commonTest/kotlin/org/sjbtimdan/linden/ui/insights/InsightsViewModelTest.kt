@@ -10,9 +10,7 @@ import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.FxRateDao
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
@@ -23,6 +21,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.onTestMain
+import org.sjbtimdan.linden.ui.testRatesProvider
 import kotlin.time.Instant
 
 private val today = { LocalDate(2026, 8, 15) }
@@ -76,10 +75,11 @@ private suspend fun insightsFixture(): InsightsFixture {
     val accountDao = AccountDao(database.accountQueries)
     val categoryDao = CategoryDao(database.categoryQueries)
     val entryDao = EntryDao(database.entryQueries)
+    val settingsDao = SettingsDao(database.settingsQueries)
     val viewModel = InsightsViewModel(
         entryDao,
-        SettingsDao(database.settingsQueries),
-        FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+        settingsDao,
+        testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
         today = today,
     )
     return InsightsFixture(database, accountDao, categoryDao, entryDao, viewModel)

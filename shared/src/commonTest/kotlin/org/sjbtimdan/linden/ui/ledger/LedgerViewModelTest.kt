@@ -15,9 +15,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.FxRateDao
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Account
@@ -31,6 +29,7 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.onTestMain
+import org.sjbtimdan.linden.ui.testRatesProvider
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
@@ -58,14 +57,15 @@ class LedgerViewModelTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 val database = lindenDatabase()
+                val settingsDao = SettingsDao(database.settingsQueries)
                 val viewModel = LedgerViewModel(
                     EntryDao(database.entryQueries),
                     AccountDao(database.accountQueries),
                     CategoryDao(database.categoryQueries),
-                    SettingsDao(database.settingsQueries),
-                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    settingsDao,
                     BudgetDao(database.budgetQueries),
-                    { LocalDate(2026, 8, 15) },
+                    testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
+                    today = { LocalDate(2026, 8, 15) },
                 )
                 viewModel.periodSelection.value.period shouldBe LedgerPeriod.Month
             }
@@ -79,14 +79,15 @@ class LedgerViewModelTest : StringSpec({
                 val accountDao = AccountDao(database.accountQueries)
                 val categoryDao = CategoryDao(database.categoryQueries)
                 val budgetDao = BudgetDao(database.budgetQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
                 val viewModel = LedgerViewModel(
                     EntryDao(database.entryQueries),
                     accountDao,
                     categoryDao,
-                    SettingsDao(database.settingsQueries),
-                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    settingsDao,
                     budgetDao,
-                    { LocalDate(2026, 8, 15) },
+                    testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
+                    today = { LocalDate(2026, 8, 15) },
                 )
                 val (main, groceries) = seed(accountDao, categoryDao)
                 viewModel.createEntry(
@@ -114,14 +115,15 @@ class LedgerViewModelTest : StringSpec({
                 val accountDao = AccountDao(database.accountQueries)
                 val categoryDao = CategoryDao(database.categoryQueries)
                 val budgetDao = BudgetDao(database.budgetQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
                 val viewModel = LedgerViewModel(
                     EntryDao(database.entryQueries),
                     accountDao,
                     categoryDao,
-                    SettingsDao(database.settingsQueries),
-                    FxRatesRepository(FxRateDao(database.fxRateQueries), FakeFxRatesSource()),
+                    settingsDao,
                     budgetDao,
-                    { LocalDate(2026, 8, 15) },
+                    testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
+                    today = { LocalDate(2026, 8, 15) },
                 )
                 val (main, groceries) = seed(accountDao, categoryDao)
                 viewModel.createEntry(

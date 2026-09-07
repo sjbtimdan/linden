@@ -13,7 +13,7 @@ import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
@@ -26,7 +26,7 @@ class EntryPointViewModel(
     accountDao: AccountDao,
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
-    fxRatesRepository: FxRatesRepository,
+    ratesProvider: RatesFlowProvider,
     initialHideEntryTotal: Boolean = false,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(
@@ -34,7 +34,7 @@ class EntryPointViewModel(
     accountDao,
     categoryDao,
     settingsDao,
-    fxRatesRepository,
+    ratesProvider,
     initialHideTotal = initialHideEntryTotal,
 ) {
     private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)

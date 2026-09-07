@@ -3,8 +3,10 @@ package org.sjbtimdan.linden.ui
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -22,6 +24,7 @@ import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.FxRatesSource
+import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.export.CsvExportManager
@@ -50,6 +53,17 @@ fun onTestMain(block: suspend () -> Unit) {
         Dispatchers.resetMain()
     }
 }
+
+/**
+ * Builds a [RatesFlowProvider] over an in-memory database for ViewModels that
+ * take a shared provider as a required dependency (mirroring the composition
+ * root wiring); the provider collects on the test's Main dispatcher.
+ */
+internal fun testRatesProvider(settingsDao: SettingsDao, fxRateDao: FxRateDao): RatesFlowProvider = RatesFlowProvider(
+    settingsDao,
+    FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+    CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+)
 
 @OptIn(ExperimentalTestApi::class)
 fun withApp(
@@ -203,7 +217,7 @@ fun withEntryPoint(
                 accountDao,
                 categoryDao,
                 settingsDao,
-                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                testRatesProvider(settingsDao, fxRateDao),
                 initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )
@@ -264,9 +278,9 @@ fun withLedgerViewModel(
                 accountDao,
                 categoryDao,
                 settingsDao,
-                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
                 BudgetDao(database.budgetQueries),
-                today,
+                testRatesProvider(settingsDao, fxRateDao),
+                today = today,
             )
             // Tests create entries with the default epoch timestamp, so they assume
             // the "All" period rather than the production default of "Month".
@@ -332,7 +346,7 @@ fun withInsightsViewModel(
             val viewModel = InsightsViewModel(
                 entryDao,
                 settingsDao,
-                FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+                testRatesProvider(settingsDao, fxRateDao),
                 initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )

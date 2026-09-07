@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
@@ -36,16 +35,14 @@ abstract class EntryEditorViewModel(
     accountDao: AccountDao,
     categoryDao: CategoryDao,
     private val settingsDao: SettingsDao,
-    fxRatesRepository: FxRatesRepository,
+    private val ratesProvider: RatesFlowProvider,
     initialHideTotal: Boolean = false,
 ) : ViewModel() {
-    private val ratesFlow = RatesFlowProvider(settingsDao, fxRatesRepository, viewModelScope)
-
     /** The currency totals are displayed in, from the settings. */
-    val defaultCurrency: StateFlow<Currency> = ratesFlow.defaultCurrency
+    val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
     /** FX rates that convert the default currency into each quote currency. */
-    protected val rates: StateFlow<List<FxRate>> get() = ratesFlow.rates
+    protected val rates: StateFlow<List<FxRate>> get() = ratesProvider.rates
 
     /** Every account, hidden or not — resolves names, currency and edited entries. */
     val accounts: StateFlow<List<Account>> = accountDao.getAll().stateFlow(emptyList())

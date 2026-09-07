@@ -22,7 +22,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
-import org.sjbtimdan.linden.data.FxRatesRepository
+import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -47,10 +47,16 @@ class LedgerViewModel(
     accountDao: AccountDao,
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
-    fxRatesRepository: FxRatesRepository,
     budgetDao: BudgetDao,
+    ratesProvider: RatesFlowProvider,
     val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
-) : EntryEditorViewModel(entryDao, accountDao, categoryDao, settingsDao, fxRatesRepository) {
+) : EntryEditorViewModel(
+    entryDao,
+    accountDao,
+    categoryDao,
+    settingsDao,
+    ratesProvider,
+) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
