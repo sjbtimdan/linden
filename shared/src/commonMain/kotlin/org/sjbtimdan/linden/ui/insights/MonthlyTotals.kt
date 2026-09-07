@@ -93,7 +93,7 @@ private class MonthSums(
  * currency has no stored rate (the series total would be incomplete). An
  * empty series totals zero.
  */
-private fun convertedTotal(
+internal fun convertedTotal(
     sums: Map<Currency, Long>,
     defaultCurrency: Currency,
     ratesByQuote: Map<Currency, Double>,

@@ -347,6 +347,7 @@ fun withInsightsViewModel(
                 entryDao,
                 settingsDao,
                 testRatesProvider(settingsDao, fxRateDao),
+                BudgetDao(database.budgetQueries),
                 initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )

@@ -112,6 +112,7 @@ class AppDependencies(
         entryDao,
         settingsDao,
         ratesProvider,
+        budgetDao,
         initialHideEntryTotal = initialHideEntryTotal,
     )
 }

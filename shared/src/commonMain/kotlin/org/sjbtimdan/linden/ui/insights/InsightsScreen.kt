@@ -24,12 +24,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -70,11 +66,11 @@ import org.sjbtimdan.linden.ui.theme.lindenColors
 fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
     val months by viewModel.months.collectAsState()
     val hasEntries by viewModel.hasEntries.collectAsState()
-    val windowEnd by viewModel.windowEnd.collectAsState()
     val canStepForward by viewModel.canStepForward.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
-    var selectedIndex by remember { mutableIntStateOf(-1) }
+    val selectedIndex by viewModel.selectedIndex.collectAsState()
+    val breakdown by viewModel.breakdown.collectAsState()
     val language = dateLanguage(platformLocaleTag())
     val colors = lindenColors()
 
@@ -85,7 +81,6 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
     } else {
         selectedIndex
     }
-    LaunchedEffect(windowEnd) { selectedIndex = -1 }
 
     Column(
         modifier = Modifier
@@ -207,8 +202,28 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
                 bars = monthlyTrendBars(months, language),
                 seriesColors = listOf(colors.income, colors.expense),
                 selectedIndex = effectiveIndex,
-                onSelect = { selectedIndex = it },
+                onSelect = viewModel::selectMonth,
             )
+
+            // The category rows would leak amounts (and budgets) under the
+            // hide-totals mask, so they only render when totals are visible.
+            val breakdownForMonth = breakdown
+            val previousMonthLabel = if (effectiveIndex > 0) {
+                months.getOrNull(effectiveIndex - 1)?.let {
+                    language.monthYearText(it.monthNumber, it.year)
+                }
+            } else {
+                null
+            }
+            if (!hideTotal && breakdownForMonth != null && !breakdownForMonth.isEmpty) {
+                CategoryBreakdownList(
+                    breakdown = breakdownForMonth,
+                    currency = defaultCurrency,
+                    language = language,
+                    previousMonthLabel = previousMonthLabel,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
         }
     }

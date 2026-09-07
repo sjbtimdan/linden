@@ -3,11 +3,13 @@ package org.sjbtimdan.linden.ui.insights
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
@@ -31,6 +33,7 @@ private class InsightsFixture(
     val accountDao: AccountDao,
     val categoryDao: CategoryDao,
     val entryDao: EntryDao,
+    val budgetDao: BudgetDao,
     val viewModel: InsightsViewModel,
 ) {
     suspend fun account(name: String = "Main", currency: Currency = Currency.CHF): Account {
@@ -40,7 +43,7 @@ private class InsightsFixture(
 
     suspend fun category(name: String = "Groceries"): Category {
         categoryDao.create(name, CategoryType.Expense)
-        return categoryDao.getAll().first().single()
+        return categoryDao.getAll().first().first { it.name == name }
     }
 
     suspend fun expense(category: Category, account: Account, amount: Long, at: String) {
@@ -76,13 +79,15 @@ private suspend fun insightsFixture(): InsightsFixture {
     val categoryDao = CategoryDao(database.categoryQueries)
     val entryDao = EntryDao(database.entryQueries)
     val settingsDao = SettingsDao(database.settingsQueries)
+    val budgetDao = BudgetDao(database.budgetQueries)
     val viewModel = InsightsViewModel(
         entryDao,
         settingsDao,
         testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
+        budgetDao,
         today = today,
     )
-    return InsightsFixture(database, accountDao, categoryDao, entryDao, viewModel)
+    return InsightsFixture(database, accountDao, categoryDao, entryDao, budgetDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
@@ -193,6 +198,85 @@ class InsightsViewModelTest : StringSpec({
 
                 fixture.viewModel.stepForward()
                 fixture.viewModel.windowEnd.value shouldBe LocalDate(2025, 8, 1)
+            }
+        }
+    }
+
+    "breakdown carries the window-end month by default, with budgets attached" {
+        onTestMain {
+            runComposeUiTest {
+                val fixture = insightsFixture()
+                val main = fixture.account()
+                val groceries = fixture.category("Groceries")
+                val salary = fixture.category("Salary")
+                fixture.viewModel.months.first { it.isNotEmpty() }
+
+                fixture.expense(groceries, main, 450, "2026-08-10T12:00:00Z")
+                fixture.income(salary, main, 5_000, "2026-08-01T09:00:00Z")
+                fixture.budgetDao.upsert("Groceries", 800)
+
+                val breakdown = fixture.viewModel.breakdown.first {
+                    it?.incomes?.singleOrNull()?.amountMinor == 5_000L &&
+                        it.expenses.singleOrNull()?.budgetMinor == 800L
+                }!!
+                breakdown.expenses.single().category shouldBe groceries
+                breakdown.expenses.single().amountMinor shouldBe 450
+                breakdown.incomes.single().category shouldBe salary
+            }
+        }
+    }
+
+    "breakdown follows the selected month and remembers previous-month totals" {
+        onTestMain {
+            runComposeUiTest {
+                val fixture = insightsFixture()
+                val main = fixture.account()
+                val groceries = fixture.category("Groceries")
+                fixture.viewModel.months.first { it.isNotEmpty() }
+
+                fixture.expense(groceries, main, 450, "2026-08-10T12:00:00Z")
+                fixture.expense(groceries, main, 100, "2026-07-05T12:00:00Z")
+                fixture.expense(groceries, main, 300, "2026-06-05T12:00:00Z")
+                fixture.viewModel.breakdown.first {
+                    it?.expenses?.singleOrNull()?.amountMinor == 450L &&
+                        it.expenses.singleOrNull()?.previousMinor == 100L
+                }!!
+
+                // July 2026 is column ten of the Sep 2025 - Aug 2026 window.
+                fixture.viewModel.selectMonth(10)
+
+                val july = fixture.viewModel.breakdown.first {
+                    it?.expenses?.singleOrNull()?.amountMinor == 100L
+                }!!
+                july.expenses.single().previousMinor shouldBe 300
+                fixture.viewModel.selectedIndex.value shouldBe 10
+            }
+        }
+    }
+
+    "paging resets the selection to the new window's last month" {
+        onTestMain {
+            runComposeUiTest {
+                val fixture = insightsFixture()
+                val main = fixture.account()
+                val groceries = fixture.category("Groceries")
+                fixture.viewModel.months.first { it.isNotEmpty() }
+                fixture.expense(groceries, main, 450, "2026-08-10T12:00:00Z")
+                fixture.viewModel.breakdown.first {
+                    it?.expenses?.singleOrNull()?.amountMinor == 450L
+                }!!
+
+                fixture.viewModel.selectMonth(0)
+                fixture.viewModel.selectedIndex.value shouldBe 0
+
+                fixture.viewModel.stepBack()
+                fixture.viewModel.selectedIndex.value shouldBe -1
+                fixture.viewModel.windowEnd.value shouldBe LocalDate(2025, 8, 1)
+
+                val oldestWindow = fixture.viewModel.breakdown.first {
+                    it != null && it.expenses.isEmpty() && it.incomes.isEmpty()
+                }!!
+                oldestWindow.expenses.shouldBeEmpty()
             }
         }
     }
