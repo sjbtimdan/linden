@@ -131,7 +131,7 @@ class EntrySuggestionsProvider(
         )
     }
 
-    /** Whole entries the user is likely to repeat right now, ranked time first. */
+    /** Whole entries the user is likely to repeat right now, boosted by field matches. */
     val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries ->
         predictQuickEntries(
             entries = entries,

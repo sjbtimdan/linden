@@ -20,10 +20,12 @@ data class QuickEntry(
  * Candidates are ranked by time of day — hour, weekday, month — multiplied by
  * recency decay and a logarithmic frequency weight so that recent,
  * frequently-entered entries dominate. Entries that appear only once are
- * filtered out. The draft's entered fields break ties within a time tier. All
- * entries of the draft's type are considered (not just the recent window of
- * the field predictors) so that periodic entries outside the prediction
- * horizon can still surface.
+ * filtered out. Entries matching the draft's entered amount/account/category
+ * (or typed description) float above the rest as a group — each group keeps its
+ * time ordering, so the strongest time match wins within it — and unmatched
+ * entries stay below rather than disappear. All entries of the draft's type are
+ * considered (not just the recent window of the field predictors) so that
+ * periodic entries outside the prediction horizon can still surface.
  *
  * Entries without a description are ignored: a chip shows the description, so
  * auto-generated entries without one can't be picked. A description entered
@@ -67,8 +69,11 @@ fun predictQuickEntries(
                 fieldScore = fieldMatchScore(entry, input) * weight,
             )
         }
+        // Entries whose fields match what the user has already entered float to
+        // the top; within each group time affinity still rules.
         .sortedWith(
-            compareByDescending<ScoredEntry> { it.timeScore }
+            compareByDescending<ScoredEntry> { it.fieldScore > 0.0 }
+                .thenByDescending { it.timeScore }
                 .thenByDescending { it.fieldScore }
                 .thenBy { it.entry.id },
         )

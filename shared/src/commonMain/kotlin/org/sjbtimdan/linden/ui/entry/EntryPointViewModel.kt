@@ -65,7 +65,7 @@ class EntryPointViewModel(
     /** Most likely descriptions for the current draft; only for new entries. */
     val descriptionSuggestions: StateFlow<List<String>> get() = suggestions.descriptionSuggestions
 
-    /** Whole entries the user is likely to repeat right now, ranked time first. */
+    /** Whole entries the user is likely to repeat right now, time first with field matches boosted. */
     val quickEntries: StateFlow<List<QuickEntry>> get() = suggestions.quickEntries
 
     /** Fills the draft from a quick-entry chip, keeping the current date and time. */

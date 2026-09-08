@@ -135,6 +135,33 @@ class QuickEntryPredictorTest : StringSpec({
                 .shouldContainExactly("Coffee", "Train", "Cinema")
         }
 
+        "floats an account match above a stronger time match" {
+            val entries = listOf(
+                expense(1, "Coffee", now.minus(1.days)),
+                expense(2, "Coffee", now.minus(1.days)),
+                expense(3, "Train", now.minus(20.days), account = credit),
+                expense(4, "Train", now.minus(20.days), account = credit),
+            )
+            // Coffee is the better time match, but Train is on the chosen account.
+            val input = FieldPredictionInput(EntryType.Expense, null, credit.id, null, null)
+            predict(entries, input).map { it.entry.description }
+                .shouldContainExactly("Train", "Coffee")
+        }
+
+        "keeps unmatched entries below the boosted group rather than dropping them" {
+            val entries = listOf(
+                expense(1, "Coffee", now.minus(1.days)),
+                expense(2, "Coffee", now.minus(1.days)),
+                expense(3, "Train", now.minus(1.days), account = credit),
+                expense(4, "Train", now.minus(1.days), account = credit),
+                expense(5, "Cinema", now.minus(1.days)),
+                expense(6, "Cinema", now.minus(1.days)),
+            )
+            val input = FieldPredictionInput(EntryType.Expense, null, credit.id, null, null)
+            predict(entries, input).map { it.entry.description }
+                .shouldContainExactly("Train", "Coffee", "Cinema")
+        }
+
         "frequent entries rank above rare ones" {
             val entries = (1L..5L).map { expense(it, "Coffee", now.minus(1.days)) } +
                 (6L..7L).map { expense(it, "Generali", now.minus(1.days)) }
