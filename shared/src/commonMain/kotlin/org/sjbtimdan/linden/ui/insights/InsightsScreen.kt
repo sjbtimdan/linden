@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.insights
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -198,12 +201,37 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            MonthlyTrendChart(
-                bars = monthlyTrendBars(months, language),
-                seriesColors = listOf(colors.income, colors.expense),
-                selectedIndex = effectiveIndex,
-                onSelect = viewModel::selectMonth,
-            )
+            // A horizontal drag pages the window like the arrows: the finger
+            // moving right steps back to older months, moving left steps
+            // forward again (up to the current month).
+            val swipeThresholdPx = with(LocalDensity.current) { PAGE_SWIPE_DISTANCE.toPx() }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(swipeThresholdPx) {
+                        var dragTotal = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { dragTotal = 0f },
+                            onHorizontalDrag = { change, dragAmount ->
+                                change.consume()
+                                dragTotal += dragAmount
+                            },
+                            onDragEnd = {
+                                when (pageSwipeDirection(dragTotal, swipeThresholdPx)) {
+                                    -1 -> viewModel.stepBack()
+                                    1 -> viewModel.stepForward()
+                                }
+                            },
+                        )
+                    },
+            ) {
+                MonthlyTrendChart(
+                    bars = monthlyTrendBars(months, language),
+                    seriesColors = listOf(colors.income, colors.expense),
+                    selectedIndex = effectiveIndex,
+                    onSelect = viewModel::selectMonth,
+                )
+            }
 
             // The category rows would leak amounts (and budgets) under the
             // hide-totals mask, so they only render when totals are visible.
@@ -232,6 +260,20 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
 /** Selected-month total, e.g. "1'234.56 CHF" (compact above one million). */
 internal fun amountLabel(valueMinor: Long, currency: Currency): String =
     "${formatAmountCompact(valueMinor)} ${currency.symbol}"
+
+/** Horizontal drag distance that counts as a page swipe. */
+internal val PAGE_SWIPE_DISTANCE = 96.dp
+
+/**
+ * Window paging of a horizontal drag once it passed the swipe threshold:
+ * -1 pages back to older months (drag to the right), 1 pages forward (drag
+ * to the left), 0 when the drag ended short of [thresholdPx].
+ */
+internal fun pageSwipeDirection(dragTotalPx: Float, thresholdPx: Float): Int = when {
+    dragTotalPx >= thresholdPx -> -1
+    dragTotalPx <= -thresholdPx -> 1
+    else -> 0
+}
 
 /** One legend row: a color dot, the series name and its amount for the month. */
 @Composable

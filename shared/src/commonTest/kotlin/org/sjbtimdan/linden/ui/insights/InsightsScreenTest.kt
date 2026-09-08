@@ -8,7 +8,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
@@ -139,6 +143,69 @@ class InsightsScreenTest : StringSpec({
             onNodeWithTag(MONTHLY_TREND_CHART_TAG).assertDoesNotExist()
             onNodeWithText("Aug 2026").assertDoesNotExist()
         }
+    }
+
+    "swiping the chart right pages back one window" {
+        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+            val main = seedAccount(accountDao)
+            val groceries = seedCategory(categoryDao)
+            expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
+
+            setContent {
+                InsightsScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithTag(MONTHLY_TREND_CHART_TAG).performTouchInput { swipeRight() }
+
+            onNodeWithText("Aug 2025").assertIsDisplayed()
+        }
+    }
+
+    "swiping the chart left returns to the current window" {
+        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+            val main = seedAccount(accountDao)
+            val groceries = seedCategory(categoryDao)
+            expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
+
+            setContent {
+                InsightsScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            onNodeWithTag(MONTHLY_TREND_CHART_TAG).performTouchInput { swipeRight() }
+            onNodeWithText("Aug 2025").assertIsDisplayed()
+
+            onNodeWithTag(MONTHLY_TREND_CHART_TAG).performTouchInput { swipeLeft() }
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+        }
+    }
+
+    "swiping the chart left does nothing at the current month" {
+        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+            val main = seedAccount(accountDao)
+            val groceries = seedCategory(categoryDao)
+            expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
+
+            setContent {
+                InsightsScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+            onNodeWithTag(MONTHLY_TREND_CHART_TAG).performTouchInput { swipeLeft() }
+
+            onNodeWithText("Aug 2026").assertIsDisplayed()
+        }
+    }
+
+    "pageSwipeDirection maps drags past the threshold" {
+        pageSwipeDirection(120f, 96f) shouldBe -1
+        pageSwipeDirection(-120f, 96f) shouldBe 1
+        pageSwipeDirection(96f, 96f) shouldBe -1
+        pageSwipeDirection(-96f, 96f) shouldBe 1
+        pageSwipeDirection(95f, 96f) shouldBe 0
+        pageSwipeDirection(-95f, 96f) shouldBe 0
+        pageSwipeDirection(0f, 96f) shouldBe 0
     }
 })
 
