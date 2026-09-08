@@ -46,6 +46,7 @@ class InsightsViewModel(
     settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     budgetDao: BudgetDao,
+    allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : ViewModel() {
@@ -69,7 +70,7 @@ class InsightsViewModel(
 
     /** 12-month expense/income window ending with [windowEnd]. */
     val months: StateFlow<List<MonthTotal>> = combine(
-        entryDao.getAll(),
+        allEntries,
         ratesProvider.defaultCurrency,
         ratesProvider.rates,
         _windowEnd,
@@ -84,7 +85,7 @@ class InsightsViewModel(
 
     /** Category rows of the selected month (window-end month when unselected). */
     val breakdown: StateFlow<MonthBreakdown?> = combine(
-        entryDao.getAll(),
+        allEntries,
         ratesProvider.defaultCurrency,
         ratesProvider.rates,
         budgetDao.budgetsFlow(),

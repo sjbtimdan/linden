@@ -6,6 +6,9 @@ import io.ktor.client.plugins.HttpTimeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
@@ -23,6 +26,7 @@ import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
@@ -76,6 +80,15 @@ class AppDependencies(
      */
     val ratesProvider = RatesFlowProvider(settingsDao, fxRatesRepository, appScope)
 
+    /**
+     * Every entry as one shared state flow. The screens that need rows across all
+     * time (insights, all-time balances, the entry screen total, the ledger's
+     * "All" period) observe this instead of each querying and re-mapping the
+     * whole table independently on every change.
+     */
+    val allEntries: StateFlow<List<Entry>> = entryDao.getAll()
+        .stateIn(appScope, SharingStarted.Eagerly, emptyList())
+
     val backupManager = LindenBackupManager(database)
     val csvExportManager = CsvExportManager(entryDao)
     val settingsViewModel = SettingsViewModel(
@@ -90,7 +103,7 @@ class AppDependencies(
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
-    val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao)
+    val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, allEntries)
     val budgetViewModel = BudgetViewModel(budgetDao, categoryDao)
     val entryViewModel = EntryPointViewModel(
         entryDao,
@@ -98,6 +111,7 @@ class AppDependencies(
         categoryDao,
         settingsDao,
         ratesProvider,
+        allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
     )
     val ledgerViewModel = LedgerViewModel(
@@ -107,12 +121,14 @@ class AppDependencies(
         settingsDao,
         budgetDao,
         ratesProvider,
+        allEntries,
     )
     val insightsViewModel = InsightsViewModel(
         entryDao,
         settingsDao,
         ratesProvider,
         budgetDao,
+        allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
     )
 }

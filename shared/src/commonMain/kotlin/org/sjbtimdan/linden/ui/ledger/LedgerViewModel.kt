@@ -49,6 +49,7 @@ class LedgerViewModel(
     settingsDao: SettingsDao,
     budgetDao: BudgetDao,
     ratesProvider: RatesFlowProvider,
+    allEntries: StateFlow<List<Entry>>,
     val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(
     entryDao,
@@ -98,7 +99,7 @@ class LedgerViewModel(
     ) { window, showFuture -> window to showFuture }
         .flatMapLatest { (window, showFuture) ->
             // Only a safe lower bound is queried; the window rules are enforced here with a fresh "today".
-            val source = window?.start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: entryDao.getAll()
+            val source = window?.start?.let { entryDao.getSince(it.sqlLowerBound()) } ?: allEntries
             source.map { rows ->
                 val now = today()
                 rows
@@ -199,7 +200,7 @@ class LedgerViewModel(
     /** Entries dated up to the period end, fetched with a safety margin. */
     private val entriesUpToPeriodEnd: StateFlow<List<Entry>> = periodEnd
         .flatMapLatest { end ->
-            val source = end?.let { entryDao.getUpTo(it.sqlUpperBound()) } ?: entryDao.getAll()
+            val source = end?.let { entryDao.getUpTo(it.sqlUpperBound()) } ?: allEntries
             source
         }
         .stateFlow(emptyList())

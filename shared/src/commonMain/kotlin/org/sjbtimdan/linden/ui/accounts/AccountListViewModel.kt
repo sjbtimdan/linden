@@ -14,11 +14,13 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
     entryDao: EntryDao,
     settingsDao: SettingsDao,
+    allEntries: StateFlow<List<Entry>>,
 ) : ViewModel() {
     val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(
@@ -62,7 +64,7 @@ class AccountListViewModel(
      */
     val allTimeBalances: StateFlow<Map<Long, Long>> = combine(
         accounts,
-        entryDao.getAll(),
+        allEntries,
     ) { accounts, entries ->
         val deltas = entryDeltas(entries)
         accounts.associate { account -> account.id to account.initialBalance + (deltas[account.id] ?: 0) }

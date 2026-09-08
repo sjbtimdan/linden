@@ -7,6 +7,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -31,6 +34,7 @@ import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
@@ -64,6 +68,14 @@ internal fun testRatesProvider(settingsDao: SettingsDao, fxRateDao: FxRateDao): 
     FxRatesRepository(fxRateDao, FakeFxRatesSource()),
     CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 )
+
+/**
+ * Caches [entryDao]'s full entry list into one [StateFlow] for ViewModels that
+ * take a shared all-entries flow as a required dependency (mirroring the
+ * composition root wiring); the flow collects on the test's Main dispatcher.
+ */
+internal fun testAllEntries(entryDao: EntryDao): StateFlow<List<Entry>> = entryDao.getAll()
+    .stateIn(CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate), SharingStarted.Eagerly, emptyList())
 
 @OptIn(ExperimentalTestApi::class)
 fun withApp(
@@ -120,7 +132,7 @@ fun withAccountViewModel(
             val entryDao = EntryDao(database.entryQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
             val settingsDao = SettingsDao(database.settingsQueries)
-            val viewModel = AccountListViewModel(accountDao, entryDao, settingsDao)
+            val viewModel = AccountListViewModel(accountDao, entryDao, settingsDao, testAllEntries(entryDao))
             block(accountDao, entryDao, categoryDao, viewModel)
         }
     }
@@ -218,6 +230,7 @@ fun withEntryPoint(
                 categoryDao,
                 settingsDao,
                 testRatesProvider(settingsDao, fxRateDao),
+                testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )
@@ -280,6 +293,7 @@ fun withLedgerViewModel(
                 settingsDao,
                 BudgetDao(database.budgetQueries),
                 testRatesProvider(settingsDao, fxRateDao),
+                testAllEntries(entryDao),
                 today = today,
             )
             // Tests create entries with the default epoch timestamp, so they assume
@@ -348,6 +362,7 @@ fun withInsightsViewModel(
                 settingsDao,
                 testRatesProvider(settingsDao, fxRateDao),
                 BudgetDao(database.budgetQueries),
+                testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 today = today,
             )

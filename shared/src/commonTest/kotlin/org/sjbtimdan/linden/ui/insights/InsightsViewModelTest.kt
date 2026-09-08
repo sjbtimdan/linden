@@ -23,6 +23,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.onTestMain
+import org.sjbtimdan.linden.ui.testAllEntries
 import org.sjbtimdan.linden.ui.testRatesProvider
 import kotlin.time.Instant
 
@@ -85,6 +86,7 @@ private suspend fun insightsFixture(): InsightsFixture {
         settingsDao,
         testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
         budgetDao,
+        testAllEntries(entryDao),
         today = today,
     )
     return InsightsFixture(database, accountDao, categoryDao, entryDao, budgetDao, viewModel)

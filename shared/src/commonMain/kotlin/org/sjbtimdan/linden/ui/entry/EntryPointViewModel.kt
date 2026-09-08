@@ -15,6 +15,7 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
@@ -27,6 +28,7 @@ class EntryPointViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     ratesProvider: RatesFlowProvider,
+    allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
 ) : EntryEditorViewModel(
@@ -46,7 +48,7 @@ class EntryPointViewModel(
      * has no stored rate.
      */
     val totalMinor: StateFlow<Long?> = combine(
-        entryDao.getAll(),
+        allEntries,
         visibleAccounts,
         defaultCurrency,
         rates,
