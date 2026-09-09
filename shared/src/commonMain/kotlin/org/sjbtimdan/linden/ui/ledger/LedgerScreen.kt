@@ -642,8 +642,10 @@ fun LedgerScreen(
             onToAmountChange = viewModel::onToAmountChange,
             onDescriptionChange = viewModel::onDescriptionChange,
             onCreatedAtChange = viewModel::onCreatedAtChange,
+            onTypeChange = viewModel::changeDialogType,
             onSave = { viewModel.saveDialog() },
             onDelete = if (state.editing != null) viewModel::deleteDialogEntry else null,
+            onDuplicate = viewModel::duplicateDialogEntry,
             onNavigateToSettings = onNavigateToSettings,
             onDismiss = viewModel::dismissDialog,
         )

@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.entry
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -131,6 +132,19 @@ data class EntryDraft(
         createdZone = previous.createdZone,
     )
 
+    /**
+     * Returns a copy of this draft that creates a new entry: it drops the edited
+     * entry and re-dates itself to [now] in [zone]. Every other field (type,
+     * amount, category, accounts, description) carries over unchanged, so saving
+     * the result duplicates the original row.
+     */
+    fun asNewEntry(now: Instant = Clock.System.now(), zone: TimeZone = TimeZone.currentSystemDefault()): EntryDraft =
+        copy(
+            editing = null,
+            createdAt = now,
+            createdZone = zone,
+        )
+
     companion object {
         fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDraft {
             val empty = EntryDraft(
@@ -189,4 +203,16 @@ data class EntryDraft(
             )
         }
     }
+}
+
+/**
+ * Categories an entry of [type] may use: expense entries cannot use income-only
+ * categories, income entries cannot use expense-only ones, transfers carry none.
+ * Mirrors what the category picker offers, so validation and type switches agree
+ * with the form.
+ */
+internal fun categoriesForType(categories: List<Category>, type: EntryType): List<Category> = when (type) {
+    EntryType.Expense -> categories.filter { it.type != CategoryType.Income }
+    EntryType.Income -> categories.filter { it.type != CategoryType.Expense }
+    EntryType.Transfer -> emptyList()
 }

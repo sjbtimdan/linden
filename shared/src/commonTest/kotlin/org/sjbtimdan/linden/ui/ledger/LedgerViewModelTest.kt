@@ -775,6 +775,103 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "changeDialogType flips an edited expense to income, keeping a both-category and the id" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("General", CategoryType.Both)
+            val main = accountDao.getAll().first().first()
+            val general = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, general, "Coupon", main, 1_000))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+
+            viewModel.openEditDialog(created)
+            viewModel.changeDialogType(EntryType.Income)
+
+            viewModel.dialogState.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.type shouldBe EntryType.Income
+                draft.editing shouldBe created
+                draft.categoryId shouldBe general.id
+                draft.amountText shouldBe "10.00"
+                draft.description shouldBe "Coupon"
+            }
+
+            viewModel.saveDialog() shouldBe true
+
+            val rows = entryDao.getAll().first()
+            rows.shouldHaveSize(1)
+            val saved = rows.single()
+            saved.id shouldBe created.id
+            saved shouldBe IncomeEntry(created.id, general, "Coupon", main, 1_000)
+        }
+    }
+
+    "changeDialogType clears a category the target type cannot use" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+
+            viewModel.openEditDialog(created)
+            viewModel.changeDialogType(EntryType.Income)
+
+            viewModel.dialogState.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.type shouldBe EntryType.Income
+                draft.categoryId.shouldBeNull()
+                draft.description shouldBe "Coffee"
+            }
+        }
+    }
+
+    "changeDialogType is a no-op for transfers" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            viewModel.createEntry(TransferEntry(0, null, "Move", main, 500, toAccount = savings, toAmount = null))
+            val created = entryDao.getAll().first().filterIsInstance<TransferEntry>().first()
+
+            viewModel.openEditDialog(created)
+            viewModel.changeDialogType(EntryType.Expense)
+
+            viewModel.dialogState.value?.type shouldBe EntryType.Transfer
+        }
+    }
+
+    "duplicateDialogEntry turns the edit into a new dated copy that saveDialog creates" {
+        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coupon", main, 1_000))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            val now = Instant.parse("2026-09-08T09:30:00Z")
+
+            viewModel.openEditDialog(created)
+            viewModel.duplicateDialogEntry(now = now, zone = TimeZone.UTC)
+
+            viewModel.dialogState.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.editing.shouldBeNull()
+                draft.type shouldBe EntryType.Expense
+                draft.amountText shouldBe "10.00"
+                draft.description shouldBe "Coupon"
+                draft.categoryId shouldBe groceries.id
+                draft.accountId shouldBe main.id
+                draft.createdAt shouldBe now
+            }
+
+            viewModel.saveDialog() shouldBe true
+            viewModel.dialogState.value.shouldBeNull()
+
+            val rows = entryDao.getAll().first()
+            rows.shouldHaveSize(2)
+            val original = rows.first { it.id == created.id }
+            original shouldBe created
+            val copy = rows.first { it.id != created.id }
+            copy shouldBe ExpenseEntry(copy.id, groceries, "Coupon", main, 1_000, createdAt = now)
+        }
+    }
+
     "view mode defaults to entries and toggles" {
         withLedgerViewModel { viewModel ->
             viewModel.viewMode.value shouldBe LedgerViewMode.Entries

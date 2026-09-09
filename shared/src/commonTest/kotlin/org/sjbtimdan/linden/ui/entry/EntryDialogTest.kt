@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -25,6 +26,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.ui.onTestMain
 import kotlin.time.Instant
 
@@ -53,7 +55,13 @@ private fun draft(
 )
 
 @OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.showDialog(state: EntryDraft, onSave: () -> Unit = {}, onDelete: (() -> Unit)? = null) {
+private fun ComposeUiTest.showDialog(
+    state: EntryDraft,
+    onSave: () -> Unit = {},
+    onDelete: (() -> Unit)? = null,
+    onDuplicate: (() -> Unit)? = null,
+    onTypeChange: ((EntryType) -> Unit)? = null,
+) {
     setContent {
         EntryDialog(
             state = state,
@@ -66,8 +74,10 @@ private fun ComposeUiTest.showDialog(state: EntryDraft, onSave: () -> Unit = {},
             onToAmountChange = {},
             onDescriptionChange = {},
             onCreatedAtChange = {},
+            onTypeChange = onTypeChange,
             onSave = onSave,
             onDelete = onDelete,
+            onDuplicate = onDuplicate,
             onNavigateToSettings = {},
             onDismiss = {},
         )
@@ -163,6 +173,51 @@ class EntryDialogTest : StringSpec({
             runComposeUiTest {
                 showDialog(draft(editing = ExpenseEntry(7, groceries, "Coffee", main, 450)), onDelete = {})
                 onNodeWithText("Delete").assertIsDisplayed()
+            }
+        }
+    }
+
+    "shows Duplicate only when editing an entry" {
+        onTestMain {
+            runComposeUiTest {
+                showDialog(draft(), onDuplicate = {})
+                onNodeWithText("Duplicate").assertDoesNotExist()
+            }
+            runComposeUiTest {
+                showDialog(
+                    draft(editing = ExpenseEntry(7, groceries, "Coffee", main, 450)),
+                    onDuplicate = {},
+                )
+                onNodeWithText("Duplicate").assertIsDisplayed()
+            }
+        }
+    }
+
+    "type picker lets an income entry flip to an expense" {
+        onTestMain {
+            runComposeUiTest {
+                var changed: EntryType? = null
+                showDialog(
+                    draft(type = EntryType.Income, editing = IncomeEntry(8, groceries, "Coffee", main, 450)),
+                    onTypeChange = { changed = it },
+                )
+                onNodeWithTag("dialogTypePicker").assertIsDisplayed()
+                onNodeWithText("Expense").performClick()
+                waitForIdle()
+                changed shouldBe EntryType.Expense
+            }
+        }
+    }
+
+    "type picker is hidden for transfers and when no handler is wired" {
+        onTestMain {
+            runComposeUiTest {
+                showDialog(draft(type = EntryType.Transfer), onTypeChange = {})
+                onNodeWithTag("dialogTypePicker").assertDoesNotExist()
+            }
+            runComposeUiTest {
+                showDialog(draft())
+                onNodeWithTag("dialogTypePicker").assertDoesNotExist()
             }
         }
     }

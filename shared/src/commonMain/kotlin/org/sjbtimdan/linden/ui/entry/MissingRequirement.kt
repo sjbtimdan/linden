@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_req_account
@@ -57,15 +56,12 @@ internal fun missingRequirement(
     val state = draft ?: return null
     val satisfiable = when (state.type) {
         EntryType.Transfer -> accounts.size >= 2
-        EntryType.Expense, EntryType.Income -> accounts.isNotEmpty() && hasUsableCategory(categories, state.type)
+
+        EntryType.Expense, EntryType.Income -> accounts.isNotEmpty() && categoriesForType(
+            categories,
+            state.type,
+        ).isNotEmpty()
     }
     if (!satisfiable) return null
     return state.firstMissingRequirement(accounts)
-}
-
-/** Whether at least one category is selectable for [type], mirroring [EntryForm]'s list. */
-private fun hasUsableCategory(categories: List<Category>, type: EntryType): Boolean = when (type) {
-    EntryType.Expense -> categories.any { it.type != CategoryType.Income }
-    EntryType.Income -> categories.any { it.type != CategoryType.Expense }
-    EntryType.Transfer -> false
 }

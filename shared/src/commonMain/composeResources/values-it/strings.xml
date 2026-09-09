@@ -15,6 +15,7 @@
     <string name="common_save">Salva</string>
     <string name="common_cancel">Annulla</string>
     <string name="common_clear">Cancella</string>
+    <string name="common_duplicate">Duplica</string>
     <string name="common_ok">OK</string>
     <string name="common_delete">Elimina</string>
     <string name="common_dismiss">Chiudi</string>

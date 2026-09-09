@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
@@ -320,5 +321,40 @@ class EntryDraftTest : StringSpec({
         carried.createdZone shouldBe previous.createdZone
         carried.categoryId shouldBe salary.id
         carried.accountId shouldBe savingsChf.id
+    }
+
+    "asNewEntry drops the edited entry and re-dates the copy" {
+        val editing = IncomeEntry(8, salary, "Coupon", main, 50_000, createdAt = createdAt, createdZone = createdZone)
+        val duplicate = EntryDraft.forEdit(editing).asNewEntry(
+            now = createdAt + 60.seconds,
+            zone = TimeZone.of("Europe/Zurich"),
+        )
+
+        duplicate.editing.shouldBeNull()
+        duplicate.type shouldBe EntryType.Income
+        duplicate.amountText shouldBe formatAmount(50_000)
+        duplicate.categoryId shouldBe salary.id
+        duplicate.accountId shouldBe main.id
+        duplicate.description shouldBe "Coupon"
+        duplicate.createdAt shouldBe createdAt + 60.seconds
+        duplicate.createdZone shouldBe TimeZone.of("Europe/Zurich")
+        duplicate.toEntry(accounts, categories) shouldBe IncomeEntry(
+            0,
+            salary,
+            "Coupon",
+            main,
+            50_000,
+            createdAt = createdAt + 60.seconds,
+            createdZone = TimeZone.of("Europe/Zurich"),
+        )
+    }
+
+    "categoriesForType offers expense and income categories where they fit" {
+        val both = Category(3, "General", CategoryType.Both)
+        val all = listOf(groceries, salary, both)
+
+        categoriesForType(all, EntryType.Expense) shouldBe listOf(groceries, both)
+        categoriesForType(all, EntryType.Income) shouldBe listOf(salary, both)
+        categoriesForType(all, EntryType.Transfer).shouldBeEmpty()
     }
 })

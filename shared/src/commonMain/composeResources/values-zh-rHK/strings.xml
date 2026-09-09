@@ -15,6 +15,7 @@
     <string name="common_save">儲存</string>
     <string name="common_cancel">取消</string>
     <string name="common_clear">清除</string>
+    <string name="common_duplicate">複製</string>
     <string name="common_ok">確定</string>
     <string name="common_delete">刪除</string>
     <string name="common_dismiss">關閉</string>

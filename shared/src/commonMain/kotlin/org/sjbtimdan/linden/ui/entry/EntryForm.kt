@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
@@ -95,11 +94,7 @@ fun EntryForm(
     quickEntries: List<QuickEntry> = emptyList(),
     onQuickEntry: (QuickEntry) -> Unit = {},
 ) {
-    val visibleCategories = when (state.type) {
-        EntryType.Expense -> categories.filter { it.type != CategoryType.Income }
-        EntryType.Income -> categories.filter { it.type != CategoryType.Expense }
-        EntryType.Transfer -> emptyList()
-    }
+    val visibleCategories = categoriesForType(categories, state.type)
     val fromAccount = accounts.firstOrNull { it.id == state.accountId }
     val toAccount = accounts.firstOrNull { it.id == state.toAccountId }
     val showReceivedAmount = state.type == EntryType.Transfer &&
