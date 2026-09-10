@@ -143,7 +143,8 @@ tasks.withType<Test>().configureEach {
     // Run test classes in parallel across forked JVMs: each fork is isolated, so
     // Compose UI tests keep running sequentially per fork while unrelated
     // test classes (DAOs, parsers, ViewModels) execute concurrently.
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceIn(1, 4)
+    // Use all available processors for parallel execution (was capped at 4).
+    maxParallelForks = Math.max(1, Runtime.getRuntime().availableProcessors())
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
@@ -151,6 +152,13 @@ tasks.withType<Test>().configureEach {
 
 tasks.named("check") {
     dependsOn(tasks.named("koverVerifyJvm"))
+}
+
+// Fast development check that runs jvmTest without kover verification.
+// Use ./gradlew fastCheck for rapid iteration, ./gradlew check for CI.
+tasks.register("fastCheck") {
+    dependsOn("jvmTest")
+    // Does NOT depend on koverVerifyJvm - faster for development iterations
 }
 
 // Generates a BuildInfo.kt file in commonMain with the app version and the
