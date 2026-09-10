@@ -76,6 +76,7 @@
 
 ### Code Patterns Worth Preserving
 - **Each new class ships with a unit test** - Unless it is pure configuration (constants/values with no behavior), a new class is not done without its test
+- **Navigation state must survive configuration changes** (since 2026-09-10): `App` holds the active `Screen` in `rememberSaveable` with `ScreenSaver` (each `Screen` carries a stable `key`, `Screen.fromKey` falls back to `Entry`). A plain `remember` resets to `Entry` on Android rotation because `MainActivity` has no `android:configChanges`. Note `AppRoot` still recreates `AppDependencies` (and thus the ViewModels) on rotation, so only the screen survives — in-progress `EntryDraft` does not, despite the business-tech bridge's claim.
 - **Each Composable in its own file** - e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file
 - **Comment minimally** - Only add comments for obscure code
 - **Conventional commits** - Standard commit message format

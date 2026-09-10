@@ -26,7 +26,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
@@ -45,20 +46,41 @@ import org.sjbtimdan.linden.ui.rates.RatesScreen
 import org.sjbtimdan.linden.ui.settings.SettingsScreen
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
-sealed class Screen {
-    data object Entry : Screen()
-    data object Ledger : Screen()
-    data object Settings : Screen()
-    data object CategoryList : Screen()
-    data object AccountList : Screen()
-    data object Rates : Screen()
-    data object Budgets : Screen()
-    data object Insights : Screen()
+sealed class Screen(val key: String) {
+    data object Entry : Screen("Entry")
+    data object Ledger : Screen("Ledger")
+    data object Settings : Screen("Settings")
+    data object CategoryList : Screen("CategoryList")
+    data object AccountList : Screen("AccountList")
+    data object Rates : Screen("Rates")
+    data object Budgets : Screen("Budgets")
+    data object Insights : Screen("Insights")
+
+    companion object {
+        fun fromKey(key: String): Screen = when (key) {
+            Entry.key -> Entry
+            Ledger.key -> Ledger
+            Settings.key -> Settings
+            CategoryList.key -> CategoryList
+            AccountList.key -> AccountList
+            Rates.key -> Rates
+            Budgets.key -> Budgets
+            Insights.key -> Insights
+            else -> Entry
+        }
+    }
 }
+
+internal val ScreenSaver: Saver<Screen, String> = Saver(
+    save = { it.key },
+    restore = { Screen.fromKey(it) },
+)
 
 @Composable
 fun App(dependencies: AppDependencies) {
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Entry) }
+    var currentScreen by rememberSaveable(stateSaver = ScreenSaver) {
+        mutableStateOf<Screen>(Screen.Entry)
+    }
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
