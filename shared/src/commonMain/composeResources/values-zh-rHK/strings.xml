@@ -149,8 +149,9 @@
     <!-- Adjust Balance dialog -->
     <string name="ledger_adjust_current_balance">目前結餘：%1$s %2$s</string>
     <string name="ledger_adjust_bank_balance">銀行結餘</string>
-    <string name="ledger_adjust_add_income">將把 %1$s 記為收入。</string>
-    <string name="ledger_adjust_add_expense">將把 %1$s 記為支出。</string>
+    <string name="ledger_adjust_explainer">將在所選分類下新增一筆記錄。</string>
+    <string name="ledger_adjust_explainer_income">將在所選分類下新增一筆收入。</string>
+    <string name="ledger_adjust_explainer_expense">將在所選分類下新增一筆支出。</string>
     <string name="ledger_adjust_confirm">調整</string>
 
     <!-- Accounts screen -->

@@ -149,8 +149,9 @@
     <!-- Adjust Balance dialog -->
     <string name="ledger_adjust_current_balance">Saldo attuale: %1$s %2$s</string>
     <string name="ledger_adjust_bank_balance">Saldo bancario</string>
-    <string name="ledger_adjust_add_income">Verrà aggiunto %1$s come entrata.</string>
-    <string name="ledger_adjust_add_expense">Verrà aggiunto %1$s come uscita.</string>
+    <string name="ledger_adjust_explainer">Verrà creata una voce nella categoria scelta.</string>
+    <string name="ledger_adjust_explainer_income">Verrà creata un'entrata nella categoria scelta.</string>
+    <string name="ledger_adjust_explainer_expense">Verrà creata un'uscita nella categoria scelta.</string>
     <string name="ledger_adjust_confirm">Rettifica</string>
 
     <!-- Accounts screen -->

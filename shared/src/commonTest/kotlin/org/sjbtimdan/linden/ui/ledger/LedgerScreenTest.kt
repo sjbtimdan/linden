@@ -1201,6 +1201,10 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("Adjust Balance").assertIsDisplayed()
             onNodeWithText("Current balance: 100.00 CHF").assertIsDisplayed()
+            // Until a target is typed, the explainer stays direction-neutral.
+            onNodeWithText("An entry will be created under the chosen category.").assertIsDisplayed()
+            onNodeWithText("An income entry will be created under the chosen category.").assertDoesNotExist()
+            onNodeWithText("An expense entry will be created under the chosen category.").assertDoesNotExist()
         }
     }
 
@@ -1220,6 +1224,7 @@ class LedgerScreenTest : StringSpec({
 
             onAllNodes(hasSetTextAction())[0].performTextClearance()
             onAllNodes(hasSetTextAction())[0].performTextInput("125.00")
+            onNodeWithText("An income entry will be created under the chosen category.").assertIsDisplayed()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Adjust").performClick()
 
@@ -1245,6 +1250,7 @@ class LedgerScreenTest : StringSpec({
 
             onAllNodes(hasSetTextAction())[0].performTextClearance()
             onAllNodes(hasSetTextAction())[0].performTextInput("90.00")
+            onNodeWithText("An expense entry will be created under the chosen category.").assertIsDisplayed()
             onNodeWithText("Groceries").performClick()
             onNodeWithText("Adjust").performClick()
 

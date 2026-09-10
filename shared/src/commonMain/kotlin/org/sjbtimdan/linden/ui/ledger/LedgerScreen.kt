@@ -74,12 +74,13 @@ import org.sjbtimdan.linden.resources.ledger_action_add_first_entry
 import org.sjbtimdan.linden.resources.ledger_action_create_account
 import org.sjbtimdan.linden.resources.ledger_action_manage_accounts
 import org.sjbtimdan.linden.resources.ledger_action_show_future_entries
-import org.sjbtimdan.linden.resources.ledger_adjust_add_expense
-import org.sjbtimdan.linden.resources.ledger_adjust_add_income
 import org.sjbtimdan.linden.resources.ledger_adjust_balance
 import org.sjbtimdan.linden.resources.ledger_adjust_bank_balance
 import org.sjbtimdan.linden.resources.ledger_adjust_confirm
 import org.sjbtimdan.linden.resources.ledger_adjust_current_balance
+import org.sjbtimdan.linden.resources.ledger_adjust_explainer
+import org.sjbtimdan.linden.resources.ledger_adjust_explainer_expense
+import org.sjbtimdan.linden.resources.ledger_adjust_explainer_income
 import org.sjbtimdan.linden.resources.ledger_categories_future_hidden
 import org.sjbtimdan.linden.resources.ledger_categories_no_match
 import org.sjbtimdan.linden.resources.ledger_categories_no_spending
@@ -759,6 +760,20 @@ private fun AdjustBalanceDialog(
         title = { Text(stringResource(Res.string.ledger_adjust_balance)) },
         text = {
             Column {
+                val explainer = when {
+                    adjustment == null || adjustment.isZero ->
+                        stringResource(Res.string.ledger_adjust_explainer)
+
+                    adjustment.delta > 0 -> stringResource(Res.string.ledger_adjust_explainer_income)
+
+                    else -> stringResource(Res.string.ledger_adjust_explainer_expense)
+                }
+                Text(
+                    text = explainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = account.name,
                     style = MaterialTheme.typography.titleSmall,
@@ -805,19 +820,6 @@ private fun AdjustBalanceDialog(
                             label = { Text(category.name) },
                         )
                     }
-                }
-                if (adjustment != null && !adjustment.isZero) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    val message = if (adjustment.delta > 0) {
-                        stringResource(Res.string.ledger_adjust_add_income, formatAmount(adjustment.delta))
-                    } else {
-                        stringResource(Res.string.ledger_adjust_add_expense, formatAmount(adjustment.delta))
-                    }
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         },

@@ -149,8 +149,9 @@
     <!-- Adjust Balance dialog -->
     <string name="ledger_adjust_current_balance">当前余额：%1$s %2$s</string>
     <string name="ledger_adjust_bank_balance">银行余额</string>
-    <string name="ledger_adjust_add_income">将把 %1$s 记为收入。</string>
-    <string name="ledger_adjust_add_expense">将把 %1$s 记为支出。</string>
+    <string name="ledger_adjust_explainer">将在所选分类下新增一条记录。</string>
+    <string name="ledger_adjust_explainer_income">将在所选分类下新增一条收入。</string>
+    <string name="ledger_adjust_explainer_expense">将在所选分类下新增一条支出。</string>
     <string name="ledger_adjust_confirm">调整</string>
 
     <!-- Accounts screen -->

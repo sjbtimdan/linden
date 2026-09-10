@@ -155,8 +155,9 @@
     <!-- Adjust Balance dialog -->
     <string name="ledger_adjust_current_balance">Current balance: %1$s %2$s</string>
     <string name="ledger_adjust_bank_balance">Bank balance</string>
-    <string name="ledger_adjust_add_income">Will add %1$s as income.</string>
-    <string name="ledger_adjust_add_expense">Will add %1$s as expense.</string>
+    <string name="ledger_adjust_explainer">An entry will be created under the chosen category.</string>
+    <string name="ledger_adjust_explainer_income">An income entry will be created under the chosen category.</string>
+    <string name="ledger_adjust_explainer_expense">An expense entry will be created under the chosen category.</string>
     <string name="ledger_adjust_confirm">Adjust</string>
 
     <!-- Accounts screen -->
