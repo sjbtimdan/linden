@@ -15,8 +15,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppRoot {
+                val context = applicationContext
                 withContext(Dispatchers.IO) {
-                    createAppDependencies(DatabaseDriverFactory(this@MainActivity).createDriver())
+                    createAppDependencies(DatabaseDriverFactory(context).createDriver())
                 }
             }
         }

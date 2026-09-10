@@ -6,6 +6,7 @@ import io.ktor.client.plugins.HttpTimeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -58,7 +59,7 @@ class AppDependencies(
     val entryDao = EntryDao(database.entryQueries)
     val fxRateDao = FxRateDao(database.fxRateQueries)
     val budgetDao = BudgetDao(database.budgetQueries)
-    val httpClient by lazy {
+    private val httpClientLazy = lazy {
         HttpClient {
             install(HttpTimeout) {
                 // Generous timeouts: rates are fetched over a network that may be slow.
@@ -68,6 +69,7 @@ class AppDependencies(
             }
         }
     }
+    val httpClient: HttpClient by httpClientLazy
     val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
 
     /** App-wide scope for the shared [ratesProvider]; lives as long as the dependencies. */
@@ -131,6 +133,16 @@ class AppDependencies(
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
     )
+
+    /**
+     * Releases the app-wide scope and, if it was ever built, the HTTP client.
+     * Called when [AppRootViewModel] is cleared (activity finishing, not a
+     * configuration change).
+     */
+    fun close() {
+        appScope.cancel()
+        if (httpClientLazy.isInitialized()) httpClientLazy.value.close()
+    }
 }
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
