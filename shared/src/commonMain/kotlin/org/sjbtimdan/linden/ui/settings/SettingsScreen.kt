@@ -294,51 +294,6 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(stringResource(Res.string.settings_nav_insights))
             }
-            FilledTonalButton(
-                onClick = { showImportConfirmation = true },
-                enabled = importState !is ImportState.Importing,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_import_ivy))
-            }
-        }
-
-        when (val state = importState) {
-            ImportState.Idle -> Unit
-
-            ImportState.Importing -> WorkingRow(text = stringResource(Res.string.settings_working_import))
-
-            is ImportState.Success -> {
-                val result = state.result
-                val summary = stringResource(
-                    Res.string.settings_import_summary,
-                    result.accounts,
-                    result.categories,
-                    result.transactions,
-                )
-                val note = if (result.splitTransactions > 0) {
-                    stringResource(Res.string.settings_import_split_note, result.splitTransactions)
-                } else {
-                    ""
-                }
-                ImportResultRow(
-                    text = summary + note,
-                    onDismiss = viewModel::clearImportState,
-                )
-            }
-
-            is ImportState.Error -> ImportResultRow(
-                text = stringResource(
-                    Res.string.settings_import_failed,
-                    state.message ?: stringResource(Res.string.common_unknown_error),
-                ),
-                onDismiss = viewModel::clearImportState,
-            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -391,6 +346,18 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(stringResource(Res.string.settings_export_csv))
+            }
+            FilledTonalButton(
+                onClick = { showImportConfirmation = true },
+                enabled = importState !is ImportState.Importing,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(Res.string.settings_import_ivy))
             }
         }
 
@@ -453,6 +420,39 @@ fun SettingsScreen(
                     state.message ?: stringResource(Res.string.common_unknown_error),
                 ),
                 onDismiss = viewModel::clearExportState,
+            )
+        }
+
+        when (val state = importState) {
+            ImportState.Idle -> Unit
+
+            ImportState.Importing -> WorkingRow(text = stringResource(Res.string.settings_working_import))
+
+            is ImportState.Success -> {
+                val result = state.result
+                val summary = stringResource(
+                    Res.string.settings_import_summary,
+                    result.accounts,
+                    result.categories,
+                    result.transactions,
+                )
+                val note = if (result.splitTransactions > 0) {
+                    stringResource(Res.string.settings_import_split_note, result.splitTransactions)
+                } else {
+                    ""
+                }
+                ImportResultRow(
+                    text = summary + note,
+                    onDismiss = viewModel::clearImportState,
+                )
+            }
+
+            is ImportState.Error -> ImportResultRow(
+                text = stringResource(
+                    Res.string.settings_import_failed,
+                    state.message ?: stringResource(Res.string.common_unknown_error),
+                ),
+                onDismiss = viewModel::clearImportState,
             )
         }
 
