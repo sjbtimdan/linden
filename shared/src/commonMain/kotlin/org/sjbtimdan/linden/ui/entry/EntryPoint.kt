@@ -37,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,8 +103,9 @@ fun EntryPoint(
 
     // Once the user starts a draft the hero card and the rates banner shrink to
     // slim rows so the form keeps the viewport; Clear restores them. A fresh
-    // prefill from the last entry does not count as a touch.
-    var draftTouched by remember { mutableStateOf(false) }
+    // prefill from the last entry does not count as a touch. Saveable so a
+    // draft that survives a configuration change keeps the compact header.
+    var draftTouched by rememberSaveable { mutableStateOf(false) }
     val markTouched: () -> Unit = { draftTouched = true }
 
     // The back arrow exits editing: clearFocus closes text fields and dropdowns,
