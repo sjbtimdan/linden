@@ -100,8 +100,8 @@ SQLDelight provides type-safe SQL with KMP support and an async API that fits th
 
 ### Impact
 **Positive**: Type-safe SQL, async API, KMP support
-**Negative**: Schema creation must be awaited; migrations are manual (`schema v2` via `migrations/1.sqm`)
-**Risk**: Editing `.sq` tables without adding a new `.sqm` migration breaks the persisted desktop DB
+**Negative**: Schema creation must be awaited; DDL changes require deleting the local DB (schema v1, no migrations)
+**Risk**: Editing `.sq` tables without deleting the persisted desktop DB breaks it
 
 ### Related
 - `data/DatabaseDriverFactory.kt` - `createLindenDatabase`
@@ -257,8 +257,8 @@ allowed to go below zero. But an individual entry always has a type (expense vs 
 initial balances; the account dialog warns instead of silently truncating an invalid value. `Account.sq`
 `initial_balance` has no CHECK. Entry amounts are enforced non-negative in the DB: `Entry.sq` declares
 `amount INTEGER NOT NULL CHECK (amount >= 0)` and `to_amount` `CHECK (to_amount IS NULL OR to_amount >= 0)`,
-backed by the v1→v2 migration (`migrations/1.sqm`) that rebuilds `EntryEntity` to add the constraints
-(SQLite cannot add a CHECK in place).
+declared directly in `Entry.sq` (SQLite cannot add a CHECK in place, so the constraint lives in the
+schema from the start).
 
 ### Rationale
 Liabilities are first-class data (negative balances must be representable), while an entry's sign lives in its
@@ -272,12 +272,12 @@ Liabilities are first-class data (negative balances must be representable), whil
 
 ### Impact
 **Positive**: DB-enforced invariant (entries never negative); accounts can model debts
-**Negative**: First migration appeared (schema now v2); app/UI layer still guards against logical misuse
-**Risk**: Editing `Entry.sq` amounts later requires another `.sqm` migration
+**Negative**: App/UI layer still guards against logical misuse
+**Risk**: Editing `Entry.sq` amounts later requires deleting the local DB (no migrations)
 
 ### Related
 - `ui/entry/MoneyFormat.kt` - `parseAmount` (accepts `-`)
-- `Entry.sq` + `sqldelight/migrations/1.sqm` - CHECK constraints
+- `Entry.sq` - CHECK constraints
 - `model/Entry.kt` - sealed `ExpenseEntry`/`IncomeEntry`/`TransferEntry`
 
 ---
@@ -337,8 +337,7 @@ never individually deleted (no `deleteById` in `Category.sq`); `EntryDao.toEntry
 - SQLite does **not** enforce FKs unless `PRAGMA foreign_keys = ON` is set per connection; SQLDelight doesn't
   enable it by default, so constraints would be decorative unless both `DatabaseDriverFactory` actuals
   (Android + JVM) are updated — a classic false-confidence trap.
-- Adding FKs requires a table-rebuild migration (SQLite can't add an FK in place), the same pattern as
-  `migrations/1.sqm` — real work and risk for a safety net the code already provides.
+- Adding FKs requires a table-rebuild migration (SQLite can't add an FK in place) — real work and risk for a safety net the code already provides.
 - `ON DELETE CASCADE` would silently delete entries when an account is deleted, contradicting the deliberate
   "block deletion of accounts with entries" behavior.
 - Backup restore and Ivy import already insert parents-before-children and delete children-before-parents, but

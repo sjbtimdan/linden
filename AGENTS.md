@@ -103,9 +103,8 @@ coverage is only enforced there because the Android target runs device tests onl
   only the `LindenDatabase` class goes into the `packageName` set in `build.gradle.kts` (`org.sjbtimdan.linden.db`).
 - `Import.sq` declares no table — it only exposes `last_insert_rowid()`, used by `IvyImporter` to resolve
   auto-increment IDs when restoring a backup in a transaction.
-- SQLDelight schema is version 2 — `sqldelight/migrations/1.sqm` rebuilds `EntryEntity` to add CHECK
-  constraints (`amount >= 0`, `to_amount` NULL-or-`>= 0`). Editing an `.sq` table still requires a new `.sqm`
-  migration, or delete the local DB (`~/.linden/linden.db` on desktop); missing migrations break the persisted DB.
+- SQLDelight schema is version 1 with no migrations (pre-release migrations were collapsed). Editing an `.sq`
+  table requires deleting the local DB (`~/.linden/linden.db` on desktop); there are no `.sqm` migrations to bump.
 - Startup is async: `AppRoot` calls the suspend `createAppDependencies(driver)` (in `AppDependencies.kt`) — both
   `MainActivity` and desktop `Main` hop to `Dispatchers.IO` — and shows a `CircularProgressIndicator`
   (`testTag("loading")`) until ready. `AppDependencies` is the composition root from `AppDependencies.kt`: DAOs,

@@ -13,22 +13,23 @@ import java.nio.file.Files
  * Boots a database exactly like the desktop entry point does: [DatabaseDriverFactory]
  * opening an existing database file, followed by [createLindenDatabase]. Unlike the
  * in-memory helpers, this exercises the real "file already exists" path, where the
- * driver must migrate an on-disk schema instead of creating tables from scratch.
+ * driver must converge an on-disk schema instead of creating tables from scratch.
  */
-class DesktopStartupMigrationTest : StringSpec({
+class DesktopStartupTest : StringSpec({
 
-    "startup on an existing unstamped database migrates it to the current schema" {
+    "startup on an existing database file converges and stamps the current schema" {
         val dir = Files.createTempDirectory("linden-startup-test").toFile()
         val dbFile = File(dir, "linden.db")
 
-        // A database left behind by the previous desktop build: every table in the
-        // v4 shape (AccountEntity has no `hidden` column yet) and user_version never
-        // stamped — desktop builds before startup migrations existed left it at 0.
+        // A database left behind by a previous build of the current schema: every
+        // table in the v1 shape and user_version never stamped — desktop builds
+        // before startup migrations existed left it at 0.
         val seed = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
         seed.execute(
             null,
             "CREATE TABLE AccountEntity (id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT NOT NULL UNIQUE, currency TEXT NOT NULL, initialBalance INTEGER NOT NULL DEFAULT 0)",
+                "name TEXT NOT NULL UNIQUE, currency TEXT NOT NULL, initialBalance INTEGER NOT NULL DEFAULT 0, " +
+                "hidden INTEGER NOT NULL DEFAULT 0)",
             0,
         )
         seed.execute(
@@ -88,11 +89,11 @@ class DesktopStartupMigrationTest : StringSpec({
         seed.execute(null, "INSERT INTO AppSettingsEntity (key, value) VALUES ('theme', 'SYSTEM')", 0)
 
         // Boot like the desktop entry point: factory opens the file, then the
-        // common bootstrap creates the schema over the (now migrated) driver.
+        // common bootstrap creates the schema over the (now converged) driver.
         val driver = DatabaseDriverFactory().createDriverAt(dbFile)
         val database = createLindenDatabase(driver)
 
-        // Current-schema queries work against the migrated file, with every
+        // Current-schema queries work against the existing file, with every
         // pre-existing account visible and the data intact.
         database.accountQueries.selectAll().executeAsList().map { it.name to it.hidden } shouldBe
             listOf("Cash" to 0L, "Savings" to 0L)
@@ -105,7 +106,7 @@ class DesktopStartupMigrationTest : StringSpec({
 
         // The file is stamped with the current schema version, so the next boot
         // skips the migration instead of replaying it.
-        userVersionOf(dbFile) shouldBe 6L
+        userVersionOf(dbFile) shouldBe 1L
     }
 })
 

@@ -68,8 +68,7 @@ linden/
 │       │   │       ├── rates/         # FX rates
 │       │   │       ├── settings/      # Settings
 │       │   │       └── theme/         # Colors, Theme
-│       │   └── sqldelight/            # org/sjbtimdan/linden/*.sq + migrations/ (schema v2;
-│       │                              #   1.sqm adds entry amount CHECK constraints)
+│       │   └── sqldelight/            # org/sjbtimdan/linden/*.sq (schema v1, no migrations)
 │       ├── androidMain/       # Android actuals (DatabaseDriverFactory, BackHandler, file pickers)
 │       ├── jvmMain/           # JVM actuals (DatabaseDriverFactory, BackHandler, file pickers)
 │       ├── commonTest/        # Shared tests (Kotest)
@@ -83,8 +82,7 @@ linden/
 
 **Key Directories**:
 - `shared/src/commonMain/kotlin/org/sjbtimdan/linden/` - All shared code, organized by concern (model/data/backup/imports/predictions/ui)
-- `shared/src/commonMain/sqldelight/org/sjbtimdan/linden/` - SQLDelight `.sq` files
-- `shared/src/commonMain/sqldelight/migrations/` - `.sqm` migrations (schema v2: `1.sqm` adds entry amount CHECKs)
+- `shared/src/commonMain/sqldelight/org/sjbtimdan/linden/` - SQLDelight `.sq` files (schema v1, no migrations)
 - `shared/src/commonTest/` - Shared tests (run via `:shared:jvmTest`)
 
 ## Key Technical Decisions
@@ -94,7 +92,7 @@ linden/
 | Money as integer minor units (`Long`) | Avoids floating-point errors; `450` = 4.50 | All currencies use 2-decimal minor units; `amount` columns are `INTEGER` |
 | `Entry` as sealed interface | `ExpenseEntry`/`IncomeEntry`/`TransferEntry`; transfers carry `toAccount`/`toAmount` | Adding a field touches all subclass branches + `Entry.sq` + `EntryDao` mapping |
 | SQLDelight `generateAsync = true` | Async API: schema creation awaited, DB ops `suspend`, reactive reads via `.asFlow()`/`awaitAsList()` | `createLindenDatabase(driver)` wraps `Schema.create(driver).await()` |
-| Entry amount CHECK constraints | `Entry.sq`: `amount >= 0`, `to_amount` NULL-or-`>= 0`; `migrations/1.sqm` rebuilds the table (schema v2) | Entries are never negative; DB enforces the invariant (SQLite can't add a CHECK in place) |
+| Entry amount CHECK constraints | `Entry.sq`: `amount >= 0`, `to_amount` NULL-or-`>= 0` (schema v1) | Entries are never negative; DB enforces the invariant (SQLite can't add a CHECK in place) |
 | Balance adjustment = fresh entry | `adjustBalance` computes `balanceAdjustment(current, target)`; `adjustmentEntry` builds income/expense dated now, `description = null` | No `is_adjustment` column or per-month update — adjustments are ordinary, visible entries |
 | `expect`/`actual` for platform code | `DatabaseDriverFactory`, `BackHandler`, `formatAmount`, file pickers | Per-source-set actuals in `androidMain`/`jvmMain` |
 | Exact calculator for amount entry | `CalculatorModel`/`AmountCalculator` on reduced fractions (Long num/den), left-to-right, no precedence | `100 / 3 * 3` = 100.00 exactly; rounded only for display/commit |
@@ -118,7 +116,7 @@ See `decisions-log.md` for full decision history with alternatives.
 
 | Constraint | Origin | Impact |
 |------------|--------|--------|
-| Editing an `.sq` table requires a new `.sqm` migration | Tech | Schema is now v2 (`migrations/1.sqm`: entry amount CHECKs); missing migrations break the persisted desktop DB at `~/.linden/linden.db` |
+| Editing an `.sq` table requires deleting the local DB | Tech | Schema is v1 with no migrations; the persisted desktop DB at `~/.linden/linden.db` must be deleted after a DDL change |
 | Accounts may be negative; entries never | Domain invariant | `initial_balance` has no CHECK (liabilities allowed); entry `amount >= 0` is CHECK-enforced since v2 |
 | `:shared` Android compiles via `compileAndroidMain`, not `compileDebugKotlin` | AGP 9 KMP plugin | `compileDebugKotlin` only exists on `:androidApp` |
 | Kover coverage only on JVM variant | Android runs device tests only | `koverVerifyJvm` (50% min) runs as part of `check` |

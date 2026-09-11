@@ -107,7 +107,7 @@ The tracker heals drift without magic: reconciling just records income/expense l
 |--------------|---------------|---------------------|
 | Money as `Double`/`BigDecimal` | Floating-point rounding in amounts | Always use integer minor units (`Long`) |
 | `formatAmountCompact` in edit fields | `parseAmount` can't parse "1.25m" | Only use compact format for read-only displays |
-| Editing `.sq` tables without migration | Desktop DB at `~/.linden/linden.db` not migrated | Add a `.sqm` migration or delete the local DB |
+| Editing `.sq` tables without deleting the local DB | Desktop DB at `~/.linden/linden.db` out of sync (schema v1, no migrations) | Delete the local DB after a DDL change |
 | Negative entry amounts | Entry `amount` < 0 | Entries carry a type; amount is always >= 0 (CHECK-enforced) |
 | Currency change on account with entries | `accountsWithEntries` blocks it | Respect the business rule |
 

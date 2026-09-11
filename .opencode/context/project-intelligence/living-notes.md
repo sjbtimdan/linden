@@ -14,18 +14,18 @@
 
 | Item | Impact | Priority | Mitigation |
 |------|--------|----------|------------|
-| Every `.sq` DDL change needs a new `.sqm` migration | Schema is v5 on `main` (`1.sqm` entry CHECKs, `2.sqm` UNIQUE names, `3.sqm` budgets, `4.sqm` `AccountEntity.hidden`). Forgetting a migration breaks the persisted desktop DB at `~/.linden/linden.db` | Medium | Add a `.sqm` migration for table changes |
-| Android DB with a newer schema opened by an older app | `DatabaseDriverFactory` (androidMain) overrides `onDowngrade` to no-op, so the DB opens but keeps its newer columns, re-stamped to the older `user_version`. Moving back to the newer app replays the re-added migration (`4.sqm` = `ADD COLUMN hidden`) on a table that already has the column → `duplicate column name: hidden` on that device | Low | Reinstall the debug app, or drop/tolerate the leftover column (see Known Issues) |
+| Every `.sq` DDL change requires deleting the local DB | Schema is v1 with no migrations (pre-release migrations collapsed). Editing a table without deleting the persisted desktop DB at `~/.linden/linden.db` breaks it | Medium | Delete `~/.linden/linden.db` after a table change |
+| Android DB with a newer schema opened by an older app | `DatabaseDriverFactory` (androidMain) overrides `onDowngrade` to no-op, so the DB opens but keeps its newer columns, re-stamped to the older `user_version`. With a single schema version this only matters across unreleased dev builds | Low | Reinstall the debug app |
 | `:shared` Android compiles via `compileAndroidMain`, not `compileDebugKotlin` | Confusing for new devs | Low | Documented in AGENTS.md |
 | Kover coverage only on JVM variant | Android target runs device tests only | Low | `koverVerifyJvm` (50% min) runs as part of `check` |
 
 ### Technical Debt Details
 
-**SQLDelight migrations are manual**  
+**SQLDelight migrations are collapsed (schema v1)**  
 *Priority*: Medium  
-*Impact*: Editing an `.sq` table without a matching `.sqm` breaks the persisted desktop DB at `~/.linden/linden.db`  
-*Root Cause*: Migrations exist (v5 on `main`, 1–4.sqm) but must be authored by hand  
-*Proposed Solution*: Keep adding `.sqm` files whenever a table changes  
+*Impact*: Editing an `.sq` table without deleting the persisted desktop DB at `~/.linden/linden.db` breaks it  
+*Root Cause*: Pre-release migrations (1–5.sqm) were collapsed onto schema v1; there are no `.sqm` files to bump  
+*Proposed Solution*: Delete `~/.linden/linden.db` after a table change; add real migrations when the app ships  
 *Effort*: Small  
 *Status*: Acknowledged
 
@@ -33,7 +33,7 @@
 *Priority*: Low  
 *Impact*: A DB stamped by a newer app version no longer crashes startup ("Can't downgrade database from version X to Y") — data is preserved and schema changes here are additive-only, so extra columns are ignored safely.  
 *Root Cause*: `AndroidSqliteDriver` hands `Schema.version` to SQLiteOpenHelper; its default `onDowngrade` (androidx `SupportSQLiteOpenHelper.Callback`) always throws.  
-*Caveat*: After the no-op downgrade the framework re-stamps the DB to `user_version = Schema.version`, but **the table keeps its newer columns**. If a newer app (schema v5, `4.sqm` = `ALTER TABLE AccountEntity ADD COLUMN hidden …`) is reinstalled over such a DB, the migration replays on a table that already has `hidden` and fails with `duplicate column name: hidden`.  
+*Caveat*: After the no-op downgrade the framework re-stamps the DB to `user_version = Schema.version`, but **the table keeps its newer columns**. With a single schema version this only bites across unreleased dev builds; a reinstall clears it.  
 *Status*: Acknowledged
 
 ## Open Questions
@@ -46,7 +46,7 @@
 
 | Issue | Severity | Workaround | Status |
 |-------|----------|------------|--------|
-| Device that ran a v5 app then an older one keeps the `hidden` column re-stamped to `user_version=4`; reinstalling v5 replays `4.sqm` (`ADD COLUMN hidden`) on that DB and errors `duplicate column name: hidden` | Low | Reinstall the debug app (fresh v5 DB migrates cleanly) or make `4.sqm` tolerate the existing column | Known |
+| Device that ran a newer dev build then an older one keeps newer columns re-stamped to the older `user_version`; with a single schema version this only matters across unreleased builds | Low | Reinstall the debug app | Known |
 
 ## Insights & Lessons Learned
 
@@ -61,7 +61,7 @@
 - **Adjust balance as ordinary entries** - Reconciliation just creates income/expense, no hidden state
 
 ### What Could Be Better
-- **Manual SQLDelight migrations** - Schema v5 on `main` but every `.sq` DDL change still needs a hand-written `.sqm`
+- **No SQLDelight migrations** - Schema v1 (pre-release migrations collapsed); every `.sq` DDL change needs the local DB deleted
 - **`formatAmountCompact` not parseable** - Can't pre-fill edit fields with it
 
 ### Lessons Learned
@@ -101,7 +101,7 @@
 - **`Entry` sealed interface** - Adding a field touches all subclass branches plus `Entry.sq` insert/update and `EntryDao` mapping
 - **Adjust balance entries have `description = null`** - Reconciliation entries are ordinary entries with no marker, so they appear in the ledger without a description
 - **SQLite FK enforcement is off by default** - If FKs are ever added, `PRAGMA foreign_keys = ON` must be set in both `DatabaseDriverFactory` actuals (Android + JVM) or the constraints are decorative
-- **Accounts can be negative, entries never** - `parseAmount` handles `-` (liabilities/negative balances); entry `amount >= 0` is CHECK-enforced (since `1.sqm`)
+- **Accounts can be negative, entries never** - `parseAmount` handles `-` (liabilities/negative balances); entry `amount >= 0` is CHECK-enforced in the schema
 - **Android tolerates newer DBs** - `onDowngrade` is a no-op in `DatabaseDriverFactory` (androidMain); the JVM driver never version-checks, so a DB stamped by newer code opens everywhere as long as changes stay additive
 - **SQLDelight async** - Schema creation must be awaited; DB ops are `suspend`
 - **No pre-commit hook** - Run `./gradlew detekt --auto-correct` after edits
@@ -118,10 +118,10 @@
 
 Moved here for historical reference. Current team should refer to current notes above.
 
-### Resolved: No SQLDelight migrations existed (schema version 1)
-- **Resolved**: 2026-08-30
-- **Resolution**: Added `sqldelight/migrations/1.sqm` (v1→v2), rebuilding `EntryEntity` with CHECK constraints on `amount >= 0` and `to_amount` (NULL-or-`>= 0`)
-- **Learnings**: SQLite can't add a CHECK in place — a table rebuild (rename → create → copy → drop) is the migration pattern to follow
+### Resolved: SQLDelight migrations collapsed onto schema v1
+- **Resolved**: 2026-09-11
+- **Resolution**: Deleted `sqldelight/migrations/1.sqm`–`5.sqm`; the `.sq` files already carry the final schema (entry amount CHECKs, UNIQUE names, `BudgetEntity`, `AccountEntity.hidden`, `EntryView`), so the generated schema is version 1 with no migration path. `SchemaMigrationTest` was removed; `DesktopStartupMigrationTest` became `DesktopStartupTest` (existing-file boot converges and stamps v1).
+- **Learnings**: Pre-release migrations are dead weight — collapse them before shipping; SQLite can't add a CHECK/UNIQUE in place, so those constraints must live in the `.sq` DDL from the start.
 
 ## Onboarding Checklist
 
