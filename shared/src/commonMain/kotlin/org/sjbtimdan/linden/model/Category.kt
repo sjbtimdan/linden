@@ -2,6 +2,8 @@ package org.sjbtimdan.linden.model
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Home
@@ -36,6 +38,8 @@ enum class CategoryIcon(val label: String) {
     School("Education"),
     Flight("Travel"),
     Spa("Personal Care"),
+    DirectionsCar("Car"),
+    DirectionsBus("Public Transport"),
     ;
 
     fun imageVector(): ImageVector = when (this) {
@@ -52,6 +56,8 @@ enum class CategoryIcon(val label: String) {
         School -> Icons.Filled.School
         Flight -> Icons.Filled.Flight
         Spa -> Icons.Filled.Spa
+        DirectionsCar -> Icons.Filled.DirectionsCar
+        DirectionsBus -> Icons.Filled.DirectionsBus
     }
 }
 

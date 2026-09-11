@@ -14,6 +14,7 @@ import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.DefaultDataSeeder
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.FxRatesFetcher
@@ -152,5 +153,6 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val initialCurrency = settingsDao.getDefaultCurrency()
     val initialHideEntryTotal = settingsDao.getHideEntryTotal()
     val initialLanguage = settingsDao.getLanguage()
+    DefaultDataSeeder(database).seedIfEmpty(initialCurrency)
     return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal, initialLanguage)
 }

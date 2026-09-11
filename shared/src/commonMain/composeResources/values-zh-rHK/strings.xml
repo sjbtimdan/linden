@@ -196,6 +196,8 @@
     <string name="category_icon_school">教育</string>
     <string name="category_icon_flight">旅行</string>
     <string name="category_icon_spa">個人護理</string>
+    <string name="category_icon_car">汽車</string>
+    <string name="category_icon_public_transport">公共交通</string>
 
     <!-- Settings screen -->
     <string name="settings_language">語言</string>

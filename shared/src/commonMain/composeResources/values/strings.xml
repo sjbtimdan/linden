@@ -202,6 +202,8 @@
     <string name="category_icon_school">Education</string>
     <string name="category_icon_flight">Travel</string>
     <string name="category_icon_spa">Personal Care</string>
+    <string name="category_icon_car">Car</string>
+    <string name="category_icon_public_transport">Public Transport</string>
 
     <!-- Settings screen -->
     <string name="settings_language">Language</string>

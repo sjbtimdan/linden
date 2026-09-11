@@ -63,12 +63,14 @@ import org.sjbtimdan.linden.resources.categories_icon
 import org.sjbtimdan.linden.resources.categories_new
 import org.sjbtimdan.linden.resources.categories_type
 import org.sjbtimdan.linden.resources.category_icon_account_balance
+import org.sjbtimdan.linden.resources.category_icon_car
 import org.sjbtimdan.linden.resources.category_icon_favorite_border
 import org.sjbtimdan.linden.resources.category_icon_flight
 import org.sjbtimdan.linden.resources.category_icon_home
 import org.sjbtimdan.linden.resources.category_icon_local_hospital
 import org.sjbtimdan.linden.resources.category_icon_movie
 import org.sjbtimdan.linden.resources.category_icon_pets
+import org.sjbtimdan.linden.resources.category_icon_public_transport
 import org.sjbtimdan.linden.resources.category_icon_restaurant
 import org.sjbtimdan.linden.resources.category_icon_savings
 import org.sjbtimdan.linden.resources.category_icon_school
@@ -511,5 +513,7 @@ private fun CategoryIcon.a11yLabel(): String = stringResource(
         CategoryIcon.School -> Res.string.category_icon_school
         CategoryIcon.Flight -> Res.string.category_icon_flight
         CategoryIcon.Spa -> Res.string.category_icon_spa
+        CategoryIcon.DirectionsCar -> Res.string.category_icon_car
+        CategoryIcon.DirectionsBus -> Res.string.category_icon_public_transport
     },
 )

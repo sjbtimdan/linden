@@ -196,6 +196,8 @@
     <string name="category_icon_school">Istruzione</string>
     <string name="category_icon_flight">Viaggi</string>
     <string name="category_icon_spa">Cura personale</string>
+    <string name="category_icon_car">Auto</string>
+    <string name="category_icon_public_transport">Trasporti pubblici</string>
 
     <!-- Settings screen -->
     <string name="settings_language">Lingua</string>
