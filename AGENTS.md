@@ -54,7 +54,7 @@ When developing, it's quicker to use IntelliJ MCP to run tests.
 ./gradlew check                             # full check — CI runs this too (.github/workflows/check.yml)
 ./gradlew detekt                            # formatting check (ktlint ruleset, all modules)
 ./gradlew detekt --auto-correct             # auto-fix formatting violations
-./gradlew :desktopApp:renderIcon            # regenerate master icon into build/icon-render/
+./gradlew :desktopApp:renderIcon      # regenerate master icon (build/icon-render/) + Play assets (docs/store-assets/)
 ./gradlew dependencyUpdates -Drevision=release  # check newer dependency versions (report in build/)
 ```
 
