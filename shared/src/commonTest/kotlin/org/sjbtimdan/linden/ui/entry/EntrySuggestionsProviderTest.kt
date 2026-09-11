@@ -91,16 +91,21 @@ class EntrySuggestionsProviderTest : StringSpec({
     "suggestions update when the draft changes" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Dining", CategoryType.Expense)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            val dining = categoryDao.getAll().first().first { it.name == "Dining" }
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, dining, "Dinner", savings, 999, createdAt = Clock.System.now()))
             draft.value = EntryDraft.forNew(EntryType.Expense)
 
-            provider.accountSuggestions.first().shouldBeEmpty()
-            provider.categorySuggestions.first().shouldBeEmpty()
+            provider.accountSuggestions.awaitEquals(listOf(main.id, savings.id))
+            provider.categorySuggestions.awaitEquals(listOf(groceries.id, dining.id))
 
             draft.value = draft.value?.copy(amountText = "4.50")
 
-            provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
-            provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
+            provider.accountSuggestions.awaitEquals(listOf(main.id))
+            provider.categorySuggestions.awaitEquals(listOf(groceries.id))
         }
     }
 
@@ -214,6 +219,10 @@ private fun withSuggestionsProvider(
  */
 private suspend fun <T> StateFlow<List<T>>.awaitNotEmpty(): List<T> =
     withTimeout(5.seconds) { first { it.isNotEmpty() } }
+
+/** Awaits the emission that eventually matches [expected], tolerating stale intermediate values. */
+private suspend fun <T> StateFlow<List<T>>.awaitEquals(expected: List<T>): List<T> =
+    withTimeout(5.seconds) { first { it == expected } }
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
