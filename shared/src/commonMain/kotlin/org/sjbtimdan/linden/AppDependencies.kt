@@ -30,6 +30,7 @@ import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
@@ -71,7 +72,11 @@ class AppDependencies(
         }
     }
     val httpClient: HttpClient by httpClientLazy
-    val fxRatesRepository = FxRatesRepository(fxRateDao, fxRatesSource ?: FxRatesFetcher(httpClient))
+    val fxRatesRepository = FxRatesRepository(
+        fxRateDao,
+        fxRatesSource ?: FxRatesFetcher(httpClient),
+        clock = SystemClock,
+    )
 
     /** App-wide scope for the shared [ratesProvider]; lives as long as the dependencies. */
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -96,7 +101,7 @@ class AppDependencies(
     val csvExportManager = CsvExportManager(entryDao)
     val settingsViewModel = SettingsViewModel(
         settingsDao,
-        IvyImporter(database),
+        IvyImporter(database, clock = SystemClock),
         backupManager,
         csvExportManager,
         initialTheme,
@@ -104,7 +109,7 @@ class AppDependencies(
         initialHideEntryTotal,
         initialLanguage,
     )
-    val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository)
+    val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
     val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, allEntries)
     val budgetViewModel = BudgetViewModel(budgetDao, categoryDao)
@@ -116,6 +121,7 @@ class AppDependencies(
         ratesProvider,
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
+        clock = SystemClock,
     )
     val ledgerViewModel = LedgerViewModel(
         entryDao,
@@ -125,6 +131,7 @@ class AppDependencies(
         budgetDao,
         ratesProvider,
         allEntries,
+        clock = SystemClock,
     )
     val insightsViewModel = InsightsViewModel(
         entryDao,
@@ -133,6 +140,7 @@ class AppDependencies(
         budgetDao,
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
+        clock = SystemClock,
     )
 
     /**

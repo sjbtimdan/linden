@@ -22,7 +22,6 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -45,7 +44,7 @@ private const val ADJUST_BALANCE_TITLE = "adjust balance"
 
 class IvyImporter(
     private val database: LindenDatabase,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 

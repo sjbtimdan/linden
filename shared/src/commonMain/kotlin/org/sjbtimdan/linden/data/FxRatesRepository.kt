@@ -6,7 +6,6 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.FxRates
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -14,7 +13,7 @@ import kotlin.time.Instant
 class FxRatesRepository(
     private val dao: FxRateDao,
     private val source: FxRatesSource,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) {
     suspend fun refreshRates(base: Currency): FxRates {
         val fetched = source.fetchLatestRates(base, Currency.entries.filter { it != base })

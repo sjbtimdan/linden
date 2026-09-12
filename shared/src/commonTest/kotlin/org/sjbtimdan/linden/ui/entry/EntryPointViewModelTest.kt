@@ -31,7 +31,7 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTestApi::class)
 class EntryPointViewModelTest : StringSpec({
     "new entry state prefills from the most recent entry of the same type" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -48,7 +48,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "new entry state for a type with no entries is empty" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -64,7 +64,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "new transfer state prefills accounts from the most recent transfer" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
@@ -87,13 +87,13 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "draft starts empty until seeded" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             viewModel.draft.value.shouldBeNull()
         }
     }
 
     "seedDraft prefills from the latest expense" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -111,7 +111,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "seedDraft does not replace an existing draft" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             val (_, _) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onDescriptionChange("Edited")
@@ -123,7 +123,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "selectType carries over the common fields" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             val (_, _) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
@@ -143,7 +143,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "selectType to transfer prefills accounts from the latest transfer" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -172,7 +172,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "field setters update the draft" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             viewModel.seedDraft()
 
             viewModel.onAmountChange("7.25")
@@ -186,7 +186,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "clearDraft resets to an empty form" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             viewModel.seedDraft()
             viewModel.onDescriptionChange("Coffee")
 
@@ -202,7 +202,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "saveDraft creates the entry and resets the form prefilled from it" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
@@ -225,7 +225,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "saveDraft returns false and keeps the draft when invalid" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             viewModel.seedDraft()
 
             viewModel.saveDraft() shouldBe false
@@ -235,7 +235,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "account and category suggestions are empty without a draft" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -264,7 +264,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "total balance is the initial balance plus income minus expenses" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             categoryDao.create("Salary", CategoryType.Income)
@@ -281,7 +281,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "transfers move money between accounts without changing the total" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             accountDao.create("Savings", Currency.CHF)
             val main = accountDao.getAll().first().first { it.name == "Main" }
@@ -295,6 +295,7 @@ class EntryPointViewModelTest : StringSpec({
 
     "foreign balances are converted with the stored rates" {
         withEntryPoint(
+            clock = FakeClock(),
             rates = listOf(FxRate(Currency.CHF, Currency.EUR, 0.9, "2026-01-01")),
         ) { accountDao, _, viewModel ->
             accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
@@ -305,7 +306,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "total is null while a foreign currency has no stored rate" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Wallet", Currency.EUR, initialBalance = 10_000)
 
             viewModel.totalMinor.first().shouldBeNull()
@@ -331,7 +332,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "total balance excludes hidden accounts" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             accountDao.create("Old", Currency.CHF, initialBalance = 90_000)
             categoryDao.create("Salary", CategoryType.Income)
@@ -350,7 +351,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "seedDraft skips entries whose account is hidden" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Old", Currency.CHF)
             val old = accountDao.getAll().first().first { it.name == "Old" }
@@ -376,7 +377,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "saveDraft refuses a draft that references a hidden account" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Old", Currency.CHF)
             val old = accountDao.getAll().first().first { it.name == "Old" }

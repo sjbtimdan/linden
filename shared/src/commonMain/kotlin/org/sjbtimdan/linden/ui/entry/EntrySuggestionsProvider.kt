@@ -32,7 +32,6 @@ import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.predictions.predictQuickEntries
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
@@ -56,7 +55,7 @@ class EntrySuggestionsProvider(
     private val draft: StateFlow<EntryDraft?>,
     private val scope: CoroutineScope,
     descriptionDebounceMillis: Long = DESCRIPTION_DEBOUNCE_MILLIS,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) {
     /** Entries of the draft's type from the last [PREDICTION_HORIZON_MONTHS] months. */
     private val predictionEntries: StateFlow<List<Entry>> = typeEntries { type ->

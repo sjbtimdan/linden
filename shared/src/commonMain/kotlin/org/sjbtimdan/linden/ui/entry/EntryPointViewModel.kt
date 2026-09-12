@@ -17,7 +17,6 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
 
@@ -29,7 +28,7 @@ class EntryPointViewModel(
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,

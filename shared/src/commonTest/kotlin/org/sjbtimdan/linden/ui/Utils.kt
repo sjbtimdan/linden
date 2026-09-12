@@ -35,7 +35,7 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
@@ -63,7 +63,7 @@ fun onTestMain(block: suspend () -> Unit) {
  */
 internal fun testRatesProvider(settingsDao: SettingsDao, fxRateDao: FxRateDao): RatesFlowProvider = RatesFlowProvider(
     settingsDao,
-    FxRatesRepository(fxRateDao, FakeFxRatesSource()),
+    FxRatesRepository(fxRateDao, FakeFxRatesSource(), clock = FakeClock()),
     CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
 )
 
@@ -170,7 +170,7 @@ fun withSettingsViewModel(
             val dao = SettingsDao(database.settingsQueries)
             val viewModel = SettingsViewModel(
                 settingsDao = dao,
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = initialTheme,
@@ -196,7 +196,9 @@ fun withRatesViewModel(
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     fxRatesSource,
+                    clock = FakeClock(),
                 ),
+                clock = FakeClock(),
             )
             block(settingsDao, viewModel)
         }
@@ -205,7 +207,7 @@ fun withRatesViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
@@ -239,7 +241,7 @@ fun withEntryPoint(
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
@@ -250,7 +252,7 @@ fun withEntryPoint(
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
@@ -259,7 +261,7 @@ fun withEntryPoint(
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
@@ -269,7 +271,7 @@ fun withLedgerViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency,
     rates: List<FxRate>,
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, SettingsDao, LedgerViewModel) -> Unit,
@@ -308,7 +310,11 @@ fun withLedgerViewModel(
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(clock, defaultCurrency, rates) { _, accountDao, categoryDao, _, viewModel ->
+) = withLedgerViewModel(
+    clock = clock,
+    defaultCurrency = defaultCurrency,
+    rates = rates,
+) { _, accountDao, categoryDao, _, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
@@ -318,27 +324,15 @@ fun withLedgerViewModel(
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel(clock, defaultCurrency, rates) { _, _, _, _, viewModel -> block(viewModel) }
-
-@OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
-    defaultCurrency: Currency = Currency.CHF,
-    rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(defaultCurrency = defaultCurrency, rates = rates) { _, accountDao, categoryDao, _, viewModel ->
-    block(accountDao, categoryDao, viewModel)
-}
-
-@OptIn(ExperimentalTestApi::class)
-fun withLedgerViewModel(
-    defaultCurrency: Currency = Currency.CHF,
-    rates: List<FxRate> = emptyList(),
-    block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel(defaultCurrency = defaultCurrency, rates = rates) { _, _, _, _, viewModel -> block(viewModel) }
+) = withLedgerViewModel(
+    clock = clock,
+    defaultCurrency = defaultCurrency,
+    rates = rates,
+) { _, _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withInsightsViewModel(
-    clock: AppClock = SystemClock,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     hideEntryTotal: Boolean = false,

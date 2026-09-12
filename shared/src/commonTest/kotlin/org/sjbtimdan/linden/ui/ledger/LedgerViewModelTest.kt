@@ -38,13 +38,13 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTestApi::class)
 class LedgerViewModelTest : StringSpec({
     "entries start empty" {
-        withLedgerViewModel { viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { viewModel ->
             viewModel.entries.value.shouldBeEmpty()
         }
     }
 
     "hasAnyEntries is false while no entry exists and becomes true with the first one" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             viewModel.hasAnyEntries.value shouldBe false
 
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -155,7 +155,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "search filters by description and account name" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -173,7 +173,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "search matches a transfer's to-account name" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -199,7 +199,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "amount filter greater-than keeps only larger amounts" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -211,7 +211,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "amount filter less-than keeps only smaller amounts" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -223,7 +223,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "amount filter approximately keeps amounts within 5%" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Low", main, 1_900))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Mid", main, 2_000))
@@ -242,7 +242,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "amount filter matches a transfer's to-amount" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -266,7 +266,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "amount filter composes with text search" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 1_200))
@@ -280,7 +280,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "clearing the amount filter restores all amounts" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -294,7 +294,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "type filter keeps only matching entries" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -311,7 +311,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "entries are always latest first by createdAt then id" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(
@@ -329,7 +329,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "update reflects in the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -343,7 +343,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "delete removes an entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -358,7 +358,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "direct database writes reflect in the list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             entryDao.create(ExpenseEntry(0, groceries, "Direct", main, 100))
@@ -649,7 +649,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "total is the net of income and expenses" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
@@ -660,6 +660,7 @@ class LedgerViewModelTest : StringSpec({
 
     "total converts foreign currency entries via stored rates" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -673,7 +674,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "total is null when a foreign rate is missing" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -684,7 +685,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "total follows search and type filters" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
@@ -702,6 +703,7 @@ class LedgerViewModelTest : StringSpec({
 
     "total follows the default currency" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
@@ -720,7 +722,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "openEditDialog prefills the draft from the entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -737,7 +739,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "saveDialog updates the entry and closes the dialog" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -752,7 +754,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "saveDialog keeps a transfer's category" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("General", CategoryType.Both)
@@ -776,7 +778,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "deleteDialogEntry deletes the entry and closes the dialog" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -790,7 +792,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "dismissDialog closes the dialog" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -803,7 +805,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "changeDialogType flips an edited expense to income, keeping a both-category and the id" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             categoryDao.create("General", CategoryType.Both)
             val main = accountDao.getAll().first().first()
@@ -834,7 +836,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "changeDialogType clears a category the target type cannot use" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -852,7 +854,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "changeDialogType is a no-op for transfers" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -867,7 +869,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "duplicateDialogEntry turns the edit into a new dated copy that saveDialog creates" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coupon", main, 1_000))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
@@ -900,7 +902,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "view mode defaults to entries and toggles" {
-        withLedgerViewModel { viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { viewModel ->
             viewModel.viewMode.value shouldBe LedgerViewMode.Entries
 
             viewModel.setViewMode(LedgerViewMode.Accounts)
@@ -978,6 +980,7 @@ class LedgerViewModelTest : StringSpec({
 
     "account total converts foreign balances via stored rates" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -997,7 +1000,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account total is null when a foreign rate is missing" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Salary", CategoryType.Income)
             val usd = accountDao.getAll().first().first()
@@ -1010,7 +1013,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category totals show net per category" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1029,7 +1032,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category total is the sum of category totals" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1043,6 +1046,7 @@ class LedgerViewModelTest : StringSpec({
 
     "category totals reconcile with the total chip and with income plus expenses" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 0.8, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -1099,7 +1103,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category totals follow search filter" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1116,7 +1120,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category totals follow type filter" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1135,6 +1139,7 @@ class LedgerViewModelTest : StringSpec({
 
     "category totals convert foreign currency entries via stored rates" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -1150,7 +1155,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category total is null when a foreign rate is missing" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -1161,7 +1166,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "openCategory filters the entries to the category and switches to the entries view" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1181,7 +1186,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category filter excludes transfers from the drill-down" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -1199,7 +1204,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "openAccount filters the entries to the account and switches to the entries view" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -1220,7 +1225,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category filter follows the type filter" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1236,7 +1241,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "clearCategoryFilter restores the full entries list" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1257,7 +1262,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "switching the view mode away from entries clears the entry filters" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -1274,7 +1279,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "setCategoryFilter narrows the entries without switching the view mode" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1290,7 +1295,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account filter narrows the entries to the account" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
@@ -1308,7 +1313,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account filter keeps transfers of the source account" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -1325,7 +1330,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account filter counts an outgoing transfer as negative" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -1342,7 +1347,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "account filter keeps transfers into the account and counts them positive" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
@@ -1361,6 +1366,7 @@ class LedgerViewModelTest : StringSpec({
 
     "account filter totals an incoming foreign transfer at the received amount" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 0.8, "2026-08-13")),
         ) { entryDao, accountDao, categoryDao, viewModel ->
@@ -1381,6 +1387,7 @@ class LedgerViewModelTest : StringSpec({
 
     "account filter without a rate for a foreign account yields a null total" {
         withLedgerViewModel(
+            clock = FakeClock(),
             defaultCurrency = Currency.CHF,
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
@@ -1398,7 +1405,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category and account filters combine" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1417,7 +1424,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "category totals ignore the category filter" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
@@ -1434,7 +1441,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "adjustBalance to a higher target creates an income entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
@@ -1458,7 +1465,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "adjustBalance to a lower target creates an expense entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
@@ -1482,7 +1489,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "usedCategories is empty when the account has no entries" {
-        withLedgerViewModel { accountDao, _, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             val main = accountDao.getAll().first().first()
 
@@ -1491,7 +1498,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "usedCategories returns the account's most-used categories" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             categoryDao.create("Salary", CategoryType.Income)
@@ -1510,7 +1517,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "adjustBalance with an unchanged balance creates no entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
@@ -1557,7 +1564,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "entries of hidden accounts stay editable from the ledger" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
@@ -1606,7 +1613,7 @@ class LedgerViewModelTest : StringSpec({
     }
 
     "adjusting again creates a separate entry" {
-        withLedgerViewModel { entryDao, accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()

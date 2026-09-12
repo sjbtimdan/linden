@@ -21,6 +21,7 @@ import org.sjbtimdan.linden.imports.minimalIvyJson
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.onTestMain
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -35,7 +36,7 @@ class SettingsViewModelTest : StringSpec({
             val dao = SettingsDao(database.settingsQueries)
             val viewModel = SettingsViewModel(
                 dao,
-                IvyImporter(database),
+                IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -56,7 +57,7 @@ class SettingsViewModelTest : StringSpec({
             val dao = SettingsDao(database.settingsQueries)
             val viewModel = SettingsViewModel(
                 dao,
-                IvyImporter(database),
+                IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -77,7 +78,7 @@ class SettingsViewModelTest : StringSpec({
             val dao = SettingsDao(database.settingsQueries)
             val viewModel = SettingsViewModel(
                 dao,
-                IvyImporter(database),
+                IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -98,7 +99,7 @@ class SettingsViewModelTest : StringSpec({
             val dao = SettingsDao(database.settingsQueries)
             val viewModel = SettingsViewModel(
                 dao,
-                IvyImporter(database),
+                IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -122,7 +123,7 @@ class SettingsViewModelTest : StringSpec({
 
             val viewModel = SettingsViewModel(
                 dao,
-                IvyImporter(database),
+                IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -139,7 +140,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -164,7 +165,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -211,7 +212,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -234,7 +235,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -258,7 +259,7 @@ class SettingsViewModelTest : StringSpec({
             database.accountQueries.insert("Cash", "CHF", 500)
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -294,7 +295,7 @@ class SettingsViewModelTest : StringSpec({
             database.accountQueries.insert("Old", "USD", 0)
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -320,7 +321,7 @@ class SettingsViewModelTest : StringSpec({
             database.accountQueries.insert("Keep", "CHF", 0)
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -343,7 +344,7 @@ class SettingsViewModelTest : StringSpec({
             database.accountQueries.insert("Keep", "CHF", 0)
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -365,7 +366,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -388,7 +389,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -411,7 +412,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
@@ -437,7 +438,7 @@ class SettingsViewModelTest : StringSpec({
             val database = lindenDatabase()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                importer = IvyImporter(database),
+                importer = IvyImporter(database, clock = FakeClock()),
                 backupManager = LindenBackupManager(database),
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,

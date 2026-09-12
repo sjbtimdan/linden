@@ -27,7 +27,6 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 
 /** Number of months in the trend window and of bars in the chart. */
 internal const val WINDOW_MONTHS = 12
@@ -48,7 +47,7 @@ class InsightsViewModel(
     budgetDao: BudgetDao,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) : ViewModel() {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency

@@ -14,6 +14,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.FakeClock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -206,7 +207,7 @@ class EntryDraftTest : StringSpec({
     }
 
     "new drafts start empty" {
-        val state = EntryDraft.forNew()
+        val state = EntryDraft.forNew(clock = FakeClock())
         state.editing shouldBe null
         state.type shouldBe EntryType.Expense
         state.amountText shouldBe ""
@@ -219,13 +220,13 @@ class EntryDraftTest : StringSpec({
 
     "new drafts prefill category, account, and description from the previous same-type entry" {
         val previous = ExpenseEntry(7, groceries, "Coffee", main, 450)
-        val state = EntryDraft.forNew(EntryType.Expense, previous)
+        val state = EntryDraft.forNew(EntryType.Expense, previous, clock = FakeClock())
         state.categoryId shouldBe groceries.id
         state.accountId shouldBe main.id
         state.description shouldBe "Coffee"
 
         val income = IncomeEntry(8, salary, "Salary", main, 50_000)
-        val incomeState = EntryDraft.forNew(EntryType.Income, income)
+        val incomeState = EntryDraft.forNew(EntryType.Income, income, clock = FakeClock())
         incomeState.categoryId shouldBe salary.id
         incomeState.accountId shouldBe main.id
         incomeState.description shouldBe "Salary"
@@ -233,7 +234,7 @@ class EntryDraftTest : StringSpec({
 
     "new transfer drafts prefill accounts but not the category" {
         val previous = TransferEntry(9, null, "Move money", main, 10_000, toAccount = savingsEur, toAmount = 9_500)
-        val state = EntryDraft.forNew(EntryType.Transfer, previous)
+        val state = EntryDraft.forNew(EntryType.Transfer, previous, clock = FakeClock())
         state.categoryId shouldBe null
         state.accountId shouldBe main.id
         state.toAccountId shouldBe savingsEur.id
@@ -242,7 +243,7 @@ class EntryDraftTest : StringSpec({
 
     "new drafts ignore a previous entry of a different type" {
         val previous = ExpenseEntry(7, groceries, "Coffee", main, 450)
-        val state = EntryDraft.forNew(EntryType.Income, previous)
+        val state = EntryDraft.forNew(EntryType.Income, previous, clock = FakeClock())
         state.categoryId shouldBe null
         state.accountId shouldBe null
         state.description shouldBe ""

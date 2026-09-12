@@ -15,6 +15,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.FakeClock
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
@@ -38,7 +39,7 @@ class IvyImporterTest : StringSpec({
 
     "imports accounts, categories and transactions from the sample backup" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
 
@@ -109,7 +110,7 @@ class IvyImporterTest : StringSpec({
 
     "imports decimal amounts without floating-point rounding errors" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -144,7 +145,7 @@ class IvyImporterTest : StringSpec({
 
     "rounds amounts with more than two decimal places to the nearest minor unit" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -174,7 +175,7 @@ class IvyImporterTest : StringSpec({
 
     "import replaces existing data" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
         val accountDao = org.sjbtimdan.linden.data.AccountDao(database.accountQueries)
         val categoryDao = org.sjbtimdan.linden.data.CategoryDao(database.categoryQueries)
         val entryDao = EntryDao(database.entryQueries)
@@ -195,7 +196,7 @@ class IvyImporterTest : StringSpec({
 
     "import rolls back and reports an error on invalid JSON" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
         val accountDao = org.sjbtimdan.linden.data.AccountDao(database.accountQueries)
         accountDao.create("Survivor", Currency.CHF)
 
@@ -209,7 +210,7 @@ class IvyImporterTest : StringSpec({
 
     "import rolls back when a transaction is invalid" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
         val accountDao = org.sjbtimdan.linden.data.AccountDao(database.accountQueries)
         accountDao.create("Survivor", Currency.CHF)
 
@@ -247,7 +248,7 @@ class IvyImporterTest : StringSpec({
 
     "assigns uncategorised expenses and incomes to a single auto-created 'Imported Entries' category" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -292,7 +293,7 @@ class IvyImporterTest : StringSpec({
 
     "infers category types from the transactions that use them" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -359,7 +360,7 @@ class IvyImporterTest : StringSpec({
 
     "does not create a fallback category when only transfers lack a category" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -392,7 +393,7 @@ class IvyImporterTest : StringSpec({
 
     "reuses an existing 'Imported Entries' category from the backup" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -424,7 +425,7 @@ class IvyImporterTest : StringSpec({
 
     "assigns entries with unknown category ids to the fallback category" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -471,7 +472,7 @@ class IvyImporterTest : StringSpec({
 
     "assigns entries with unknown account ids to per-currency fallback accounts" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -527,7 +528,7 @@ class IvyImporterTest : StringSpec({
 
     "assigns a transfer with an unknown toAccount to a fallback account" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -563,7 +564,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a same-currency transfer without a toAmount" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -599,7 +600,7 @@ class IvyImporterTest : StringSpec({
 
     "throws when a cross-currency transfer has no toAmount" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -630,7 +631,7 @@ class IvyImporterTest : StringSpec({
 
     "uses the default currency for fallback accounts when the entry has no currency" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -663,7 +664,7 @@ class IvyImporterTest : StringSpec({
 
     "resets fallback category state between imports" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -693,7 +694,7 @@ class IvyImporterTest : StringSpec({
 
     "a failed import does not affect a subsequent successful import" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         shouldThrow<IvyImportException> {
             importer.import(ByteArrayInputStream(buildIvyZip("this is not json")))
@@ -708,7 +709,7 @@ class IvyImporterTest : StringSpec({
 
     "resets fallback account state between imports" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -742,7 +743,7 @@ class IvyImporterTest : StringSpec({
 
     "import throws when the archive contains no JSON file" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         shouldThrow<IvyImportException> {
             importer.import(ByteArrayInputStream(buildIvyZipWithEntryNames("readme.txt", "data.dat", json = "{}")))
@@ -751,7 +752,7 @@ class IvyImporterTest : StringSpec({
 
     "skips scheduled transactions that have no dateTime" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -793,7 +794,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a UTF-8 backup" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson, charset = Charsets.UTF_8)))
 
@@ -803,7 +804,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a UTF-16LE backup without a byte order mark" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson, charset = Charsets.UTF_16LE)))
 
@@ -813,7 +814,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a UTF-16BE backup without a byte order mark" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(minimalIvyJson, charset = Charsets.UTF_16BE)))
 
@@ -823,7 +824,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a UTF-16LE backup with a byte order mark" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val jsonBytes = minimalIvyJson.toByteArray(Charsets.UTF_16LE)
         val withBom = byteArrayOf(0xFF.toByte(), 0xFE.toByte()) + jsonBytes
@@ -841,7 +842,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a UTF-16 backup with a byte order mark" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val jsonBytes = minimalIvyJson.toByteArray(Charsets.UTF_16BE)
         val withBom = byteArrayOf(0xFE.toByte(), 0xFF.toByte()) + jsonBytes
@@ -859,7 +860,7 @@ class IvyImporterTest : StringSpec({
 
     "imports the first 'initial balance' entry as the account's initial balance" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -890,7 +891,7 @@ class IvyImporterTest : StringSpec({
 
     "treats subsequent 'initial balance' entries as normal entries" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -935,7 +936,7 @@ class IvyImporterTest : StringSpec({
 
     "an expense-typed 'initial balance' entry yields a negative initial balance" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -965,7 +966,7 @@ class IvyImporterTest : StringSpec({
 
     "a transfer titled 'initial balance' is imported as a normal entry" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -997,7 +998,7 @@ class IvyImporterTest : StringSpec({
 
     "resets initial balance state between imports" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1027,7 +1028,7 @@ class IvyImporterTest : StringSpec({
 
     "imports an 'Adjust balance' entry as the account's initial balance" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1057,7 +1058,7 @@ class IvyImporterTest : StringSpec({
 
     "consumes only one balance entry per account regardless of title" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1102,7 +1103,7 @@ class IvyImporterTest : StringSpec({
 
     "imports a transaction with an 'Initial Balance' category as the account's initial balance" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1136,7 +1137,7 @@ class IvyImporterTest : StringSpec({
 
     "treats subsequent 'Initial Balance' category entries as normal entries" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1182,7 +1183,7 @@ class IvyImporterTest : StringSpec({
 
     "routes a transaction whose currency conflicts with its account's currency to a split account" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1224,7 +1225,7 @@ class IvyImporterTest : StringSpec({
 
     "reuses a split account for every conflicting transaction from the same account" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1271,7 +1272,7 @@ class IvyImporterTest : StringSpec({
 
     "routes conflicting transactions to an account that already has the split name" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1311,7 +1312,7 @@ class IvyImporterTest : StringSpec({
 
     "routes a transfer to a split account when its currency conflicts with the source account's currency" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1352,7 +1353,7 @@ class IvyImporterTest : StringSpec({
 
     "routes a transfer's target to a split account when toCurrency conflicts with the target account's currency" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1392,7 +1393,7 @@ class IvyImporterTest : StringSpec({
 
     "applies a conflicting 'initial balance' entry to the split account" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {
@@ -1426,7 +1427,7 @@ class IvyImporterTest : StringSpec({
 
     "counts a transfer with conflicting source and target currencies as one routed transaction" {
         val database = lindenDatabase()
-        val importer = IvyImporter(database)
+        val importer = IvyImporter(database, clock = FakeClock())
 
         val json = """
             {

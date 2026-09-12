@@ -100,6 +100,7 @@ import org.sjbtimdan.linden.resources.settings_working_backup
 import org.sjbtimdan.linden.resources.settings_working_export
 import org.sjbtimdan.linden.resources.settings_working_import
 import org.sjbtimdan.linden.resources.settings_working_restore
+import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.ScreenMaxWidth
 import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -133,7 +134,7 @@ fun SettingsScreen(
     val importFilePicker = pickImportFile
         ?: rememberZipFilePicker { input -> input?.let(viewModel::importIvy) }
     val backupFilePicker = pickBackupFile
-        ?: rememberDatabaseBackupPicker(onPicked = { output -> output?.let(viewModel::backupTo) })
+        ?: rememberDatabaseBackupPicker(onPicked = { output -> output?.let(viewModel::backupTo) }, clock = SystemClock)
     val restoreFilePicker = pickRestoreFile
         ?: rememberDatabaseRestorePicker { input -> input?.let(viewModel::restoreFrom) }
     val exportFilePicker = pickExportFile

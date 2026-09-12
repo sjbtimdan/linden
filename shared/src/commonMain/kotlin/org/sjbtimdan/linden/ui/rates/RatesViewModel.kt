@@ -17,7 +17,6 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -36,7 +35,7 @@ sealed interface RatesWarning {
 class RatesViewModel(
     private val settingsDao: SettingsDao,
     private val fxRatesRepository: FxRatesRepository,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) : ViewModel() {
     val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(

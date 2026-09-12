@@ -30,7 +30,6 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
@@ -52,7 +51,7 @@ class LedgerViewModel(
     budgetDao: BudgetDao,
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
-    private val clock: AppClock = SystemClock,
+    private val clock: AppClock,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,

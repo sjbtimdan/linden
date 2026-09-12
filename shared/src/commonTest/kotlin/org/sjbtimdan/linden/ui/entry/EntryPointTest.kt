@@ -48,7 +48,7 @@ import kotlin.time.Duration.Companion.days
 @OptIn(ExperimentalTestApi::class)
 class EntryPointTest : StringSpec({
     "shows the expense form with add disabled initially" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel)
             }
@@ -60,7 +60,7 @@ class EntryPointTest : StringSpec({
     }
 
     "hero card shows the total balance across accounts" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
@@ -73,7 +73,7 @@ class EntryPointTest : StringSpec({
     }
 
     "hero card masks the total when hiding is enabled" {
-        withEntryPoint(hideEntryTotal = true) { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock(), hideEntryTotal = true) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
@@ -88,7 +88,7 @@ class EntryPointTest : StringSpec({
     }
 
     "tapping the eye hides and restores the hero card total" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
 
             setContent {
@@ -113,7 +113,7 @@ class EntryPointTest : StringSpec({
     }
 
     "expense is the default selected type" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel)
             }
@@ -125,7 +125,7 @@ class EntryPointTest : StringSpec({
     }
 
     "creating an expense saves it and resets the form" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -153,7 +153,7 @@ class EntryPointTest : StringSpec({
     }
 
     "clear resets the form without adding an entry" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             // The prior entry prefills the form, so Clear must empty it, not restore the prefill.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
@@ -182,7 +182,7 @@ class EntryPointTest : StringSpec({
     }
 
     "back arrow while editing expands the form and keeps the draft" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -208,7 +208,7 @@ class EntryPointTest : StringSpec({
     }
 
     "add is enabled once the form is valid" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -227,7 +227,7 @@ class EntryPointTest : StringSpec({
     }
 
     "the save hint names the missing fields in order" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -254,7 +254,7 @@ class EntryPointTest : StringSpec({
     }
 
     "the save hint asks for the received amount on a cross-currency transfer" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -277,7 +277,7 @@ class EntryPointTest : StringSpec({
     }
 
     "the hero card compacts once the draft is touched and expands again on clear" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -302,7 +302,7 @@ class EntryPointTest : StringSpec({
     }
 
     "chrome stays compact after adding an entry" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -324,7 +324,7 @@ class EntryPointTest : StringSpec({
     }
 
     "the rates banner compacts while a draft is in progress" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -343,7 +343,7 @@ class EntryPointTest : StringSpec({
     }
 
     "switching type keeps amount and description" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -362,7 +362,7 @@ class EntryPointTest : StringSpec({
     }
 
     "switching type swaps the type-specific fields" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -380,7 +380,7 @@ class EntryPointTest : StringSpec({
     }
 
     "switching to transfer prefills accounts from the last transfer" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
@@ -407,7 +407,7 @@ class EntryPointTest : StringSpec({
     }
 
     "cross-currency transfer requires the received amount" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -439,7 +439,7 @@ class EntryPointTest : StringSpec({
     }
 
     "same-currency transfer hides the received amount field" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
 
@@ -460,7 +460,7 @@ class EntryPointTest : StringSpec({
     }
 
     "type tabs hide while the amount calculator is open and return on commit" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel)
             }
@@ -484,7 +484,7 @@ class EntryPointTest : StringSpec({
     }
 
     "back arrow closes the amount calculator and keeps the draft" {
-        withEntryPoint { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -512,7 +512,7 @@ class EntryPointTest : StringSpec({
     }
 
     "received amount opens its own calculator and collapses the form" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -550,7 +550,7 @@ class EntryPointTest : StringSpec({
     }
 
     "calculator header falls back to the field purpose without an account" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel)
             }
@@ -563,7 +563,7 @@ class EntryPointTest : StringSpec({
     }
 
     "calculator header shows the amount purpose and the account context" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
@@ -580,7 +580,7 @@ class EntryPointTest : StringSpec({
     }
 
     "calculator header for a transfer sent amount shows both accounts" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -602,7 +602,7 @@ class EntryPointTest : StringSpec({
     }
 
     "calculator header for the received amount shows both accounts" {
-        withEntryPoint { entryDao, accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -624,7 +624,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows settings links when no accounts or categories exist" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             var settingsNavigations = 0
             setContent {
                 EntryPoint(
@@ -646,7 +646,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows account link for transfer fields when no accounts exist" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(
                     viewModel = viewModel,
@@ -662,7 +662,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows add-second-account link for transfer when only one account exists" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             var settingsNavigations = 0
 
@@ -684,7 +684,7 @@ class EntryPointTest : StringSpec({
     }
 
     "to account dropdown excludes the from account" {
-        withEntryPoint { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
 
@@ -705,7 +705,7 @@ class EntryPointTest : StringSpec({
     }
 
     "expense form prefills from the last expense" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
@@ -951,7 +951,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows a banner when rates are missing" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Missing)
             }
@@ -961,7 +961,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows a banner when rates are over a week old" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
                 EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Outdated)
             }
@@ -971,7 +971,7 @@ class EntryPointTest : StringSpec({
     }
 
     "the rates banner navigates to the rates screen" {
-        withEntryPoint { viewModel ->
+        withEntryPoint(clock = FakeClock()) { viewModel ->
             var navigatedToRates = false
             setContent {
                 EntryPoint(

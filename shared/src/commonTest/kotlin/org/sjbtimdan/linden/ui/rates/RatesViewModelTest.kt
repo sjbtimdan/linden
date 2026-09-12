@@ -28,7 +28,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource(),
+                    FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRates()
@@ -46,7 +48,8 @@ class RatesViewModelTest : StringSpec({
             val dao = FxRateDao(database.fxRateQueries)
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(dao, FakeFxRatesSource()),
+                fxRatesRepository = FxRatesRepository(dao, FakeFxRatesSource(), FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRates(Currency.USD)
@@ -65,7 +68,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource { error("network") },
+                    FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRates()
@@ -85,7 +90,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource { throw RuntimeException() },
+                    FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRates()
@@ -106,7 +113,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource(),
+                    FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             settingsDao.setDefaultCurrency(Currency.EUR)
@@ -126,6 +135,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -145,6 +155,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(dao, source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -167,6 +178,7 @@ class RatesViewModelTest : StringSpec({
                     FakeFxRatesSource { error("network") },
                     FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -188,6 +200,7 @@ class RatesViewModelTest : StringSpec({
                     FakeFxRatesSource { error("network") },
                     FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -261,6 +274,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -283,6 +297,7 @@ class RatesViewModelTest : StringSpec({
                     FakeFxRatesSource { error("network") },
                     FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -302,7 +317,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource(),
+                    FakeClock(now = NOW),
                 ),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.setRate(Currency.EUR, 1.5)
@@ -323,6 +340,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -341,6 +359,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -365,6 +384,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = settingsDao,
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -384,6 +404,7 @@ class RatesViewModelTest : StringSpec({
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.setAutoUpdateRates(false)

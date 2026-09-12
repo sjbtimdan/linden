@@ -61,7 +61,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
             provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
@@ -80,7 +80,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             val monthsAgo = TEST_NOW.minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, ancientCategory, "Ancient", oldAccount, 450, createdAt = monthsAgo))
             entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 450, createdAt = TEST_NOW))
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
             provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
@@ -98,7 +98,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             val dining = categoryDao.getAll().first().first { it.name == "Dining" }
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             entryDao.create(ExpenseEntry(0, dining, "Dinner", savings, 999, createdAt = TEST_NOW))
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
 
             provider.accountSuggestions.awaitEquals(listOf(main.id, savings.id))
             provider.categorySuggestions.awaitEquals(listOf(groceries.id, dining.id))
@@ -114,7 +114,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
-            draft.value = EntryDraft.forNew(EntryType.Income)
+            draft.value = EntryDraft.forNew(EntryType.Income, clock = FakeClock())
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
             provider.accountSuggestions.first().shouldBeEmpty()
@@ -135,7 +135,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             entryDao.create(ExpenseEntry(0, groceries, "Archived", old, 450, createdAt = TEST_NOW))
             accountDao.setHidden(old.id, true)
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
             // The hidden account's history feeds neither the account suggestions
@@ -152,7 +152,7 @@ class EntrySuggestionsProviderTest : StringSpec({
                 .minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
 
             provider.quickEntries.awaitNotEmpty().map { it.entry.description } shouldContainExactly listOf("Coffee")
         }
@@ -164,7 +164,7 @@ class EntrySuggestionsProviderTest : StringSpec({
             val yesterday = TEST_NOW.minus(1, DateTimeUnit.DAY, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
-            draft.value = EntryDraft.forNew(EntryType.Income)
+            draft.value = EntryDraft.forNew(EntryType.Income, clock = FakeClock())
 
             provider.quickEntries.first().shouldBeEmpty()
 
@@ -178,7 +178,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, null, main, 450, createdAt = TEST_NOW))
-            draft.value = EntryDraft.forNew(EntryType.Expense)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
 
             provider.quickEntries.first().shouldBeEmpty()
         }

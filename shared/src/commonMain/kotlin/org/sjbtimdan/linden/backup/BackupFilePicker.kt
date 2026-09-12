@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.backup
 
 import androidx.compose.runtime.Composable
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -13,7 +12,7 @@ import java.io.OutputStream
  * user cancels. The consumer owns the stream: it must be closed after use.
  */
 @Composable
-expect fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit, clock: AppClock = SystemClock): () -> Unit
+expect fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit, clock: AppClock): () -> Unit
 
 /**
  * Returns a launcher that opens the platform "open" dialog for a database backup file.

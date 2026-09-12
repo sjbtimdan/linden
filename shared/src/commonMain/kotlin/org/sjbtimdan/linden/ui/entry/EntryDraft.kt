@@ -10,7 +10,6 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.AppClock
-import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Instant
 
 /**
@@ -146,11 +145,7 @@ data class EntryDraft(
     )
 
     companion object {
-        fun forNew(
-            type: EntryType = EntryType.Expense,
-            previous: Entry? = null,
-            clock: AppClock = SystemClock,
-        ): EntryDraft {
+        fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null, clock: AppClock): EntryDraft {
             val empty = EntryDraft(
                 editing = null,
                 type = type,
