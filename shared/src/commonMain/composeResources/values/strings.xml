@@ -10,6 +10,11 @@
     <string name="startup_error_message">An error occurred while opening your data.</string>
     <string name="startup_error_retry">Retry</string>
 
+    <!-- First run -->
+    <string name="first_run_title">Welcome to Linden</string>
+    <string name="first_run_subtitle">Choose the currency you use. You can change it later in Settings.</string>
+    <string name="first_run_continue">Continue</string>
+
     <!-- Common actions -->
     <string name="common_back">Back</string>
     <string name="common_save">Save</string>

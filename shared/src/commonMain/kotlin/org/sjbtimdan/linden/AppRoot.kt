@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.sjbtimdan.linden.ui.FirstRunScreen
 import org.sjbtimdan.linden.ui.StartupError
 
 /**
@@ -29,6 +30,10 @@ fun AppRoot(createDependencies: suspend () -> AppDependencies) {
 
     when (val current = state) {
         is AppRootState.Ready -> App(current.dependencies)
+
+        is AppRootState.FirstRun -> MaterialTheme {
+            FirstRunScreen(onComplete = viewModel::completeFirstRun)
+        }
 
         AppRootState.Failed -> MaterialTheme {
             StartupError(onRetry = viewModel::retry)

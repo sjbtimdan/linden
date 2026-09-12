@@ -61,6 +61,16 @@ class SettingsViewModel(
 
     val hideEntryTotal: StateFlow<Boolean> = hideEntryTotalSetting.state
 
+    init {
+        // Keep the currency in sync with the settings table: the first-run
+        // screen writes the currency before the app is shown, and a restored
+        // backup can change it too. The optimistic update in
+        // [setDefaultCurrency] still applies instantly.
+        viewModelScope.launch {
+            settingsDao.defaultCurrencyFlow().collect { _defaultCurrency.value = it }
+        }
+    }
+
     private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
     val importState: StateFlow<ImportState> = _importState.asStateFlow()
 

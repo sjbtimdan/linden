@@ -87,4 +87,33 @@ class AppRootTest : StringSpec({
             }
         }
     }
+
+    "shows the first-run currency prompt and completes into the app" {
+        onTestMain {
+            runComposeUiTest {
+                val dependencies = AppDependencies(
+                    database = lindenDatabase(),
+                    initialTheme = ThemeMode.SYSTEM,
+                    initialCurrency = Currency.CHF,
+                    firstRun = true,
+                    fxRatesSource = FakeFxRatesSource(),
+                )
+
+                setContent {
+                    AppRoot { dependencies }
+                }
+
+                waitForIdle()
+
+                onNodeWithTag("firstRunScreen").assertIsDisplayed()
+
+                onNodeWithTag("firstRunCurrency-USD").performClick()
+                onNodeWithTag("firstRunContinue").performClick()
+                waitForIdle()
+
+                onNodeWithTag("firstRunScreen").assertDoesNotExist()
+                onNodeWithText("Add").assertIsDisplayed()
+            }
+        }
+    }
 })

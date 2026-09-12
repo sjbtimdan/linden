@@ -10,6 +10,11 @@
     <string name="startup_error_message">開啟你的資料時發生錯誤。</string>
     <string name="startup_error_retry">重試</string>
 
+    <!-- First run -->
+    <string name="first_run_title">歡迎使用 Linden</string>
+    <string name="first_run_subtitle">選擇你使用的貨幣。之後可以在設定中更改。</string>
+    <string name="first_run_continue">繼續</string>
+
     <!-- Common actions -->
     <string name="common_back">返回</string>
     <string name="common_save">儲存</string>

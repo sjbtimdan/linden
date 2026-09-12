@@ -53,6 +53,7 @@ class AppDependencies(
     val initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
     initialLanguage: AppLanguage = AppLanguage.SYSTEM,
+    val firstRun: Boolean = false,
     fxRatesSource: FxRatesSource? = null,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
@@ -61,6 +62,7 @@ class AppDependencies(
     val entryDao = EntryDao(database.entryQueries)
     val fxRateDao = FxRateDao(database.fxRateQueries)
     val budgetDao = BudgetDao(database.budgetQueries)
+    val seeder = DefaultDataSeeder(database)
     private val httpClientLazy = lazy {
         HttpClient {
             install(HttpTimeout) {
@@ -144,6 +146,16 @@ class AppDependencies(
     )
 
     /**
+     * Completes the first-run setup: persists the chosen default currency and
+     * seeds the starter categories and accounts in that currency. Called once
+     * from the first-run screen before the app is shown.
+     */
+    suspend fun completeFirstRun(currency: Currency) {
+        settingsDao.setDefaultCurrency(currency)
+        seeder.seedIfEmpty(currency)
+    }
+
+    /**
      * Releases the app-wide scope and, if it was ever built, the HTTP client.
      * Called when [AppRootViewModel] is cleared (activity finishing, not a
      * configuration change).
@@ -161,6 +173,12 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val initialCurrency = settingsDao.getDefaultCurrency()
     val initialHideEntryTotal = settingsDao.getHideEntryTotal()
     val initialLanguage = settingsDao.getLanguage()
-    DefaultDataSeeder(database).seedIfEmpty(initialCurrency)
-    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal, initialLanguage)
+    // On a fresh install the user has not chosen a currency yet: seeding is
+    // deferred until the first-run screen completes, so the starter accounts
+    // are created in the currency the user actually picks.
+    val firstRun = !settingsDao.hasDefaultCurrency()
+    if (!firstRun) {
+        DefaultDataSeeder(database).seedIfEmpty(initialCurrency)
+    }
+    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal, initialLanguage, firstRun)
 }

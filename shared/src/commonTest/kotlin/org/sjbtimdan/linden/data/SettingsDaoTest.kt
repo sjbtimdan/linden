@@ -40,6 +40,14 @@ class SettingsDaoTest : StringSpec({
         dao.getDefaultCurrency() shouldBe Currency.CHF
     }
 
+    "hasDefaultCurrency is false on a fresh database and true once set" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.hasDefaultCurrency() shouldBe false
+        dao.setDefaultCurrency(Currency.EUR)
+        dao.hasDefaultCurrency() shouldBe true
+    }
+
     "defaultCurrencyFlow emits CHF by default and follows updates" {
         val database = lindenDatabase()
         val dao = SettingsDao(database.settingsQueries)

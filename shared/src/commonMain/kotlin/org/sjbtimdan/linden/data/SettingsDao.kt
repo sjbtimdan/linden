@@ -38,6 +38,9 @@ class SettingsDao(private val queries: SettingsQueries) {
         }
     }
 
+    /** True once the user has chosen a default currency (false on a fresh install). */
+    suspend fun hasDefaultCurrency(): Boolean = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull() != null
+
     suspend fun setDefaultCurrency(currency: Currency) {
         queries.insertOrReplace(CURRENCY_KEY, currency.name)
     }

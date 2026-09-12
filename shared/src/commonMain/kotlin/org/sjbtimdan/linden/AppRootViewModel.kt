@@ -3,10 +3,13 @@ package org.sjbtimdan.linden
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.sjbtimdan.linden.model.Currency
 
 /**
  * Owns the [AppDependencies] composition root for the lifetime of the host
@@ -31,7 +34,12 @@ class AppRootViewModel(
         _state.value = AppRootState.Loading
         viewModelScope.launch {
             _state.value = try {
-                AppRootState.Ready(createDependencies())
+                val dependencies = createDependencies()
+                if (dependencies.firstRun) {
+                    AppRootState.FirstRun(dependencies)
+                } else {
+                    AppRootState.Ready(dependencies)
+                }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (e: Exception) {
@@ -40,8 +48,25 @@ class AppRootViewModel(
         }
     }
 
+    /**
+     * Completes the first-run setup with the chosen currency, then shows the
+     * app. The dependencies are reused: only the currency write and the
+     * deferred seeding happen here.
+     */
+    fun completeFirstRun(currency: Currency) {
+        val dependencies = (_state.value as? AppRootState.FirstRun)?.dependencies ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { dependencies.completeFirstRun(currency) }
+            _state.value = AppRootState.Ready(dependencies)
+        }
+    }
+
     override fun onCleared() {
-        (_state.value as? AppRootState.Ready)?.dependencies?.close()
+        when (val current = _state.value) {
+            is AppRootState.Ready -> current.dependencies.close()
+            is AppRootState.FirstRun -> current.dependencies.close()
+            else -> Unit
+        }
     }
 }
 
@@ -50,4 +75,7 @@ sealed interface AppRootState {
     data object Loading : AppRootState
     data object Failed : AppRootState
     data class Ready(val dependencies: AppDependencies) : AppRootState
+
+    /** Dependencies built but seeding deferred: the user must pick a currency first. */
+    data class FirstRun(val dependencies: AppDependencies) : AppRootState
 }
