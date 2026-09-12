@@ -9,7 +9,8 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
-import kotlin.time.Clock
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Instant
 
 /**
@@ -138,15 +139,18 @@ data class EntryDraft(
      * amount, category, accounts, description) carries over unchanged, so saving
      * the result duplicates the original row.
      */
-    fun asNewEntry(now: Instant = Clock.System.now(), zone: TimeZone = TimeZone.currentSystemDefault()): EntryDraft =
-        copy(
-            editing = null,
-            createdAt = now,
-            createdZone = zone,
-        )
+    fun asNewEntry(now: Instant, zone: TimeZone): EntryDraft = copy(
+        editing = null,
+        createdAt = now,
+        createdZone = zone,
+    )
 
     companion object {
-        fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null): EntryDraft {
+        fun forNew(
+            type: EntryType = EntryType.Expense,
+            previous: Entry? = null,
+            clock: AppClock = SystemClock,
+        ): EntryDraft {
             val empty = EntryDraft(
                 editing = null,
                 type = type,
@@ -156,7 +160,7 @@ data class EntryDraft(
                 toAccountId = null,
                 toAmountText = "",
                 description = "",
-                createdAt = Clock.System.now(),
+                createdAt = clock.now(),
                 createdZone = TimeZone.currentSystemDefault(),
             )
             if (previous == null || previous.type != type) return empty

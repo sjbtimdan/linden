@@ -22,12 +22,11 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.onTestMain
 import org.sjbtimdan.linden.ui.testAllEntries
 import org.sjbtimdan.linden.ui.testRatesProvider
 import kotlin.time.Instant
-
-private val today = { LocalDate(2026, 8, 15) }
 
 private class InsightsFixture(
     val database: LindenDatabase,
@@ -87,7 +86,7 @@ private suspend fun insightsFixture(): InsightsFixture {
         testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
         budgetDao,
         testAllEntries(entryDao),
-        today = today,
+        clock = FakeClock(today = LocalDate(2026, 8, 15)),
     )
     return InsightsFixture(database, accountDao, categoryDao, entryDao, budgetDao, viewModel)
 }

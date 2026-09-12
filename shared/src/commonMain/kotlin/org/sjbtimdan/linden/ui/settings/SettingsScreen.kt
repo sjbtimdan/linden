@@ -133,7 +133,7 @@ fun SettingsScreen(
     val importFilePicker = pickImportFile
         ?: rememberZipFilePicker { input -> input?.let(viewModel::importIvy) }
     val backupFilePicker = pickBackupFile
-        ?: rememberDatabaseBackupPicker { output -> output?.let(viewModel::backupTo) }
+        ?: rememberDatabaseBackupPicker(onPicked = { output -> output?.let(viewModel::backupTo) })
     val restoreFilePicker = pickRestoreFile
         ?: rememberDatabaseRestorePicker { input -> input?.let(viewModel::restoreFrom) }
     val exportFilePicker = pickExportFile

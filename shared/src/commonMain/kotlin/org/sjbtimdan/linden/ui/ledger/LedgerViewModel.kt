@@ -29,6 +29,8 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
@@ -39,7 +41,6 @@ import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import org.sjbtimdan.linden.ui.entry.categoriesForType
 import kotlin.math.abs
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,7 +52,7 @@ class LedgerViewModel(
     budgetDao: BudgetDao,
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
-    val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    private val clock: AppClock = SystemClock,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -59,6 +60,8 @@ class LedgerViewModel(
     settingsDao,
     ratesProvider,
 ) {
+    /** Today in the system zone, re-read on every call. */
+    fun today(): LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -402,7 +405,7 @@ class LedgerViewModel(
      * being edited but is dated [now] in [zone]: Save then creates a duplicate,
      * leaving the original untouched. The edit is replaced, not stacked.
      */
-    fun duplicateDialogEntry(now: Instant = Clock.System.now(), zone: TimeZone = TimeZone.currentSystemDefault()) {
+    fun duplicateDialogEntry(now: Instant = clock.now(), zone: TimeZone = TimeZone.currentSystemDefault()) {
         draftState.update { it?.asNewEntry(now, zone) }
     }
 
@@ -437,7 +440,7 @@ class LedgerViewModel(
      * dated now; a positive delta becomes an income entry, a negative delta an
      * expense entry. When the delta is zero nothing is created.
      */
-    fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = Clock.System.now()) {
+    fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = clock.now()) {
         viewModelScope.launch {
             val zone = TimeZone.currentSystemDefault()
             val current = currentAccountBalances.value[account.id] ?: account.initialBalance

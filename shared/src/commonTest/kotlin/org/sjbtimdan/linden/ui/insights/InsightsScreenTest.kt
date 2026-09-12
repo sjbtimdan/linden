@@ -24,6 +24,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.withInsightsViewModel
 import kotlin.time.Instant
 
@@ -31,7 +32,9 @@ import kotlin.time.Instant
 class InsightsScreenTest : StringSpec({
 
     "shows the current month, both series totals and the change against last month" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao, "Groceries")
             val salary = seedCategory(categoryDao, "Salary", CategoryType.Income)
@@ -61,7 +64,9 @@ class InsightsScreenTest : StringSpec({
     }
 
     "tapping an older month's bar shows its own totals and title" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao, "Groceries")
             expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
@@ -84,7 +89,9 @@ class InsightsScreenTest : StringSpec({
     }
 
     "the forward arrow is disabled at the current month and pages after going back" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao)
             expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
@@ -110,7 +117,7 @@ class InsightsScreenTest : StringSpec({
 
     "hiding totals masks the amounts and the change caption" {
         withInsightsViewModel(
-            today = { LocalDate(2026, 8, 15) },
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
             hideEntryTotal = true,
         ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
@@ -134,7 +141,7 @@ class InsightsScreenTest : StringSpec({
     }
 
     "shows a no-entries hint instead of the chart when the database is empty" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { _, _, _, viewModel ->
+        withInsightsViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { _, _, _, viewModel ->
             setContent {
                 InsightsScreen(viewModel = viewModel, onNavigateBack = {})
             }
@@ -146,7 +153,9 @@ class InsightsScreenTest : StringSpec({
     }
 
     "swiping the chart right pages back one window" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao)
             expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
@@ -163,7 +172,9 @@ class InsightsScreenTest : StringSpec({
     }
 
     "swiping the chart left returns to the current window" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao)
             expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")
@@ -182,7 +193,9 @@ class InsightsScreenTest : StringSpec({
     }
 
     "swiping the chart left does nothing at the current month" {
-        withInsightsViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, entryDao, viewModel ->
+        withInsightsViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { accountDao, categoryDao, entryDao, viewModel ->
             val main = seedAccount(accountDao)
             val groceries = seedCategory(categoryDao)
             expense(entryDao, groceries, main, 450, "2026-08-10T12:00:00Z")

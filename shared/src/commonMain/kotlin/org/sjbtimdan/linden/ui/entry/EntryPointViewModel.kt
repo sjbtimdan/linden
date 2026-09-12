@@ -7,9 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -18,9 +16,10 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
-import kotlin.time.Clock
 
 class EntryPointViewModel(
     entryDao: EntryDao,
@@ -30,7 +29,7 @@ class EntryPointViewModel(
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    private val clock: AppClock = SystemClock,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -39,7 +38,7 @@ class EntryPointViewModel(
     ratesProvider,
     initialHideTotal = initialHideEntryTotal,
 ) {
-    private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope)
+    private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope, clock = clock)
 
     /**
      * Total across all visible accounts in the default currency: initial balances plus
@@ -53,7 +52,11 @@ class EntryPointViewModel(
         defaultCurrency,
         rates,
     ) { entries, accounts, currency, rates ->
-        accountTotalMinor(accountBalancesAtEnd(entries, today(), accounts), currency, rates)
+        accountTotalMinor(
+            accountBalancesAtEnd(entries, clock.todayIn(TimeZone.currentSystemDefault()), accounts),
+            currency,
+            rates,
+        )
     }.stateFlow(null)
 
     /** Most likely account ids for the current draft; only for new entries. */
@@ -107,11 +110,15 @@ class EntryPointViewModel(
     }
 
     /** A new draft of [type] prefilled from the latest entry of that type. */
-    internal suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(type, entryDao.latest(type))
+    internal suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(
+        type,
+        entryDao.latest(type),
+        clock,
+    )
 
     /** Resets the form to an empty draft of the selected type. */
     fun clearDraft() {
-        draftState.value = EntryDraft.forNew(_selectedType.value)
+        draftState.value = EntryDraft.forNew(_selectedType.value, clock = clock)
     }
 
     /**
@@ -123,7 +130,7 @@ class EntryPointViewModel(
         val state = draftState.value ?: return false
         val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
         createEntry(entry)
-        draftState.value = EntryDraft.forNew(entry.type, entry)
+        draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }
 }

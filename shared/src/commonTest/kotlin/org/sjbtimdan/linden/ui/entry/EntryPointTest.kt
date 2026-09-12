@@ -39,9 +39,10 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.FakeClock
+import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.withEntryPoint
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 
 @OptIn(ExperimentalTestApi::class)
@@ -155,7 +156,7 @@ class EntryPointTest : StringSpec({
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             // The prior entry prefills the form, so Clear must empty it, not restore the prefill.
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -564,7 +565,7 @@ class EntryPointTest : StringSpec({
     "calculator header shows the amount purpose and the account context" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -706,7 +707,7 @@ class EntryPointTest : StringSpec({
     "expense form prefills from the last expense" {
         withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -723,9 +724,9 @@ class EntryPointTest : StringSpec({
     }
 
     "shows description suggestions based on category, account and amount" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val now = Clock.System.now()
+            val now = TEST_NOW
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
             setContent {
@@ -742,9 +743,9 @@ class EntryPointTest : StringSpec({
     }
 
     "selecting a description suggestion fills the field" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val now = Clock.System.now()
+            val now = TEST_NOW
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
@@ -766,9 +767,9 @@ class EntryPointTest : StringSpec({
     }
 
     "tapping outside the description field clears focus and hides suggestions" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val now = Clock.System.now()
+            val now = TEST_NOW
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(3.days)))
 
@@ -796,9 +797,9 @@ class EntryPointTest : StringSpec({
     }
 
     "typing filters the description suggestions" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val now = Clock.System.now()
+            val now = TEST_NOW
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Cocoa", main, 450, createdAt = now.minus(1.days)))
 
@@ -819,7 +820,7 @@ class EntryPointTest : StringSpec({
     }
 
     "shows predicted account and category chips from history" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -830,7 +831,7 @@ class EntryPointTest : StringSpec({
             val savings = accounts.first { it.name == "Savings" }
             val groceries = categories.first { it.name == "Groceries" }
             val leisure = categories.first { it.name == "Leisure" }
-            val now = Clock.System.now()
+            val now = TEST_NOW
             // The pairing prediction must be rediscovered from history.
             viewModel.createEntry(ExpenseEntry(0, leisure, "Cinema", savings, 2_000, createdAt = now.minus(5.days)))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
@@ -859,7 +860,7 @@ class EntryPointTest : StringSpec({
     }
 
     "prefilled account and category fall back to the full list" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -868,7 +869,7 @@ class EntryPointTest : StringSpec({
             val categories = categoryDao.getAll().first()
             val main = accounts.first { it.name == "Main" }
             val groceries = categories.first { it.name == "Groceries" }
-            val now = Clock.System.now()
+            val now = TEST_NOW
             // The latest entry prefills the form with account=Main, category=Groceries.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
 
@@ -889,9 +890,9 @@ class EntryPointTest : StringSpec({
     }
 
     "shows quick entry chips for the current type" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val yesterday = Clock.System.now().minus(1.days)
+            val yesterday = TEST_NOW.minus(1.days)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
 
@@ -907,9 +908,9 @@ class EntryPointTest : StringSpec({
     }
 
     "selecting a quick entry fills the form" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val yesterday = Clock.System.now().minus(1.days)
+            val yesterday = TEST_NOW.minus(1.days)
             // Two occurrences of each description so the frequency filter passes.
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
@@ -931,9 +932,9 @@ class EntryPointTest : StringSpec({
     }
 
     "quick entry chips hide for a type without matching history" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val yesterday = Clock.System.now().minus(1.days)
+            val yesterday = TEST_NOW.minus(1.days)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
 

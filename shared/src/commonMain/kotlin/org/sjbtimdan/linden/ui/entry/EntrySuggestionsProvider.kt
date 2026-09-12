@@ -31,7 +31,8 @@ import org.sjbtimdan.linden.predictions.predictAccounts
 import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.predictions.predictQuickEntries
-import kotlin.time.Clock
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
@@ -55,6 +56,7 @@ class EntrySuggestionsProvider(
     private val draft: StateFlow<EntryDraft?>,
     private val scope: CoroutineScope,
     descriptionDebounceMillis: Long = DESCRIPTION_DEBOUNCE_MILLIS,
+    private val clock: AppClock = SystemClock,
 ) {
     /** Entries of the draft's type from the last [PREDICTION_HORIZON_MONTHS] months. */
     private val predictionEntries: StateFlow<List<Entry>> = typeEntries { type ->
@@ -97,7 +99,7 @@ class EntrySuggestionsProvider(
         predictAccounts(
             entries = entries,
             input = state.fieldInput(),
-            now = Clock.System.now(),
+            now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
         )
@@ -108,7 +110,7 @@ class EntrySuggestionsProvider(
         predictCategories(
             entries = entries,
             input = state.fieldInput(),
-            now = Clock.System.now(),
+            now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
         )
@@ -125,7 +127,7 @@ class EntrySuggestionsProvider(
                 amount = state.amount,
                 description = state.description,
             ),
-            now = Clock.System.now(),
+            now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
         )
@@ -136,7 +138,7 @@ class EntrySuggestionsProvider(
         predictQuickEntries(
             entries = entries,
             input = state.fieldInput(),
-            now = Clock.System.now(),
+            now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = QUICK_ENTRY_TOP_N,
         )
@@ -169,7 +171,7 @@ class EntrySuggestionsProvider(
         .flowOn(Dispatchers.Default)
         .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
-    private fun horizonCutoffMillis(): Long = Clock.System.now()
+    private fun horizonCutoffMillis(): Long = clock.now()
         .minus(PREDICTION_HORIZON_MONTHS, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
         .toEpochMilliseconds()
 

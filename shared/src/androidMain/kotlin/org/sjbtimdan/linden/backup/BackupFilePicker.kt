@@ -6,12 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.sjbtimdan.linden.time.AppClock
 import java.io.InputStream
 import java.io.OutputStream
-import kotlin.time.Clock
 
 @Composable
-actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -> Unit {
+actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit, clock: AppClock): () -> Unit {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/zip"),
@@ -23,7 +23,7 @@ actual fun rememberDatabaseBackupPicker(onPicked: (OutputStream?) -> Unit): () -
         }
     }
     return {
-        launcher.launch(backupFileName(Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())))
+        launcher.launch(backupFileName(clock.now().toLocalDateTime(TimeZone.currentSystemDefault())))
     }
 }
 

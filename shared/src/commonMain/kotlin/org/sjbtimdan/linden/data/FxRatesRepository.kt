@@ -1,13 +1,12 @@
 package org.sjbtimdan.linden.data
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.FxRates
-import kotlin.time.Clock
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -15,23 +14,22 @@ import kotlin.time.Instant
 class FxRatesRepository(
     private val dao: FxRateDao,
     private val source: FxRatesSource,
-    private val clock: () -> Instant = { Clock.System.now() },
-    private val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    private val clock: AppClock = SystemClock,
 ) {
     suspend fun refreshRates(base: Currency): FxRates {
         val fetched = source.fetchLatestRates(base, Currency.entries.filter { it != base })
-        dao.replaceRates(fetched.toFxRates(), clock().toEpochMilliseconds())
+        dao.replaceRates(fetched.toFxRates(), clock.now().toEpochMilliseconds())
         return fetched
     }
 
     suspend fun setRate(base: Currency, quote: Currency, rate: Double) {
-        val now = clock()
+        val now = clock.now()
         dao.setRate(
             rate = FxRate(
                 baseCurrency = base,
                 quoteCurrency = quote,
                 rate = rate,
-                date = today().toString(),
+                date = clock.todayIn(TimeZone.currentSystemDefault()).toString(),
             ),
             fetchedAt = now.toEpochMilliseconds(),
         )
@@ -44,7 +42,7 @@ class FxRatesRepository(
 
     suspend fun isStale(base: Currency): Boolean {
         val fetchedAt = dao.lastFetchedAt(base) ?: return true
-        return clock() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_STALE_AFTER
+        return clock.now() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_STALE_AFTER
     }
 
     suspend fun lastFetchedAt(base: Currency): Long? = dao.lastFetchedAt(base)

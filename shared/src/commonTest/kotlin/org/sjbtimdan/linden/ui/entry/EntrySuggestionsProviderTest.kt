@@ -25,8 +25,9 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.time.FakeClock
+import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.onTestMain
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalTestApi::class)
@@ -59,7 +60,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "suggestions reflect the draft and recent history" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             draft.value = EntryDraft.forNew(EntryType.Expense)
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
@@ -76,9 +77,9 @@ class EntrySuggestionsProviderTest : StringSpec({
             categoryDao.create("Ancient", CategoryType.Expense)
             val oldAccount = accountDao.getAll().first().first { it.name == "Old" }
             val ancientCategory = categoryDao.getAll().first().first { it.name == "Ancient" }
-            val monthsAgo = Clock.System.now().minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
+            val monthsAgo = TEST_NOW.minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, ancientCategory, "Ancient", oldAccount, 450, createdAt = monthsAgo))
-            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 450, createdAt = TEST_NOW))
             draft.value = EntryDraft.forNew(EntryType.Expense)
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
@@ -95,8 +96,8 @@ class EntrySuggestionsProviderTest : StringSpec({
             categoryDao.create("Dining", CategoryType.Expense)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
             val dining = categoryDao.getAll().first().first { it.name == "Dining" }
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-            entryDao.create(ExpenseEntry(0, dining, "Dinner", savings, 999, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, dining, "Dinner", savings, 999, createdAt = TEST_NOW))
             draft.value = EntryDraft.forNew(EntryType.Expense)
 
             provider.accountSuggestions.awaitEquals(listOf(main.id, savings.id))
@@ -112,7 +113,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "suggestions only consider entries of the draft's type" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             draft.value = EntryDraft.forNew(EntryType.Income)
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
 
@@ -131,8 +132,8 @@ class EntrySuggestionsProviderTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Old", Currency.CHF)
             val old = accountDao.getAll().first().first { it.name == "Old" }
-            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = Clock.System.now()))
-            entryDao.create(ExpenseEntry(0, groceries, "Archived", old, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Archived", old, 450, createdAt = TEST_NOW))
             accountDao.setHidden(old.id, true)
             draft.value = EntryDraft.forNew(EntryType.Expense)
                 .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
@@ -147,7 +148,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "quick entries include entries beyond the prediction horizon" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val monthsAgo = Clock.System.now()
+            val monthsAgo = TEST_NOW
                 .minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = monthsAgo))
@@ -160,7 +161,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "quick entries only consider entries of the draft's type" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            val yesterday = Clock.System.now().minus(1, DateTimeUnit.DAY, TimeZone.currentSystemDefault())
+            val yesterday = TEST_NOW.minus(1, DateTimeUnit.DAY, TimeZone.currentSystemDefault())
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = yesterday))
             draft.value = EntryDraft.forNew(EntryType.Income)
@@ -176,7 +177,7 @@ class EntrySuggestionsProviderTest : StringSpec({
     "quick entries ignore entries without a description" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            entryDao.create(ExpenseEntry(0, groceries, null, main, 450, createdAt = Clock.System.now()))
+            entryDao.create(ExpenseEntry(0, groceries, null, main, 450, createdAt = TEST_NOW))
             draft.value = EntryDraft.forNew(EntryType.Expense)
 
             provider.quickEntries.first().shouldBeEmpty()
@@ -206,6 +207,7 @@ private fun withSuggestionsProvider(
                 draft,
                 CoroutineScope(Dispatchers.Main),
                 descriptionDebounceMillis = 0,
+                clock = FakeClock(now = TEST_NOW),
             )
             block(entryDao, accountDao, categoryDao, provider, draft)
         }

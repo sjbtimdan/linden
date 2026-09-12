@@ -22,8 +22,9 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.FakeClock
+import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.withEntryPoint
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
@@ -244,13 +245,13 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "account and category suggestions reflect the draft and history" {
-        withEntryPoint { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             categoryDao.create("Leisure", CategoryType.Expense)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
             val leisure = categoryDao.getAll().first().first { it.name == "Leisure" }
-            val now = Clock.System.now()
+            val now = TEST_NOW
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = now.minus(2.days)))
             entryDao.create(ExpenseEntry(0, leisure, "Cinema", savings, 2_000, createdAt = now.minus(1.days)))
 
@@ -312,12 +313,14 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "entries dated after today do not count toward the total" {
-        withEntryPoint(today = { LocalDate(2026, 1, 15) }) { entryDao, accountDao, categoryDao, viewModel ->
+        withEntryPoint(
+            clock = FakeClock(today = LocalDate(2026, 1, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            val future = Instant.fromEpochMilliseconds(1_768_867_200_000) // 2026-01-20 00:00 UTC
+            val future = TEST_NOW
 
             entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 450, createdAt = future, createdZone = TimeZone.UTC),

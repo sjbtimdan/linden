@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.time.FakeClock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
@@ -104,7 +105,7 @@ class FxRatesRepositoryTest : StringSpec({
     "setRate stores a manually entered rate stamped with today and now" {
         val database = lindenDatabase()
         val dao = FxRateDao(database.fxRateQueries)
-        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock, today = { TODAY })
+        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock)
 
         repository.setRate(Currency.CHF, Currency.EUR, 1.5)
 
@@ -118,7 +119,7 @@ class FxRatesRepositoryTest : StringSpec({
         val database = lindenDatabase()
         val dao = FxRateDao(database.fxRateQueries)
         val source = FakeFxRatesSource()
-        val repository = FxRatesRepository(dao, source, clock, today = { TODAY })
+        val repository = FxRatesRepository(dao, source, clock)
 
         repository.setRate(Currency.CHF, Currency.EUR, 1.5)
         repository.refreshIfStale(Currency.CHF)
@@ -129,7 +130,7 @@ class FxRatesRepositoryTest : StringSpec({
     "refreshRates overwrites a manually entered rate" {
         val database = lindenDatabase()
         val dao = FxRateDao(database.fxRateQueries)
-        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock, today = { TODAY })
+        val repository = FxRatesRepository(dao, FakeFxRatesSource(), clock)
 
         repository.setRate(Currency.CHF, Currency.EUR, 1.5)
         repository.refreshRates(Currency.CHF)
@@ -139,8 +140,8 @@ class FxRatesRepositoryTest : StringSpec({
 }) {
     companion object {
         private val now = Instant.parse("2026-08-13T12:00:00Z")
-        private val clock: () -> Instant = { now }
         private val TODAY = LocalDate(2026, 8, 13)
+        private val clock = FakeClock(now = now, today = TODAY)
         private val existingRates = listOf(
             FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
             FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-12"),

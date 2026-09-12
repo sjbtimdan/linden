@@ -14,9 +14,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.AppDependencies
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
@@ -37,6 +34,8 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
@@ -46,7 +45,6 @@ import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
-import kotlin.time.Clock
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun onTestMain(block: suspend () -> Unit) {
@@ -207,7 +205,7 @@ fun withRatesViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
@@ -232,7 +230,7 @@ fun withEntryPoint(
                 testRatesProvider(settingsDao, fxRateDao),
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
-                today = today,
+                clock = clock,
             )
             block(entryDao, accountDao, categoryDao, viewModel)
         }
@@ -241,37 +239,37 @@ fun withEntryPoint(
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
-) = withEntryPoint(today, defaultCurrency, hideEntryTotal, rates) { _, accountDao, categoryDao, viewModel ->
+) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates) { _, accountDao, categoryDao, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withEntryPoint(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(EntryPointViewModel) -> Unit,
-) = withEntryPoint(today, defaultCurrency, hideEntryTotal, rates) { _, _, _, viewModel -> block(viewModel) }
+) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, rates) { entryDao, accountDao, categoryDao, _, viewModel ->
+) = withLedgerViewModel(clock, defaultCurrency, rates) { entryDao, accountDao, categoryDao, _, viewModel ->
     block(entryDao, accountDao, categoryDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency,
     rates: List<FxRate>,
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, SettingsDao, LedgerViewModel) -> Unit,
@@ -294,7 +292,7 @@ fun withLedgerViewModel(
                 BudgetDao(database.budgetQueries),
                 testRatesProvider(settingsDao, fxRateDao),
                 testAllEntries(entryDao),
-                today = today,
+                clock = clock,
             )
             // Tests create entries with the default epoch timestamp, so they assume
             // the "All" period rather than the production default of "Month".
@@ -306,21 +304,21 @@ fun withLedgerViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    today: () -> LocalDate,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, rates) { _, accountDao, categoryDao, _, viewModel ->
+) = withLedgerViewModel(clock, defaultCurrency, rates) { _, accountDao, categoryDao, _, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
-    today: () -> LocalDate,
+    clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     block: suspend ComposeUiTest.(LedgerViewModel) -> Unit,
-) = withLedgerViewModel(today, defaultCurrency, rates) { _, _, _, _, viewModel -> block(viewModel) }
+) = withLedgerViewModel(clock, defaultCurrency, rates) { _, _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(
@@ -340,7 +338,7 @@ fun withLedgerViewModel(
 
 @OptIn(ExperimentalTestApi::class)
 fun withInsightsViewModel(
-    today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    clock: AppClock = SystemClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     hideEntryTotal: Boolean = false,
@@ -364,7 +362,7 @@ fun withInsightsViewModel(
                 BudgetDao(database.budgetQueries),
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
-                today = today,
+                clock = clock,
             )
             block(accountDao, categoryDao, entryDao, viewModel)
         }

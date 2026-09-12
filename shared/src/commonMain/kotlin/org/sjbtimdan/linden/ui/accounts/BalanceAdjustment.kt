@@ -6,7 +6,6 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
@@ -38,8 +37,8 @@ fun adjustmentEntry(
     adjustment: BalanceAdjustment,
     account: Account,
     category: Category,
-    now: Instant = Clock.System.now(),
-    zone: TimeZone = TimeZone.currentSystemDefault(),
+    now: Instant,
+    zone: TimeZone,
 ): Entry? {
     if (adjustment.isZero) return null
     val amount = kotlin.math.abs(adjustment.delta)

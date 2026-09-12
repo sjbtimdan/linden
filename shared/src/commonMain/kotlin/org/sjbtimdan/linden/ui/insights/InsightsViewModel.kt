@@ -17,7 +17,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
@@ -27,7 +26,8 @@ import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
-import kotlin.time.Clock
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 
 /** Number of months in the trend window and of bars in the chart. */
 internal const val WINDOW_MONTHS = 12
@@ -48,7 +48,7 @@ class InsightsViewModel(
     budgetDao: BudgetDao,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
-    private val today: () -> LocalDate = { Clock.System.todayIn(TimeZone.currentSystemDefault()) },
+    private val clock: AppClock = SystemClock,
 ) : ViewModel() {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
@@ -124,6 +124,8 @@ class InsightsViewModel(
         started = SharingStarted.Eagerly,
         initialValue = initial,
     )
+
+    private fun today(): LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
 }
 
 private fun currentMonthStart(date: LocalDate): LocalDate = LocalDate(date.year, date.month.number, 1)

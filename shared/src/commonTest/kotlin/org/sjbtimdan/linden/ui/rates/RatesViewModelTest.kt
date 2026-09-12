@@ -12,6 +12,7 @@ import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.FxRates
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.onTestMain
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -124,7 +125,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.refreshRatesIfStale()
@@ -143,7 +144,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(dao, source, { NOW }),
+                fxRatesRepository = FxRatesRepository(dao, source, FakeClock(now = NOW)),
             )
 
             viewModel.refreshRatesIfStale()
@@ -164,7 +165,7 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource { error("network") },
-                    { NOW },
+                    FakeClock(now = NOW),
                 ),
             )
 
@@ -185,7 +186,7 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource { error("network") },
-                    { NOW },
+                    FakeClock(now = NOW),
                 ),
             )
 
@@ -206,9 +207,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     dao,
                     FakeFxRatesSource { error("network") },
-                    { NOW },
+                    FakeClock(now = NOW),
                 ),
-                clock = { NOW },
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -228,9 +229,9 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     dao,
                     FakeFxRatesSource { error("network") },
-                    { NOW },
+                    FakeClock(now = NOW),
                 ),
-                clock = { NOW },
+                clock = FakeClock(now = NOW),
             )
 
             viewModel.refreshRatesIfStale()
@@ -259,7 +260,7 @@ class RatesViewModelTest : StringSpec({
             }
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.refreshRatesIfStale()
@@ -280,7 +281,7 @@ class RatesViewModelTest : StringSpec({
                 fxRatesRepository = FxRatesRepository(
                     FxRateDao(database.fxRateQueries),
                     FakeFxRatesSource { error("network") },
-                    { NOW },
+                    FakeClock(now = NOW),
                 ),
             )
 
@@ -321,7 +322,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -339,7 +340,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -363,7 +364,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = settingsDao,
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.setAutoUpdateRates(false)
@@ -382,7 +383,7 @@ class RatesViewModelTest : StringSpec({
             val source = FakeFxRatesSource()
             val viewModel = RatesViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
-                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, { NOW }),
+                fxRatesRepository = FxRatesRepository(FxRateDao(database.fxRateQueries), source, FakeClock(now = NOW)),
             )
 
             viewModel.setAutoUpdateRates(false)

@@ -37,6 +37,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
@@ -221,7 +222,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show future toggle on the period navigator reveals future entries" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
@@ -245,7 +246,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future notice explains what the toggle revealed and dismisses it" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
@@ -271,7 +272,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "empty entries list explains when only future entries are hidden" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
@@ -291,7 +292,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "categories view names hidden future spending and explains totals once shown" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
@@ -313,7 +314,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "accounts view notice says balances include entries after today" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
@@ -331,7 +332,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future toggle is hidden when the shown period does not include today" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -359,7 +360,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "scheduled entries in a wholly future month are shown without the toggle" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-10-05T12:00:00Z")),
@@ -384,7 +385,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future notice hides once the shown period no longer includes today" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-09-20T12:00:00Z")),
@@ -411,7 +412,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future toggle is hidden for a week that closes today" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 6) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 6))) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -429,7 +430,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future toggle appears for a mid-week window that still has days ahead" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 9) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 9))) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -447,7 +448,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future toggle is hidden when today closes the shown month" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 31) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 31))) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
             setContent {
@@ -622,7 +623,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "selecting a period narrows the list" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
@@ -648,7 +649,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "arrows move between periods" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
@@ -683,7 +684,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "period with no entries shows no entries match" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
@@ -703,7 +704,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "every period view shows only the time on its rows, the date stays in the day headers" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Morning", main, 100, createdAt = Instant.parse("2026-08-15T08:00:00Z")),
@@ -910,7 +911,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "accounts view shows balances at the end of the selected period" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -1019,7 +1020,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "categories view shows totals at the end of the selected period" {
-        withLedgerViewModel(today = { LocalDate(2026, 9, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
@@ -1323,7 +1324,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "adjust balance shows an explanation when viewing a historical period" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
 
             setContent {
@@ -1346,7 +1347,7 @@ class LedgerScreenTest : StringSpec({
     }
 
     "adjust balance is shown for the current period" {
-        withLedgerViewModel(today = { LocalDate(2026, 8, 15) }) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
 
             setContent {

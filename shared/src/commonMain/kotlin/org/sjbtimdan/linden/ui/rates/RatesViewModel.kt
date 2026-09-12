@@ -16,7 +16,8 @@ import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
-import kotlin.time.Clock
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -35,7 +36,7 @@ sealed interface RatesWarning {
 class RatesViewModel(
     private val settingsDao: SettingsDao,
     private val fxRatesRepository: FxRatesRepository,
-    private val clock: () -> Instant = { Clock.System.now() },
+    private val clock: AppClock = SystemClock,
 ) : ViewModel() {
     val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
         .stateIn(
@@ -133,7 +134,7 @@ class RatesViewModel(
         val fetchedAt = fxRatesRepository.lastFetchedAt(currency)
         _ratesWarning.value = when {
             fetchedAt == null -> RatesWarning.Missing
-            clock() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_WARNING_STALE_AFTER -> RatesWarning.Outdated
+            clock.now() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_WARNING_STALE_AFTER -> RatesWarning.Outdated
             else -> null
         }
     }

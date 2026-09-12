@@ -21,12 +21,13 @@ import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.time.SystemClock
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.zip.ZipInputStream
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 data class IvyImportResult(
@@ -42,7 +43,10 @@ private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
 private const val INITIAL_BALANCE_TITLE = "initial balance"
 private const val ADJUST_BALANCE_TITLE = "adjust balance"
 
-class IvyImporter(private val database: LindenDatabase) {
+class IvyImporter(
+    private val database: LindenDatabase,
+    private val clock: AppClock = SystemClock,
+) {
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun import(input: InputStream): IvyImportResult {
@@ -311,7 +315,7 @@ class IvyImporter(private val database: LindenDatabase) {
             amount = transaction.amount,
             toAccountId = toAccount?.id,
             toAmount = toAmount,
-            createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: Clock.System.now())
+            createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: clock.now())
                 .toEpochMilliseconds(),
             createdZone = TimeZone.currentSystemDefault().id,
         )
