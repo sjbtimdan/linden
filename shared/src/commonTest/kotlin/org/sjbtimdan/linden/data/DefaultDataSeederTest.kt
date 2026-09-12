@@ -21,6 +21,21 @@ class DefaultDataSeederTest : StringSpec({
             "Bills",
             "Car",
             "Education",
+            "Gifts",
+            "Groceries",
+            "Holidays",
+            "House",
+            "Interest",
+            "Pets",
+            "Public Transport",
+            "Refunds",
+            "Restaurants",
+            "Salary",
+        )
+        categories.filter { it.type == CategoryType.Expense }.map { it.name } shouldContainExactly listOf(
+            "Bills",
+            "Car",
+            "Education",
             "Groceries",
             "Holidays",
             "House",
@@ -28,9 +43,16 @@ class DefaultDataSeederTest : StringSpec({
             "Public Transport",
             "Restaurants",
         )
-        categories.all { it.type == CategoryType.Expense } shouldBe true
+        categories.filter { it.type == CategoryType.Income }.map { it.name } shouldContainExactly listOf(
+            "Gifts",
+            "Interest",
+            "Refunds",
+            "Salary",
+        )
         categories.first { it.name == "Groceries" }.icon shouldBe CategoryIcon.ShoppingCart
         categories.first { it.name == "Public Transport" }.icon shouldBe CategoryIcon.DirectionsBus
+        categories.first { it.name == "Salary" }.icon shouldBe CategoryIcon.Savings
+        categories.first { it.name == "Gifts" }.icon shouldBe CategoryIcon.FavoriteBorder
 
         accountDao.getAll().first().map { it.name } shouldContainExactly
             listOf("Current Account", "Savings Account")
@@ -76,7 +98,7 @@ class DefaultDataSeederTest : StringSpec({
         seeder.seedIfEmpty(Currency.CHF)
         seeder.seedIfEmpty(Currency.CHF)
 
-        categoryDao.getAll().first().size shouldBe 9
+        categoryDao.getAll().first().size shouldBe 13
         accountDao.getAll().first().size shouldBe 2
     }
 })

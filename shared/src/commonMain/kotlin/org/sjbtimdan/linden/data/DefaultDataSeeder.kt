@@ -17,8 +17,11 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
     suspend fun seedIfEmpty(defaultCurrency: Currency) {
         if (!isEmpty()) return
         database.transaction {
-            DEFAULT_CATEGORIES.forEach { (name, icon) ->
+            DEFAULT_EXPENSE_CATEGORIES.forEach { (name, icon) ->
                 database.categoryQueries.insert(name, CategoryType.Expense.name, icon.name)
+            }
+            DEFAULT_INCOME_CATEGORIES.forEach { (name, icon) ->
+                database.categoryQueries.insert(name, CategoryType.Income.name, icon.name)
             }
             DEFAULT_ACCOUNTS.forEach { name ->
                 database.accountQueries.insert(name, defaultCurrency.name, 0)
@@ -31,7 +34,7 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
         database.entryQueries.selectAllRows().awaitAsList().isEmpty()
 
     private companion object {
-        val DEFAULT_CATEGORIES = listOf(
+        val DEFAULT_EXPENSE_CATEGORIES = listOf(
             "Groceries" to CategoryIcon.ShoppingCart,
             "House" to CategoryIcon.Home,
             "Car" to CategoryIcon.DirectionsCar,
@@ -41,6 +44,12 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
             "Education" to CategoryIcon.School,
             "Holidays" to CategoryIcon.Flight,
             "Public Transport" to CategoryIcon.DirectionsBus,
+        )
+        val DEFAULT_INCOME_CATEGORIES = listOf(
+            "Salary" to CategoryIcon.Savings,
+            "Gifts" to CategoryIcon.FavoriteBorder,
+            "Interest" to CategoryIcon.AccountBalance,
+            "Refunds" to CategoryIcon.ShoppingBag,
         )
         val DEFAULT_ACCOUNTS = listOf("Savings Account", "Current Account")
     }
