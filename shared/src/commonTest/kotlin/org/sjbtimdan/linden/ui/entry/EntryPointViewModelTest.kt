@@ -15,6 +15,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -390,6 +391,101 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.saveDraft() shouldBe false
 
             entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
+
+    "createCategory inserts the category and selects it in the draft" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAccountChange(main.id)
+
+            viewModel.createCategory("Travel", CategoryType.Expense, CategoryIcon.Flight) shouldBe true
+
+            val created = categoryDao.getAll().first { list -> list.any { it.name == "Travel" } }
+                .first { it.name == "Travel" }
+            created.type shouldBe CategoryType.Expense
+            created.icon shouldBe CategoryIcon.Flight
+            viewModel.draft.first { it?.categoryId == created.id }?.categoryId shouldBe created.id
+        }
+    }
+
+    "createCategory rejects an empty name" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (_, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.createCategory("   ", CategoryType.Expense) shouldBe false
+
+            categoryDao.getAll().first().shouldHaveSize(1)
+            viewModel.draft.value?.categoryId.shouldBeNull()
+        }
+    }
+
+    "createCategory rejects a duplicate name case-insensitively" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (_, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.createCategory("GROCERIES", CategoryType.Expense) shouldBe false
+
+            categoryDao.getAll().first().shouldHaveSize(1)
+            viewModel.draft.value?.categoryId.shouldBeNull()
+        }
+    }
+
+    "createAccount inserts the account and selects it in the draft" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (_, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.createAccount("Wallet", Currency.EUR, initialBalance = 1_250) shouldBe true
+
+            val created = accountDao.getAll().first { list -> list.any { it.name == "Wallet" } }
+                .first { it.name == "Wallet" }
+            created.currency shouldBe Currency.EUR
+            created.initialBalance shouldBe 1_250
+            viewModel.draft.first { it?.accountId == created.id }?.accountId shouldBe created.id
+        }
+    }
+
+    "createAccount with selectAsTo selects the transfer destination" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.selectType(EntryType.Transfer)
+            viewModel.onAccountChange(main.id)
+
+            viewModel.createAccount("Savings", Currency.CHF, selectAsTo = true) shouldBe true
+
+            val created = accountDao.getAll().first { list -> list.any { it.name == "Savings" } }
+                .first { it.name == "Savings" }
+            viewModel.draft.first { it?.toAccountId == created.id }?.toAccountId shouldBe created.id
+            viewModel.draft.value?.accountId shouldBe main.id
+        }
+    }
+
+    "createAccount rejects an empty name" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (_, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.createAccount("", Currency.CHF) shouldBe false
+
+            accountDao.getAll().first().shouldHaveSize(1)
+            viewModel.draft.value?.accountId.shouldBeNull()
+        }
+    }
+
+    "createAccount rejects a duplicate name case-insensitively" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (_, _) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.createAccount("MAIN", Currency.CHF) shouldBe false
+
+            accountDao.getAll().first().shouldHaveSize(1)
+            viewModel.draft.value?.accountId.shouldBeNull()
         }
     }
 })

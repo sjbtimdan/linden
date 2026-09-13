@@ -78,7 +78,6 @@ private fun ComposeUiTest.showDialog(
             onSave = onSave,
             onDelete = onDelete,
             onDuplicate = onDuplicate,
-            onNavigateToSettings = {},
             onDismiss = {},
         )
     }
@@ -102,7 +101,6 @@ private fun ComposeUiTest.showForm(initial: EntryDraft, onCreatedAtChange: (Inst
                 state = state.copy(createdAt = it)
                 onCreatedAtChange(it)
             },
-            onNavigateToSettings = {},
         )
     }
 }

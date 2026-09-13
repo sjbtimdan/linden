@@ -31,6 +31,7 @@ fun <T> OptionChipRow(
     isSelected: (T) -> Boolean = { false },
     isPredicted: (T) -> Boolean = { false },
     optionIcon: ((T) -> ImageVector?)? = null,
+    trailingChip: (@Composable () -> Unit)? = null,
 ) {
     FlowRow(
         modifier = modifier,
@@ -93,5 +94,6 @@ fun <T> OptionChipRow(
                 }
             }
         }
+        trailingChip?.invoke()
     }
 }

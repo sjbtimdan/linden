@@ -56,12 +56,12 @@ class MissingRequirementHintTest : StringSpec({
             MissingRequirement.ACCOUNT
     }
 
-    "hidden when the missing fields are links instead of pickers" {
-        // No accounts: the form shows "Please enter account" links.
+    "hidden when the form cannot be satisfied" {
+        // No accounts: the empty dropdowns and their "+ New" chips explain the blocker.
         missingRequirement(draft(), emptyList(), listOf(groceries)).shouldBeNull()
         // Only income categories exist, so an expense has no category picker.
         missingRequirement(draft(), listOf(main), listOf(salary)).shouldBeNull()
-        // A transfer needs two accounts; with one the form shows the second-account link.
+        // A transfer needs two accounts; with one the To dropdown is empty.
         missingRequirement(draft(type = EntryType.Transfer), listOf(main), listOf(groceries)).shouldBeNull()
         // Two accounts: the transfer blocker is now the missing destination account.
         missingRequirement(

@@ -70,7 +70,6 @@ private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.T
 @Composable
 fun EntryPoint(
     viewModel: EntryPointViewModel,
-    onNavigateToSettings: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
 ) {
@@ -234,7 +233,6 @@ fun EntryPoint(
                         viewModel.onCreatedAtChange(it)
                         markTouched()
                     },
-                    onNavigateToSettings = onNavigateToSettings,
                     onFieldFocusChange = { fieldFocused = it },
                     editEpoch = editEpoch,
                     descriptionSuggestions = descriptionSuggestions,
@@ -244,6 +242,17 @@ fun EntryPoint(
                     onQuickEntry = {
                         viewModel.applyQuickEntry(it)
                         markTouched()
+                    },
+                    defaultCurrency = defaultCurrency,
+                    onCreateCategory = { name, type, icon ->
+                        val created = viewModel.createCategory(name, type, icon)
+                        if (created) markTouched()
+                        created
+                    },
+                    onCreateAccount = { name, currency, initialBalance, selectAsTo ->
+                        val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
+                        if (created) markTouched()
+                        created
                     },
                 )
             }

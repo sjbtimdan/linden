@@ -59,9 +59,12 @@
     <string name="entry_ok">確定</string>
     <string name="entry_quick_entry">快捷記帳</string>
     <string name="entry_amount_positive">金額必須大於零</string>
-    <string name="entry_need_account">請先加入戶口</string>
-    <string name="entry_need_second_account">請再多加一個戶口</string>
-    <string name="entry_need_category">請先加入分類</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">新建分類</string>
+    <string name="entry_new_category_with_name">新建分類 "%1$s"</string>
+    <string name="entry_new_account">新建帳戶</string>
+    <string name="entry_new_account_with_name">新建帳戶 "%1$s"</string>
     <string name="entry_date_time_section">日期和時間</string>
     <string name="entry_select_time">選擇時間</string>
 

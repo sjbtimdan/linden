@@ -366,4 +366,94 @@ class DropdownFieldTest : StringSpec({
             }
         }
     }
+
+    "shows the create chip with the plain label when the query is empty" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        createLabel = { query -> if (query.isBlank()) "New account" else "New account \"$query\"" },
+                        onCreate = {},
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                onNodeWithText("New account").assertIsDisplayed()
+            }
+        }
+    }
+
+    "shows the create chip with the query in the label while typing" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        createLabel = { query -> if (query.isBlank()) "New account" else "New account \"$query\"" },
+                        onCreate = {},
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+                onNode(hasSetTextAction()).performTextInput("sav")
+
+                onNodeWithText("New account \"sav\"").assertIsDisplayed()
+            }
+        }
+    }
+
+    "tapping the create chip invokes onCreate with the query" {
+        onTestMain {
+            runComposeUiTest {
+                var createdQuery: String? = null
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        createLabel = { query -> if (query.isBlank()) "New account" else "New account \"$query\"" },
+                        onCreate = { createdQuery = it },
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+                onNode(hasSetTextAction()).performTextInput("sav")
+                onNodeWithText("New account \"sav\"").performClick()
+
+                createdQuery shouldBe "sav"
+            }
+        }
+    }
+
+    "no create chip when onCreate is not provided" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                onNodeWithText("New account").assertDoesNotExist()
+            }
+        }
+    }
 })

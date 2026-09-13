@@ -59,9 +59,12 @@
     <string name="entry_ok">Ok</string>
     <string name="entry_quick_entry">Quick entry</string>
     <string name="entry_amount_positive">Amount must be greater than zero</string>
-    <string name="entry_need_account">Please enter account</string>
-    <string name="entry_need_second_account">Please add a second account</string>
-    <string name="entry_need_category">Please enter category</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">New category</string>
+    <string name="entry_new_category_with_name">New category "%1$s"</string>
+    <string name="entry_new_account">New account</string>
+    <string name="entry_new_account_with_name">New account "%1$s"</string>
     <string name="entry_date_time_section">Date &amp; time</string>
     <string name="entry_select_time">Select time</string>
 

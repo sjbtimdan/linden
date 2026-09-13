@@ -67,7 +67,6 @@ private fun ComposeUiTest.showForm(initial: EntryDraft, onAmountChange: (String)
             onToAmountChange = {},
             onDescriptionChange = {},
             onCreatedAtChange = {},
-            onNavigateToSettings = {},
         )
     }
 }

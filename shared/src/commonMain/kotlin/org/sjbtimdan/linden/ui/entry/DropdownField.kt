@@ -30,6 +30,8 @@ fun <T> DropdownField(
     onFocusChange: (Boolean) -> Unit = {},
     predictedOptions: List<T>? = null,
     optionIcon: ((T) -> ImageVector?)? = null,
+    createLabel: ((String) -> String)? = null,
+    onCreate: ((String) -> Unit)? = null,
 ) {
     var focused by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
@@ -66,7 +68,8 @@ fun <T> DropdownField(
             .fillMaxWidth(),
     )
     // Options render in-layout instead of a popup so the keyboard can never cover them.
-    if (focused && visibleOptions.isNotEmpty()) {
+    // The create chip is a trailing action, always offered while the field is focused.
+    if (focused && (visibleOptions.isNotEmpty() || createLabel != null)) {
         Spacer(modifier = Modifier.height(8.dp))
         OptionChipRow(
             options = visibleOptions,
@@ -78,6 +81,16 @@ fun <T> DropdownField(
                 onSelect(option)
                 keyboardController?.hide()
                 focusManager.clearFocus()
+            },
+            trailingChip = if (createLabel != null && onCreate != null) {
+                {
+                    CreateChip(
+                        label = createLabel(query),
+                        onClick = { onCreate(query) },
+                    )
+                }
+            } else {
+                null
             },
         )
     }

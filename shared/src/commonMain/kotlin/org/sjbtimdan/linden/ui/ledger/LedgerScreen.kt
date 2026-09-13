@@ -131,7 +131,6 @@ private val categoryTypeOptions = listOf(EntryType.Expense, EntryType.Income)
 @Composable
 fun LedgerScreen(
     viewModel: LedgerViewModel,
-    onNavigateToSettings: () -> Unit = {},
     onNavigateToEntry: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
@@ -647,7 +646,6 @@ fun LedgerScreen(
             onSave = { viewModel.saveDialog() },
             onDelete = if (state.editing != null) viewModel::deleteDialogEntry else null,
             onDuplicate = viewModel::duplicateDialogEntry,
-            onNavigateToSettings = onNavigateToSettings,
             onDismiss = viewModel::dismissDialog,
         )
     }

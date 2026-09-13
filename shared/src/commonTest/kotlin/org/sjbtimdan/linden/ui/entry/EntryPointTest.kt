@@ -623,41 +623,112 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "shows settings links when no accounts or categories exist" {
+    "empty dropdowns show the create chips when no accounts or categories exist" {
         withEntryPoint(clock = FakeClock()) { viewModel ->
-            var settingsNavigations = 0
             setContent {
-                EntryPoint(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { settingsNavigations++ },
-                )
+                EntryPoint(viewModel = viewModel)
             }
 
-            onNodeWithText("Please enter category").assertIsDisplayed()
-            onNodeWithText("Please enter account").assertIsDisplayed()
-            // The inline links already explain the blocker, so no generic hint.
+            onNodeWithText("Category").performClick()
+            onNodeWithText("New category").assertIsDisplayed()
+            onNodeWithText("Groceries").assertDoesNotExist()
+            // The empty dropdown and its chip already explain the blocker, so no generic hint.
             onNodeWithText("Enter an amount").assertDoesNotExist()
+            tapOutside()
 
-            onNodeWithText("Please enter category").performClick()
-            onNodeWithText("Please enter account").performClick()
-
-            settingsNavigations shouldBe 2
+            onNodeWithText("Account").performClick()
+            onNodeWithText("New account").assertIsDisplayed()
+            onNodeWithText("Main").assertDoesNotExist()
         }
     }
 
-    "shows account link for transfer fields when no accounts exist" {
+    "transfer fields show the create chip when no accounts exist" {
         withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {
-                EntryPoint(
-                    viewModel = viewModel,
-                    onNavigateToSettings = {},
-                )
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
 
-            onAllNodesWithText("Please enter account").assertCountEquals(2)
-            onNodeWithText("Please enter category").assertDoesNotExist()
+            onNodeWithText("From account").performClick()
+            onNodeWithText("New account").assertIsDisplayed()
+            tapOutside()
+
+            onNodeWithText("To account").performClick()
+            onNodeWithText("New account").assertIsDisplayed()
+            onNodeWithText("New category").assertDoesNotExist()
+        }
+    }
+
+    "creating a category from the chip selects it in the form" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Category").performClick()
+            onNodeWithText("New category").performClick()
+            waitForIdle()
+
+            // The dialog's name field is the last text field on screen.
+            onAllNodes(hasSetTextAction())[1].performTextInput("Travel")
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("Travel").assertIsDisplayed()
+            val created = categoryDao.getAll().first { list -> list.any { it.name == "Travel" } }
+                .first { it.name == "Travel" }
+            viewModel.draft.value?.categoryId shouldBe created.id
+            entryDao.getAll().first().shouldHaveSize(0)
+        }
+    }
+
+    "creating an account from the chip selects it in the form" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("New account").performClick()
+            waitForIdle()
+
+            onAllNodes(hasSetTextAction())[1].performTextInput("Wallet")
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("Wallet").assertIsDisplayed()
+            val created = accountDao.getAll().first { list -> list.any { it.name == "Wallet" } }
+                .first { it.name == "Wallet" }
+            viewModel.draft.value?.accountId shouldBe created.id
+        }
+    }
+
+    "creating a transfer destination from the missing link selects it as the to account" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Please add a second account").performClick()
+            waitForIdle()
+
+            onAllNodes(hasSetTextAction())[1].performTextInput("Savings")
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("Savings").assertIsDisplayed()
+            val created = accountDao.getAll().first { list -> list.any { it.name == "Savings" } }
+                .first { it.name == "Savings" }
+            viewModel.draft.value?.toAccountId shouldBe created.id
         }
     }
 
@@ -679,7 +750,9 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Please enter account").assertDoesNotExist()
 
             onNodeWithText("Please add a second account").performClick()
-            settingsNavigations shouldBe 1
+            onNodeWithText("Save").assertIsDisplayed()
+            onNodeWithText("Cancel").performClick()
+            settingsNavigations shouldBe 0
         }
     }
 

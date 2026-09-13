@@ -59,9 +59,12 @@
     <string name="entry_ok">确定</string>
     <string name="entry_quick_entry">快捷记账</string>
     <string name="entry_amount_positive">金额必须大于零</string>
-    <string name="entry_need_account">请先添加账户</string>
-    <string name="entry_need_second_account">请再添加一个账户</string>
-    <string name="entry_need_category">请先添加分类</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">新建分类</string>
+    <string name="entry_new_category_with_name">新建分类 "%1$s"</string>
+    <string name="entry_new_account">新建账户</string>
+    <string name="entry_new_account_with_name">新建账户 "%1$s"</string>
     <string name="entry_date_time_section">日期和时间</string>
     <string name="entry_select_time">选择时间</string>
 

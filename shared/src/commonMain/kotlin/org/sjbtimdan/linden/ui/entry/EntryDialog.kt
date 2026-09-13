@@ -65,7 +65,6 @@ fun EntryDialog(
     onSave: () -> Unit,
     onDelete: (() -> Unit)?,
     onDuplicate: (() -> Unit)? = null,
-    onNavigateToSettings: () -> Unit,
     onDismiss: () -> Unit,
     descriptionSuggestions: List<String> = emptyList(),
     accountSuggestions: List<Long> = emptyList(),
@@ -118,8 +117,10 @@ fun EntryDialog(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                // Explains why Save is disabled unless the form's own links
-                // already point at the blocker (missing accounts or categories).
+                // Explains why Save is disabled unless the form cannot be
+                // satisfied at all (no accounts or categories, or only one
+                // account for a transfer), where the empty dropdowns and their
+                // "+ New" chips already point at the blocker.
                 missingRequirement(state, accounts, categories)?.let { requirement ->
                     MissingRequirementHint(message = requirement.text())
                     Spacer(modifier = Modifier.height(8.dp))
@@ -135,7 +136,6 @@ fun EntryDialog(
                     onToAmountChange = onToAmountChange,
                     onDescriptionChange = onDescriptionChange,
                     onCreatedAtChange = onCreatedAtChange,
-                    onNavigateToSettings = onNavigateToSettings,
                     descriptionSuggestions = descriptionSuggestions,
                     accountSuggestions = accountSuggestions,
                     categorySuggestions = categorySuggestions,

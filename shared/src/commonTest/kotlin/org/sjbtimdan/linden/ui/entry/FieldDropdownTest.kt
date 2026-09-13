@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.ui.entry
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -105,52 +104,6 @@ class FieldDropdownTest : StringSpec({
                 onNodeWithText("Account").performClick()
 
                 focused shouldBe true
-            }
-        }
-    }
-
-    "shows the missing link instead of the dropdown when missing text is given" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    FieldDropdown(
-                        label = "Account",
-                        selected = null,
-                        options = accountOptions,
-                        optionLabel = { it },
-                        onSelect = {},
-                        onFocusChange = {},
-                        missing = "Please enter account",
-                    )
-                }
-
-                onNodeWithText("Account").assertIsDisplayed()
-                onNodeWithText("Please enter account").assertIsDisplayed()
-                onNode(hasSetTextAction()).assertDoesNotExist()
-            }
-        }
-    }
-
-    "clicking the missing link invokes onNavigateToSettings" {
-        onTestMain {
-            runComposeUiTest {
-                var navigated = false
-                setContent {
-                    FieldDropdown(
-                        label = "Account",
-                        selected = null,
-                        options = accountOptions,
-                        optionLabel = { it },
-                        onSelect = {},
-                        onFocusChange = {},
-                        missing = "Please enter account",
-                        onNavigateToSettings = { navigated = true },
-                    )
-                }
-
-                onNodeWithText("Please enter account").performClick()
-
-                navigated shouldBe true
             }
         }
     }

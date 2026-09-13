@@ -59,9 +59,12 @@
     <string name="entry_ok">Ok</string>
     <string name="entry_quick_entry">Inserimento rapido</string>
     <string name="entry_amount_positive">L'importo deve essere maggiore di zero</string>
-    <string name="entry_need_account">Inserisci un conto</string>
-    <string name="entry_need_second_account">Aggiungi un secondo conto</string>
-    <string name="entry_need_category">Inserisci una categoria</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">Nuova categoria</string>
+    <string name="entry_new_category_with_name">Nuova categoria "%1$s"</string>
+    <string name="entry_new_account">Nuovo conto</string>
+    <string name="entry_new_account_with_name">Nuovo conto "%1$s"</string>
     <string name="entry_date_time_section">Data e ora</string>
     <string name="entry_select_time">Seleziona l'ora</string>
 

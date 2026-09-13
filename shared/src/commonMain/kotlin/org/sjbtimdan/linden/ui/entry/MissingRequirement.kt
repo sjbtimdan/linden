@@ -44,9 +44,10 @@ internal fun MissingRequirement.text(): String = stringResource(
 
 /**
  * Why the current draft cannot be saved yet, or null when the form is valid —
- * and also null when the form's own [MissingFieldLink]s already explain the
- * blocker (no accounts or categories, or only one account for a transfer), so
- * the hint never duplicates the inline links.
+ * and also null when the form cannot be satisfied at all (no accounts or
+ * categories, or only one account for a transfer): the empty dropdowns and
+ * their "+ New" chips already explain the blocker, and "choose an account"
+ * would be misleading when there is nothing to choose.
  */
 internal fun missingRequirement(
     draft: EntryDraft?,

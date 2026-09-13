@@ -157,14 +157,12 @@ fun App(dependencies: AppDependencies) {
                         when (screen) {
                             Screen.Entry -> EntryPoint(
                                 viewModel = entryViewModel,
-                                onNavigateToSettings = { currentScreen = Screen.Settings },
                                 onNavigateToRates = { currentScreen = Screen.Rates },
                                 ratesWarning = ratesWarning,
                             )
 
                             Screen.Ledger -> LedgerScreen(
                                 viewModel = ledgerViewModel,
-                                onNavigateToSettings = { currentScreen = Screen.Settings },
                                 onNavigateToEntry = { currentScreen = Screen.Entry },
                                 onNavigateToAccounts = { currentScreen = Screen.AccountList },
                                 onNavigateToCategories = { currentScreen = Screen.CategoryList },
