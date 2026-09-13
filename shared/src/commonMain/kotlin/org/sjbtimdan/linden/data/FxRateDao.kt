@@ -1,14 +1,12 @@
 package org.sjbtimdan.linden.data
 
-import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import org.sjbtimdan.linden.FxRateEntity
 import org.sjbtimdan.linden.FxRateQueries
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.util.asListFlow
 
 class FxRateDao(private val queries: FxRateQueries) {
     suspend fun replaceRates(rates: List<FxRate>, fetchedAt: Long) {
@@ -35,9 +33,7 @@ class FxRateDao(private val queries: FxRateQueries) {
 
     suspend fun lastFetchedAt(base: Currency): Long? = queries.selectFetchedAtByBase(base.name).awaitAsOneOrNull()
 
-    fun ratesFor(base: Currency): Flow<List<FxRate>> = queries.selectByBase(base.name)
-        .asFlow()
-        .map { it.awaitAsList().map { row -> row.toFxRate() } }
+    fun ratesFor(base: Currency): Flow<List<FxRate>> = queries.selectByBase(base.name).asListFlow { it.toFxRate() }
 
     suspend fun deleteRates(base: Currency) {
         queries.deleteByBase(base.name)

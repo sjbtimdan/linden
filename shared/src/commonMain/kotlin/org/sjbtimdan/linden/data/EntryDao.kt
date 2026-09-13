@@ -2,7 +2,6 @@ package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.TimeZone
@@ -17,6 +16,8 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.util.asListFlow
+import org.sjbtimdan.linden.util.asOneOrNullFlow
 import kotlin.time.Instant
 
 class EntryDao(private val queries: EntryQueries) {
@@ -55,23 +56,20 @@ class EntryDao(private val queries: EntryQueries) {
         queries.deleteById(id)
     }
 
-    fun getAll(): Flow<List<Entry>> = queries.selectAll(::toEntry).asFlow().map { it.awaitAsList() }
+    fun getAll(): Flow<List<Entry>> = queries.selectAll(::toEntry).asListFlow()
 
-    fun getSince(epochMs: Long): Flow<List<Entry>> =
-        queries.selectSince(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
+    fun getSince(epochMs: Long): Flow<List<Entry>> = queries.selectSince(epochMs, ::toEntry).asListFlow()
 
     fun getSinceByType(type: EntryType, epochMs: Long): Flow<List<Entry>> =
-        queries.selectSinceByType(type.name, epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
+        queries.selectSinceByType(type.name, epochMs, ::toEntry).asListFlow()
 
     /** All entries of [type], without a date cutoff; used by quick entry. */
-    fun getAllByType(type: EntryType): Flow<List<Entry>> =
-        queries.selectAllByType(type.name, ::toEntry).asFlow().map { it.awaitAsList() }
+    fun getAllByType(type: EntryType): Flow<List<Entry>> = queries.selectAllByType(type.name, ::toEntry).asListFlow()
 
-    fun getUpTo(epochMs: Long): Flow<List<Entry>> =
-        queries.selectUpTo(epochMs, ::toEntry).asFlow().map { it.awaitAsList() }
+    fun getUpTo(epochMs: Long): Flow<List<Entry>> = queries.selectUpTo(epochMs, ::toEntry).asListFlow()
 
     /** Whether any entry exists at all — a LIMIT 1 probe, far cheaper than [getAll]. */
-    fun entryExists(): Flow<Boolean> = queries.entryExists().asFlow().map { it.awaitAsOneOrNull() != null }
+    fun entryExists(): Flow<Boolean> = queries.entryExists().asOneOrNullFlow().map { it != null }
 
     suspend fun latest(type: EntryType): Entry? = queries.selectLatestByType(type.name, ::toEntry).awaitAsOneOrNull()
 
@@ -87,23 +85,18 @@ class EntryDao(private val queries: EntryQueries) {
         }
 
     /** Net change per account for entries created at or before [epochMs] (minor units). */
-    fun accountDeltasUpTo(epochMs: Long): Flow<Map<Long, Long>> = queries.accountDeltasUpTo(
-        epochMs,
-    ).asFlow().map { rows ->
-        rows.awaitAsList()
-            .mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
-            .toMap()
-    }
+    fun accountDeltasUpTo(epochMs: Long): Flow<Map<Long, Long>> = queries.accountDeltasUpTo(epochMs)
+        .asListFlow()
+        .map { rows ->
+            rows.mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
+                .toMap()
+        }
 
     /** Accounts referenced by at least one entry, as source or transfer target. */
-    fun accountsWithEntries(): Flow<Set<Long>> = queries.accountsWithEntries().asFlow().map { rows ->
-        rows.awaitAsList().toSet()
-    }
+    fun accountsWithEntries(): Flow<Set<Long>> = queries.accountsWithEntries().asListFlow().map { it.toSet() }
 
     /** Categories referenced by at least one entry; they cannot be deleted while entries exist. */
-    fun categoriesWithEntries(): Flow<Set<Long>> = queries.categoriesWithEntries().asFlow().map { rows ->
-        rows.awaitAsList().toSet()
-    }
+    fun categoriesWithEntries(): Flow<Set<Long>> = queries.categoriesWithEntries().asListFlow().map { it.toSet() }
 
     private fun Entry.sqlArgs(): SqlArgs = when (this) {
         is ExpenseEntry, is IncomeEntry -> SqlArgs(category?.id, null, null)

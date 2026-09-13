@@ -1,13 +1,13 @@
 package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
-import app.cash.sqldelight.coroutines.asFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.sjbtimdan.linden.SettingsQueries
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.util.asOneOrNullFlow
 
 const val THEME_KEY = "theme"
 const val CURRENCY_KEY = "currency"
@@ -92,8 +92,8 @@ class SettingsDao(private val queries: SettingsQueries) {
 
     /** Reactive value of a single settings key; null while the key is absent. */
     private fun valueFlow(key: String): Flow<String?> = queries.selectByKey(key)
-        .asFlow()
-        .map { rows -> rows.awaitAsOneOrNull()?.value_ }
+        .asOneOrNullFlow()
+        .map { it?.value_ }
 
     private fun parseCurrency(code: String): Currency? = try {
         Currency.fromCode(code)

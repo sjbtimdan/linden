@@ -5,7 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -39,6 +37,7 @@ import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.predictions.predictQuickEntries
 import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.util.stateFlow
 import kotlin.time.Duration.Companion.milliseconds
 
 private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
@@ -84,12 +83,12 @@ class EntrySuggestionsProvider(
     ) { type, categories ->
         if (type == null) emptyList() else defaultCategoryIdsFor(type, categories)
     }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+        .stateFlow(scope, emptyList())
 
     /** Default account ids, in seeder order — the cold-start fallback. */
     private val defaultAccountIds: StateFlow<List<Long>> = accountDao.getAll()
         .map { accounts -> defaultAccountIdsFor(accounts) }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+        .stateFlow(scope, emptyList())
 
     /** The draft's description, trailing the field by the debounce while it is enabled. */
     private val debouncedDescription: Flow<String> = draft
@@ -102,7 +101,7 @@ class EntrySuggestionsProvider(
                 descriptions.debounce(descriptionDebounceMillis.milliseconds)
             }
         }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = draft.value?.description.orEmpty())
+        .stateFlow(scope, draft.value?.description.orEmpty())
 
     /**
      * The draft with its description trailing the field by
@@ -114,7 +113,7 @@ class EntrySuggestionsProvider(
         draft,
         debouncedDescription,
     ) { state, description -> state?.copy(description = description) }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = null)
+        .stateFlow(scope, null)
 
     /** Most likely account ids for the current draft, falling back to the seeded defaults on a cold start. */
     val accountSuggestions: StateFlow<List<Long>> = suggestion(
@@ -185,7 +184,7 @@ class EntrySuggestionsProvider(
                 load(type)
             }
         }
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+        .stateFlow(scope, emptyList())
 
     /**
      * Suggestion list for the current draft, recomputed when it, [entries] or the
@@ -204,7 +203,7 @@ class EntrySuggestionsProvider(
         }
     }
         .flowOn(Dispatchers.Default)
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+        .stateFlow(scope, emptyList())
 
     private fun horizonCutoffMillis(): Long = clock.now()
         .minus(PREDICTION_HORIZON_MONTHS, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())

@@ -1,15 +1,12 @@
 package org.sjbtimdan.linden.ui.rates
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.FxRatesRepository
@@ -17,6 +14,7 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.ui.AppViewModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -36,20 +34,10 @@ class RatesViewModel(
     private val settingsDao: SettingsDao,
     private val fxRatesRepository: FxRatesRepository,
     private val clock: AppClock,
-) : ViewModel() {
-    val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = Currency.CHF,
-        )
+) : AppViewModel() {
+    val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
 
-    val autoUpdateRates: StateFlow<Boolean> = settingsDao.autoUpdateRatesFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = true,
-        )
+    val autoUpdateRates: StateFlow<Boolean> = settingsDao.autoUpdateRatesFlow().stateFlow(true)
 
     private val _rates = MutableStateFlow<List<FxRate>>(emptyList())
     val rates: StateFlow<List<FxRate>> = _rates.asStateFlow()

@@ -1,33 +1,21 @@
 package org.sjbtimdan.linden.ui.budget
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.ui.AppViewModel
 
 class BudgetViewModel(
     private val budgetDao: BudgetDao,
     categoryDao: CategoryDao,
-) : ViewModel() {
-    val budgets: StateFlow<List<Budget>> = budgetDao.budgetsFlow()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
+) : AppViewModel() {
+    val budgets: StateFlow<List<Budget>> = budgetDao.budgetsFlow().stateFlow(emptyList())
 
-    val categories: StateFlow<List<Category>> = categoryDao.getAll()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList(),
-        )
+    val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
 
     /** Adds or updates a budget for [categoryName]; returns false when the limit is not positive. */
     fun saveBudget(categoryName: String, limitMinor: Long): Boolean {

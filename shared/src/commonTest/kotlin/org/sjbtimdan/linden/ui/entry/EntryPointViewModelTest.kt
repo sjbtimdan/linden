@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.ui.entry
 import androidx.compose.ui.test.ExperimentalTestApi
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -259,8 +258,11 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.clearDraft()
             viewModel.onAmountChange("4.50")
 
-            viewModel.categorySuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(groceries.id)
-            viewModel.accountSuggestions.first { it.isNotEmpty() } shouldContainExactly listOf(main.id)
+            // Await the amount-settled prediction: a frequency-ranked list can be
+            // emitted (and retained) before the amount signal lands, so matching
+            // on "non-empty" is racy.
+            viewModel.categorySuggestions.first { it == listOf(groceries.id) } shouldBe listOf(groceries.id)
+            viewModel.accountSuggestions.first { it == listOf(main.id) } shouldBe listOf(main.id)
         }
     }
 

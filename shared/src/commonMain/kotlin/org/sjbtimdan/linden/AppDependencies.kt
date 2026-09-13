@@ -7,9 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
@@ -39,6 +37,7 @@ import org.sjbtimdan.linden.ui.insights.InsightsViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
+import org.sjbtimdan.linden.util.stateFlow
 
 /**
  * Composition root owning every long-lived dependency of the app.
@@ -96,8 +95,7 @@ class AppDependencies(
      * "All" period) observe this instead of each querying and re-mapping the
      * whole table independently on every change.
      */
-    val allEntries: StateFlow<List<Entry>> = entryDao.getAll()
-        .stateIn(appScope, SharingStarted.Eagerly, emptyList())
+    val allEntries: StateFlow<List<Entry>> = entryDao.getAll().stateFlow(appScope, emptyList())
 
     val backupManager = LindenBackupManager(database)
     val csvExportManager = CsvExportManager(entryDao)

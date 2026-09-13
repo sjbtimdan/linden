@@ -1,15 +1,11 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
@@ -25,6 +21,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.ui.AppViewModel
 import kotlin.time.Instant
 
 /**
@@ -40,7 +37,7 @@ abstract class EntryEditorViewModel(
     protected val settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     initialHideTotal: Boolean = false,
-) : ViewModel() {
+) : AppViewModel() {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
@@ -141,11 +138,4 @@ abstract class EntryEditorViewModel(
             entryDao.delete(id)
         }
     }
-
-    /** Collects this flow eagerly into a [StateFlow] owned by the ViewModel scope. */
-    protected fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initial,
-    )
 }

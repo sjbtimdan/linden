@@ -1,10 +1,9 @@
 package org.sjbtimdan.linden.data
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.sjbtimdan.linden.util.stateFlow
 
 /**
  * Reactive holder for the "Hide totals" privacy setting, shared by the settings
@@ -17,8 +16,7 @@ class HideEntryTotalSetting(
     initial: Boolean,
     private val scope: CoroutineScope,
 ) {
-    val state: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow()
-        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = initial)
+    val state: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow().stateFlow(scope, initial)
 
     fun set(hidden: Boolean) {
         scope.launch {

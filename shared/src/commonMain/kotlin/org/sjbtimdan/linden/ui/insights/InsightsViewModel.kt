@@ -1,15 +1,11 @@
 package org.sjbtimdan.linden.ui.insights
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -27,6 +23,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.ui.AppViewModel
 
 /** Number of months in the trend window and of bars in the chart. */
 internal const val WINDOW_MONTHS = 12
@@ -48,7 +45,7 @@ class InsightsViewModel(
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
-) : ViewModel() {
+) : AppViewModel() {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
@@ -117,12 +114,6 @@ class InsightsViewModel(
         }
         _selectedIndex.value = -1
     }
-
-    private fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = initial,
-    )
 
     private fun today(): LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
 }
