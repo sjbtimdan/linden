@@ -32,25 +32,28 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
     private suspend fun isEmpty(): Boolean = database.accountQueries.selectAll().awaitAsList().isEmpty() &&
         database.categoryQueries.selectAll().awaitAsList().isEmpty() &&
         database.entryQueries.selectAllRows().awaitAsList().isEmpty()
-
-    private companion object {
-        val DEFAULT_EXPENSE_CATEGORIES = listOf(
-            "Groceries" to CategoryIcon.ShoppingCart,
-            "House" to CategoryIcon.Home,
-            "Car" to CategoryIcon.DirectionsCar,
-            "Restaurants" to CategoryIcon.Restaurant,
-            "Bills" to CategoryIcon.AccountBalance,
-            "Pets" to CategoryIcon.Pets,
-            "Education" to CategoryIcon.School,
-            "Holidays" to CategoryIcon.Flight,
-            "Public Transport" to CategoryIcon.DirectionsBus,
-        )
-        val DEFAULT_INCOME_CATEGORIES = listOf(
-            "Salary" to CategoryIcon.Savings,
-            "Gifts" to CategoryIcon.FavoriteBorder,
-            "Interest" to CategoryIcon.AccountBalance,
-            "Refunds" to CategoryIcon.ShoppingBag,
-        )
-        val DEFAULT_ACCOUNTS = listOf("Savings Account", "Current Account")
-    }
 }
+
+/** Starter expense categories, in seeding order. Also the cold-start suggestion fallback. */
+val DEFAULT_EXPENSE_CATEGORIES = listOf(
+    "Groceries" to CategoryIcon.ShoppingCart,
+    "House" to CategoryIcon.Home,
+    "Car" to CategoryIcon.DirectionsCar,
+    "Restaurants" to CategoryIcon.Restaurant,
+    "Bills" to CategoryIcon.AccountBalance,
+    "Pets" to CategoryIcon.Pets,
+    "Education" to CategoryIcon.School,
+    "Holidays" to CategoryIcon.Flight,
+    "Public Transport" to CategoryIcon.DirectionsBus,
+)
+
+/** Starter income categories, in seeding order. Also the cold-start suggestion fallback. */
+val DEFAULT_INCOME_CATEGORIES = listOf(
+    "Salary" to CategoryIcon.Savings,
+    "Gifts" to CategoryIcon.FavoriteBorder,
+    "Interest" to CategoryIcon.AccountBalance,
+    "Refunds" to CategoryIcon.ShoppingBag,
+)
+
+/** Starter accounts, in seeding order. Also the cold-start suggestion fallback. */
+val DEFAULT_ACCOUNTS = listOf("Savings Account", "Current Account")

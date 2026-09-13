@@ -34,11 +34,19 @@ class FieldPredictorTest : StringSpec({
         description: String? = null,
     ) = FieldPredictionInput(type, categoryId, accountId, amount, description)
 
-    fun predictAccounts(entries: List<Entry>, predictionInput: FieldPredictionInput, topN: Int = PREDICTION_TOP_N) =
-        predictAccounts(entries, predictionInput, now, timeZone, topN)
+    fun predictAccounts(
+        entries: List<Entry>,
+        predictionInput: FieldPredictionInput,
+        topN: Int = PREDICTION_TOP_N,
+        fallback: List<Long> = emptyList(),
+    ) = predictAccounts(entries, predictionInput, now, timeZone, topN, fallback)
 
-    fun predictCategories(entries: List<Entry>, predictionInput: FieldPredictionInput, topN: Int = PREDICTION_TOP_N) =
-        predictCategories(entries, predictionInput, now, timeZone, topN)
+    fun predictCategories(
+        entries: List<Entry>,
+        predictionInput: FieldPredictionInput,
+        topN: Int = PREDICTION_TOP_N,
+        fallback: List<Long> = emptyList(),
+    ) = predictCategories(entries, predictionInput, now, timeZone, topN, fallback)
 
     context("predictCategories") {
         "ranks by frequency when no signals are given" {
@@ -189,6 +197,21 @@ class FieldPredictorTest : StringSpec({
             }
             predictCategories(entries, input(accountId = main.id)).shouldHaveSize(PREDICTION_TOP_N)
         }
+
+        "returns the fallback in order when history is empty" {
+            predictCategories(emptyList(), input(), fallback = listOf(1L, 2L, 3L))
+                .shouldContainExactly(1L, 2L, 3L)
+        }
+
+        "caps the fallback at top N" {
+            predictCategories(emptyList(), input(), topN = 2, fallback = listOf(1L, 2L, 3L))
+                .shouldContainExactly(1L, 2L)
+        }
+
+        "ignores the fallback when history exists" {
+            val entries = listOf(expense(1, food, "Coffee", main, 450, now))
+            predictCategories(entries, input(), fallback = listOf(99L)).shouldContainExactly(food.id)
+        }
     }
 
     context("predictAccounts") {
@@ -290,6 +313,21 @@ class FieldPredictorTest : StringSpec({
                 expense(id, food, "Description", Account(id, "Account $id", Currency.CHF), 450, now)
             }
             predictAccounts(entries, input(categoryId = food.id)).shouldHaveSize(PREDICTION_TOP_N)
+        }
+
+        "returns the fallback in order when history is empty" {
+            predictAccounts(emptyList(), input(), fallback = listOf(1L, 2L, 3L))
+                .shouldContainExactly(1L, 2L, 3L)
+        }
+
+        "caps the fallback at top N" {
+            predictAccounts(emptyList(), input(), topN = 2, fallback = listOf(1L, 2L, 3L))
+                .shouldContainExactly(1L, 2L)
+        }
+
+        "ignores the fallback when history exists" {
+            val entries = listOf(expense(1, food, "Coffee", main, 450, now))
+            predictAccounts(entries, input(), fallback = listOf(99L)).shouldContainExactly(main.id)
         }
     }
 })

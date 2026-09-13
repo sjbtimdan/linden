@@ -22,6 +22,9 @@ data class FieldPredictionInput(
  * candidates must match that signal; entries closer in time rank higher.
  * When no signals are present, results are ranked by usage frequency weighted
  * by recency so the most commonly used options appear first.
+ *
+ * With no history at all ([entries] empty) [fallback] is returned instead, so a
+ * cold start can still show the seeded defaults as "Recommended".
  */
 fun predictAccounts(
     entries: List<Entry>,
@@ -29,7 +32,9 @@ fun predictAccounts(
     now: Instant,
     timeZone: TimeZone,
     topN: Int,
+    fallback: List<Long> = emptyList(),
 ): List<Long> {
+    if (entries.isEmpty()) return fallback.take(topN)
     val hasSignal = input.categoryId != null || input.amount != null || !input.description.isNullOrBlank()
     if (!hasSignal) return frequencyRankIds(entries, input.type, now, timeZone, topN) { it.account.id }
     return predictField(entries, input.copy(accountId = null), now, timeZone, topN) { it.account.id }
@@ -44,6 +49,9 @@ fun predictAccounts(
  * candidates must match that signal; entries closer in time rank higher.
  * When no signals are present, results are ranked by usage frequency weighted
  * by recency so the most commonly used options appear first.
+ *
+ * With no history at all ([entries] empty) [fallback] is returned instead, so a
+ * cold start can still show the seeded defaults as "Recommended".
  */
 fun predictCategories(
     entries: List<Entry>,
@@ -51,7 +59,9 @@ fun predictCategories(
     now: Instant,
     timeZone: TimeZone,
     topN: Int,
+    fallback: List<Long> = emptyList(),
 ): List<Long> {
+    if (entries.isEmpty()) return fallback.take(topN)
     val hasSignal = input.accountId != null || input.amount != null || !input.description.isNullOrBlank()
     if (!hasSignal) return frequencyRankIds(entries, input.type, now, timeZone, topN) { it.category?.id }
     return predictField(entries, input.copy(categoryId = null), now, timeZone, topN) { it.category?.id }

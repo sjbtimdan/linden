@@ -18,7 +18,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.DEFAULT_ACCOUNTS
+import org.sjbtimdan.linden.data.DEFAULT_EXPENSE_CATEGORIES
+import org.sjbtimdan.linden.data.DEFAULT_INCOME_CATEGORIES
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.DescriptionPredictionInput
@@ -52,6 +59,8 @@ private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class EntrySuggestionsProvider(
     private val entryDao: EntryDao,
+    private val categoryDao: CategoryDao,
+    private val accountDao: AccountDao,
     private val draft: StateFlow<EntryDraft?>,
     private val scope: CoroutineScope,
     descriptionDebounceMillis: Long = DESCRIPTION_DEBOUNCE_MILLIS,
@@ -67,6 +76,20 @@ class EntrySuggestionsProvider(
      * time of day, so entries outside the prediction horizon must be candidates.
      */
     private val allTypeEntries: StateFlow<List<Entry>> = typeEntries(entryDao::getAllByType)
+
+    /** Default category ids of the draft's type, in seeder order — the cold-start fallback. */
+    private val defaultCategoryIds: StateFlow<List<Long>> = combine(
+        draft.map { it?.type }.distinctUntilChanged(),
+        categoryDao.getAll(),
+    ) { type, categories ->
+        if (type == null) emptyList() else defaultCategoryIdsFor(type, categories)
+    }
+        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
+
+    /** Default account ids, in seeder order — the cold-start fallback. */
+    private val defaultAccountIds: StateFlow<List<Long>> = accountDao.getAll()
+        .map { accounts -> defaultAccountIdsFor(accounts) }
+        .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
     /** The draft's description, trailing the field by the debounce while it is enabled. */
     private val debouncedDescription: Flow<String> = draft
@@ -93,30 +116,38 @@ class EntrySuggestionsProvider(
     ) { state, description -> state?.copy(description = description) }
         .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = null)
 
-    /** Most likely account ids for the current draft. */
-    val accountSuggestions: StateFlow<List<Long>> = suggestion(predictionEntries) { state, entries ->
+    /** Most likely account ids for the current draft, falling back to the seeded defaults on a cold start. */
+    val accountSuggestions: StateFlow<List<Long>> = suggestion(
+        predictionEntries,
+        defaultAccountIds,
+    ) { state, entries, fallback ->
         predictAccounts(
             entries = entries,
             input = state.fieldInput(),
             now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
+            fallback = fallback,
         )
     }
 
-    /** Most likely category ids for the current draft. */
-    val categorySuggestions: StateFlow<List<Long>> = suggestion(predictionEntries) { state, entries ->
+    /** Most likely category ids for the current draft, falling back to the seeded defaults on a cold start. */
+    val categorySuggestions: StateFlow<List<Long>> = suggestion(
+        predictionEntries,
+        defaultCategoryIds,
+    ) { state, entries, fallback ->
         predictCategories(
             entries = entries,
             input = state.fieldInput(),
             now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
+            fallback = fallback,
         )
     }
 
     /** Most likely descriptions for the current draft. */
-    val descriptionSuggestions: StateFlow<List<String>> = suggestion(predictionEntries) { state, entries ->
+    val descriptionSuggestions: StateFlow<List<String>> = suggestion(predictionEntries) { state, entries, _ ->
         predictDescriptions(
             entries = entries,
             input = DescriptionPredictionInput(
@@ -133,7 +164,7 @@ class EntrySuggestionsProvider(
     }
 
     /** Whole entries the user is likely to repeat right now, boosted by field matches. */
-    val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries ->
+    val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
         predictQuickEntries(
             entries = entries,
             input = state.fieldInput(),
@@ -156,15 +187,20 @@ class EntrySuggestionsProvider(
         }
         .stateIn(scope = scope, started = SharingStarted.Eagerly, initialValue = emptyList())
 
-    /** Suggestion list for the current draft, recomputed when it or [entries] change; empty while editing. */
+    /**
+     * Suggestion list for the current draft, recomputed when it, [entries] or the
+     * [fallback] change; empty while editing. The fallback is the cold-start
+     * default ids the predictors return when the history is empty.
+     */
     private fun <T> suggestion(
         entries: StateFlow<List<Entry>>,
-        compute: (EntryDraft, List<Entry>) -> List<T>,
-    ): StateFlow<List<T>> = combine(debouncedDraft, entries) { state, history ->
+        fallback: Flow<List<Long>> = flowOf(emptyList()),
+        compute: (EntryDraft, List<Entry>, List<Long>) -> List<T>,
+    ): StateFlow<List<T>> = combine(debouncedDraft, entries, fallback) { state, history, fallbackIds ->
         if (state == null || state.editing != null) {
             emptyList()
         } else {
-            compute(state, history)
+            compute(state, history, fallbackIds)
         }
     }
         .flowOn(Dispatchers.Default)
@@ -182,3 +218,17 @@ class EntrySuggestionsProvider(
         description = description,
     )
 }
+
+/** Default category ids of [type] present in [categories], in seeder order. */
+private fun defaultCategoryIdsFor(type: EntryType, categories: List<Category>): List<Long> {
+    val defaultNames = when (type) {
+        EntryType.Expense -> DEFAULT_EXPENSE_CATEGORIES.map { it.first }
+        EntryType.Income -> DEFAULT_INCOME_CATEGORIES.map { it.first }
+        EntryType.Transfer -> emptyList()
+    }
+    return defaultNames.mapNotNull { name -> categories.firstOrNull { it.name == name }?.id }
+}
+
+/** Default account ids present in [accounts], in seeder order. */
+private fun defaultAccountIdsFor(accounts: List<Account>): List<Long> =
+    DEFAULT_ACCOUNTS.mapNotNull { name -> accounts.firstOrNull { it.name == name }?.id }

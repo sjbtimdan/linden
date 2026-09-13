@@ -17,6 +17,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.DEFAULT_ACCOUNTS
+import org.sjbtimdan.linden.data.DEFAULT_EXPENSE_CATEGORIES
+import org.sjbtimdan.linden.data.DEFAULT_INCOME_CATEGORIES
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Account
@@ -183,6 +186,44 @@ class EntrySuggestionsProviderTest : StringSpec({
             provider.quickEntries.first().shouldBeEmpty()
         }
     }
+
+    "cold start suggests the seeded defaults in seeder order" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            seedDefaults(accountDao, categoryDao)
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
+
+            val expenseIds = DEFAULT_EXPENSE_CATEGORIES.map { (name, _) ->
+                categoryDao.getAll().first().first { it.name == name }.id
+            }
+            val incomeIds = DEFAULT_INCOME_CATEGORIES.map { (name, _) ->
+                categoryDao.getAll().first().first { it.name == name }.id
+            }
+            val accountIds = DEFAULT_ACCOUNTS.map { name ->
+                accountDao.getAll().first().first { it.name == name }.id
+            }
+
+            provider.categorySuggestions.awaitEquals(expenseIds)
+            provider.accountSuggestions.awaitEquals(accountIds)
+
+            draft.value = draft.value?.copy(type = EntryType.Income)
+
+            provider.categorySuggestions.awaitEquals(incomeIds)
+            provider.accountSuggestions.awaitEquals(accountIds)
+        }
+    }
+
+    "history replaces the cold-start fallback" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            seedDefaults(accountDao, categoryDao)
+            val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
+            val current = accountDao.getAll().first().first { it.name == "Current Account" }
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", current, 450, createdAt = TEST_NOW))
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
+
+            provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(current.id)
+            provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
+        }
+    }
 })
 
 @OptIn(ExperimentalTestApi::class)
@@ -204,6 +245,8 @@ private fun withSuggestionsProvider(
             val draft = MutableStateFlow<EntryDraft?>(null)
             val provider = EntrySuggestionsProvider(
                 entryDao,
+                categoryDao,
+                accountDao,
                 draft,
                 CoroutineScope(Dispatchers.Main),
                 descriptionDebounceMillis = 0,
@@ -232,4 +275,15 @@ private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair
     val main = accountDao.getAll().first().first()
     val groceries = categoryDao.getAll().first().first()
     return main to groceries
+}
+
+/** Seeds the exact starter set [org.sjbtimdan.linden.data.DefaultDataSeeder] writes. */
+private suspend fun seedDefaults(accountDao: AccountDao, categoryDao: CategoryDao) {
+    DEFAULT_EXPENSE_CATEGORIES.forEach { (name, icon) ->
+        categoryDao.create(name, CategoryType.Expense, icon)
+    }
+    DEFAULT_INCOME_CATEGORIES.forEach { (name, icon) ->
+        categoryDao.create(name, CategoryType.Income, icon)
+    }
+    DEFAULT_ACCOUNTS.forEach { name -> accountDao.create(name, Currency.CHF) }
 }

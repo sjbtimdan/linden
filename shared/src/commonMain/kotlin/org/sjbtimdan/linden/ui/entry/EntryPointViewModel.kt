@@ -37,7 +37,14 @@ class EntryPointViewModel(
     ratesProvider,
     initialHideTotal = initialHideEntryTotal,
 ) {
-    private val suggestions = EntrySuggestionsProvider(entryDao, draft, viewModelScope, clock = clock)
+    private val suggestions = EntrySuggestionsProvider(
+        entryDao,
+        categoryDao,
+        accountDao,
+        draft,
+        viewModelScope,
+        clock = clock,
+    )
 
     /**
      * Total across all visible accounts in the default currency: initial balances plus
