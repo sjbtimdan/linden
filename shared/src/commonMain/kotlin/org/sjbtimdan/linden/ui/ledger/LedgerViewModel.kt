@@ -16,7 +16,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
@@ -29,6 +28,7 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.model.dayInZone
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
@@ -489,9 +489,6 @@ data class AmountFilter(
         AmountOperator.Approximately -> abs(amount - minor) <= (minor * 5 + 50) / 100
     }
 }
-
-/** The calendar day an entry is dated, in the zone it was created in. */
-private fun Entry.dayInZone(): LocalDate = createdAt.toLocalDateTime(createdZone).date
 
 /**
  * Last date whose entries count while the show-future toggle is off, or null for

@@ -50,13 +50,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.dayInZone
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.accounts_empty_none
 import org.sjbtimdan.linden.resources.categories_empty_none
@@ -841,7 +841,7 @@ internal data class EntryListItem(val entry: Entry) : LedgerListItem {
 internal fun ledgerListItems(entries: List<Entry>): List<LedgerListItem> = buildList {
     var previousDay: LocalDate? = null
     entries.forEach { entry ->
-        val day = entry.createdAt.toLocalDateTime(entry.createdZone).date
+        val day = entry.dayInZone()
         if (day != previousDay) {
             add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
             previousDay = day

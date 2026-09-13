@@ -2,11 +2,11 @@ package org.sjbtimdan.linden.ui.insights
 
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.number
-import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.model.dayInZone
 import org.sjbtimdan.linden.ui.entry.DateLanguage
 import kotlin.math.roundToLong
 
@@ -55,7 +55,7 @@ fun monthlyTotals(
     // Per month, per type, per source currency: the summed amounts.
     val sums = Array(windowMonths) { monthSums() }
     for (entry in entries) {
-        val monthKey = entry.createdAt.toLocalDateTime(entry.createdZone).date
+        val monthKey = entry.dayInZone()
         val offset = monthIndexOf(monthKey) - firstIndex
         if (offset !in sums.indices) continue
         val type = entry.type

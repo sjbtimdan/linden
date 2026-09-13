@@ -1,9 +1,9 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Entry
+import org.sjbtimdan.linden.model.dayInZone
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.entryDeltas
@@ -16,7 +16,7 @@ import org.sjbtimdan.linden.ui.accounts.entryDeltas
  */
 fun accountBalancesAtEnd(entries: List<Entry>, cutoff: LocalDate?, accounts: List<Account>): List<AccountWithBalance> {
     val relevant = entries.filter { entry ->
-        cutoff == null || entry.createdAt.toLocalDateTime(entry.createdZone).date <= cutoff
+        cutoff == null || entry.dayInZone() <= cutoff
     }
     val balances = accountBalancesMinor(entryDeltas(relevant), accounts)
     return accounts.map { account -> AccountWithBalance(account, balances.getValue(account.id)) }

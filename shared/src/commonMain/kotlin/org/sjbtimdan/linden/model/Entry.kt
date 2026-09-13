@@ -1,6 +1,8 @@
 package org.sjbtimdan.linden.model
 
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 enum class EntryType {
@@ -57,3 +59,6 @@ data class TransferEntry(
 ) : Entry {
     override val type: EntryType = EntryType.Transfer
 }
+
+/** The calendar day this entry is dated, in the zone it was created in. */
+fun Entry.dayInZone(): LocalDate = createdAt.toLocalDateTime(createdZone).date
