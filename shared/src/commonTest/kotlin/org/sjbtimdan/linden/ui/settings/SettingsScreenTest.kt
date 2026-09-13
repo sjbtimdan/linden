@@ -214,7 +214,7 @@ class SettingsScreenTest : StringSpec({
             """.trimIndent()
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
-            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is ImportState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is BackupState.Success } }
 
             onNodeWithText(
                 "Note: 1 transaction(s) were in a different currency than their account " +
@@ -229,7 +229,7 @@ class SettingsScreenTest : StringSpec({
             setContent { SettingsScreen(viewModel) }
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
-            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is ImportState.Success } }
+            withTimeout(5_000.milliseconds) { viewModel.importState.first { it is BackupState.Success } }
 
             onNodeWithText("Imported 3 accounts, 3 categories, 5 transactions").assertExists()
             onAllNodesWithText("different currency", substring = true).assertCountEquals(0)

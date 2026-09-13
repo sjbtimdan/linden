@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -37,7 +36,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,7 +59,6 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_accounts
-import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.common_unknown_error
@@ -99,9 +96,9 @@ import org.sjbtimdan.linden.resources.settings_working_export
 import org.sjbtimdan.linden.resources.settings_working_import
 import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.time.SystemClock
+import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.screenContainer
-import org.sjbtimdan.linden.ui.theme.DialogShape
 
 @Composable
 fun SettingsScreen(
@@ -343,7 +340,7 @@ fun SettingsScreen(
             }
             FilledTonalButton(
                 onClick = { showImportConfirmation = true },
-                enabled = importState !is ImportState.Importing,
+                enabled = importState !is BackupState.Working,
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
@@ -355,75 +352,51 @@ fun SettingsScreen(
             }
         }
 
-        when (val state = backupState) {
-            BackupState.Idle -> Unit
-
-            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_backup))
-
-            is BackupState.Success -> ImportResultRow(
-                text = stringResource(Res.string.settings_backup_saved),
-                onDismiss = viewModel::clearBackupState,
-            )
-
-            is BackupState.Error -> ImportResultRow(
-                text = stringResource(
+        OperationStatus(
+            state = backupState,
+            workingText = stringResource(Res.string.settings_working_backup),
+            successText = { stringResource(Res.string.settings_backup_saved) },
+            errorText = { message ->
+                stringResource(
                     Res.string.settings_backup_failed,
-                    state.message ?: stringResource(Res.string.common_unknown_error),
-                ),
-                onDismiss = viewModel::clearBackupState,
-            )
-        }
+                    message ?: stringResource(Res.string.common_unknown_error),
+                )
+            },
+            onDismiss = viewModel::clearBackupState,
+        )
 
-        when (val state = restoreState) {
-            BackupState.Idle -> Unit
-
-            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_restore))
-
-            is BackupState.Success -> ImportResultRow(
-                text = stringResource(
-                    Res.string.settings_restore_summary,
-                    state.value.accounts,
-                    state.value.categories,
-                    state.value.entries,
-                ),
-                onDismiss = viewModel::clearRestoreState,
-            )
-
-            is BackupState.Error -> ImportResultRow(
-                text = stringResource(
+        OperationStatus(
+            state = restoreState,
+            workingText = stringResource(Res.string.settings_working_restore),
+            successText = { result ->
+                stringResource(Res.string.settings_restore_summary, result.accounts, result.categories, result.entries)
+            },
+            errorText = { message ->
+                stringResource(
                     Res.string.settings_restore_failed,
-                    state.message ?: stringResource(Res.string.common_unknown_error),
-                ),
-                onDismiss = viewModel::clearRestoreState,
-            )
-        }
+                    message ?: stringResource(Res.string.common_unknown_error),
+                )
+            },
+            onDismiss = viewModel::clearRestoreState,
+        )
 
-        when (val state = exportState) {
-            BackupState.Idle -> Unit
-
-            BackupState.Working -> WorkingRow(text = stringResource(Res.string.settings_working_export))
-
-            is BackupState.Success -> ImportResultRow(
-                text = stringResource(Res.string.settings_export_done),
-                onDismiss = viewModel::clearExportState,
-            )
-
-            is BackupState.Error -> ImportResultRow(
-                text = stringResource(
+        OperationStatus(
+            state = exportState,
+            workingText = stringResource(Res.string.settings_working_export),
+            successText = { stringResource(Res.string.settings_export_done) },
+            errorText = { message ->
+                stringResource(
                     Res.string.settings_export_failed,
-                    state.message ?: stringResource(Res.string.common_unknown_error),
-                ),
-                onDismiss = viewModel::clearExportState,
-            )
-        }
+                    message ?: stringResource(Res.string.common_unknown_error),
+                )
+            },
+            onDismiss = viewModel::clearExportState,
+        )
 
-        when (val state = importState) {
-            ImportState.Idle -> Unit
-
-            ImportState.Importing -> WorkingRow(text = stringResource(Res.string.settings_working_import))
-
-            is ImportState.Success -> {
-                val result = state.result
+        OperationStatus(
+            state = importState,
+            workingText = stringResource(Res.string.settings_working_import),
+            successText = { result ->
                 val summary = stringResource(
                     Res.string.settings_import_summary,
                     result.accounts,
@@ -435,20 +408,16 @@ fun SettingsScreen(
                 } else {
                     ""
                 }
-                ImportResultRow(
-                    text = summary + note,
-                    onDismiss = viewModel::clearImportState,
-                )
-            }
-
-            is ImportState.Error -> ImportResultRow(
-                text = stringResource(
+                summary + note
+            },
+            errorText = { message ->
+                stringResource(
                     Res.string.settings_import_failed,
-                    state.message ?: stringResource(Res.string.common_unknown_error),
-                ),
-                onDismiss = viewModel::clearImportState,
-            )
-        }
+                    message ?: stringResource(Res.string.common_unknown_error),
+                )
+            },
+            onDismiss = viewModel::clearImportState,
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
         HorizontalDivider()
@@ -463,56 +432,46 @@ fun SettingsScreen(
         )
 
         if (showImportConfirmation) {
-            AlertDialog(
-                onDismissRequest = { showImportConfirmation = false },
-                shape = DialogShape,
-                title = { Text(stringResource(Res.string.settings_import_ivy)) },
-                text = { Text(stringResource(Res.string.settings_import_confirm_body)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showImportConfirmation = false
-                            importFilePicker()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.settings_import_confirm))
-                    }
+            ConfirmDialog(
+                title = stringResource(Res.string.settings_import_ivy),
+                body = stringResource(Res.string.settings_import_confirm_body),
+                confirmLabel = stringResource(Res.string.settings_import_confirm),
+                onConfirm = {
+                    showImportConfirmation = false
+                    importFilePicker()
                 },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showImportConfirmation = false },
-                    ) {
-                        Text(stringResource(Res.string.common_cancel))
-                    }
-                },
+                onDismiss = { showImportConfirmation = false },
             )
         }
 
         if (showRestoreConfirmation) {
-            AlertDialog(
-                onDismissRequest = { showRestoreConfirmation = false },
-                shape = DialogShape,
-                title = { Text(stringResource(Res.string.settings_restore_backup)) },
-                text = { Text(stringResource(Res.string.settings_restore_confirm_body)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            showRestoreConfirmation = false
-                            restoreFilePicker()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.settings_restore_confirm))
-                    }
+            ConfirmDialog(
+                title = stringResource(Res.string.settings_restore_backup),
+                body = stringResource(Res.string.settings_restore_confirm_body),
+                confirmLabel = stringResource(Res.string.settings_restore_confirm),
+                onConfirm = {
+                    showRestoreConfirmation = false
+                    restoreFilePicker()
                 },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showRestoreConfirmation = false },
-                    ) {
-                        Text(stringResource(Res.string.common_cancel))
-                    }
-                },
+                onDismiss = { showRestoreConfirmation = false },
             )
         }
+    }
+}
+
+@Composable
+private fun <T> OperationStatus(
+    state: BackupState<T>,
+    workingText: String,
+    successText: @Composable (T) -> String,
+    errorText: @Composable (String?) -> String,
+    onDismiss: () -> Unit,
+) {
+    when (state) {
+        BackupState.Idle -> Unit
+        BackupState.Working -> WorkingRow(text = workingText)
+        is BackupState.Success -> ImportResultRow(text = successText(state.value), onDismiss = onDismiss)
+        is BackupState.Error -> ImportResultRow(text = errorText(state.message), onDismiss = onDismiss)
     }
 }
 

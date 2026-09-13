@@ -23,14 +23,7 @@ import org.sjbtimdan.linden.model.ThemeMode
 import java.io.InputStream
 import java.io.OutputStream
 
-sealed interface ImportState {
-    data object Idle : ImportState
-    data object Importing : ImportState
-    data class Success(val result: IvyImportResult) : ImportState
-    data class Error(val message: String?) : ImportState
-}
-
-/** State of a backup or restore operation; [T] is the success payload. */
+/** State of a backup, restore, export or import operation; [T] is the success payload. */
 sealed interface BackupState<out T> {
     data object Idle : BackupState<Nothing>
     data object Working : BackupState<Nothing>
@@ -71,8 +64,8 @@ class SettingsViewModel(
         }
     }
 
-    private val _importState = MutableStateFlow<ImportState>(ImportState.Idle)
-    val importState: StateFlow<ImportState> = _importState.asStateFlow()
+    private val _importState = MutableStateFlow<BackupState<IvyImportResult>>(BackupState.Idle)
+    val importState: StateFlow<BackupState<IvyImportResult>> = _importState.asStateFlow()
 
     private val _backupState = MutableStateFlow<BackupState<Unit>>(BackupState.Idle)
     val backupState: StateFlow<BackupState<Unit>> = _backupState.asStateFlow()
@@ -108,21 +101,21 @@ class SettingsViewModel(
 
     fun importIvy(input: InputStream) {
         viewModelScope.launch {
-            _importState.update { ImportState.Importing }
+            _importState.update { BackupState.Working }
             _importState.update {
                 try {
-                    ImportState.Success(withContext(Dispatchers.IO) { importer.import(input) })
+                    BackupState.Success(withContext(Dispatchers.IO) { importer.import(input) })
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    ImportState.Error(e.message)
+                    BackupState.Error(e.message)
                 }
             }
         }
     }
 
     fun clearImportState() {
-        _importState.update { ImportState.Idle }
+        _importState.update { BackupState.Idle }
     }
 
     fun backupTo(output: OutputStream) {

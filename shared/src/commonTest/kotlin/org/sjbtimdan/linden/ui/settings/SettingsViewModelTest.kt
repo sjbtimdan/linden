@@ -150,10 +150,10 @@ class SettingsViewModelTest : StringSpec({
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
 
             val state = withTimeout(5_000.milliseconds) {
-                viewModel.importState.first { it is ImportState.Success }
+                viewModel.importState.first { it is BackupState.Success }
             }
 
-            val result = (state as ImportState.Success).result
+            val result = (state as BackupState.Success).value
             result.accounts shouldBe 3
             result.categories shouldBe 3
             result.transactions shouldBe 5
@@ -198,10 +198,10 @@ class SettingsViewModelTest : StringSpec({
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
 
             val state = withTimeout(5_000.milliseconds) {
-                viewModel.importState.first { it is ImportState.Success }
+                viewModel.importState.first { it is BackupState.Success }
             }
 
-            val result = (state as ImportState.Success).result
+            val result = (state as BackupState.Success).value
             result.accounts shouldBe 2
             result.splitTransactions shouldBe 1
         }
@@ -222,10 +222,10 @@ class SettingsViewModelTest : StringSpec({
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip("this is not json")))
 
             val state = withTimeout(5_000.milliseconds) {
-                viewModel.importState.first { it is ImportState.Error }
+                viewModel.importState.first { it is BackupState.Error }
             }
 
-            (state as ImportState.Error).message shouldContain "not a valid Ivy backup"
+            (state as BackupState.Error).message shouldContain "not a valid Ivy backup"
             database.accountQueries.selectAll().awaitAsList() shouldBe emptyList()
         }
     }
@@ -244,12 +244,12 @@ class SettingsViewModelTest : StringSpec({
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(minimalIvyJson)))
             withTimeout(5_000.milliseconds) {
-                viewModel.importState.first { it is ImportState.Success }
+                viewModel.importState.first { it is BackupState.Success }
             }
 
             viewModel.clearImportState()
 
-            viewModel.importState.value shouldBe ImportState.Idle
+            viewModel.importState.value shouldBe BackupState.Idle
         }
     }
 

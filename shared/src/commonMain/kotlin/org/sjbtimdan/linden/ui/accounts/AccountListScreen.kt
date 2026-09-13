@@ -18,12 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,9 +44,9 @@ import org.sjbtimdan.linden.resources.accounts_hide_confirm
 import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
-import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
@@ -57,7 +55,6 @@ import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.CardShape
-import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 
 @Composable
@@ -279,41 +276,24 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     hideConfirmation?.let { pending ->
         val account = pending.account
         val balance = account?.let { allTimeBalances[it.id] ?: it.initialBalance } ?: 0L
-        AlertDialog(
-            onDismissRequest = { hideConfirmation = null },
-            shape = DialogShape,
-            title = { Text(stringResource(Res.string.accounts_hide_title)) },
-            text = {
-                Text(
-                    stringResource(
-                        Res.string.accounts_hide_body,
-                        account?.name.orEmpty(),
-                        formatAmount(balance),
-                        account?.currency?.symbol.orEmpty(),
-                    ),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val id = account?.id
-                        if (id != null) {
-                            viewModel.setHidden(id, true)
-                            dialogState = pending.copy(hidden = true)
-                        }
-                        hideConfirmation = null
-                    },
-                ) {
-                    Text(stringResource(Res.string.accounts_hide_confirm))
+        ConfirmDialog(
+            title = stringResource(Res.string.accounts_hide_title),
+            body = stringResource(
+                Res.string.accounts_hide_body,
+                account?.name.orEmpty(),
+                formatAmount(balance),
+                account?.currency?.symbol.orEmpty(),
+            ),
+            confirmLabel = stringResource(Res.string.accounts_hide_confirm),
+            onConfirm = {
+                val id = account?.id
+                if (id != null) {
+                    viewModel.setHidden(id, true)
+                    dialogState = pending.copy(hidden = true)
                 }
+                hideConfirmation = null
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { hideConfirmation = null },
-                ) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
-            },
+            onDismiss = { hideConfirmation = null },
         )
     }
 }
