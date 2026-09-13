@@ -233,7 +233,7 @@ fun EntryForm(
         if (state.type == EntryType.Transfer) {
             if (!editing || activeField == ActiveField.From) {
                 Spacer(modifier = Modifier.height(16.dp))
-                FieldDropdown(
+                DropdownField(
                     label = stringResource(Res.string.entry_from_account),
                     selected = accounts.firstOrNull { it.id == state.accountId },
                     options = accounts,
@@ -254,7 +254,7 @@ fun EntryForm(
             }
             if (!editing || activeField == ActiveField.To) {
                 Spacer(modifier = Modifier.height(16.dp))
-                FieldDropdown(
+                DropdownField(
                     label = stringResource(Res.string.entry_to_account),
                     selected = accounts.firstOrNull { it.id == state.toAccountId },
                     options = accounts.filter { it.id != state.accountId },
@@ -290,14 +290,14 @@ fun EntryForm(
         } else {
             if (!editing || activeField == ActiveField.Category) {
                 Spacer(modifier = Modifier.height(16.dp))
-                FieldDropdown(
+                DropdownField(
                     label = stringResource(Res.string.common_category),
                     selected = visibleCategories.firstOrNull { it.id == state.categoryId },
                     options = visibleCategories,
                     optionLabel = { it.name },
                     onSelect = { onCategoryChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Category else null },
-                    predicted = categorySuggestions
+                    predictedOptions = categorySuggestions
                         .filterNot { it == state.categoryId }
                         .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
                     optionIcon = { it.icon?.imageVector() },
@@ -315,14 +315,14 @@ fun EntryForm(
             }
             if (!editing || activeField == ActiveField.Account) {
                 Spacer(modifier = Modifier.height(16.dp))
-                FieldDropdown(
+                DropdownField(
                     label = stringResource(Res.string.entry_account),
                     selected = accounts.firstOrNull { it.id == state.accountId },
                     options = accounts,
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Account else null },
-                    predicted = accountSuggestions
+                    predictedOptions = accountSuggestions
                         .filterNot { it == state.accountId }
                         .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
                     createLabel = if (onCreateAccount != null) {

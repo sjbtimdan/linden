@@ -187,6 +187,28 @@ class DropdownFieldTest : StringSpec({
         }
     }
 
+    "reports focus changes through onFocusChange" {
+        onTestMain {
+            runComposeUiTest {
+                var focused: Boolean? = null
+                setContent {
+                    DropdownField(
+                        label = "Account",
+                        selected = null,
+                        options = accountOptions,
+                        optionLabel = { it },
+                        onSelect = {},
+                        onFocusChange = { focused = it },
+                    )
+                }
+
+                onNodeWithText("Account").performClick()
+
+                focused shouldBe true
+            }
+        }
+    }
+
     "search query resets when the menu is reopened" {
         onTestMain {
             runComposeUiTest {
