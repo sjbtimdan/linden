@@ -62,8 +62,8 @@ enum class CategoryIcon(val label: String) {
 }
 
 data class Category(
-    val id: Long,
-    val name: String,
+    override val id: Long,
+    override val name: String,
     val type: CategoryType,
     val icon: CategoryIcon? = null,
-)
+) : NamedEntity

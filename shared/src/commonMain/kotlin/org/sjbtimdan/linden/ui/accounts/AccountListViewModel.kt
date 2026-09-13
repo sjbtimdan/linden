@@ -1,9 +1,7 @@
 package org.sjbtimdan.linden.ui.accounts
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
@@ -12,31 +10,18 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
-import org.sjbtimdan.linden.ui.AppViewModel
+import org.sjbtimdan.linden.model.uniqueName
+import org.sjbtimdan.linden.ui.SearchableListViewModel
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
     entryDao: EntryDao,
     settingsDao: SettingsDao,
     allEntries: StateFlow<List<Entry>>,
-) : AppViewModel() {
+) : SearchableListViewModel() {
     val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
 
-    private val _searchQuery = MutableStateFlow("")
-
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    val accounts: StateFlow<List<Account>> = combine(
-        accountDao.getAll(),
-        _searchQuery,
-    ) { accounts, query ->
-        val normalized = query.trim().lowercase()
-        if (normalized.isEmpty()) {
-            accounts
-        } else {
-            accounts.filter { it.name.lowercase().contains(normalized) }
-        }
-    }.stateFlow(emptyList())
+    val accounts: StateFlow<List<Account>> = accountDao.getAll().filteredBySearch()
 
     /** Accounts referenced by at least one entry; their currency must not be changed. */
     val accountsWithEntries: StateFlow<Set<Long>> = entryDao.accountsWithEntries().stateFlow(emptySet())
@@ -54,10 +39,6 @@ class AccountListViewModel(
         accounts.associate { account -> account.id to account.initialBalance + (deltas[account.id] ?: 0) }
     }.stateFlow(emptyMap())
 
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
-
     /** Hides or reveals [id]; hidden accounts stay in history but leave the ledger, pickers and filters. */
     fun setHidden(id: Long, hidden: Boolean) {
         viewModelScope.launch {
@@ -67,9 +48,7 @@ class AccountListViewModel(
 
     /** Creates an account; returns false when the name is empty or already taken (case-insensitive). */
     fun createAccount(name: String, currency: Currency, initialBalance: Long = 0): Boolean {
-        val trimmed = name.trim()
-        if (trimmed.isEmpty()) return false
-        if (accounts.value.any { it.name.equals(trimmed, ignoreCase = true) }) return false
+        val trimmed = uniqueName(accounts.value, name) ?: return false
         viewModelScope.launch {
             accountDao.create(trimmed, currency, initialBalance)
         }
@@ -78,9 +57,7 @@ class AccountListViewModel(
 
     /** Updates an account; returns false when the name is empty or taken by another account (case-insensitive). */
     fun updateAccount(account: Account): Boolean {
-        val trimmed = account.name.trim()
-        if (trimmed.isEmpty()) return false
-        if (accounts.value.any { it.id != account.id && it.name.equals(trimmed, ignoreCase = true) }) return false
+        val trimmed = uniqueName(accounts.value, account.name, excludingId = account.id) ?: return false
         viewModelScope.launch {
             val current = accounts.value.firstOrNull { it.id == account.id }
             val currencyChanged = current != null && current.currency != account.currency

@@ -21,6 +21,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
+import org.sjbtimdan.linden.model.uniqueName
 import org.sjbtimdan.linden.ui.AppViewModel
 import kotlin.time.Instant
 
@@ -88,9 +89,7 @@ abstract class EntryEditorViewModel(
      * empty or already taken (case-insensitive). The draft is never cleared.
      */
     fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Boolean {
-        val trimmed = name.trim()
-        if (trimmed.isEmpty()) return false
-        if (categories.value.any { it.name.equals(trimmed, ignoreCase = true) }) return false
+        val trimmed = uniqueName(categories.value, name) ?: return false
         viewModelScope.launch {
             categoryDao.create(trimmed, type, icon)
             val created = categoryDao.getAll().first { list -> list.any { it.name == trimmed } }
@@ -111,9 +110,7 @@ abstract class EntryEditorViewModel(
         initialBalance: Long = 0,
         selectAsTo: Boolean = false,
     ): Boolean {
-        val trimmed = name.trim()
-        if (trimmed.isEmpty()) return false
-        if (accounts.value.any { it.name.equals(trimmed, ignoreCase = true) }) return false
+        val trimmed = uniqueName(accounts.value, name) ?: return false
         viewModelScope.launch {
             accountDao.create(trimmed, currency, initialBalance)
             val created = accountDao.getAll().first { list -> list.any { it.name == trimmed } }
