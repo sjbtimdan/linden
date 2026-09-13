@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.insights_average
 import org.sjbtimdan.linden.resources.insights_expenses
 import org.sjbtimdan.linden.resources.insights_income
@@ -47,6 +46,7 @@ import org.sjbtimdan.linden.resources.insights_next_period
 import org.sjbtimdan.linden.resources.insights_no_entries
 import org.sjbtimdan.linden.resources.insights_previous_period
 import org.sjbtimdan.linden.resources.insights_vs_previous
+import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.entry.dateLanguage
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -86,12 +86,7 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.common_back),
-            )
-        }
+        ScreenBackButton(onClick = onNavigateBack)
 
         if (months.isNotEmpty() && !hasEntries) {
             Spacer(modifier = Modifier.height(48.dp))

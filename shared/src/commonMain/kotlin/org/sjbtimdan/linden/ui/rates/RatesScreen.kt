@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.common_unknown_error
 import org.sjbtimdan.linden.resources.rates_auto_update_help
@@ -51,6 +49,7 @@ import org.sjbtimdan.linden.resources.rates_from_date
 import org.sjbtimdan.linden.resources.rates_refresh
 import org.sjbtimdan.linden.resources.rates_refresh_failed
 import org.sjbtimdan.linden.resources.rates_update_automatically
+import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.screenContainer
 
 @Composable
@@ -72,12 +71,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.common_back),
-            )
-        }
+        ScreenBackButton(onClick = onNavigateBack)
 
         Spacer(modifier = Modifier.height(16.dp))
 

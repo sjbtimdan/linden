@@ -17,16 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,10 +42,9 @@ import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_new
-import org.sjbtimdan.linden.resources.common_back
-import org.sjbtimdan.linden.resources.common_clear
-import org.sjbtimdan.linden.resources.common_search
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.accentColor
@@ -70,37 +64,11 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.common_back),
-            )
-        }
+        ScreenBackButton(onClick = onNavigateBack)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = viewModel::setSearchQuery,
-            label = { Text(stringResource(Res.string.common_search)) },
-            singleLine = true,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                )
-            },
-            trailingIcon = if (searchQuery.isNotEmpty()) {
-                {
-                    IconButton(
-                        onClick = { viewModel.setSearchQuery("") },
-                    ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
-                }
-            } else {
-                null
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SearchField(value = searchQuery, onValueChange = viewModel::setSearchQuery)
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
@@ -57,13 +56,13 @@ import org.sjbtimdan.linden.resources.budget_edit
 import org.sjbtimdan.linden.resources.budget_empty
 import org.sjbtimdan.linden.resources.budget_monthly_limit
 import org.sjbtimdan.linden.resources.budget_new
-import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenContainer
@@ -91,12 +90,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.common_back),
-            )
-        }
+        ScreenBackButton(onClick = onNavigateBack)
 
         Spacer(modifier = Modifier.height(16.dp))
 

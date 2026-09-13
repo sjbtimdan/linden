@@ -17,16 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,12 +46,11 @@ import org.sjbtimdan.linden.resources.accounts_hide_confirm
 import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
-import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_cancel
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
-import org.sjbtimdan.linden.resources.common_search
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
@@ -88,37 +82,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(Res.string.common_back),
-            )
-        }
+        ScreenBackButton(onClick = onNavigateBack)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = viewModel::setSearchQuery,
-            label = { Text(stringResource(Res.string.common_search)) },
-            singleLine = true,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                )
-            },
-            trailingIcon = if (searchQuery.isNotEmpty()) {
-                {
-                    IconButton(
-                        onClick = { viewModel.setSearchQuery("") },
-                    ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
-                }
-            } else {
-                null
-            },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SearchField(value = searchQuery, onValueChange = viewModel::setSearchQuery)
 
         Spacer(modifier = Modifier.height(16.dp))
 
