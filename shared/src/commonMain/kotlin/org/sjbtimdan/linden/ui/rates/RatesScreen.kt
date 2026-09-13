@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,9 +51,7 @@ import org.sjbtimdan.linden.resources.rates_from_date
 import org.sjbtimdan.linden.resources.rates_refresh
 import org.sjbtimdan.linden.resources.rates_refresh_failed
 import org.sjbtimdan.linden.resources.rates_update_automatically
-import org.sjbtimdan.linden.ui.ScreenMaxWidth
-import org.sjbtimdan.linden.ui.ScreenPadding
-import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.screenContainer
 
 @Composable
 fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
@@ -73,10 +69,7 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
 
     Column(
         modifier = Modifier
-            .screenInsets()
-            .fillMaxSize()
-            .padding(ScreenPadding)
-            .widthIn(max = ScreenMaxWidth)
+            .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
         IconButton(onClick = onNavigateBack) {

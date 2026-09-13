@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -65,11 +64,9 @@ import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.ScreenMaxWidth
-import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
-import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
@@ -92,11 +89,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     }
 
     Column(
-        modifier = Modifier
-            .screenInsets()
-            .fillMaxSize()
-            .padding(ScreenPadding)
-            .widthIn(max = ScreenMaxWidth),
+        modifier = Modifier.screenContainer(),
     ) {
         IconButton(onClick = onNavigateBack) {
             Icon(

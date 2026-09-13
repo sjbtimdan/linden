@@ -2,8 +2,12 @@ package org.sjbtimdan.linden.ui
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,3 +28,21 @@ val ScreenMaxWidth = 720.dp
 fun Modifier.screenInsets(): Modifier = windowInsetsPadding(
     WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
 )
+
+/**
+ * Root layout shared by every screen: insets, full size, edge padding and a max
+ * content width.
+ */
+@Composable
+fun Modifier.screenContainer(): Modifier = this.screenInsets()
+    .fillMaxSize()
+    .padding(ScreenPadding)
+    .widthIn(max = ScreenMaxWidth)
+
+/** [screenContainer] with the IME inset applied above the content padding, for screens under a keyboard. */
+@Composable
+fun Modifier.screenContainerWithIme(): Modifier = this.screenInsets()
+    .fillMaxSize()
+    .imePadding()
+    .padding(ScreenPadding)
+    .widthIn(max = ScreenMaxWidth)

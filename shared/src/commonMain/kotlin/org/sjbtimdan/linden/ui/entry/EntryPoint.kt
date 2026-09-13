@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -59,11 +56,9 @@ import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.ScreenMaxWidth
-import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
-import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.screenContainerWithIme
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
@@ -128,11 +123,7 @@ fun EntryPoint(
 
     Column(
         modifier = Modifier
-            .screenInsets()
-            .fillMaxSize()
-            .imePadding()
-            .padding(ScreenPadding)
-            .widthIn(max = ScreenMaxWidth)
+            .screenContainerWithIme()
             // Tapping outside a field hides the keyboard too — focus loss alone
             // doesn't always close the IME on Android.
             .pointerInput(Unit) {

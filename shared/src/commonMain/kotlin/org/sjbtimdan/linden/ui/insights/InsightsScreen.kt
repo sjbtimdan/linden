@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -49,13 +47,11 @@ import org.sjbtimdan.linden.resources.insights_next_period
 import org.sjbtimdan.linden.resources.insights_no_entries
 import org.sjbtimdan.linden.resources.insights_previous_period
 import org.sjbtimdan.linden.resources.insights_vs_previous
-import org.sjbtimdan.linden.ui.ScreenMaxWidth
-import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.entry.dateLanguage
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.ledger.formatTotal
-import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 /**
@@ -87,10 +83,7 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
 
     Column(
         modifier = Modifier
-            .screenInsets()
-            .fillMaxSize()
-            .padding(ScreenPadding)
-            .widthIn(max = ScreenMaxWidth)
+            .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
         IconButton(onClick = onNavigateBack) {

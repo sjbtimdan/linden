@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,8 +95,6 @@ import org.sjbtimdan.linden.resources.ledger_search_entries
 import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.ScreenMaxWidth
-import org.sjbtimdan.linden.ui.ScreenPadding
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
@@ -109,7 +104,7 @@ import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatDate
 import org.sjbtimdan.linden.ui.entry.parseAmount
-import org.sjbtimdan.linden.ui.screenInsets
+import org.sjbtimdan.linden.ui.screenContainerWithIme
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
@@ -209,12 +204,7 @@ fun LedgerScreen(
     }
 
     Column(
-        modifier = Modifier
-            .screenInsets()
-            .fillMaxSize()
-            .imePadding()
-            .padding(ScreenPadding)
-            .widthIn(max = ScreenMaxWidth),
+        modifier = Modifier.screenContainerWithIme(),
     ) {
         LedgerViewModeTabs(
             viewMode = viewMode,
