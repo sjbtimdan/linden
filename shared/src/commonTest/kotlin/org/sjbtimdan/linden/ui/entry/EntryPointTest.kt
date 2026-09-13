@@ -708,7 +708,7 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "creating a transfer destination from the missing link selects it as the to account" {
+    "creating a transfer destination from the chip selects it as the to account" {
         withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -718,7 +718,7 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Transfer").performClick()
             onNodeWithText("To account").performClick()
-            onNodeWithText("Please add a second account").performClick()
+            onNodeWithText("New account").performClick()
             waitForIdle()
 
             onAllNodes(hasSetTextAction())[1].performTextInput("Savings")
@@ -732,27 +732,24 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "shows add-second-account link for transfer when only one account exists" {
+    "to account dropdown offers the create chip when only one account exists" {
         withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
-            var settingsNavigations = 0
 
             setContent {
-                EntryPoint(
-                    viewModel = viewModel,
-                    onNavigateToSettings = { settingsNavigations++ },
-                )
+                EntryPoint(viewModel = viewModel)
             }
 
             onNodeWithText("Transfer").performClick()
+            onNodeWithText("To account").performClick()
 
-            onNodeWithText("Please add a second account").assertIsDisplayed()
+            // The from account is excluded, so the To list is empty but offers creation.
+            onNodeWithText("New account").assertIsDisplayed()
             onNodeWithText("Please enter account").assertDoesNotExist()
 
-            onNodeWithText("Please add a second account").performClick()
+            onNodeWithText("New account").performClick()
             onNodeWithText("Save").assertIsDisplayed()
             onNodeWithText("Cancel").performClick()
-            settingsNavigations shouldBe 0
         }
     }
 
