@@ -11,12 +11,18 @@ import org.sjbtimdan.linden.resources.entry_req_amount
 import org.sjbtimdan.linden.resources.entry_req_category
 import org.sjbtimdan.linden.resources.entry_req_destination
 import org.sjbtimdan.linden.resources.entry_req_different_destination
+import org.sjbtimdan.linden.resources.entry_req_no_accounts
+import org.sjbtimdan.linden.resources.entry_req_no_categories
 import org.sjbtimdan.linden.resources.entry_req_received
 import org.sjbtimdan.linden.resources.entry_req_source
 
 /**
  * The first requirement a draft still misses. Pure, so it can be unit-tested
  * without resources; UI resolves the localized wording via [text].
+ *
+ * [NO_ACCOUNTS] and [NO_CATEGORY] are the "the form cannot be satisfied at all"
+ * blockers: nothing exists to pick, so the fix is to create it (the UI renders
+ * them as an action that opens the create dialog, not as a picker hint).
  */
 enum class MissingRequirement {
     AMOUNT,
@@ -26,6 +32,8 @@ enum class MissingRequirement {
     DESTINATION_ACCOUNT,
     DIFFERENT_DESTINATION,
     RECEIVED_AMOUNT,
+    NO_ACCOUNTS,
+    NO_CATEGORY,
 }
 
 /** Localized wording for [MissingRequirement]. */
@@ -39,15 +47,30 @@ internal fun MissingRequirement.text(): String = stringResource(
         MissingRequirement.DESTINATION_ACCOUNT -> Res.string.entry_req_destination
         MissingRequirement.DIFFERENT_DESTINATION -> Res.string.entry_req_different_destination
         MissingRequirement.RECEIVED_AMOUNT -> Res.string.entry_req_received
+        MissingRequirement.NO_ACCOUNTS -> Res.string.entry_req_no_accounts
+        MissingRequirement.NO_CATEGORY -> Res.string.entry_req_no_categories
     },
 )
 
 /**
- * Why the current draft cannot be saved yet, or null when the form is valid —
- * and also null when the form cannot be satisfied at all (no accounts or
- * categories, or only one account for a transfer): the empty dropdowns and
- * their "+ New" chips already explain the blocker, and "choose an account"
- * would be misleading when there is nothing to choose.
+ * True when the blocker cannot be resolved by picking an existing option — the
+ * hint must offer the create-dialog action rather than point at a dropdown.
+ */
+internal val MissingRequirement.isCreateAction: Boolean
+    get() = this == MissingRequirement.NO_ACCOUNTS || this == MissingRequirement.NO_CATEGORY
+
+/**
+ * Why the current draft cannot be saved yet, or null when the form is valid.
+ *
+ * When the form can be satisfied by picking existing options (accounts exist,
+ * categories of the right type exist, a transfer has two accounts) this returns
+ * the first field the draft still misses, e.g. [MissingRequirement.AMOUNT].
+ *
+ * When it cannot — no accounts, no matching categories, or only one account for
+ * a transfer — this returns [MissingRequirement.NO_ACCOUNTS] or
+ * [MissingRequirement.NO_CATEGORY] instead of a picker hint, so the UI can
+ * offer the create action directly ("choose an account" would be misleading
+ * when there is nothing to choose).
  */
 internal fun missingRequirement(
     draft: EntryDraft?,
@@ -55,14 +78,13 @@ internal fun missingRequirement(
     categories: List<Category>,
 ): MissingRequirement? {
     val state = draft ?: return null
-    val satisfiable = when (state.type) {
-        EntryType.Transfer -> accounts.size >= 2
+    when (state.type) {
+        EntryType.Transfer -> if (accounts.size < 2) return MissingRequirement.NO_ACCOUNTS
 
-        EntryType.Expense, EntryType.Income -> accounts.isNotEmpty() && categoriesForType(
-            categories,
-            state.type,
-        ).isNotEmpty()
+        EntryType.Expense, EntryType.Income -> when {
+            accounts.isEmpty() -> return MissingRequirement.NO_ACCOUNTS
+            categoriesForType(categories, state.type).isEmpty() -> return MissingRequirement.NO_CATEGORY
+        }
     }
-    if (!satisfiable) return null
     return state.firstMissingRequirement(accounts)
 }

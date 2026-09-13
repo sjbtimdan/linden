@@ -80,6 +80,8 @@
     <string name="entry_req_destination">请选择转入账户</string>
     <string name="entry_req_different_destination">请选择其他转入账户</string>
     <string name="entry_req_received">请输入实际收到的金额</string>
+    <string name="entry_req_no_accounts">添加账户以继续</string>
+    <string name="entry_req_no_categories">还没有分类 — 创建一个</string>
 
     <!-- Entry calculator and misc -->
     <string name="entry_calculator">计算器</string>

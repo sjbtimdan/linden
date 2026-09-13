@@ -81,7 +81,7 @@ private fun calculatorContextLabel(purpose: String, from: Account?, to: Account?
 }
 
 /** The category type a new category should get for an entry of [type]. */
-private fun EntryType.toCategoryType(): CategoryType = when (this) {
+internal fun EntryType.toCategoryType(): CategoryType = when (this) {
     EntryType.Expense -> CategoryType.Expense
     EntryType.Income -> CategoryType.Income
     EntryType.Transfer -> CategoryType.Both
@@ -113,6 +113,13 @@ fun EntryForm(
     defaultCurrency: Currency = Currency.CHF,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
     onCreateAccount: ((String, Currency, Long, Boolean) -> Boolean)? = null,
+    // Create-dialog state hoisted by a host that wants to open the same dialogs
+    // from outside the form (e.g. from its missing-requirement hint). When the
+    // holders are left null, EntryForm remembers its own dialog state.
+    categoryDialogState: CategoryDialogState? = null,
+    onCategoryDialogStateChange: ((CategoryDialogState?) -> Unit)? = null,
+    accountDialogState: AccountDialogState? = null,
+    onAccountDialogStateChange: ((AccountDialogState?) -> Unit)? = null,
 ) {
     val visibleCategories = categoriesForType(categories, state.type)
     val fromAccount = accounts.firstOrNull { it.id == state.accountId }
@@ -138,23 +145,35 @@ fun EntryForm(
     val duplicateAccountNameError = stringResource(Res.string.accounts_duplicate_name)
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
 
-    // Create dialogs opened from the "+ New" chips.
-    var createCategoryState by remember { mutableStateOf<CategoryDialogState?>(null) }
-    var createAccountState by remember { mutableStateOf<AccountDialogState?>(null) }
+    // Create dialogs, opened from the "+ New" chips or from hoisted state a
+    // host seeded via the missing-requirement hint. The host's state wins when
+    // provided; otherwise the dialogs are remembered inside the form.
+    var internalCreateCategory by remember { mutableStateOf<CategoryDialogState?>(null) }
+    var internalCreateAccount by remember { mutableStateOf<AccountDialogState?>(null) }
+    val setCreateCategory: (CategoryDialogState?) -> Unit =
+        onCategoryDialogStateChange ?: { internalCreateCategory = it }
+    val createCategory = categoryDialogState ?: internalCreateCategory
+    val setCreateAccount: (AccountDialogState?) -> Unit =
+        onAccountDialogStateChange ?: { internalCreateAccount = it }
+    val createAccount = accountDialogState ?: internalCreateAccount
     val openCreateCategory: (String) -> Unit = { query ->
-        createCategoryState = CategoryDialogState(
-            category = null,
-            name = query,
-            type = state.type.toCategoryType(),
+        setCreateCategory(
+            CategoryDialogState(
+                category = null,
+                name = query,
+                type = state.type.toCategoryType(),
+            ),
         )
     }
     val openCreateAccount: (String, Boolean) -> Unit = { query, selectAsTo ->
-        createAccountState = AccountDialogState(
-            account = null,
-            name = query,
-            currency = defaultCurrency,
-            initialBalanceText = "",
-            selectAsTo = selectAsTo,
+        setCreateAccount(
+            AccountDialogState(
+                account = null,
+                name = query,
+                currency = defaultCurrency,
+                initialBalanceText = "",
+                selectAsTo = selectAsTo,
+            ),
         )
     }
 
@@ -450,7 +469,7 @@ fun EntryForm(
         )
     }
 
-    createCategoryState?.let { dialogState ->
+    createCategory?.let { dialogState ->
         CategoryDialog(
             name = dialogState.name,
             type = dialogState.type,
@@ -458,28 +477,28 @@ fun EntryForm(
             nameError = dialogState.nameError,
             isEditing = false,
             canDelete = false,
-            onNameChange = { createCategoryState = dialogState.copy(name = it, nameError = null) },
-            onTypeChange = { createCategoryState = dialogState.copy(type = it) },
-            onIconChange = { createCategoryState = dialogState.copy(icon = it) },
+            onNameChange = { setCreateCategory(dialogState.copy(name = it, nameError = null)) },
+            onTypeChange = { setCreateCategory(dialogState.copy(type = it)) },
+            onIconChange = { setCreateCategory(dialogState.copy(icon = it)) },
             onDelete = {},
             onSave = {
                 val name = dialogState.name.trim()
                 if (name.isNotEmpty()) {
                     val saved = onCreateCategory?.invoke(name, dialogState.type, dialogState.icon) ?: false
                     if (saved) {
-                        createCategoryState = null
+                        setCreateCategory(null)
                         keyboardController?.hide()
                         focusManager.clearFocus()
                     } else {
-                        createCategoryState = dialogState.copy(nameError = duplicateCategoryNameError)
+                        setCreateCategory(dialogState.copy(nameError = duplicateCategoryNameError))
                     }
                 }
             },
-            onDismiss = { createCategoryState = null },
+            onDismiss = { setCreateCategory(null) },
         )
     }
 
-    createAccountState?.let { dialogState ->
+    createAccount?.let { dialogState ->
         AccountDialog(
             name = dialogState.name,
             currency = dialogState.currency,
@@ -490,10 +509,10 @@ fun EntryForm(
             canChangeCurrency = true,
             canDelete = false,
             hidden = false,
-            onNameChange = { createAccountState = dialogState.copy(name = it, nameError = null) },
-            onCurrencyChange = { createAccountState = dialogState.copy(currency = it) },
+            onNameChange = { setCreateAccount(dialogState.copy(name = it, nameError = null)) },
+            onCurrencyChange = { setCreateAccount(dialogState.copy(currency = it)) },
             onInitialBalanceChange = {
-                createAccountState = dialogState.copy(initialBalanceText = it, initialBalanceError = null)
+                setCreateAccount(dialogState.copy(initialBalanceText = it, initialBalanceError = null))
             },
             onHiddenChange = {},
             onDelete = {},
@@ -507,7 +526,7 @@ fun EntryForm(
                         parseAmount(dialogState.initialBalanceText)
                     }
                     if (initialBalance == null) {
-                        createAccountState = dialogState.copy(initialBalanceError = invalidAmountError)
+                        setCreateAccount(dialogState.copy(initialBalanceError = invalidAmountError))
                     } else {
                         val saved = onCreateAccount?.invoke(
                             name,
@@ -516,16 +535,16 @@ fun EntryForm(
                             dialogState.selectAsTo,
                         ) ?: false
                         if (saved) {
-                            createAccountState = null
+                            setCreateAccount(null)
                             keyboardController?.hide()
                             focusManager.clearFocus()
                         } else {
-                            createAccountState = dialogState.copy(nameError = duplicateAccountNameError)
+                            setCreateAccount(dialogState.copy(nameError = duplicateAccountNameError))
                         }
                     }
                 }
             },
-            onDismiss = { createAccountState = null },
+            onDismiss = { setCreateAccount(null) },
         )
     }
 }

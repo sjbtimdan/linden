@@ -80,6 +80,8 @@
     <string name="entry_req_destination">請選擇轉入戶口</string>
     <string name="entry_req_different_destination">請選擇其他轉入戶口</string>
     <string name="entry_req_received">請輸入實際收到的金額</string>
+    <string name="entry_req_no_accounts">新增戶口以繼續</string>
+    <string name="entry_req_no_categories">尚未有分類 — 建立一個</string>
 
     <!-- Entry calculator and misc -->
     <string name="entry_calculator">計算機</string>

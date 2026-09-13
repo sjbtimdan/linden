@@ -22,6 +22,8 @@ class MissingRequirementTest : StringSpec({
         MissingRequirement.DESTINATION_ACCOUNT to "Choose where the money goes",
         MissingRequirement.DIFFERENT_DESTINATION to "Choose a different destination account",
         MissingRequirement.RECEIVED_AMOUNT to "Enter the received amount",
+        MissingRequirement.NO_ACCOUNTS to "Add an account to continue",
+        MissingRequirement.NO_CATEGORY to "No categories yet — create one",
     )
 
     "every requirement resolves to its copy" {

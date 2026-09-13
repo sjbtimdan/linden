@@ -56,6 +56,8 @@ import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.accounts.AccountDialogState
+import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenContainerWithIme
@@ -103,6 +105,11 @@ fun EntryPoint(
     // draft that survives a configuration change keeps the compact header.
     var draftTouched by rememberSaveable { mutableStateOf(false) }
     val markTouched: () -> Unit = { draftTouched = true }
+
+    // Create dialogs shared with EntryForm and opened from the missing-requirement
+    // hint when no accounts/categories exist. EntryForm renders them from this state.
+    var createCategoryDialog by remember { mutableStateOf<CategoryDialogState?>(null) }
+    var createAccountDialog by remember { mutableStateOf<AccountDialogState?>(null) }
 
     // The back arrow exits editing: clearFocus closes text fields and dropdowns,
     // bumping editEpoch closes EntryForm's calculators. The draft stays — Clear
@@ -254,6 +261,10 @@ fun EntryPoint(
                         if (created) markTouched()
                         created
                     },
+                    categoryDialogState = createCategoryDialog,
+                    onCategoryDialogStateChange = { createCategoryDialog = it },
+                    accountDialogState = createAccountDialog,
+                    onAccountDialogStateChange = { createAccountDialog = it },
                 )
             }
         }
@@ -263,6 +274,27 @@ fun EntryPoint(
         val missingHint = missingRequirement(draft, accounts, categories)
         val addedMessage = stringResource(Res.string.entry_added)
 
+        // When nothing exists to pick, the hint becomes an action that opens the
+        // same create dialogs as the form's "+ New" chips.
+        val openCreateCategoryFromHint: () -> Unit = {
+            draft?.type?.let { type ->
+                createCategoryDialog = CategoryDialogState(
+                    category = null,
+                    name = "",
+                    type = type.toCategoryType(),
+                )
+            }
+        }
+        val openCreateAccountFromHint: () -> Unit = {
+            createAccountDialog = AccountDialogState(
+                account = null,
+                name = "",
+                currency = defaultCurrency,
+                initialBalanceText = "",
+                selectAsTo = false,
+            )
+        }
+
         if (!fieldFocused) {
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -271,7 +303,14 @@ fun EntryPoint(
             Spacer(modifier = Modifier.height(8.dp))
 
             missingHint?.let { hint ->
-                MissingRequirementHint(message = hint.text())
+                MissingRequirementHint(
+                    message = hint.text(),
+                    onClick = when (hint) {
+                        MissingRequirement.NO_ACCOUNTS -> openCreateAccountFromHint
+                        MissingRequirement.NO_CATEGORY -> openCreateCategoryFromHint
+                        else -> null
+                    },
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 

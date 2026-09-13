@@ -80,6 +80,8 @@
     <string name="entry_req_destination">Scegli il conto di destinazione</string>
     <string name="entry_req_different_destination">Scegli un conto di destinazione diverso</string>
     <string name="entry_req_received">Inserisci l'importo ricevuto</string>
+    <string name="entry_req_no_accounts">Aggiungi un conto per continuare</string>
+    <string name="entry_req_no_categories">Nessuna categoria per ora — creane una</string>
 
     <!-- Entry calculator and misc -->
     <string name="entry_calculator">Calcolatrice</string>

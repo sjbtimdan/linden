@@ -2,7 +2,9 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
@@ -56,19 +58,30 @@ class MissingRequirementHintTest : StringSpec({
             MissingRequirement.ACCOUNT
     }
 
-    "hidden when the form cannot be satisfied" {
-        // No accounts: the empty dropdowns and their "+ New" chips explain the blocker.
-        missingRequirement(draft(), emptyList(), listOf(groceries)).shouldBeNull()
+    "reports a create-action blocker when the form cannot be satisfied" {
+        // No accounts: nothing to pick, the hint must offer creating one.
+        missingRequirement(draft(), emptyList(), listOf(groceries)) shouldBe
+            MissingRequirement.NO_ACCOUNTS
         // Only income categories exist, so an expense has no category picker.
-        missingRequirement(draft(), listOf(main), listOf(salary)).shouldBeNull()
+        missingRequirement(draft(), listOf(main), listOf(salary)) shouldBe
+            MissingRequirement.NO_CATEGORY
         // A transfer needs two accounts; with one the To dropdown is empty.
-        missingRequirement(draft(type = EntryType.Transfer), listOf(main), listOf(groceries)).shouldBeNull()
+        missingRequirement(draft(type = EntryType.Transfer), listOf(main), listOf(groceries)) shouldBe
+            MissingRequirement.NO_ACCOUNTS
         // Two accounts: the transfer blocker is now the missing destination account.
         missingRequirement(
             draft(type = EntryType.Transfer).copy(amountText = "100"),
             listOf(main, savings),
             listOf(groceries),
         ) shouldBe MissingRequirement.DESTINATION_ACCOUNT
+    }
+
+    "only the create-action blockers are marked as create actions" {
+        MissingRequirement.NO_ACCOUNTS.isCreateAction shouldBe true
+        MissingRequirement.NO_CATEGORY.isCreateAction shouldBe true
+        MissingRequirement.entries.filterNot { it.isCreateAction }.forEach { requirement ->
+            requirement.isCreateAction shouldBe false
+        }
     }
 
     "renders the message in error styling" {
@@ -79,6 +92,21 @@ class MissingRequirementHintTest : StringSpec({
                 }
 
                 onNodeWithText("Enter an amount").assertIsDisplayed()
+            }
+        }
+    }
+
+    "renders as a tappable action when onClick is given" {
+        onTestMain {
+            runComposeUiTest {
+                var clicked = false
+                setContent {
+                    MissingRequirementHint(message = "Add an account to continue", onClick = { clicked = true })
+                }
+
+                onNodeWithTag("missingRequirementAction").assertIsDisplayed()
+                onNodeWithText("Add an account to continue").performClick()
+                clicked shouldBe true
             }
         }
     }

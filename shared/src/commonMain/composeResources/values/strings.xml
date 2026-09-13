@@ -80,6 +80,8 @@
     <string name="entry_req_destination">Choose where the money goes</string>
     <string name="entry_req_different_destination">Choose a different destination account</string>
     <string name="entry_req_received">Enter the received amount</string>
+    <string name="entry_req_no_accounts">Add an account to continue</string>
+    <string name="entry_req_no_categories">No categories yet — create one</string>
 
     <!-- Entry calculator and misc -->
     <string name="entry_calculator">Calculator</string>

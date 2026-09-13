@@ -288,6 +288,37 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "the hint offers to create an account when none exist" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Add an account to continue").assertIsDisplayed()
+            onNodeWithTag("missingRequirementAction").performClick()
+
+            onNodeWithText("New Account").assertIsDisplayed()
+            accountDao.getAll().first().shouldHaveSize(0)
+        }
+    }
+
+    "the hint offers to create a category when none match the entry type" {
+        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("No categories yet — create one").assertIsDisplayed()
+            onNodeWithTag("missingRequirementAction").performClick()
+
+            onNodeWithText("New Category").assertIsDisplayed()
+        }
+    }
+
     "the hero card compacts once the draft is touched and expands again on clear" {
         withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
