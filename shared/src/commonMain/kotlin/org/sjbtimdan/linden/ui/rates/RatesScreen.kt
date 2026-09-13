@@ -30,6 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,11 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
     val autoUpdateRates by viewModel.autoUpdateRates.collectAsState()
     var editingQuote by remember { mutableStateOf<Currency?>(null) }
     val rateByQuote = rates.associateBy { it.quoteCurrency }
+
+    // Opening the screen once unlocks the Entry-tab rates warning for good.
+    LaunchedEffect(Unit) {
+        viewModel.markRatesSeen()
+    }
 
     Column(
         modifier = Modifier

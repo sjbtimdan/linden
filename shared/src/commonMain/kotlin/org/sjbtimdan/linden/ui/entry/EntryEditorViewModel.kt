@@ -37,7 +37,7 @@ abstract class EntryEditorViewModel(
     protected val entryDao: EntryDao,
     protected val accountDao: AccountDao,
     protected val categoryDao: CategoryDao,
-    private val settingsDao: SettingsDao,
+    protected val settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     initialHideTotal: Boolean = false,
 ) : ViewModel() {

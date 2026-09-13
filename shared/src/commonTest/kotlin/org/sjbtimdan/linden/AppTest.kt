@@ -75,7 +75,7 @@ class AppTest : StringSpec({
     }
 
     "startup shows a rates warning and navigates to rates when the fetch fails with no cached rates" {
-        withApp(fxRatesSource = FakeFxRatesSource { error("network") }) { dependencies ->
+        withApp(fxRatesSource = FakeFxRatesSource { error("network") }, ratesSeen = true) { dependencies ->
             setContent { App(dependencies) }
 
             waitUntil(timeoutMillis = 5_000) {

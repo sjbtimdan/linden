@@ -14,6 +14,7 @@ const val CURRENCY_KEY = "currency"
 const val HIDE_ENTRY_TOTAL_KEY = "hideEntryTotal"
 const val AUTO_UPDATE_RATES_KEY = "autoUpdateRates"
 const val LANGUAGE_KEY = "language"
+const val RATES_SEEN_KEY = "ratesSeen"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {
@@ -75,6 +76,19 @@ class SettingsDao(private val queries: SettingsQueries) {
 
     fun autoUpdateRatesFlow(): Flow<Boolean> = valueFlow(AUTO_UPDATE_RATES_KEY)
         .map { it?.toBoolean() ?: true }
+
+    /** True once the user has opened the Rates screen (unlocks the Entry-tab warning). */
+    suspend fun getRatesSeen(): Boolean {
+        val entity = queries.selectByKey(RATES_SEEN_KEY).awaitAsOneOrNull()
+        return entity?.value_?.toBoolean() == true
+    }
+
+    suspend fun setRatesSeen(seen: Boolean) {
+        queries.insertOrReplace(RATES_SEEN_KEY, seen.toString())
+    }
+
+    fun ratesSeenFlow(): Flow<Boolean> = valueFlow(RATES_SEEN_KEY)
+        .map { it?.toBoolean() == true }
 
     /** Reactive value of a single settings key; null while the key is absent. */
     private fun valueFlow(key: String): Flow<String?> = queries.selectByKey(key)

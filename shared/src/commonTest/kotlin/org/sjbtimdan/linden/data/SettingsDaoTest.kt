@@ -63,4 +63,20 @@ class SettingsDaoTest : StringSpec({
         dao.setAutoUpdateRates(false)
         dao.autoUpdateRatesFlow().first() shouldBe false
     }
+
+    "getRatesSeen is false on a fresh database and true once set" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.getRatesSeen() shouldBe false
+        dao.setRatesSeen(true)
+        dao.getRatesSeen() shouldBe true
+    }
+
+    "ratesSeenFlow emits false by default and follows updates" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.ratesSeenFlow().first() shouldBe false
+        dao.setRatesSeen(true)
+        dao.ratesSeenFlow().first() shouldBe true
+    }
 })

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -13,8 +14,10 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
@@ -64,6 +67,18 @@ class EntryPointViewModel(
             rates,
         )
     }.stateFlow(null)
+
+    /** True once at least one entry exists; the hero card stays hidden until then. */
+    val hasEntries: StateFlow<Boolean> = allEntries.map { it.isNotEmpty() }.stateFlow(false)
+
+    /**
+     * Whether the Entry tab may show the rates warning: the user either has entries
+     * spanning 2+ currencies (so FX rates matter) or has opened the Rates screen.
+     */
+    val showRatesWarning: StateFlow<Boolean> = combine(
+        allEntries.map { entries -> entries.flatMap { it.currencies() }.distinct().size > 1 },
+        settingsDao.ratesSeenFlow(),
+    ) { multiCurrency, ratesSeen -> multiCurrency || ratesSeen }.stateFlow(false)
 
     /** Most likely account ids for the current draft; only for new entries. */
     val accountSuggestions: StateFlow<List<Long>> get() = suggestions.accountSuggestions
@@ -139,4 +154,10 @@ class EntryPointViewModel(
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }
+}
+
+/** Currencies an entry touches; transfers involve both accounts. */
+private fun Entry.currencies(): List<Currency> = when (this) {
+    is TransferEntry -> listOf(account.currency, toAccount.currency)
+    else -> listOf(account.currency)
 }

@@ -95,6 +95,11 @@ class RatesViewModel(
         viewModelScope.launch { settingsDao.setAutoUpdateRates(enabled) }
     }
 
+    /** Persists that the user has opened the Rates screen, unlocking the Entry-tab warning. */
+    fun markRatesSeen() {
+        viewModelScope.launch { settingsDao.setRatesSeen(true) }
+    }
+
     fun setRate(quote: Currency, rate: Double) {
         viewModelScope.launch {
             fxRatesRepository.setRate(base.value, quote, rate)

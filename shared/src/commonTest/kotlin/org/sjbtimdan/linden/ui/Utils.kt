@@ -78,12 +78,15 @@ internal fun testAllEntries(entryDao: EntryDao): StateFlow<List<Entry>> = entryD
 @OptIn(ExperimentalTestApi::class)
 fun withApp(
     fxRatesSource: FxRatesSource = FakeFxRatesSource(),
+    ratesSeen: Boolean = false,
     block: suspend ComposeUiTest.(AppDependencies) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
+            val database = lindenDatabase()
+            if (ratesSeen) SettingsDao(database.settingsQueries).setRatesSeen(true)
             val dependencies = AppDependencies(
-                database = lindenDatabase(),
+                database = database,
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
                 fxRatesSource = fxRatesSource,
@@ -211,6 +214,7 @@ fun withEntryPoint(
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
+    ratesSeen: Boolean = false,
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
 ) {
     onTestMain {
@@ -222,6 +226,7 @@ fun withEntryPoint(
             val settingsDao = SettingsDao(database.settingsQueries)
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
             if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
+            if (ratesSeen) settingsDao.setRatesSeen(true)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
             val viewModel = EntryPointViewModel(
@@ -245,8 +250,9 @@ fun withEntryPoint(
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
+    ratesSeen: Boolean = false,
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
-) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates) { _, accountDao, categoryDao, viewModel ->
+) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates, ratesSeen) { _, accountDao, categoryDao, viewModel ->
     block(accountDao, categoryDao, viewModel)
 }
 
@@ -256,8 +262,9 @@ fun withEntryPoint(
     defaultCurrency: Currency = Currency.CHF,
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
+    ratesSeen: Boolean = false,
     block: suspend ComposeUiTest.(EntryPointViewModel) -> Unit,
-) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates) { _, _, _, viewModel -> block(viewModel) }
+) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates, ratesSeen) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(

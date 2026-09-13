@@ -416,6 +416,27 @@ class RatesViewModelTest : StringSpec({
             source.fetchCount shouldBe 1
         }
     }
+
+    "markRatesSeen persists the flag in settings" {
+        onTestMain {
+            val database = lindenDatabase()
+            val settingsDao = SettingsDao(database.settingsQueries)
+            val viewModel = RatesViewModel(
+                settingsDao = settingsDao,
+                fxRatesRepository = FxRatesRepository(
+                    FxRateDao(database.fxRateQueries),
+                    FakeFxRatesSource(),
+                    FakeClock(now = NOW),
+                ),
+                clock = FakeClock(now = NOW),
+            )
+
+            settingsDao.getRatesSeen() shouldBe false
+            viewModel.markRatesSeen()
+            withTimeout(5_000.milliseconds) { settingsDao.ratesSeenFlow().first { it } }
+            settingsDao.getRatesSeen() shouldBe true
+        }
+    }
 }) {
     companion object {
         private val NOW = Instant.parse("2026-08-13T12:00:00Z")
