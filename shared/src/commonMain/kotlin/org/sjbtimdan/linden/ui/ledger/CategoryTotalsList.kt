@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.pluralStringResource
@@ -34,6 +36,8 @@ import org.sjbtimdan.linden.resources.ledger_budget_progress
 import org.sjbtimdan.linden.resources.ledger_entry_count
 import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.theme.CardElevation
+import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 
 /**
@@ -61,7 +65,7 @@ fun CategoryTotalsList(
     } else {
         LazyColumn(
             modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(categories, key = { it.category?.id ?: 0L }) { item ->
                 val categoryName = item.category?.name
@@ -71,10 +75,12 @@ fun CategoryTotalsList(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .shadow(CardElevation, CardShape, clip = false)
+                        .clip(CardShape)
                         .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
                         .clickable(role = Role.Button) { onCategoryClick(item) }
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                        .padding(horizontal = 10.dp, vertical = 10.dp),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -123,7 +129,7 @@ fun CategoryTotalsList(
                         )
                     }
                     item.budget?.let { budget ->
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         BudgetProgressBar(
                             spent = item.total,
                             limit = budget,

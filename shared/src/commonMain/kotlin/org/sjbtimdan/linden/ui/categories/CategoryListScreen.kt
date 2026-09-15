@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.categories
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -46,6 +48,7 @@ import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.screenContainer
+import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 
@@ -116,8 +119,10 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .shadow(CardElevation, CardShape, clip = false)
                             .clip(CardShape)
                             .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
                             .clickable(role = Role.Button) {
                                 dialogState = CategoryDialogState(
                                     category = category,

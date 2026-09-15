@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,6 +62,7 @@ import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenContainerWithIme
+import org.sjbtimdan.linden.ui.theme.CardElevation
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
@@ -368,6 +370,8 @@ private fun TotalBalanceCard(
             modifier = Modifier.fillMaxWidth().testTag("totalBalanceCompact"),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = CardElevation,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Row(
                 modifier = Modifier.padding(start = 16.dp, end = 4.dp),
@@ -408,6 +412,8 @@ private fun TotalBalanceCard(
             modifier = Modifier.fillMaxWidth().testTag("totalBalanceCard"),
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = CardElevation,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                 Row(

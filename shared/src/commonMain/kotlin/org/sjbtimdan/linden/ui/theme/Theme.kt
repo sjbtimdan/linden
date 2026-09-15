@@ -82,6 +82,9 @@ val DialogShape = RoundedCornerShape(28.dp)
 /** Corner radius of list rows/cards across the app. */
 val CardShape = RoundedCornerShape(20.dp)
 
+/** Subtle shadow elevation for list-row cards. */
+val CardElevation = 2.dp
+
 private val LindenTypography = Typography(
     titleLarge = TextStyle(
         fontWeight = FontWeight.SemiBold,

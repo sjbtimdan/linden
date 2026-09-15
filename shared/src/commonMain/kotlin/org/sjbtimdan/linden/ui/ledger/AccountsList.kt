@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -37,6 +38,8 @@ import org.sjbtimdan.linden.resources.ledger_more_options
 import org.sjbtimdan.linden.resources.ledger_view_entries
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
+import org.sjbtimdan.linden.ui.theme.CardElevation
+import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
  * The account balances at the end of the selected period, or the empty state.
@@ -67,17 +70,19 @@ fun AccountsList(
     } else {
         LazyColumn(
             modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(balances, key = { it.account.id }) { item ->
                 val account = item.account
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .shadow(CardElevation, CardShape, clip = false)
+                        .clip(CardShape)
                         .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
                         .clickable(role = Role.Button) { onAccountClick(item) }
-                        .padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
+                        .padding(start = 10.dp, top = 10.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
