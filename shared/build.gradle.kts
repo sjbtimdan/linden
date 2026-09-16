@@ -79,7 +79,29 @@ kotlin {
             implementation(libs.kotest.runner.junit5)
             implementation(compose.desktop.currentOs)
         }
+    }
 
+    jvm {
+        val mainCompilation = compilations["main"]
+        val testCompilation = compilations["test"]
+        compilations.create("integrationTest") {
+            // Associate with main + test so internal members (e.g.
+            // DatabaseDriverFactory.createDriverAt) are visible and the test
+            // dependencies (Kotest, JDBC driver) are on the classpath.
+            associateWith(mainCompilation)
+            associateWith(testCompilation)
+        }
+    }
+    sourceSets {
+        val jvmIntegrationTest by getting {
+            dependencies {
+                // The integration test source set compiles only its own sources
+                // but sees the compiled jvmTest classes and their dependencies
+                // (helpers, Kotest, JDBC driver) on its classpath.
+                implementation(files(this@kotlin.jvm().compilations["test"].output.allOutputs))
+                implementation(files(this@kotlin.jvm().compilations["test"].compileDependencyFiles))
+            }
+        }
     }
 }
 
@@ -148,6 +170,17 @@ tasks.withType<Test>().configureEach {
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
+}
+
+// Integration tests live in their own source set (jvmIntegrationTest) so they
+// are never part of the normal test run; run them manually with
+// ./gradlew :shared:integrationTest.
+val integrationCompilation = kotlin.jvm().compilations.getByName("integrationTest")
+tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests against a real database (manual only)"
+    group = "integration"
+    testClassesDirs = files(integrationCompilation.output.allOutputs)
+    classpath = integrationCompilation.runtimeDependencyFiles + files(integrationCompilation.output.allOutputs)
 }
 
 tasks.named("check") {

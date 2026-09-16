@@ -55,6 +55,7 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
 ./gradlew :desktopApp:compileKotlin         # verify Desktop app
 ./gradlew :shared:jvmTest                   # run Kotest suite (commonTest + jvmTest)
 ./gradlew fastCheck                         # jvmTest only, no Kover gate — fast dev loop
+./integration-test.sh                       # manual-only integration tests (real on-disk DB, seeded from integrationTestData/)
 ./gradlew :androidApp:assembleDebug         # full Android debug build
 ./gradlew :desktopApp:run                   # run Desktop app
 ./gradlew check                             # full check — CI runs this too (.github/workflows/check.yml)

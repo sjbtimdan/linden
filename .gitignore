@@ -13,3 +13,4 @@ captures
 node_modules/
 kotlin-js-store/
 .tmp/
+integrationTestData/
