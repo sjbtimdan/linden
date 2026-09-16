@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -10,8 +11,14 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import org.sjbtimdan.linden.AccountQueries
+import org.sjbtimdan.linden.CategoryQueries
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FxRateDao
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
@@ -24,6 +31,9 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
+import org.sjbtimdan.linden.ui.onTestMain
+import org.sjbtimdan.linden.ui.testAllEntries
+import org.sjbtimdan.linden.ui.testRatesProvider
 import org.sjbtimdan.linden.ui.withEntryPoint
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
@@ -490,6 +500,64 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.draft.value?.accountId.shouldBeNull()
         }
     }
+
+    "createCategory reports an error and does not hang when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val categoryDao = FailingCategoryDao(database.categoryQueries)
+                val entryDao = EntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.seedDraft()
+
+                categoryDao.failWrites = true
+                viewModel.createCategory("Travel", CategoryType.Expense) shouldBe true
+
+                viewModel.error.value.shouldNotBeNull()
+                viewModel.draft.value?.categoryId.shouldBeNull()
+            }
+        }
+    }
+
+    "createAccount reports an error and does not hang when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val accountDao = FailingAccountDao(database.accountQueries)
+                val entryDao = EntryDao(database.entryQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.seedDraft()
+
+                accountDao.failWrites = true
+                viewModel.createAccount("Wallet", Currency.EUR) shouldBe true
+
+                viewModel.error.value.shouldNotBeNull()
+                viewModel.draft.value?.accountId.shouldBeNull()
+            }
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
@@ -498,4 +566,24 @@ private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair
     val main = accountDao.getAll().first().first()
     val groceries = categoryDao.getAll().first().first()
     return main to groceries
+}
+
+/** [CategoryDao] whose writes throw once [failWrites] is set; reads stay live. */
+private class FailingCategoryDao(queries: CategoryQueries) : CategoryDao(queries) {
+    var failWrites = false
+
+    override suspend fun create(name: String, type: CategoryType, icon: CategoryIcon?) {
+        if (failWrites) throw IllegalStateException("write failed")
+        super.create(name, type, icon)
+    }
+}
+
+/** [AccountDao] whose writes throw once [failWrites] is set; reads stay live. */
+private class FailingAccountDao(queries: AccountQueries) : AccountDao(queries) {
+    var failWrites = false
+
+    override suspend fun create(name: String, currency: Currency, initialBalance: Long) {
+        if (failWrites) throw IllegalStateException("write failed")
+        super.create(name, currency, initialBalance)
+    }
 }

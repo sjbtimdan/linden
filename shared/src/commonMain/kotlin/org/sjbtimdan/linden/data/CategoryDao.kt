@@ -8,8 +8,8 @@ import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.util.asListFlow
 
-class CategoryDao(private val queries: CategoryQueries) {
-    suspend fun create(name: String, type: CategoryType, icon: CategoryIcon? = null) {
+open class CategoryDao(private val queries: CategoryQueries) {
+    open suspend fun create(name: String, type: CategoryType, icon: CategoryIcon? = null) {
         queries.insert(name, type.name, icon?.name)
     }
 

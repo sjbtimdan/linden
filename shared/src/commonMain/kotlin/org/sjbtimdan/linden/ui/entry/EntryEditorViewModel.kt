@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,7 +81,13 @@ abstract class EntryEditorViewModel(
 
     fun createEntry(entry: Entry) {
         viewModelScope.launch {
-            entryDao.create(entry)
+            try {
+                entryDao.create(entry)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 
@@ -91,10 +98,16 @@ abstract class EntryEditorViewModel(
     fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Boolean {
         val trimmed = uniqueName(categories.value, name) ?: return false
         viewModelScope.launch {
-            categoryDao.create(trimmed, type, icon)
-            val created = categoryDao.getAll().first { list -> list.any { it.name == trimmed } }
-                .first { it.name == trimmed }
-            draftState.update { it?.copy(categoryId = created.id) }
+            try {
+                categoryDao.create(trimmed, type, icon)
+                val created = categoryDao.getAll().first { list -> list.any { it.name == trimmed } }
+                    .first { it.name == trimmed }
+                draftState.update { it?.copy(categoryId = created.id) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
         return true
     }
@@ -112,13 +125,19 @@ abstract class EntryEditorViewModel(
     ): Boolean {
         val trimmed = uniqueName(accounts.value, name) ?: return false
         viewModelScope.launch {
-            accountDao.create(trimmed, currency, initialBalance)
-            val created = accountDao.getAll().first { list -> list.any { it.name == trimmed } }
-                .first { it.name == trimmed }
-            draftState.update { state ->
-                state?.let {
-                    if (selectAsTo) it.copy(toAccountId = created.id) else it.copy(accountId = created.id)
+            try {
+                accountDao.create(trimmed, currency, initialBalance)
+                val created = accountDao.getAll().first { list -> list.any { it.name == trimmed } }
+                    .first { it.name == trimmed }
+                draftState.update { state ->
+                    state?.let {
+                        if (selectAsTo) it.copy(toAccountId = created.id) else it.copy(accountId = created.id)
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
             }
         }
         return true
@@ -126,13 +145,25 @@ abstract class EntryEditorViewModel(
 
     fun updateEntry(entry: Entry) {
         viewModelScope.launch {
-            entryDao.update(entry)
+            try {
+                entryDao.update(entry)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 
     fun deleteEntry(id: Long) {
         viewModelScope.launch {
-            entryDao.delete(id)
+            try {
+                entryDao.delete(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 }

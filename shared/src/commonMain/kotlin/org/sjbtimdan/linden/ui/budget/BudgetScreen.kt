@@ -32,6 +32,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,6 +66,7 @@ import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
@@ -85,10 +88,13 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     val budgets by viewModel.budgets.collectAsState()
     val categories by viewModel.categories.collectAsState()
     var dialogState by remember { mutableStateOf<BudgetDialogState?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
     }
+
+    viewModel.ErrorSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainer(),
@@ -185,6 +191,8 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
             }
         }
     }
+
+    SnackbarHost(hostState = snackbarHostState)
 
     dialogState?.let { state ->
         val isEditing = state.budget != null

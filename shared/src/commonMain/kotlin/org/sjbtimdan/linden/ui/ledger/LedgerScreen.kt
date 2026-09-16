@@ -30,6 +30,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -95,6 +97,7 @@ import org.sjbtimdan.linden.resources.ledger_search_entries
 import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
@@ -152,6 +155,7 @@ fun LedgerScreen(
     val displayedEntries by viewModel.displayedEntries.collectAsState()
     val hasAnyEntries by viewModel.hasAnyEntries.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
+    val saving by viewModel.saving.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
 
     val todayDate = viewModel.today()
@@ -170,6 +174,7 @@ fun LedgerScreen(
         (periodStart != null && periodStart <= todayDate && todayDate < periodEnd)
 
     var adjustState by remember { mutableStateOf<AdjustBalanceDialogState?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     // Starts collapsed so the tabs, period bar and list lead; active filters stay
     // visible as removable chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
@@ -202,6 +207,8 @@ fun LedgerScreen(
     BackHandler(enabled = dialogState != null) {
         viewModel.dismissDialog()
     }
+
+    viewModel.ErrorSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainerWithIme(),
@@ -614,6 +621,8 @@ fun LedgerScreen(
         }
     }
 
+    SnackbarHost(hostState = snackbarHostState)
+
     dialogState?.let { state ->
         // Editing may open an entry that lives on a hidden account (its history is
         // kept), so the account pickers also offer exactly the hidden accounts the
@@ -625,6 +634,7 @@ fun LedgerScreen(
             state = state,
             accounts = dialogAccounts,
             categories = categories,
+            saving = saving,
             onAmountChange = viewModel::onAmountChange,
             onCategoryChange = viewModel::onCategoryChange,
             onAccountChange = viewModel::onAccountChange,

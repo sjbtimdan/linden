@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.budget
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.BudgetDao
@@ -22,7 +23,13 @@ class BudgetViewModel(
         val name = categoryName.trim()
         if (name.isEmpty() || limitMinor <= 0) return false
         viewModelScope.launch {
-            budgetDao.upsert(name, limitMinor)
+            try {
+                budgetDao.upsert(name, limitMinor)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
         return true
     }
@@ -30,7 +37,13 @@ class BudgetViewModel(
     /** Removes the budget for [categoryName] if one exists. */
     fun deleteBudget(categoryName: String) {
         viewModelScope.launch {
-            budgetDao.delete(categoryName)
+            try {
+                budgetDao.delete(categoryName)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 }

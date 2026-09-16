@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -379,6 +380,10 @@ class LedgerViewModel(
     /** Draft currently being edited in the entry dialog, or null when it is closed. */
     val dialogState: StateFlow<EntryDraft?> get() = draft
 
+    /** True while a dialog save or delete is writing; guards against double-taps. */
+    private val _saving = MutableStateFlow(false)
+    val saving: StateFlow<Boolean> = _saving.asStateFlow()
+
     fun openEditDialog(entry: Entry) {
         draftState.value = EntryDraft.forEdit(entry)
     }
@@ -410,24 +415,53 @@ class LedgerViewModel(
         draftState.update { it?.asNewEntry(now, zone) }
     }
 
-    /** Saves the dialog draft and closes the dialog. */
+    /**
+     * Saves the dialog draft and closes the dialog once the write succeeds; the
+     * dialog stays open on failure so the draft is not lost. Returns false when
+     * there is nothing to save or the draft is invalid.
+     */
     fun saveDialog(): Boolean {
         val state = draftState.value ?: return false
         val entry = state.toEntry(accounts.value, categories.value) ?: return false
-        // Duplicate turns the dialog into a New draft (no edited entry), which creates.
-        if (state.editing == null) {
-            createEntry(entry)
-        } else {
-            updateEntry(entry)
+        if (_saving.value) return false
+        _saving.value = true
+        viewModelScope.launch {
+            try {
+                // Duplicate turns the dialog into a New draft (no edited entry), which creates.
+                if (state.editing == null) {
+                    entryDao.create(entry)
+                } else {
+                    entryDao.update(entry)
+                }
+                draftState.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            } finally {
+                _saving.value = false
+            }
         }
-        draftState.value = null
         return true
     }
 
-    /** Deletes the entry being edited and closes the dialog. */
+    /** Deletes the entry being edited and closes the dialog once the write succeeds. */
     fun deleteDialogEntry() {
-        draftState.value?.editing?.let { deleteEntry(it.id) }
-        draftState.value = null
+        val id = draftState.value?.editing?.id ?: return
+        if (_saving.value) return
+        _saving.value = true
+        viewModelScope.launch {
+            try {
+                entryDao.delete(id)
+                draftState.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            } finally {
+                _saving.value = false
+            }
+        }
     }
 
     fun dismissDialog() {
@@ -443,12 +477,18 @@ class LedgerViewModel(
      */
     fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = clock.now()) {
         viewModelScope.launch {
-            val zone = TimeZone.currentSystemDefault()
-            val current = currentAccountBalances.value[account.id] ?: account.initialBalance
-            val adjustment = balanceAdjustment(current, targetBalance)
-            val entry = adjustmentEntry(adjustment, account, category, now, zone)
-                ?: return@launch
-            entryDao.create(entry)
+            try {
+                val zone = TimeZone.currentSystemDefault()
+                val current = currentAccountBalances.value[account.id] ?: account.initialBalance
+                val adjustment = balanceAdjustment(current, targetBalance)
+                val entry = adjustmentEntry(adjustment, account, category, now, zone)
+                    ?: return@launch
+                entryDao.create(entry)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 

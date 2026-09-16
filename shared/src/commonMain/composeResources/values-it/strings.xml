@@ -26,6 +26,7 @@
     <string name="common_dismiss">Chiudi</string>
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">errore sconosciuto</string>
+    <string name="common_operation_failed">Operazione non riuscita: %1$s</string>
 
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">Conti</string>

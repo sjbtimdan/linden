@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.categories
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.CategoryDao
@@ -24,7 +25,13 @@ class CategoryListViewModel(
     fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Boolean {
         val trimmed = uniqueName(categories.value, name) ?: return false
         viewModelScope.launch {
-            categoryDao.create(trimmed, type, icon)
+            try {
+                categoryDao.create(trimmed, type, icon)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
         return true
     }
@@ -33,7 +40,13 @@ class CategoryListViewModel(
     fun updateCategory(category: Category): Boolean {
         val trimmed = uniqueName(categories.value, category.name, excludingId = category.id) ?: return false
         viewModelScope.launch {
-            categoryDao.update(category.copy(name = trimmed))
+            try {
+                categoryDao.update(category.copy(name = trimmed))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
         return true
     }
@@ -41,8 +54,14 @@ class CategoryListViewModel(
     /** Deletes a category; ignored when the category still has entries on it. */
     fun deleteCategory(id: Long) {
         viewModelScope.launch {
-            if (id in categoriesWithEntries.value) return@launch
-            categoryDao.delete(id)
+            try {
+                if (id in categoriesWithEntries.value) return@launch
+                categoryDao.delete(id)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 }

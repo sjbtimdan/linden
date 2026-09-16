@@ -26,6 +26,7 @@
     <string name="common_dismiss">Dismiss</string>
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">unknown error</string>
+    <string name="common_operation_failed">Operation failed: %1$s</string>
 
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">Accounts</string>

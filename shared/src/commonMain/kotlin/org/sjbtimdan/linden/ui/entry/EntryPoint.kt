@@ -57,6 +57,7 @@ import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
 import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import org.sjbtimdan.linden.ui.rates.RatesWarning
@@ -98,6 +99,8 @@ fun EntryPoint(
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
     }
+
+    viewModel.ErrorSnackbar(snackbarHostState)
 
     var fieldFocused by remember { mutableStateOf(false) }
 

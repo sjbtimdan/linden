@@ -82,18 +82,40 @@ class RatesViewModel(
     }
 
     fun setAutoUpdateRates(enabled: Boolean) {
-        viewModelScope.launch { settingsDao.setAutoUpdateRates(enabled) }
+        viewModelScope.launch {
+            try {
+                settingsDao.setAutoUpdateRates(enabled)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
+        }
     }
 
     /** Persists that the user has opened the Rates screen, unlocking the Entry-tab warning. */
     fun markRatesSeen() {
-        viewModelScope.launch { settingsDao.setRatesSeen(true) }
+        viewModelScope.launch {
+            try {
+                settingsDao.setRatesSeen(true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
+        }
     }
 
     fun setRate(quote: Currency, rate: Double) {
         viewModelScope.launch {
-            fxRatesRepository.setRate(base.value, quote, rate)
-            _ratesWarning.value = null
+            try {
+                fxRatesRepository.setRate(base.value, quote, rate)
+                _ratesWarning.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
         }
     }
 

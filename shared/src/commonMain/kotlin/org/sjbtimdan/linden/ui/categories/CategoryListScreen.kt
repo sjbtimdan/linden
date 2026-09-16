@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +47,7 @@ import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_new
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.screenContainer
@@ -58,11 +61,14 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoriesWithEntries by viewModel.categoriesWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     val duplicateNameError = stringResource(Res.string.categories_duplicate_name)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
     }
+
+    viewModel.ErrorSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainer(),
@@ -158,6 +164,8 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             }
         }
     }
+
+    SnackbarHost(hostState = snackbarHostState)
 
     dialogState?.let { state ->
         val isEditing = state.category != null

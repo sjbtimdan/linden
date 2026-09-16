@@ -79,21 +79,39 @@ class SettingsViewModel(
     fun setThemeMode(mode: ThemeMode) {
         _themeMode.value = mode
         viewModelScope.launch {
-            settingsDao.setTheme(mode)
+            try {
+                settingsDao.setTheme(mode)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Optimistic state is already propagated.
+            }
         }
     }
 
     fun setDefaultCurrency(currency: Currency) {
         _defaultCurrency.value = currency
         viewModelScope.launch {
-            settingsDao.setDefaultCurrency(currency)
+            try {
+                settingsDao.setDefaultCurrency(currency)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Optimistic state is already propagated.
+            }
         }
     }
 
     fun setLanguage(language: AppLanguage) {
         _language.value = language
         viewModelScope.launch {
-            settingsDao.setLanguage(language)
+            try {
+                settingsDao.setLanguage(language)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Optimistic state is already propagated.
+            }
         }
     }
 

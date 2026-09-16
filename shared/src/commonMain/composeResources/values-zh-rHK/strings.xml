@@ -26,6 +26,7 @@
     <string name="common_dismiss">關閉</string>
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">未知錯誤</string>
+    <string name="common_operation_failed">操作失敗：%1$s</string>
 
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">戶口</string>

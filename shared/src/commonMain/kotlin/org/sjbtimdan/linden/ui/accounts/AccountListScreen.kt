@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -49,6 +51,7 @@ import org.sjbtimdan.linden.resources.accounts_new
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ConfirmDialog
+import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
@@ -71,6 +74,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     // Set when hiding an account with a non-zero all-time balance: the confirm
     // dialog must be answered before the account is actually hidden.
     var hideConfirmation by remember { mutableStateOf<AccountDialogState?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
     // Error copy for the dialog's plain save lambda, resolved in composition.
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
     val duplicateNameError = stringResource(Res.string.accounts_duplicate_name)
@@ -78,6 +82,8 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     BackHandler(enabled = dialogState != null) {
         dialogState = null
     }
+
+    viewModel.ErrorSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainer(),
@@ -208,6 +214,8 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             }
         }
     }
+
+    SnackbarHost(hostState = snackbarHostState)
 
     dialogState?.let { state ->
         val isEditing = state.account != null

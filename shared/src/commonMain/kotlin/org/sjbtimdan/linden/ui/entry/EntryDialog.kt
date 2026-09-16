@@ -66,6 +66,7 @@ fun EntryDialog(
     onDelete: (() -> Unit)?,
     onDuplicate: (() -> Unit)? = null,
     onDismiss: () -> Unit,
+    saving: Boolean = false,
     descriptionSuggestions: List<String> = emptyList(),
     accountSuggestions: List<Long> = emptyList(),
     categorySuggestions: List<Long> = emptyList(),
@@ -145,7 +146,7 @@ fun EntryDialog(
         confirmButton = {
             Button(
                 onClick = onSave,
-                enabled = state.isValid(accounts),
+                enabled = state.isValid(accounts) && !saving,
             ) {
                 Text(stringResource(Res.string.common_save))
             }

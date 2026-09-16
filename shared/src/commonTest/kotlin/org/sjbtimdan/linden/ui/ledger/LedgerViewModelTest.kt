@@ -8,9 +8,11 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -22,6 +24,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
@@ -1630,6 +1633,116 @@ class LedgerViewModelTest : StringSpec({
             entries.map { it.amount } shouldBe listOf(1_500L, 2_500L)
         }
     }
+
+    "saveDialog keeps the dialog open and reports an error when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+                viewModel.openEditDialog(created)
+                viewModel.onAmountChange("5.00")
+
+                entryDao.failWrites = true
+                viewModel.saveDialog() shouldBe true
+
+                viewModel.dialogState.value.shouldNotBeNull()
+                viewModel.error.value.shouldNotBeNull()
+                viewModel.saving.value shouldBe false
+            }
+        }
+    }
+
+    "deleteDialogEntry keeps the dialog open and reports an error when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+                viewModel.openEditDialog(created)
+
+                entryDao.failWrites = true
+                viewModel.deleteDialogEntry()
+
+                viewModel.dialogState.value.shouldNotBeNull()
+                viewModel.error.value.shouldNotBeNull()
+                viewModel.saving.value shouldBe false
+            }
+        }
+    }
+
+    "saveDialog returns false while a save is in flight" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = GatedEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+                viewModel.openEditDialog(created)
+                viewModel.onAmountChange("5.00")
+
+                entryDao.gateWrites = true
+                viewModel.saveDialog() shouldBe true
+                viewModel.saving.value shouldBe true
+
+                viewModel.saveDialog() shouldBe false
+
+                entryDao.gate.complete(Unit)
+                viewModel.dialogState.value.shouldBeNull()
+                viewModel.saving.value shouldBe false
+            }
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
@@ -1641,3 +1754,39 @@ private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair
 }
 
 private fun at(millis: Long) = Instant.fromEpochMilliseconds(millis)
+
+/** [EntryDao] whose writes throw once [failWrites] is set; reads stay live. */
+private class FailingEntryDao(queries: EntryQueries) : EntryDao(queries) {
+    var failWrites = false
+
+    override suspend fun create(entry: Entry) {
+        if (failWrites) throw IllegalStateException("write failed")
+        super.create(entry)
+    }
+
+    override suspend fun update(entry: Entry) {
+        if (failWrites) throw IllegalStateException("write failed")
+        super.update(entry)
+    }
+
+    override suspend fun delete(id: Long) {
+        if (failWrites) throw IllegalStateException("write failed")
+        super.delete(id)
+    }
+}
+
+/** [EntryDao] whose writes suspend on [gate] once [gateWrites] is set. */
+private class GatedEntryDao(queries: EntryQueries) : EntryDao(queries) {
+    val gate = CompletableDeferred<Unit>()
+    var gateWrites = false
+
+    override suspend fun create(entry: Entry) {
+        if (gateWrites) gate.await()
+        super.create(entry)
+    }
+
+    override suspend fun update(entry: Entry) {
+        if (gateWrites) gate.await()
+        super.update(entry)
+    }
+}

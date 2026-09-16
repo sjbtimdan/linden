@@ -7,8 +7,8 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.util.asListFlow
 
-class AccountDao(private val queries: AccountQueries) {
-    suspend fun create(name: String, currency: Currency, initialBalance: Long = 0) {
+open class AccountDao(private val queries: AccountQueries) {
+    open suspend fun create(name: String, currency: Currency, initialBalance: Long = 0) {
         queries.insert(name, currency.name, initialBalance)
     }
 

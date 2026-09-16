@@ -20,8 +20,8 @@ import org.sjbtimdan.linden.util.asListFlow
 import org.sjbtimdan.linden.util.asOneOrNullFlow
 import kotlin.time.Instant
 
-class EntryDao(private val queries: EntryQueries) {
-    suspend fun create(entry: Entry) {
+open class EntryDao(private val queries: EntryQueries) {
+    open suspend fun create(entry: Entry) {
         val args = entry.sqlArgs()
         queries.insert(
             type = entry.type.name,
@@ -36,7 +36,7 @@ class EntryDao(private val queries: EntryQueries) {
         )
     }
 
-    suspend fun update(entry: Entry) {
+    open suspend fun update(entry: Entry) {
         val args = entry.sqlArgs()
         queries.updateById(
             type = entry.type.name,
@@ -52,7 +52,7 @@ class EntryDao(private val queries: EntryQueries) {
         )
     }
 
-    suspend fun delete(id: Long) {
+    open suspend fun delete(id: Long) {
         queries.deleteById(id)
     }
 

@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.data
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,7 +21,13 @@ class HideEntryTotalSetting(
 
     fun set(hidden: Boolean) {
         scope.launch {
-            settingsDao.setHideEntryTotal(hidden)
+            try {
+                settingsDao.setHideEntryTotal(hidden)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // The optimistic state is already propagated through the database flow.
+            }
         }
     }
 }
