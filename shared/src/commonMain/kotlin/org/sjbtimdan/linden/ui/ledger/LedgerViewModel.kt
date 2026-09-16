@@ -35,6 +35,7 @@ import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.accounts.adjustmentEntry
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
+import org.sjbtimdan.linden.ui.accounts.entryDeltas
 import org.sjbtimdan.linden.ui.budget.computeCategoryBudgets
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
@@ -258,9 +259,10 @@ class LedgerViewModel(
      */
     val currentAccountBalances: StateFlow<Map<Long, Long>> = combine(
         visibleAccounts,
-        entryDao.accountDeltasUpTo(today().sqlUpperBound()),
-    ) { accounts, deltas ->
-        accountBalancesMinor(deltas, accounts)
+        entryDao.getUpTo(today().sqlUpperBound()),
+    ) { accounts, entries ->
+        val now = today()
+        accountBalancesMinor(entryDeltas(entries.filter { it.dayInZone() <= now }), accounts)
     }.stateFlow(emptyMap())
 
     /** Net total per category in the default currency derived from the filtered entries. */

@@ -84,14 +84,6 @@ class EntryDao(private val queries: EntryQueries) {
             )
         }
 
-    /** Net change per account for entries created at or before [epochMs] (minor units). */
-    fun accountDeltasUpTo(epochMs: Long): Flow<Map<Long, Long>> = queries.accountDeltasUpTo(epochMs)
-        .asListFlow()
-        .map { rows ->
-            rows.mapNotNull { row -> row.accountId?.let { id -> id to row.delta } }
-                .toMap()
-        }
-
     /** Accounts referenced by at least one entry, as source or transfer target. */
     fun accountsWithEntries(): Flow<Set<Long>> = queries.accountsWithEntries().asListFlow().map { it.toSet() }
 

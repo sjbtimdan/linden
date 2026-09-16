@@ -1596,12 +1596,14 @@ class LedgerViewModelTest : StringSpec({
             val savings = accounts.first { it.name == "Savings" }
             val groceries = categoryDao.getAll().first().first()
 
-            // A past expense (2026-08-01) and a future transfer out of Main (2026-09-01).
+            // A past expense (2026-07-14) and a future transfer out of Main
+            // (2026-08-16, tomorrow — inside the SQL safety margin, so only the
+            // in-memory date filter can exclude it).
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, at(1_784_000_000_000), TimeZone.UTC))
             entryDao.create(
                 TransferEntry(
                     0, null, null, main, 10_000, toAccount = savings, toAmount = null,
-                    createdAt = at(1_787_000_000_000), createdZone = TimeZone.UTC,
+                    createdAt = at(1_786_838_400_000), createdZone = TimeZone.UTC,
                 ),
             )
 
