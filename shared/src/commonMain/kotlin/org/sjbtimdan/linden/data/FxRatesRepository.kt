@@ -10,6 +10,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
+private val RATES_STALE_AFTER: Duration = 24.hours
+
 class FxRatesRepository(
     private val dao: FxRateDao,
     private val source: FxRatesSource,
@@ -50,9 +52,5 @@ class FxRatesRepository(
 
     private fun FxRates.toFxRates() = rates.map { (quote, rate) ->
         FxRate(baseCurrency = base, quoteCurrency = quote, rate = rate, date = date)
-    }
-
-    private companion object {
-        val RATES_STALE_AFTER: Duration = 24.hours
     }
 }

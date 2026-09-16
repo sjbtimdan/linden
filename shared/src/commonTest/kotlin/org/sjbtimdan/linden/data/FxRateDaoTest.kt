@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 
+private const val FETCHED_AT = 1_800_000_000_000L
+private val rates = listOf(
+    FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-13"),
+    FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-13"),
+)
+
 class FxRateDaoTest : StringSpec({
     "replaceRates stores rates for a base and ratesFor returns them" {
         val database = lindenDatabase()
@@ -80,12 +86,4 @@ class FxRateDaoTest : StringSpec({
             listOf(FxRate(Currency.CHF, Currency.EUR, 1.6, "2026-08-14"))
         dao.lastFetchedAt(Currency.CHF) shouldBe FETCHED_AT + 1
     }
-}) {
-    companion object {
-        private const val FETCHED_AT = 1_800_000_000_000L
-        private val rates = listOf(
-            FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-13"),
-            FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-13"),
-        )
-    }
-}
+})

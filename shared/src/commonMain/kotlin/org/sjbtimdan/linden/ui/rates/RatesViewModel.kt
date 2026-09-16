@@ -19,6 +19,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
+private val RATES_WARNING_STALE_AFTER: Duration = 7.days
+
 sealed interface RatesRefreshState {
     data object Idle : RatesRefreshState
     data object Refreshing : RatesRefreshState
@@ -129,9 +131,5 @@ class RatesViewModel(
             clock.now() - Instant.fromEpochMilliseconds(fetchedAt) >= RATES_WARNING_STALE_AFTER -> RatesWarning.Outdated
             else -> null
         }
-    }
-
-    private companion object {
-        val RATES_WARNING_STALE_AFTER: Duration = 7.days
     }
 }

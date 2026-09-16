@@ -11,6 +11,14 @@ import org.sjbtimdan.linden.time.FakeClock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 
+private val now = Instant.parse("2026-08-13T12:00:00Z")
+private val TODAY = LocalDate(2026, 8, 13)
+private val clock = FakeClock(now = now, today = TODAY)
+private val existingRates = listOf(
+    FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
+    FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-12"),
+)
+
 class FxRatesRepositoryTest : StringSpec({
     "refreshRates caches the fetched rates in the database" {
         val database = lindenDatabase()
@@ -137,14 +145,4 @@ class FxRatesRepositoryTest : StringSpec({
 
         repository.ratesFor(Currency.CHF).first().first { it.quoteCurrency == Currency.EUR }.rate shouldBe 1.0
     }
-}) {
-    companion object {
-        private val now = Instant.parse("2026-08-13T12:00:00Z")
-        private val TODAY = LocalDate(2026, 8, 13)
-        private val clock = FakeClock(now = now, today = TODAY)
-        private val existingRates = listOf(
-            FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
-            FxRate(Currency.CHF, Currency.USD, 1.2306, "2026-08-12"),
-        )
-    }
-}
+})

@@ -1,5 +1,14 @@
 package org.sjbtimdan.linden.ui.entry
 
+private val ENGLISH_MONTHS = listOf(
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+private val ITALIAN_MONTHS = listOf(
+    "gen", "feb", "mar", "apr", "mag", "giu",
+    "lug", "ago", "set", "ott", "nov", "dic",
+)
+
 /**
  * The language used for date display. Dates never follow the raw system
  * locale: unsupported locales render in English, so numeric date formats
@@ -31,17 +40,6 @@ internal enum class DateLanguage {
     internal fun monthYearText(monthNumber: Int, year: Int): String = when (this) {
         English, Italian -> "${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}"
-    }
-
-    private companion object {
-        val ENGLISH_MONTHS = listOf(
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-        )
-        val ITALIAN_MONTHS = listOf(
-            "gen", "feb", "mar", "apr", "mag", "giu",
-            "lug", "ago", "set", "ott", "nov", "dic",
-        )
     }
 }
 

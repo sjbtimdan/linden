@@ -4,6 +4,9 @@ import kotlin.math.abs
 
 enum class CalculatorOp { Add, Subtract, Multiply, Divide }
 
+private const val MAX_INT_DIGITS = 14
+private const val MAX_FRAC_DIGITS = 4
+
 /**
  * Exact decimal calculator state machine for amount entry. Arithmetic runs on
  * reduced fractions (Long numerator/denominator) so chains like `100 / 3 * 3`
@@ -140,11 +143,6 @@ class CalculatorModel(initialMinor: Long?) {
             acc != null -> acc?.toDisplayStringOrNull() ?: "Err"
             else -> "0.00"
         }
-    }
-
-    private companion object {
-        const val MAX_INT_DIGITS = 14
-        const val MAX_FRAC_DIGITS = 4
     }
 }
 

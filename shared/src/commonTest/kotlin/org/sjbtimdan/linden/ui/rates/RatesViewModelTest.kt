@@ -19,6 +19,11 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
+private val NOW = Instant.parse("2026-08-13T12:00:00Z")
+private val seededRates = listOf(
+    FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
+)
+
 class RatesViewModelTest : StringSpec({
     "refreshRates fetches and exposes cached rates for the default currency" {
         onTestMain {
@@ -437,11 +442,4 @@ class RatesViewModelTest : StringSpec({
             settingsDao.getRatesSeen() shouldBe true
         }
     }
-}) {
-    companion object {
-        private val NOW = Instant.parse("2026-08-13T12:00:00Z")
-        private val seededRates = listOf(
-            FxRate(Currency.CHF, Currency.EUR, 1.0669, "2026-08-12"),
-        )
-    }
-}
+})
