@@ -32,6 +32,7 @@ class EntryPointViewModel(
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
+    private val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -62,7 +63,7 @@ class EntryPointViewModel(
         rates,
     ) { entries, accounts, currency, rates ->
         accountTotalMinor(
-            accountBalancesAtEnd(entries, clock.todayIn(TimeZone.currentSystemDefault()), accounts),
+            accountBalancesAtEnd(entries, clock.todayIn(zone), accounts, zone),
             currency,
             rates,
         )

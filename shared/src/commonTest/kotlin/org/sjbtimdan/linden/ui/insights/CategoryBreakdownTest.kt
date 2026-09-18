@@ -70,6 +70,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             emptyList(),
+            TimeZone.UTC,
         )
 
         breakdown.expenses shouldHaveSize 2
@@ -92,6 +93,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             listOf(Budget("Groceries", 800)),
+            TimeZone.UTC,
         )
 
         breakdown.expenses.single().budgetMinor shouldBe 800
@@ -111,6 +113,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             emptyList(),
+            TimeZone.UTC,
         )
 
         val groceriesRow = breakdown.expenses.first { it.category == groceries }
@@ -130,6 +133,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             emptyList(),
+            TimeZone.UTC,
         )
 
         breakdown.expenses.shouldBeEmpty()
@@ -143,6 +147,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             listOf(Budget("groceries", 800), Budget("Salary", 9_999)),
+            TimeZone.UTC,
         )
 
         breakdown.expenses.single().budgetMinor shouldBe 800
@@ -156,6 +161,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             emptyList(),
             emptyList(),
+            TimeZone.UTC,
         )
 
         breakdown.expenses.single().amountMinor.shouldBeNull()
@@ -169,6 +175,7 @@ class CategoryBreakdownTest : StringSpec({
             Currency.CHF,
             listOf(FxRate(Currency.CHF, Currency.USD, 1.13, "2026-08-01")),
             emptyList(),
+            TimeZone.UTC,
         )
 
         breakdown.expenses.single().amountMinor shouldBe 1_000

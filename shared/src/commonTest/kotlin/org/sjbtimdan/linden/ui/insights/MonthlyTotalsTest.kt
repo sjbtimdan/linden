@@ -68,7 +68,8 @@ private fun totals(
     currentMonth: LocalDate = defaultCurrentMonth,
     currency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
-) = monthlyTotals(entries, windowEnd, currentMonth, currency, rates)
+    zone: TimeZone = TimeZone.UTC,
+) = monthlyTotals(entries, windowEnd, currentMonth, currency, rates, zone)
 
 class MonthlyTotalsTest : StringSpec({
 
@@ -108,6 +109,19 @@ class MonthlyTotalsTest : StringSpec({
         totals.last().isCurrent shouldBe true
     }
 
+    "buckets entries by the passed zone, not their created zone" {
+        val la = TimeZone.of("America/Los_Angeles")
+        val totals = totals(
+            listOf(expense(450, "2026-08-01T00:30:00Z")),
+            zone = la,
+        )
+
+        // 00:30 UTC on Aug 1 is still Jul 31 in Los Angeles: the expense
+        // belongs to July, not August.
+        totals.first { it.year == 2026 && it.monthNumber == 7 }.expenseMinor shouldBe 450
+        totals.last().expenseMinor shouldBe 0
+    }
+
     "drops entries outside the twelve-month window" {
         val totals = totals(
             listOf(expense(999, "2025-08-31T12:00:00Z"), expense(100, "2026-09-01T00:00:00Z")),
@@ -139,18 +153,20 @@ class MonthlyTotalsTest : StringSpec({
         totals.last().incomeMinor shouldBe 0
     }
 
-    "buckets by the entry's own time zone" {
+    "buckets by the passed zone, not the entry's created zone" {
         val totals = totals(
             listOf(
-                // 23:00 UTC on July 31 is already August 1 in Tokyo.
+                // 23:00 UTC on July 31 is already August 1 in Tokyo, but the
+                // classification zone (UTC) keeps it in July.
                 expense(300, "2026-07-31T23:00:00Z", zone = TimeZone.of("Asia/Tokyo")),
-                // 01:30 UTC on August 1 is still July 31 in Los Angeles.
+                // 01:30 UTC on August 1 is still July 31 in Los Angeles, but the
+                // classification zone (UTC) puts it in August.
                 expense(700, "2026-08-01T01:30:00Z", zone = TimeZone.of("America/Los_Angeles")),
             ),
         )
 
-        totals.first { it.year == 2026 && it.monthNumber == 7 }.expenseMinor shouldBe 700
-        totals.first { it.year == 2026 && it.monthNumber == 8 }.expenseMinor shouldBe 300
+        totals.first { it.year == 2026 && it.monthNumber == 7 }.expenseMinor shouldBe 300
+        totals.first { it.year == 2026 && it.monthNumber == 8 }.expenseMinor shouldBe 700
     }
 
     "converts foreign-currency expenses into the default currency" {

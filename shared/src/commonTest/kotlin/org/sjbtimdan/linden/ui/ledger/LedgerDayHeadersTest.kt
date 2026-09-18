@@ -28,12 +28,13 @@ class LedgerDayHeadersTest : StringSpec({
     val day = 86_400_000L
 
     "empty list produces no items" {
-        ledgerListItems(emptyList()) shouldBe emptyList()
+        ledgerListItems(emptyList(), TimeZone.UTC) shouldBe emptyList()
     }
 
     "entries on a single day produce one header" {
         val items = ledgerListItems(
             listOf(expense(1, 0), expense(2, day - 1)),
+            TimeZone.UTC,
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L)
         items.first().shouldBeInstanceOf<DayHeaderItem>().label shouldBe "Jan 1, 1970"
@@ -48,6 +49,7 @@ class LedgerDayHeadersTest : StringSpec({
                 expense(4, 2 * day - 1),
                 expense(5, 2 * day),
             ),
+            TimeZone.UTC,
         )
         items.map { it.key } shouldBe listOf(
             "day-1970-01-01",
@@ -61,7 +63,7 @@ class LedgerDayHeadersTest : StringSpec({
         )
     }
 
-    "different zones landing on the same local day produce one header" {
+    "entries are grouped by the classification zone, not their created zone" {
         val la = TimeZone.of("America/Los_Angeles")
         val items = ledgerListItems(
             listOf(
@@ -69,6 +71,7 @@ class LedgerDayHeadersTest : StringSpec({
                 expense(2, 8 * 3_600_000, la),
                 expense(3, 32 * 3_600_000, la),
             ),
+            TimeZone.UTC,
         )
         items.map { it.key } shouldBe listOf("day-1970-01-01", 1L, 2L, "day-1970-01-02", 3L)
     }
@@ -76,6 +79,7 @@ class LedgerDayHeadersTest : StringSpec({
     "non-chronological input produces a header per contiguous run" {
         val items = ledgerListItems(
             listOf(expense(1, day), expense(2, 0), expense(3, 2 * day)),
+            TimeZone.UTC,
         )
         items.map { it.key } shouldBe listOf(
             "day-1970-01-02",

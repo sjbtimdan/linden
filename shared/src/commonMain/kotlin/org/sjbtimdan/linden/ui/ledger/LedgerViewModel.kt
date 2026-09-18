@@ -29,7 +29,7 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
-import org.sjbtimdan.linden.model.dayInZone
+import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
@@ -54,6 +54,7 @@ class LedgerViewModel(
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
     private val clock: AppClock,
+    val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -61,8 +62,8 @@ class LedgerViewModel(
     settingsDao,
     ratesProvider,
 ) {
-    /** Today in the system zone, re-read on every call. */
-    fun today(): LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
+    /** Today in [zone], re-read on every call. */
+    fun today(): LocalDate = clock.todayIn(zone)
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -108,7 +109,7 @@ class LedgerViewModel(
             source.map { rows ->
                 val now = today()
                 rows
-                    .filter { entry -> entry.isInWindow(window?.start, window?.end, now, showFuture) }
+                    .filter { entry -> entry.isInWindow(window?.start, window?.end, now, showFuture, zone) }
                     .sortedWith(compareByDescending<Entry> { it.createdAt }.thenByDescending { it.id })
                     .map(::SearchableEntry)
             }
@@ -222,7 +223,7 @@ class LedgerViewModel(
     ) { rows, end ->
         val now = today()
         rows.count { entry ->
-            val day = entry.dayInZone()
+            val day = entry.dayIn(zone)
             day > now && (end == null || day <= end)
         }
     }.stateFlow(0)
@@ -242,7 +243,7 @@ class LedgerViewModel(
         // Entries dated after today count only when the window spans today and the
         // toggle is off; past and wholly-future windows count through their own end.
         val cutoff = if (showFuture) window?.end else hideFutureBound(window?.start, window?.end, now)
-        accountBalancesAtEnd(entries, cutoff, accounts)
+        accountBalancesAtEnd(entries, cutoff, accounts, zone)
     }.stateFlow(emptyList())
 
     /** Net total of all period-end balances in the default currency; null when a rate is missing. */
@@ -263,7 +264,7 @@ class LedgerViewModel(
         entryDao.getUpTo(today().sqlUpperBound()),
     ) { accounts, entries ->
         val now = today()
-        accountBalancesMinor(entryDeltas(entries.filter { it.dayInZone() <= now }), accounts)
+        accountBalancesMinor(entryDeltas(entries.filter { it.dayIn(zone) <= now }), accounts)
     }.stateFlow(emptyMap())
 
     /** Net total per category in the default currency derived from the filtered entries. */
@@ -411,7 +412,7 @@ class LedgerViewModel(
      * being edited but is dated [now] in [zone]: Save then creates a duplicate,
      * leaving the original untouched. The edit is replaced, not stacked.
      */
-    fun duplicateDialogEntry(now: Instant = clock.now(), zone: TimeZone = TimeZone.currentSystemDefault()) {
+    fun duplicateDialogEntry(now: Instant = clock.now(), zone: TimeZone = this.zone) {
         draftState.update { it?.asNewEntry(now, zone) }
     }
 
@@ -478,7 +479,6 @@ class LedgerViewModel(
     fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = clock.now()) {
         viewModelScope.launch {
             try {
-                val zone = TimeZone.currentSystemDefault()
                 val current = currentAccountBalances.value[account.id] ?: account.initialBalance
                 val adjustment = balanceAdjustment(current, targetBalance)
                 val entry = adjustmentEntry(adjustment, account, category, now, zone)
@@ -543,8 +543,14 @@ private fun hideFutureBound(start: LocalDate?, end: LocalDate?, today: LocalDate
     return if (today >= start && today <= end) today else end
 }
 
-private fun Entry.isInWindow(start: LocalDate?, end: LocalDate?, today: LocalDate, showFuture: Boolean): Boolean {
-    val date = dayInZone()
+private fun Entry.isInWindow(
+    start: LocalDate?,
+    end: LocalDate?,
+    today: LocalDate,
+    showFuture: Boolean,
+    zone: TimeZone,
+): Boolean {
+    val date = dayIn(zone)
     val bound = if (showFuture) end else hideFutureBound(start, end, today)
     return (bound == null || date <= bound) &&
         (start == null || date >= start)

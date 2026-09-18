@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
@@ -66,7 +67,12 @@ private fun Entry.tintColor(): Color = when (type) {
  * shows the time to tell same-day entries apart.
  */
 @Composable
-fun EntryRow(entry: Entry, onClick: () -> Unit, showTime: Boolean = true) {
+fun EntryRow(
+    entry: Entry,
+    onClick: () -> Unit,
+    showTime: Boolean = true,
+    zone: TimeZone = TimeZone.currentSystemDefault(),
+) {
     val tint = entry.tintColor()
     Row(
         modifier = Modifier
@@ -106,7 +112,7 @@ fun EntryRow(entry: Entry, onClick: () -> Unit, showTime: Boolean = true) {
             )
             if (showTime) {
                 Text(
-                    text = formatTime(entry.createdAt, entry.createdZone),
+                    text = formatTime(entry.createdAt, zone),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

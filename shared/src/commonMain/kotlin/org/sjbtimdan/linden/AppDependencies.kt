@@ -51,7 +51,7 @@ class AppDependencies(
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
     initialHideEntryTotal: Boolean,
-    initialLanguage: AppLanguage ,
+    initialLanguage: AppLanguage,
     val firstRun: Boolean,
     fxRatesSource: FxRatesSource?,
 ) {

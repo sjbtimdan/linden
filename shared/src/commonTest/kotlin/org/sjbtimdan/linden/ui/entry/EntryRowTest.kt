@@ -42,6 +42,7 @@ class EntryRowTest : StringSpec({
                             createdZone = TimeZone.UTC,
                         ),
                         onClick = {},
+                        zone = TimeZone.UTC,
                     )
                 }
 

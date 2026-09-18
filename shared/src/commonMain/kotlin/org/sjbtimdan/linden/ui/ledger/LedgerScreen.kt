@@ -52,13 +52,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.dayInZone
+import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.accounts_empty_none
 import org.sjbtimdan.linden.resources.categories_empty_none
@@ -196,7 +197,7 @@ fun LedgerScreen(
     }
 
     val listItems = remember(displayedEntries) {
-        ledgerListItems(entries = displayedEntries)
+        ledgerListItems(entries = displayedEntries, zone = viewModel.zone)
     }
 
     BackHandler(enabled = dialogState == null && (categoryFilter != null || accountFilter != null)) {
@@ -613,6 +614,7 @@ fun LedgerScreen(
                             EntryRow(
                                 entry = item.entry,
                                 onClick = { viewModel.openEditDialog(item.entry) },
+                                zone = viewModel.zone,
                             )
                         }
                     }
@@ -848,12 +850,12 @@ internal data class EntryListItem(val entry: Entry) : LedgerListItem {
 }
 
 /** Builds the flat list of headers and entries shown by the ledger list. */
-internal fun ledgerListItems(entries: List<Entry>): List<LedgerListItem> = buildList {
+internal fun ledgerListItems(entries: List<Entry>, zone: TimeZone): List<LedgerListItem> = buildList {
     var previousDay: LocalDate? = null
     entries.forEach { entry ->
-        val day = entry.dayInZone()
+        val day = entry.dayIn(zone)
         if (day != previousDay) {
-            add(DayHeaderItem("day-$day", formatDate(entry.createdAt, entry.createdZone)))
+            add(DayHeaderItem("day-$day", formatDate(entry.createdAt, zone)))
             previousDay = day
         }
         add(EntryListItem(entry))

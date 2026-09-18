@@ -60,5 +60,5 @@ data class TransferEntry(
     override val type: EntryType = EntryType.Transfer
 }
 
-/** The calendar day this entry is dated, in the zone it was created in. */
-fun Entry.dayInZone(): LocalDate = createdAt.toLocalDateTime(createdZone).date
+/** The calendar day this entry is dated, in [zone]. */
+fun Entry.dayIn(zone: TimeZone): LocalDate = createdAt.toLocalDateTime(zone).date

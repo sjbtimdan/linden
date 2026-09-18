@@ -45,6 +45,7 @@ class InsightsViewModel(
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
+    private val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) : AppViewModel() {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
@@ -71,7 +72,7 @@ class InsightsViewModel(
         ratesProvider.rates,
         _windowEnd,
     ) { entries, currency, rates, windowEnd ->
-        monthlyTotals(entries, windowEnd, currentMonthStart(today()), currency, rates)
+        monthlyTotals(entries, windowEnd, currentMonthStart(today()), currency, rates, zone)
     }.stateFlow(emptyList())
 
     /** False once the window already ends with the current month. */
@@ -91,7 +92,7 @@ class InsightsViewModel(
     }.combine(_selectedIndex) { input, selected ->
         val index = if (selected == -1 || selected >= WINDOW_MONTHS) WINDOW_MONTHS - 1 else selected
         val month = monthBefore(input.windowEnd, WINDOW_MONTHS - 1 - index)
-        categoryBreakdown(input.entries, month, input.currency, input.rates, input.budgets)
+        categoryBreakdown(input.entries, month, input.currency, input.rates, input.budgets, zone)
     }.stateFlow(null)
 
     /** Inspects the month at [index] within the window. */
@@ -115,7 +116,7 @@ class InsightsViewModel(
         _selectedIndex.value = -1
     }
 
-    private fun today(): LocalDate = clock.todayIn(TimeZone.currentSystemDefault())
+    private fun today(): LocalDate = clock.todayIn(zone)
 }
 
 private fun currentMonthStart(date: LocalDate): LocalDate = LocalDate(date.year, date.month.number, 1)

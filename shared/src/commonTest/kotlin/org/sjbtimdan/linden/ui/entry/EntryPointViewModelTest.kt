@@ -518,6 +518,7 @@ class EntryPointViewModelTest : StringSpec({
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
+                    zone = TimeZone.UTC,
                 )
                 viewModel.seedDraft()
 
@@ -547,6 +548,7 @@ class EntryPointViewModelTest : StringSpec({
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
+                    zone = TimeZone.UTC,
                 )
                 viewModel.seedDraft()
 

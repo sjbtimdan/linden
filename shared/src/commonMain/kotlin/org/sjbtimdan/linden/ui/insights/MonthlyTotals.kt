@@ -1,12 +1,13 @@
 package org.sjbtimdan.linden.ui.insights
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
-import org.sjbtimdan.linden.model.dayInZone
+import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.ui.entry.DateLanguage
 import kotlin.math.roundToLong
 
@@ -34,11 +35,10 @@ internal fun monthIndexOf(date: LocalDate): Int = monthIndexOf(date.year, date.m
 /**
  * Expense and income totals of the [windowMonths] months ending with the month
  * of [windowEnd], one [MonthTotal] per month in ascending order. Transfers
- * never contribute; entries are bucketed by their own
- * [org.sjbtimdan.linden.model.Entry.createdZone] so a month boundary near
- * midnight never misplaces an entry. Months without entries total zero.
- * [isCurrent] compares against [currentMonth], the real "now", so a historical
- * window keeps its current-month marker.
+ * never contribute; entries are bucketed by the day they fall on in [zone] so
+ * a month boundary near midnight never misplaces an entry. Months without
+ * entries total zero. [isCurrent] compares against [currentMonth], the real
+ * "now", so a historical window keeps its current-month marker.
  */
 fun monthlyTotals(
     entries: List<Entry>,
@@ -46,6 +46,7 @@ fun monthlyTotals(
     currentMonth: LocalDate,
     defaultCurrency: Currency,
     rates: List<FxRate>,
+    zone: TimeZone,
     windowMonths: Int = 12,
 ): List<MonthTotal> {
     require(windowMonths > 0)
@@ -55,7 +56,7 @@ fun monthlyTotals(
     // Per month, per type, per source currency: the summed amounts.
     val sums = Array(windowMonths) { monthSums() }
     for (entry in entries) {
-        val monthKey = entry.dayInZone()
+        val monthKey = entry.dayIn(zone)
         val offset = monthIndexOf(monthKey) - firstIndex
         if (offset !in sums.indices) continue
         val type = entry.type

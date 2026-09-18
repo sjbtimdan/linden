@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.insights
 
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
@@ -9,7 +10,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
-import org.sjbtimdan.linden.model.dayInZone
+import org.sjbtimdan.linden.model.dayIn
 
 /** One category of the selected month: totals, budget and previous-month total. */
 data class CategoryBreakdownRow(
@@ -52,11 +53,12 @@ fun categoryBreakdown(
     defaultCurrency: Currency,
     rates: List<FxRate>,
     budgets: List<Budget>,
+    zone: TimeZone,
 ): MonthBreakdown {
     val monthIndex = monthIndexOf(month)
     val buckets = BreakdownBuckets()
     for (entry in entries) {
-        val date = entry.dayInZone()
+        val date = entry.dayIn(zone)
         val slot = when (monthIndexOf(date) - monthIndex) {
             0 -> 0
             -1 -> 1

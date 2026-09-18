@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.AppDependencies
 import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.AccountDao
@@ -241,6 +242,7 @@ fun withEntryPoint(
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 clock = clock,
+                zone = TimeZone.UTC,
             )
             block(entryDao, accountDao, categoryDao, viewModel)
         }
@@ -305,6 +307,7 @@ fun withLedgerViewModel(
                 testRatesProvider(settingsDao, fxRateDao),
                 testAllEntries(entryDao),
                 clock = clock,
+                zone = TimeZone.UTC,
             )
             // Tests create entries with the default epoch timestamp, so they assume
             // the "All" period rather than the production default of "Month".
@@ -367,6 +370,7 @@ fun withInsightsViewModel(
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 clock = clock,
+                zone = TimeZone.UTC,
             )
             block(accountDao, categoryDao, entryDao, viewModel)
         }
