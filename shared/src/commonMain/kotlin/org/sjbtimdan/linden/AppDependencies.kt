@@ -50,10 +50,10 @@ class AppDependencies(
     val database: LindenDatabase,
     val initialTheme: ThemeMode,
     val initialCurrency: Currency,
-    initialHideEntryTotal: Boolean = false,
-    initialLanguage: AppLanguage = AppLanguage.SYSTEM,
-    val firstRun: Boolean = false,
-    fxRatesSource: FxRatesSource? = null,
+    initialHideEntryTotal: Boolean,
+    initialLanguage: AppLanguage ,
+    val firstRun: Boolean,
+    fxRatesSource: FxRatesSource?,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
     val accountDao = AccountDao(database.accountQueries)
@@ -178,5 +178,13 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     if (!firstRun) {
         DefaultDataSeeder(database).seedIfEmpty(initialCurrency)
     }
-    return AppDependencies(database, initialTheme, initialCurrency, initialHideEntryTotal, initialLanguage, firstRun)
+    return AppDependencies(
+        database,
+        initialTheme,
+        initialCurrency,
+        initialHideEntryTotal,
+        initialLanguage,
+        firstRun,
+        null,
+    )
 }

@@ -89,6 +89,9 @@ fun withApp(
                 database = database,
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
+                initialHideEntryTotal = false,
+                initialLanguage = AppLanguage.SYSTEM,
+                firstRun = false,
                 fxRatesSource = fxRatesSource,
             )
             block(dependencies)

@@ -8,6 +8,7 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
@@ -17,6 +18,8 @@ private suspend fun testDependencies(firstRun: Boolean = false): AppDependencies
     initialTheme = ThemeMode.SYSTEM,
     initialCurrency = Currency.CHF,
     firstRun = firstRun,
+    initialHideEntryTotal = false,
+    initialLanguage = AppLanguage.SYSTEM,
     fxRatesSource = FakeFxRatesSource(),
 )
 

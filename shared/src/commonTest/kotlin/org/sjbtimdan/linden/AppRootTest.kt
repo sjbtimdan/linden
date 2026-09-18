@@ -10,6 +10,7 @@ import io.kotest.core.spec.style.StringSpec
 import kotlinx.coroutines.CompletableDeferred
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
@@ -24,6 +25,9 @@ class AppRootTest : StringSpec({
                     database = lindenDatabase(),
                     initialTheme = ThemeMode.SYSTEM,
                     initialCurrency = Currency.CHF,
+                    initialHideEntryTotal = false,
+                    initialLanguage = AppLanguage.SYSTEM,
+                    firstRun = false,
                     fxRatesSource = FakeFxRatesSource(),
                 )
 
@@ -65,6 +69,9 @@ class AppRootTest : StringSpec({
                     database = lindenDatabase(),
                     initialTheme = ThemeMode.SYSTEM,
                     initialCurrency = Currency.CHF,
+                    initialHideEntryTotal = false,
+                    initialLanguage = AppLanguage.SYSTEM,
+                    firstRun = false,
                     fxRatesSource = FakeFxRatesSource(),
                 )
 
@@ -95,6 +102,8 @@ class AppRootTest : StringSpec({
                     database = lindenDatabase(),
                     initialTheme = ThemeMode.SYSTEM,
                     initialCurrency = Currency.CHF,
+                    initialHideEntryTotal = false,
+                    initialLanguage = AppLanguage.SYSTEM,
                     firstRun = true,
                     fxRatesSource = FakeFxRatesSource(),
                 )
