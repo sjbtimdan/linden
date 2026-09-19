@@ -1,1 +1,1 @@
-./gradlew :androidApp:assembleRelease
+./gradlew :androidApp:bundleRelease

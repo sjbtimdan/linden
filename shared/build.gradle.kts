@@ -25,7 +25,7 @@ kotlin {
         minSdk = libs.versions.android.minSdk.get().toInt()
 
         compilerOptions {
-            jvmTarget = JvmTarget.JVM_11
+            jvmTarget = JvmTarget.JVM_17
         }
         androidResources {
             enable = true
@@ -93,7 +93,7 @@ kotlin {
         }
     }
     sourceSets {
-        val jvmIntegrationTest by getting {
+        val jvmIntegrationTest = getByName("jvmIntegrationTest") {
             dependencies {
                 // The integration test source set compiles only its own sources
                 // but sees the compiled jvmTest classes and their dependencies

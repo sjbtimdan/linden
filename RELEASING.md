@@ -2,6 +2,8 @@
 
 This document covers the steps to produce and publish a release of Linden.
 
+Email for testing: crafted-devs@proton.me
+
 ## Release signing
 
 Linden uses **Play App Signing** (recommended by Google). You keep an **upload key**
