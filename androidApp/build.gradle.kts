@@ -30,6 +30,10 @@ dependencies {
     implementation(libs.firebase.analytics)
     debugImplementation(libs.compose.uiTooling)
     detektPlugins(libs.detekt.ktlint.wrapper)
+    constraints {
+        // play-services-base pulls in ancient fragment:1.1.0, flagged as outdated by Play.
+        implementation(libs.androidx.fragment)
+    }
 }
 
 detekt {
