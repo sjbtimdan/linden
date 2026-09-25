@@ -110,6 +110,7 @@ fun EntryForm(
     categorySuggestions: List<Long> = emptyList(),
     quickEntries: List<QuickEntry> = emptyList(),
     onQuickEntry: (QuickEntry) -> Unit = {},
+    onAdd: (() -> Unit)? = null,
     defaultCurrency: Currency = Currency.CHF,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
     onCreateAccount: ((String, Currency, Long, Boolean) -> Boolean)? = null,
@@ -445,6 +446,8 @@ fun EntryForm(
                 activeField = null
             },
             onCancel = { activeField = null },
+            onAdd = onAdd,
+            addEnabled = { value -> state.copy(amountText = value).isValid(accounts) },
         )
     }
 
@@ -466,6 +469,8 @@ fun EntryForm(
                 activeField = null
             },
             onCancel = { activeField = null },
+            onAdd = onAdd,
+            addEnabled = { value -> state.copy(toAmountText = value).isValid(accounts) },
         )
     }
 

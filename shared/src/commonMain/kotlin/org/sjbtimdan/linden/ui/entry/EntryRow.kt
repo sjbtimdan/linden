@@ -35,7 +35,7 @@ import org.sjbtimdan.linden.ui.theme.CardShape
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
-private fun Entry.title(): String {
+internal fun Entry.title(): String {
     val description = description?.takeIf { it.isNotBlank() }
     return when (this) {
         is TransferEntry -> description ?: stringResource(Res.string.entry_type_transfer)
@@ -43,19 +43,19 @@ private fun Entry.title(): String {
     }
 }
 
-private fun Entry.subtitle(): String = when (this) {
+internal fun Entry.subtitle(): String = when (this) {
     is TransferEntry -> "${account.name} → ${toAccount.name}"
     else -> account.name
 }
 
-private fun Entry.amountLabel(): String = when (type) {
+internal fun Entry.amountLabel(): String = when (type) {
     EntryType.Expense -> "− ${formatAmountCompact(amount)} ${account.currency.symbol}"
     EntryType.Income -> "+ ${formatAmountCompact(amount)} ${account.currency.symbol}"
     EntryType.Transfer -> "${formatAmountCompact(amount)} ${account.currency.symbol}"
 }
 
 @Composable
-private fun Entry.tintColor(): Color = when (type) {
+internal fun Entry.tintColor(): Color = when (type) {
     EntryType.Expense -> lindenColors().expense
     EntryType.Income -> lindenColors().income
     EntryType.Transfer -> lindenColors().transfer

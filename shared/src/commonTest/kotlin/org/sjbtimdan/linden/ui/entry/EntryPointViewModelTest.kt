@@ -244,6 +244,57 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 
+    "lastAdded exposes the entry a successful save wrote" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.onDescriptionChange("Coffee")
+
+            viewModel.saveDraft() shouldBe true
+
+            viewModel.lastAdded.value.let { entry ->
+                entry.shouldNotBeNull()
+                entry.description shouldBe "Coffee"
+                entry.amount shouldBe 450
+            }
+        }
+    }
+
+    "lastAdded is unchanged when a save is refused" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+            val saved = viewModel.lastAdded.value
+
+            viewModel.onAmountChange("")
+            viewModel.saveDraft() shouldBe false
+
+            viewModel.lastAdded.value shouldBe saved
+        }
+    }
+
+    "clearDraft clears lastAdded" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+
+            viewModel.clearDraft()
+
+            viewModel.lastAdded.value.shouldBeNull()
+        }
+    }
+
     "account and category suggestions are empty without a draft" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

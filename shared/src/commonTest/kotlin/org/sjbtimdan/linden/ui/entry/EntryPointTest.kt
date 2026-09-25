@@ -164,6 +164,35 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "adding shows the last added entry as already added until clear" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            onNodeWithTag("lastAddedEntry").assertIsDisplayed()
+            onNodeWithText("Already added").assertIsDisplayed()
+            onNodeWithText("Groceries · Main").assertIsDisplayed()
+            onNodeWithText("− 12.50 CHF").assertIsDisplayed()
+
+            onNodeWithText("Clear").performClick()
+            waitForIdle()
+
+            onNodeWithTag("lastAddedEntry").assertDoesNotExist()
+            onNodeWithText("Already added").assertDoesNotExist()
+        }
+    }
+
     "clear resets the form without adding an entry" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -515,7 +544,7 @@ class EntryPointTest : StringSpec({
             // Only the calculator keypad remains: no tabs, no form, no actions.
             onNodeWithText("Enter").assertIsDisplayed()
             onNodeWithText("Expense").assertDoesNotExist()
-            onNodeWithText("Add").assertDoesNotExist()
+            onNodeWithTag("saveEntry").assertDoesNotExist()
 
             onNodeWithText("1").performClick()
             onNodeWithText("0").performClick()
@@ -541,7 +570,7 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Amount").performClick()
             waitForIdle()
             onNodeWithText("Enter").assertIsDisplayed()
-            onNodeWithText("Add").assertDoesNotExist()
+            onNodeWithTag("saveEntry").assertDoesNotExist()
 
             onNodeWithContentDescription("Back")
                 .performSemanticsAction(SemanticsActions.OnClick)
@@ -577,7 +606,7 @@ class EntryPointTest : StringSpec({
             // The received amount opens its own keypad; the form and tabs collapse.
             onNodeWithText("Enter").assertIsDisplayed()
             onNodeWithText("Transfer").assertDoesNotExist()
-            onNodeWithText("Add").assertDoesNotExist()
+            onNodeWithTag("saveEntry").assertDoesNotExist()
 
             onNodeWithText("9").performClick()
             onNodeWithText("5").performClick()
@@ -587,6 +616,89 @@ class EntryPointTest : StringSpec({
             // The committed value comes back formatted by the calculator.
             onNode(hasSetTextAction() and hasText("95.00")).assertIsDisplayed()
             onNodeWithText("Add").performClick()
+
+            onNodeWithText("Added").assertIsDisplayed()
+            entryDao.getAll().first().filterIsInstance<TransferEntry>().shouldHaveSize(1)
+        }
+    }
+
+    "the calculator Add button saves the entry when the rest of the form is filled" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+            onNodeWithText("1").performClick()
+            onNodeWithText("2").performClick()
+            onNodeWithTag("calculatorAdd").assertIsEnabled()
+            onNodeWithTag("calculatorAdd").performClick()
+            waitForIdle()
+
+            onNodeWithText("Added").assertIsDisplayed()
+            onNodeWithTag("lastAddedEntry").assertIsDisplayed()
+            onNodeWithText("Already added").assertIsDisplayed()
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
+        }
+    }
+
+    "the calculator Add button stays disabled while the rest of the form is incomplete" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+            onNodeWithText("1").performClick()
+            onNodeWithText("2").performClick()
+
+            onNodeWithTag("calculatorAdd").assertIsNotEnabled()
+        }
+    }
+
+    "the calculator Add button waits for the received amount on a cross-currency transfer" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("Savings", Currency.EUR)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Transfer").performClick()
+            onNodeWithText("From account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("To account").performClick()
+            onNodeWithText("Savings").performClick()
+
+            onNodeWithText("Amount (sent)").performClick()
+            waitForIdle()
+            onNodeWithText("1").performClick()
+            onNodeWithText("0").performClick()
+            onNodeWithText("0").performClick()
+            // The received amount is still missing, so the sent amount cannot be added yet.
+            onNodeWithTag("calculatorAdd").assertIsNotEnabled()
+            onNodeWithText("Enter").performClick()
+            waitForIdle()
+
+            onNodeWithText("Amount (received)").performClick()
+            waitForIdle()
+            onNodeWithText("9").performClick()
+            onNodeWithText("5").performClick()
+            onNodeWithTag("calculatorAdd").assertIsEnabled()
+            onNodeWithTag("calculatorAdd").performClick()
+            waitForIdle()
 
             onNodeWithText("Added").assertIsDisplayed()
             entryDao.getAll().first().filterIsInstance<TransferEntry>().shouldHaveSize(1)

@@ -93,6 +93,14 @@ class EntryPointViewModel(
     /** Whole entries the user is likely to repeat right now, time first with field matches boosted. */
     val quickEntries: StateFlow<List<QuickEntry>> get() = suggestions.quickEntries
 
+    private val _lastAdded = MutableStateFlow<Entry?>(null)
+
+    /**
+     * The entry most recently saved from this screen, shown as a read-only
+     * "already added" confirmation until the user clears the form.
+     */
+    val lastAdded: StateFlow<Entry?> = _lastAdded.asStateFlow()
+
     /** Fills the draft from a quick-entry chip, keeping the current date and time. */
     fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->
         state?.let {
@@ -140,6 +148,7 @@ class EntryPointViewModel(
 
     /** Resets the form to an empty draft of the selected type. */
     fun clearDraft() {
+        _lastAdded.value = null
         draftState.value = EntryDraft.forNew(_selectedType.value, clock = clock)
     }
 
@@ -152,6 +161,7 @@ class EntryPointViewModel(
         val state = draftState.value ?: return false
         val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
         createEntry(entry)
+        _lastAdded.value = entry
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }

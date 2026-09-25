@@ -45,6 +45,8 @@
     <!-- Entry point -->
     <string name="entry_add">Add</string>
     <string name="entry_added">Added</string>
+    <string name="entry_add_to_ledger">Add To Ledger</string>
+    <string name="entry_already_added">Already added</string>
     <string name="entry_total_balance">Total balance</string>
     <string name="entry_show_total">Show total</string>
     <string name="entry_hide_total">Hide total</string>

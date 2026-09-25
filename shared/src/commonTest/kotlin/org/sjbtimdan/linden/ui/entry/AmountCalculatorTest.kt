@@ -8,6 +8,8 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -50,7 +52,11 @@ private fun draft(amountText: String): EntryDraft = EntryDraft(
 )
 
 @OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.showForm(initial: EntryDraft, onAmountChange: (String) -> Unit = {}) {
+private fun ComposeUiTest.showForm(
+    initial: EntryDraft,
+    onAmountChange: (String) -> Unit = {},
+    onAdd: (() -> Unit)? = null,
+) {
     setContent {
         var state by remember { mutableStateOf(initial) }
         EntryForm(
@@ -67,6 +73,7 @@ private fun ComposeUiTest.showForm(initial: EntryDraft, onAmountChange: (String)
             onToAmountChange = {},
             onDescriptionChange = {},
             onCreatedAtChange = {},
+            onAdd = onAdd,
         )
     }
 }
@@ -217,6 +224,65 @@ class AmountCalculatorTest : StringSpec({
                 waitForIdle()
 
                 committed shouldBe "12.50"
+            }
+        }
+    }
+
+    "Add action is hidden when the host provides no handler" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onNodeWithTag("calculatorAdd").assertDoesNotExist()
+            }
+        }
+    }
+
+    "Add action stays disabled until a valid amount is typed" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""), onAdd = {})
+                openCalculator()
+
+                onNodeWithTag("calculatorAdd").assertIsNotEnabled()
+
+                onNodeWithText("1").performClick()
+                waitForIdle()
+                onNodeWithTag("calculatorAdd").assertIsEnabled()
+            }
+        }
+    }
+
+    "Add action stays disabled while another required field is missing" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft("").copy(accountId = null), onAdd = {})
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                waitForIdle()
+
+                onNodeWithTag("calculatorAdd").assertIsNotEnabled()
+            }
+        }
+    }
+
+    "Add action commits the amount and fires the handler" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                var added = false
+                showForm(draft(""), onAmountChange = { committed = it }, onAdd = { added = true })
+                openCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("2").performClick()
+                onNodeWithTag("calculatorAdd").performClick()
+                waitForIdle()
+
+                committed shouldBe "12.00"
+                added shouldBe true
             }
         }
     }

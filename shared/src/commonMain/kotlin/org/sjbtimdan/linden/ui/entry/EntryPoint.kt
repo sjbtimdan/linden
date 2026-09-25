@@ -88,6 +88,7 @@ fun EntryPoint(
     val hideTotal by viewModel.hideTotal.collectAsState()
     val hasEntries by viewModel.hasEntries.collectAsState()
     val showRatesWarning by viewModel.showRatesWarning.collectAsState()
+    val lastAdded by viewModel.lastAdded.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -110,6 +111,16 @@ fun EntryPoint(
     // draft that survives a configuration change keeps the compact header.
     var draftTouched by rememberSaveable { mutableStateOf(false) }
     val markTouched: () -> Unit = { draftTouched = true }
+    val addedMessage = stringResource(Res.string.entry_added)
+
+    // Saves the draft from either the form's Add row or the calculator's Add
+    // button; both only fire while the draft is valid.
+    val addDraft: () -> Unit = {
+        if (viewModel.saveDraft()) {
+            markTouched()
+            scope.launch { snackbarHostState.showSnackbar(addedMessage) }
+        }
+    }
 
     // Create dialogs shared with EntryForm and opened from the missing-requirement
     // hint when no accounts/categories exist. EntryForm renders them from this state.
@@ -255,6 +266,7 @@ fun EntryPoint(
                         viewModel.applyQuickEntry(it)
                         markTouched()
                     },
+                    onAdd = addDraft,
                     defaultCurrency = defaultCurrency,
                     onCreateCategory = { name, type, icon ->
                         val created = viewModel.createCategory(name, type, icon)
@@ -277,7 +289,6 @@ fun EntryPoint(
         // Explains why Add is disabled unless the form's own links already
         // point at the blocker (missing accounts or categories).
         val missingHint = missingRequirement(draft, accounts, categories)
-        val addedMessage = stringResource(Res.string.entry_added)
 
         // When nothing exists to pick, the hint becomes an action that opens the
         // same create dialogs as the form's "+ New" chips.
@@ -319,17 +330,19 @@ fun EntryPoint(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            // Receipt of the entry just saved, clearly marked as added so the
+            // prefilled form below is not mistaken for an unsaved draft.
+            lastAdded?.let { entry ->
+                LastAddedEntry(entry = entry)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
-                    onClick = {
-                        if (viewModel.saveDraft()) {
-                            markTouched()
-                            scope.launch { snackbarHostState.showSnackbar(addedMessage) }
-                        }
-                    },
+                    onClick = addDraft,
                     enabled = draft?.isValid(accounts) == true,
                     modifier = Modifier.weight(1f).testTag("saveEntry"),
                 ) {

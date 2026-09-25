@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.entry_add_to_ledger
 import org.sjbtimdan.linden.resources.entry_backspace
 import org.sjbtimdan.linden.resources.entry_calculator
 import org.sjbtimdan.linden.resources.entry_enter
@@ -52,6 +53,11 @@ import org.sjbtimdan.linden.resources.entry_simple_keypad
  * calculator; the display-row toggle switches modes, carrying the typed value
  * across. Enter commits a valid positive amount via [onEnter] (otherwise
  * [onInvalid] fires); Escape or the system back cancels via [onCancel].
+ *
+ * When [onAdd] is provided, an Add action commits the amount like Enter and
+ * then fires [onAdd]; it is enabled only while that amount keeps the rest of
+ * the entry valid according to [addEnabled]. This lets a host save in one tap
+ * when the other fields are already filled.
  */
 @Composable
 fun AmountCalculator(
@@ -62,6 +68,8 @@ fun AmountCalculator(
     onInvalid: () -> Unit,
     onCancel: () -> Unit,
     contextLabel: String? = null,
+    onAdd: (() -> Unit)? = null,
+    addEnabled: (String) -> Boolean = { true },
 ) {
     val model = remember(initialMinor) { CalculatorModel(initialMinor) }
     var display by remember { mutableStateOf(model.display) }
@@ -72,10 +80,15 @@ fun AmountCalculator(
         display = model.display
     }
 
-    fun enter() {
+    fun enter(): Boolean {
         press { model.onEquals() }
         val value = model.commitValue
-        if (value != null) onEnter(value) else onInvalid()
+        if (value == null) {
+            onInvalid()
+            return false
+        }
+        onEnter(value)
+        return true
     }
 
     BoxWithConstraints(
@@ -179,11 +192,27 @@ fun AmountCalculator(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = { enter() },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(stringResource(Res.string.entry_enter))
+                Button(
+                    onClick = { enter() },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                ) {
+                    Text(stringResource(Res.string.entry_enter))
+                }
+
+                onAdd?.let { add ->
+                    val value = model.commitValue
+                    Button(
+                        onClick = { if (enter()) add() },
+                        enabled = value != null && addEnabled(value),
+                        modifier = Modifier.weight(1f).height(56.dp).testTag("calculatorAdd"),
+                    ) {
+                        Text(stringResource(Res.string.entry_add_to_ledger))
+                    }
+                }
             }
         }
     }
