@@ -71,7 +71,7 @@ Market Position: Personal expenses tracker (local-first, multi-currency)
 ## Business Constraints
 
 - Local-first: no server, no accounts, no cloud sync
-- Multi-currency: users may hold accounts in CHF/EUR/GBP/HKD/JPY/SGD/USD
+- Multi-currency: users may hold accounts in CHF/CNY/EUR/GBP/HKD/JPY/SGD/USD
 - Cross-currency totals require FX rates (fetched from Frankfurter, cached 24h)
 - Accounts can be liabilities: account balances may be negative, but a single entry is never negative (it has a type — expense or income)
 

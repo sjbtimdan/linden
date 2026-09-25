@@ -22,7 +22,7 @@
 Money needs to be stored and manipulated without floating-point rounding errors.
 
 ### Decision
-Store all money as integer minor units (`Long`), never `Double`/`BigDecimal`. `450` = 4.50. All currencies (CHF/EUR/GBP/HKD/JPY/SGD/USD) use a 2-decimal minor unit. `amount` columns in `.sq` files are `INTEGER`.
+Store all money as integer minor units (`Long`), never `Double`/`BigDecimal`. `450` = 4.50. All currencies (CHF/CNY/EUR/GBP/HKD/JPY/SGD/USD) use a 2-decimal minor unit. `amount` columns in `.sq` files are `INTEGER`.
 
 ### Rationale
 Floating-point arithmetic introduces rounding errors that would corrupt financial data. Integer minor units are exact and simple.

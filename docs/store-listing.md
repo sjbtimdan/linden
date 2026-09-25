@@ -12,7 +12,7 @@ TRACK EVERYTHING IN ONE PLACE
 Log expenses, income, and transfers in seconds. Group entries by account and category, and see exactly where your money goes.
 
 MULTI-CURRENCY BY DESIGN
-Hold accounts in CHF, EUR, GBP, HKD, JPY, SGD, and USD. Linden converts totals using live exchange rates, so your balance always makes sense.
+Hold accounts in CHF, CNY, EUR, GBP, HKD, JPY, SGD, and USD. Linden converts totals using live exchange rates, so your balance always makes sense.
 
 FAST, SMART ENTRY
 • A built-in exact calculator handles amounts on the fly

@@ -4,6 +4,7 @@ enum class Currency(
     val symbol: String,
 ) {
     CHF("CHF"),
+    CNY("CN¥"),
     EUR("€"),
     GBP("£"),
     HKD("HK$"),
