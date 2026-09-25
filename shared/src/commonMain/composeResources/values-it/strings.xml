@@ -46,7 +46,7 @@
     <string name="entry_add">Aggiungi</string>
     <string name="entry_added">Aggiunto</string>
     <string name="entry_add_to_ledger">Aggiungi al registro</string>
-    <string name="entry_already_added">Già aggiunto</string>
+    <string name="entry_undo">Annulla</string>
     <string name="entry_total_balance">Saldo totale</string>
     <string name="entry_show_total">Mostra totale</string>
     <string name="entry_hide_total">Nascondi totale</string>

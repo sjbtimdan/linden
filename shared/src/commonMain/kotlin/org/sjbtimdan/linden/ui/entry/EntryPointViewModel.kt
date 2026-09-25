@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +18,8 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.AppClock
@@ -157,14 +160,41 @@ class EntryPointViewModel(
      * Drafts only resolve against visible accounts: an account hidden while a
      * draft referenced it simply cannot be saved.
      */
-    fun saveDraft(): Boolean {
+    suspend fun saveDraft(): Boolean {
         val state = draftState.value ?: return false
         val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
-        createEntry(entry)
-        _lastAdded.value = entry
+        val id = try {
+            entryDao.create(entry)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            reportError(e.message)
+            return false
+        }
+        _lastAdded.value = entry.withId(id)
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }
+
+    /**
+     * Pulls the last added entry out of the ledger and back into the form,
+     * amount included, so an accidental or mistyped add can be redone. The form
+     * then holds the entry as a fresh draft; nothing is written until Add again.
+     */
+    fun undoLastAdded() {
+        val entry = _lastAdded.value ?: return
+        deleteEntry(entry.id)
+        _selectedType.value = entry.type
+        draftState.value = EntryDraft.forEdit(entry).copy(editing = null)
+        _lastAdded.value = null
+    }
+}
+
+/** Copy of an entry with its database-assigned [id], after an insert. */
+private fun Entry.withId(id: Long): Entry = when (this) {
+    is ExpenseEntry -> copy(id = id)
+    is IncomeEntry -> copy(id = id)
+    is TransferEntry -> copy(id = id)
 }
 
 /** Currencies an entry touches; transfers involve both accounts. */

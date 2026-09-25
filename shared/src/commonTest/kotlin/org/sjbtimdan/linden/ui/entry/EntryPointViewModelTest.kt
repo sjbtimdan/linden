@@ -13,6 +13,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.AccountQueries
 import org.sjbtimdan.linden.CategoryQueries
+import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -24,6 +25,7 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
@@ -245,7 +247,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "lastAdded exposes the entry a successful save wrote" {
-        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.seedDraft()
             viewModel.onAmountChange("4.50")
@@ -260,6 +262,8 @@ class EntryPointViewModelTest : StringSpec({
                 entry.description shouldBe "Coffee"
                 entry.amount shouldBe 450
             }
+            // The receipt carries the database id, so undo can delete the row.
+            entryDao.getAll().first().single().id shouldBe viewModel.lastAdded.value?.id
         }
     }
 
@@ -292,6 +296,108 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.clearDraft()
 
             viewModel.lastAdded.value.shouldBeNull()
+        }
+    }
+
+    "undoLastAdded removes the entry and restores it as an editable draft" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.onDescriptionChange("Coffee")
+            viewModel.saveDraft() shouldBe true
+
+            viewModel.undoLastAdded()
+
+            viewModel.lastAdded.value.shouldBeNull()
+            entryDao.getAll().first().shouldBeEmpty()
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.editing.shouldBeNull()
+                draft.type shouldBe EntryType.Expense
+                draft.amountText shouldBe "4.50"
+                draft.description shouldBe "Coffee"
+                draft.categoryId shouldBe groceries.id
+                draft.accountId shouldBe main.id
+            }
+        }
+    }
+
+    "undoLastAdded restores the type of the saved entry" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Salary", CategoryType.Income)
+            val main = accountDao.getAll().first().first()
+            val salary = categoryDao.getAll().first().first()
+            viewModel.seedDraft()
+            viewModel.selectType(EntryType.Income)
+            viewModel.onAmountChange("20.00")
+            viewModel.onCategoryChange(salary.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+            viewModel.selectType(EntryType.Expense)
+
+            viewModel.undoLastAdded()
+
+            viewModel.selectedType.value shouldBe EntryType.Income
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.type shouldBe EntryType.Income
+                draft.amountText shouldBe "20.00"
+            }
+        }
+    }
+
+    "undoLastAdded does nothing without a saved receipt" {
+        withEntryPoint(clock = FakeClock()) { entryDao, _, _, viewModel ->
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+
+            viewModel.undoLastAdded()
+
+            viewModel.lastAdded.value.shouldBeNull()
+            viewModel.draft.value?.amountText shouldBe "4.50"
+            entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
+
+    "saveDraft reports an error and keeps the draft when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                    zone = TimeZone.UTC,
+                )
+                accountDao.create("Main", Currency.CHF)
+                categoryDao.create("Groceries", CategoryType.Expense)
+                val main = accountDao.getAll().first().first()
+                val groceries = categoryDao.getAll().first().first()
+                viewModel.seedDraft()
+                viewModel.onAmountChange("4.50")
+                viewModel.onCategoryChange(groceries.id)
+                viewModel.onAccountChange(main.id)
+
+                entryDao.failWrites = true
+
+                viewModel.saveDraft() shouldBe false
+                viewModel.lastAdded.value.shouldBeNull()
+                viewModel.error.value.shouldNotBeNull()
+                viewModel.draft.value?.amountText shouldBe "4.50"
+            }
         }
     }
 
@@ -638,5 +744,15 @@ private class FailingAccountDao(queries: AccountQueries) : AccountDao(queries) {
     override suspend fun create(name: String, currency: Currency, initialBalance: Long) {
         if (failWrites) throw IllegalStateException("write failed")
         super.create(name, currency, initialBalance)
+    }
+}
+
+/** [EntryDao] whose writes throw once [failWrites] is set; reads stay live. */
+private class FailingEntryDao(queries: EntryQueries) : EntryDao(queries) {
+    var failWrites = false
+
+    override suspend fun create(entry: Entry): Long {
+        if (failWrites) throw IllegalStateException("write failed")
+        return super.create(entry)
     }
 }

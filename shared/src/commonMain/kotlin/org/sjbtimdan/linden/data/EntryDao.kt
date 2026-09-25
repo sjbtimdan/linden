@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.data
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,7 +22,8 @@ import org.sjbtimdan.linden.util.asOneOrNullFlow
 import kotlin.time.Instant
 
 open class EntryDao(private val queries: EntryQueries) {
-    open suspend fun create(entry: Entry) {
+    /** Inserts [entry] and returns the generated id. */
+    open suspend fun create(entry: Entry): Long {
         val args = entry.sqlArgs()
         queries.insert(
             type = entry.type.name,
@@ -34,6 +36,7 @@ open class EntryDao(private val queries: EntryQueries) {
             createdAt = entry.createdAt.toEpochMilliseconds(),
             createdZone = entry.createdZone.id,
         )
+        return queries.lastInsertedId().awaitAsOne()
     }
 
     open suspend fun update(entry: Entry) {

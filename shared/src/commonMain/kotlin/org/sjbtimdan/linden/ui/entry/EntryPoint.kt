@@ -52,7 +52,6 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.entry_add
-import org.sjbtimdan.linden.resources.entry_added
 import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
@@ -111,14 +110,13 @@ fun EntryPoint(
     // draft that survives a configuration change keeps the compact header.
     var draftTouched by rememberSaveable { mutableStateOf(false) }
     val markTouched: () -> Unit = { draftTouched = true }
-    val addedMessage = stringResource(Res.string.entry_added)
 
     // Saves the draft from either the form's Add row or the calculator's Add
-    // button; both only fire while the draft is valid.
+    // button; both only fire while the draft is valid. The persistent last-added
+    // receipt is the confirmation, so no snackbar is shown.
     val addDraft: () -> Unit = {
-        if (viewModel.saveDraft()) {
-            markTouched()
-            scope.launch { snackbarHostState.showSnackbar(addedMessage) }
+        scope.launch {
+            if (viewModel.saveDraft()) markTouched()
         }
     }
 
@@ -331,9 +329,16 @@ fun EntryPoint(
             }
 
             // Receipt of the entry just saved, clearly marked as added so the
-            // prefilled form below is not mistaken for an unsaved draft.
+            // prefilled form below is not mistaken for an unsaved draft. Tapping
+            // it pulls the entry back into the form as an undo.
             lastAdded?.let { entry ->
-                LastAddedEntry(entry = entry)
+                LastAddedEntry(
+                    entry = entry,
+                    onClick = {
+                        viewModel.undoLastAdded()
+                        markTouched()
+                    },
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 

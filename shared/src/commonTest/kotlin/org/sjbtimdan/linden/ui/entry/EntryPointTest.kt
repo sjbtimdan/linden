@@ -28,6 +28,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
@@ -164,7 +165,7 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "adding shows the last added entry as already added until clear" {
+    "adding shows the last added entry as a receipt until clear" {
         withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -181,15 +182,48 @@ class EntryPointTest : StringSpec({
             waitForIdle()
 
             onNodeWithTag("lastAddedEntry").assertIsDisplayed()
-            onNodeWithText("Already added").assertIsDisplayed()
+            onNodeWithText("Added").assertIsDisplayed()
             onNodeWithText("Groceries · Main").assertIsDisplayed()
             onNodeWithText("− 12.50 CHF").assertIsDisplayed()
+            onNodeWithText("Undo").assertIsDisplayed()
 
             onNodeWithText("Clear").performClick()
             waitForIdle()
 
             onNodeWithTag("lastAddedEntry").assertDoesNotExist()
-            onNodeWithText("Already added").assertDoesNotExist()
+        }
+    }
+
+    "tapping the added receipt pulls the entry back into the form" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Description (optional)").performTextInput("Coffee")
+            tapOutside()
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+            entryDao.getAll().first().shouldHaveSize(1)
+
+            onNodeWithTag("lastAddedEntry").performClick()
+            waitForIdle()
+
+            // The entry left the ledger and its values are back in an editable form.
+            onNodeWithTag("lastAddedEntry").assertDoesNotExist()
+            entryDao.getAll().first().shouldBeEmpty()
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("Add").assertIsEnabled()
         }
     }
 
@@ -645,7 +679,6 @@ class EntryPointTest : StringSpec({
 
             onNodeWithText("Added").assertIsDisplayed()
             onNodeWithTag("lastAddedEntry").assertIsDisplayed()
-            onNodeWithText("Already added").assertIsDisplayed()
             entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
         }
     }

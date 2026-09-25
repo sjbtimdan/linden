@@ -1759,9 +1759,9 @@ private fun at(millis: Long) = Instant.fromEpochMilliseconds(millis)
 private class FailingEntryDao(queries: EntryQueries) : EntryDao(queries) {
     var failWrites = false
 
-    override suspend fun create(entry: Entry) {
+    override suspend fun create(entry: Entry): Long {
         if (failWrites) throw IllegalStateException("write failed")
-        super.create(entry)
+        return super.create(entry)
     }
 
     override suspend fun update(entry: Entry) {
@@ -1780,9 +1780,9 @@ private class GatedEntryDao(queries: EntryQueries) : EntryDao(queries) {
     val gate = CompletableDeferred<Unit>()
     var gateWrites = false
 
-    override suspend fun create(entry: Entry) {
+    override suspend fun create(entry: Entry): Long {
         if (gateWrites) gate.await()
-        super.create(entry)
+        return super.create(entry)
     }
 
     override suspend fun update(entry: Entry) {

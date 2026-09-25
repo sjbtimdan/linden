@@ -46,7 +46,7 @@
     <string name="entry_add">添加</string>
     <string name="entry_added">已添加</string>
     <string name="entry_add_to_ledger">添加到账本</string>
-    <string name="entry_already_added">已添加</string>
+    <string name="entry_undo">撤销</string>
     <string name="entry_total_balance">总余额</string>
     <string name="entry_show_total">显示总额</string>
     <string name="entry_hide_total">隐藏总额</string>

@@ -74,6 +74,22 @@ class EntryDaoTest : StringSpec({
         )
     }
 
+    "create returns the id assigned to the inserted entry" {
+        val database = lindenDatabase()
+        val entryDao = EntryDao(database.entryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        val categoryDao = CategoryDao(database.categoryQueries)
+
+        accountDao.create("Main", Currency.CHF)
+        categoryDao.create("Groceries", CategoryType.Expense)
+        val main = accountDao.getAll().first().first()
+        val groceries = categoryDao.getAll().first().first()
+
+        val id = entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+        entryDao.getAll().first().single().id shouldBe id
+    }
+
     "entries are ordered newest first" {
         val database = lindenDatabase()
         val entryDao = EntryDao(database.entryQueries)

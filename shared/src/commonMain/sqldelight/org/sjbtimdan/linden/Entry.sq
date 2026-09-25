@@ -57,6 +57,11 @@ INSERT INTO EntryEntity (
 VALUES (:id, :type, :categoryId, :description, :accountId, :amount,
         :toAccountId, :toAmount, :createdAt, :createdZone);
 
+-- Generated id of the row the last insert created. Read right after insert on
+-- the same connection, so callers can reference the entry they just wrote.
+lastInsertedId:
+SELECT last_insert_rowid();
+
 -- Raw rows only; used to serialize the database into a backup.
 selectAllRows:
 SELECT *
