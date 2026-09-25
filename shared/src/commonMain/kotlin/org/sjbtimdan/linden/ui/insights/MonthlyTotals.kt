@@ -142,7 +142,7 @@ internal fun monthlyTrendBars(months: List<MonthTotal>, language: DateLanguage):
 internal fun monthBarLabel(year: Int, monthNumber: Int, language: DateLanguage): String {
     if (monthNumber != 1) return language.monthShort(monthNumber)
     return when (language) {
-        DateLanguage.English, DateLanguage.Italian ->
+        DateLanguage.English, DateLanguage.Italian, DateLanguage.Hindi ->
             "${language.monthShort(1)} '${(year % 100).toString().padStart(2, '0')}"
 
         DateLanguage.Chinese -> language.monthYearText(1, year)

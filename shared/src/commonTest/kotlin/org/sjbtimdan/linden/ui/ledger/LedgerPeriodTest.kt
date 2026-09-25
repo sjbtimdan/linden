@@ -25,6 +25,7 @@ class LedgerPeriodTest : StringSpec({
     "day label shows the localized date" {
         Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "Aug 13, 2026"
         Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Italian) shouldBe "13 ago 2026"
+        Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Hindi) shouldBe "13 अग 2026"
         Day.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月13日"
     }
 
@@ -112,6 +113,18 @@ class LedgerPeriodTest : StringSpec({
         Week.windowLabel(LocalDate(2026, 12, 31), DateLanguage.Italian) shouldBe "28 dic 2026 – 3 gen 2027"
     }
 
+    "week label shows a single month range in Hindi" {
+        Week.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Hindi) shouldBe "10–16 अग 2026"
+    }
+
+    "week label spans months in Hindi" {
+        Week.windowLabel(LocalDate(2026, 9, 2), DateLanguage.Hindi) shouldBe "31 अग – 6 सित 2026"
+    }
+
+    "week label spans years in Hindi" {
+        Week.windowLabel(LocalDate(2026, 12, 31), DateLanguage.Hindi) shouldBe "28 दिस 2026 – 3 जन 2027"
+    }
+
     "week label shows a single month range in Chinese" {
         Week.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月10日–16日"
     }
@@ -127,6 +140,7 @@ class LedgerPeriodTest : StringSpec({
     "month and year labels follow the language" {
         Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "Aug 2026"
         Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Italian) shouldBe "ago 2026"
+        Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Hindi) shouldBe "अग 2026"
         Month.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026年8月"
         Year.windowLabel(LocalDate(2026, 8, 13), DateLanguage.English) shouldBe "2026"
         Year.windowLabel(LocalDate(2026, 8, 13), DateLanguage.Chinese) shouldBe "2026"

@@ -98,7 +98,7 @@ git describe). It is generated code — never edit it.
   closed client). `MainActivity` passes `applicationContext` to `DatabaseDriverFactory` so the retained ViewModel never
   leaks the activity. A plain `remember` in either place resets navigation and loses the in-progress `EntryDraft`.
 - **All UI copy lives in resources** (`shared/src/commonMain/composeResources/values/strings.xml`; per-locale dirs
-  `values-it`, `values-zh`, `values-zh-rCN`, `values-zh-rHK`). Use `stringResource(Res.string.key)` /
+  `values-it`, `values-hi`, `values-zh`, `values-zh-rCN`, `values-zh-rHK`). Use `stringResource(Res.string.key)` /
   `pluralStringResource(Res.plurals.key, qty, qty)` — **repeat the quantity as the `%1$d` arg**. Accessors are
   top-level extensions on `Res.string`/`Res.plurals` and need explicit per-key imports (no wildcards). Never call
   `stringResource` from non-composable lambdas (resolve to a `val` first). `testTag`s and user data are never resources.

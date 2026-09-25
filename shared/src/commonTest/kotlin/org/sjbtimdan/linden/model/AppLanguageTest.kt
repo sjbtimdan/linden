@@ -8,6 +8,7 @@ class AppLanguageTest : StringSpec({
         AppLanguage.fromTag(null) shouldBe AppLanguage.SYSTEM
         AppLanguage.fromTag("en") shouldBe AppLanguage.ENGLISH
         AppLanguage.fromTag("it") shouldBe AppLanguage.ITALIAN
+        AppLanguage.fromTag("hi") shouldBe AppLanguage.HINDI
         AppLanguage.fromTag("zh-CN") shouldBe AppLanguage.CHINESE_SIMPLIFIED
         AppLanguage.fromTag("zh-HK") shouldBe AppLanguage.CHINESE_TRADITIONAL_HK
     }
@@ -22,6 +23,8 @@ class AppLanguageTest : StringSpec({
         AppLanguage.fromSystemLanguage("it") shouldBe AppLanguage.ITALIAN
         AppLanguage.fromSystemLanguage("it-IT") shouldBe AppLanguage.ITALIAN
         AppLanguage.fromSystemLanguage("it-CH") shouldBe AppLanguage.ITALIAN
+        AppLanguage.fromSystemLanguage("hi") shouldBe AppLanguage.HINDI
+        AppLanguage.fromSystemLanguage("hi-IN") shouldBe AppLanguage.HINDI
         AppLanguage.fromSystemLanguage("zh-CN") shouldBe AppLanguage.CHINESE_SIMPLIFIED
         AppLanguage.fromSystemLanguage("zh-Hans-CN") shouldBe AppLanguage.CHINESE_SIMPLIFIED
         AppLanguage.fromSystemLanguage("zh-SG") shouldBe AppLanguage.CHINESE_SIMPLIFIED
@@ -44,6 +47,7 @@ class AppLanguageTest : StringSpec({
     "resolve turns SYSTEM into the resolved language and keeps pins" {
         AppLanguage.resolve(AppLanguage.SYSTEM, "de-DE") shouldBe AppLanguage.ENGLISH
         AppLanguage.resolve(AppLanguage.SYSTEM, "zh-HK") shouldBe AppLanguage.CHINESE_TRADITIONAL_HK
+        AppLanguage.resolve(AppLanguage.SYSTEM, "hi-IN") shouldBe AppLanguage.HINDI
         AppLanguage.resolve(AppLanguage.ITALIAN, "de-DE") shouldBe AppLanguage.ITALIAN
         AppLanguage.resolve(AppLanguage.ENGLISH, "zh-CN") shouldBe AppLanguage.ENGLISH
     }

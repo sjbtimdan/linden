@@ -13,6 +13,9 @@ class DateLanguageTest : StringSpec({
         dateLanguage("it") shouldBe DateLanguage.Italian
         dateLanguage("IT") shouldBe DateLanguage.Italian
         dateLanguage("it-CH") shouldBe DateLanguage.Italian
+        dateLanguage("hi") shouldBe DateLanguage.Hindi
+        dateLanguage("HI") shouldBe DateLanguage.Hindi
+        dateLanguage("hi-IN") shouldBe DateLanguage.Hindi
         dateLanguage("zh") shouldBe DateLanguage.Chinese
         dateLanguage("zh-CN") shouldBe DateLanguage.Chinese
         dateLanguage("zh-Hans-CN") shouldBe DateLanguage.Chinese
@@ -34,6 +37,13 @@ class DateLanguageTest : StringSpec({
         )
     }
 
+    "keeps the Hindi month table" {
+        (1..12).map(DateLanguage.Hindi::monthShort) shouldBe listOf(
+            "जन", "फ़र", "मार्च", "अप्रै", "मई", "जून",
+            "जुल", "अग", "सित", "अक्तू", "नव", "दिस",
+        )
+    }
+
     "numbers the Chinese months" {
         DateLanguage.Chinese.monthShort(1) shouldBe "1月"
         DateLanguage.Chinese.monthShort(8) shouldBe "8月"
@@ -43,12 +53,14 @@ class DateLanguageTest : StringSpec({
     "date text follows the language layout" {
         DateLanguage.English.dateText(13, 8, 2026) shouldBe "Aug 13, 2026"
         DateLanguage.Italian.dateText(13, 8, 2026) shouldBe "13 ago 2026"
+        DateLanguage.Hindi.dateText(13, 8, 2026) shouldBe "13 अग 2026"
         DateLanguage.Chinese.dateText(13, 8, 2026) shouldBe "2026年8月13日"
     }
 
     "month-year text follows the language layout" {
         DateLanguage.English.monthYearText(8, 2026) shouldBe "Aug 2026"
         DateLanguage.Italian.monthYearText(8, 2026) shouldBe "ago 2026"
+        DateLanguage.Hindi.monthYearText(8, 2026) shouldBe "अग 2026"
         DateLanguage.Chinese.monthYearText(8, 2026) shouldBe "2026年8月"
     }
 })

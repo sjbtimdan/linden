@@ -248,6 +248,7 @@ class MonthlyTotalsTest : StringSpec({
     "month bar labels are language-aware" {
         monthBarLabel(2026, 1, DateLanguage.English) shouldBe "Jan '26"
         monthBarLabel(2026, 1, DateLanguage.Italian) shouldBe "gen '26"
+        monthBarLabel(2026, 1, DateLanguage.Hindi) shouldBe "जन '26"
         monthBarLabel(2026, 1, DateLanguage.Chinese) shouldBe "2026年1月"
         monthBarLabel(2025, 12, DateLanguage.English) shouldBe "Dec"
         monthBarLabel(2000, 1, DateLanguage.English) shouldBe "Jan '00"

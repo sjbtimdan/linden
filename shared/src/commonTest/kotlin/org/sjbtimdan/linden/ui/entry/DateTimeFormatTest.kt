@@ -37,6 +37,11 @@ class DateTimeFormatTest : StringSpec({
         formatDate(instant, TimeZone.UTC, DateLanguage.Italian) shouldBe "10 ago 2026"
     }
 
+    "formats Hindi dates day-month" {
+        val instant = Instant.parse("2026-08-10T14:30:00Z")
+        formatDate(instant, TimeZone.UTC, DateLanguage.Hindi) shouldBe "10 अग 2026"
+    }
+
     "formats Chinese dates year-first with 年月日" {
         val instant = Instant.parse("2026-08-10T14:30:00Z")
         formatDate(instant, TimeZone.UTC, DateLanguage.Chinese) shouldBe "2026年8月10日"

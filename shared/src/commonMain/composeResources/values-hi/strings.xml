@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell -->
+    <string name="nav_ledger">बहीखाता</string>
+    <string name="nav_entry">प्रविष्टि</string>
+    <string name="nav_settings">सेटिंग्स</string>
+
+    <!-- Startup error -->
+    <string name="startup_error_title">Linden शुरू नहीं हो सका</string>
+    <string name="startup_error_message">आपका डेटा खोलते समय एक त्रुटि हुई।</string>
+    <string name="startup_error_retry">पुनः प्रयास करें</string>
+
+    <!-- First run -->
+    <string name="first_run_title">Linden में आपका स्वागत है</string>
+    <string name="first_run_subtitle">अपनी मुद्रा चुनें। आप इसे बाद में सेटिंग्स में बदल सकते हैं।</string>
+    <string name="first_run_continue">जारी रखें</string>
+
+    <!-- Common actions -->
+    <string name="common_back">वापस</string>
+    <string name="common_save">सहेजें</string>
+    <string name="common_cancel">रद्द करें</string>
+    <string name="common_clear">साफ़ करें</string>
+    <string name="common_duplicate">डुप्लिकेट करें</string>
+    <string name="common_ok">ठीक है</string>
+    <string name="common_delete">हटाएँ</string>
+    <string name="common_dismiss">बंद करें</string>
+    <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
+    <string name="common_unknown_error">अज्ञात त्रुटि</string>
+    <string name="common_operation_failed">कार्रवाई विफल रही: %1$s</string>
+
+    <!-- Shared labels with identical copy across screens -->
+    <string name="common_accounts">खाते</string>
+    <string name="common_all">सभी</string>
+    <string name="common_categories">श्रेणियाँ</string>
+    <string name="common_category">श्रेणी</string>
+    <string name="common_invalid_amount">मान्य राशि दर्ज करें</string>
+    <string name="common_name">नाम</string>
+    <string name="common_search">खोजें</string>
+
+    <!-- Entry types; category type labels reuse the expense/income words -->
+    <string name="entry_type_expense">खर्च</string>
+    <string name="entry_type_income">आय</string>
+    <string name="entry_type_transfer">स्थानांतरण</string>
+
+    <!-- Entry point -->
+    <string name="entry_add">जोड़ें</string>
+    <string name="entry_added">जोड़ा गया</string>
+    <string name="entry_add_to_ledger">बहीखाते में जोड़ें</string>
+    <string name="entry_undo">पूर्ववत करें</string>
+    <string name="entry_total_balance">कुल बैलेंस</string>
+    <string name="entry_show_total">कुल दिखाएँ</string>
+    <string name="entry_hide_total">कुल छिपाएँ</string>
+
+    <!-- Entry form -->
+    <string name="entry_amount">राशि</string>
+    <string name="entry_amount_sent">राशि (भेजी गई)</string>
+    <string name="entry_amount_received">राशि (प्राप्त)</string>
+    <string name="entry_from_account">प्रेषक खाता</string>
+    <string name="entry_to_account">प्राप्तकर्ता खाता</string>
+    <string name="entry_account">खाता</string>
+    <string name="entry_description_optional">विवरण (वैकल्पिक)</string>
+    <string name="entry_ok">ठीक है</string>
+    <string name="entry_quick_entry">त्वरित प्रविष्टि</string>
+    <string name="entry_amount_positive">राशि शून्य से अधिक होनी चाहिए</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">नई श्रेणी</string>
+    <string name="entry_new_category_with_name">नई श्रेणी "%1$s"</string>
+    <string name="entry_new_account">नया खाता</string>
+    <string name="entry_new_account_with_name">नया खाता "%1$s"</string>
+    <string name="entry_date_time_section">दिनांक और समय</string>
+    <string name="entry_select_time">समय चुनें</string>
+
+    <!-- Entry dialog titles: %1$s is the localized entry type name -->
+    <string name="entry_title_new">%1$s जोड़ें</string>
+    <string name="entry_title_edit">%1$s संपादित करें</string>
+
+    <!-- Draft validation hints (firstMissingRequirement) -->
+    <string name="entry_req_amount">राशि दर्ज करें</string>
+    <string name="entry_req_account">खाता चुनें</string>
+    <string name="entry_req_source">चुनें कि पैसा कहाँ से आएगा</string>
+    <string name="entry_req_category">श्रेणी चुनें</string>
+    <string name="entry_req_destination">चुनें कि पैसा कहाँ जाएगा</string>
+    <string name="entry_req_different_destination">कोई दूसरा प्राप्तकर्ता खाता चुनें</string>
+    <string name="entry_req_received">प्राप्त राशि दर्ज करें</string>
+    <string name="entry_req_no_accounts">जारी रखने के लिए खाता जोड़ें</string>
+    <string name="entry_req_no_categories">अभी कोई श्रेणी नहीं है — एक बनाएँ</string>
+
+    <!-- Entry calculator and misc -->
+    <string name="entry_calculator">कैलकुलेटर</string>
+    <string name="entry_simple_keypad">साधारण कीपैड</string>
+    <string name="entry_backspace">बैकस्पेस</string>
+    <string name="entry_enter">दर्ज करें</string>
+    <string name="entry_recommended">अनुशंसित</string>
+
+    <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
+    <string name="ledger_mode_entries">प्रविष्टियाँ</string>
+
+    <!-- Ledger search & filters -->
+    <string name="ledger_search_entries">प्रविष्टियाँ खोजें</string>
+    <string name="ledger_filter_accounts">खाते फ़िल्टर करें</string>
+    <string name="ledger_filter_categories">श्रेणियाँ फ़िल्टर करें</string>
+    <string name="ledger_filters_header">फ़िल्टर और खोज</string>
+    <string name="ledger_expand_filters">फ़िल्टर फैलाएँ</string>
+    <string name="ledger_collapse_filters">फ़िल्टर संकुचित करें</string>
+    <string name="ledger_remove_filter">फ़िल्टर हटाएँ</string>
+    <string name="ledger_clear_all">सभी साफ़ करें</string>
+    <string name="ledger_uncategorized">बिना श्रेणी</string>
+    <string name="ledger_unknown_account">अज्ञात खाता</string>
+    <string name="ledger_amount_all">राशि: सभी</string>
+    <string name="ledger_filter_by_amount">राशि से फ़िल्टर करें</string>
+    <string name="ledger_apply">लागू करें</string>
+
+    <!-- Period navigator -->
+    <string name="ledger_period_day">दिन</string>
+    <string name="ledger_period_week">सप्ताह</string>
+    <string name="ledger_period_month">महीना</string>
+    <string name="ledger_period_year">वर्ष</string>
+    <!-- The "All" option uses the shared common_all -->
+    <string name="ledger_previous_period">पिछली अवधि</string>
+    <string name="ledger_next_period">अगली अवधि</string>
+    <string name="ledger_show_future_entries">भविष्य की प्रविष्टियाँ दिखाएँ</string>
+    <string name="ledger_hide_future_entries">भविष्य की प्रविष्टियाँ छिपाएँ</string>
+
+    <!-- Future-entries notice -->
+    <string name="ledger_future_none_bounded">इस अवधि में आज के बाद कोई प्रविष्टि नहीं</string>
+    <string name="ledger_future_none">आज के बाद कोई प्रविष्टि नहीं</string>
+    <string name="ledger_future_balances">बैलेंस में आज के बाद की प्रविष्टियाँ शामिल हैं</string>
+    <string name="ledger_future_totals">कुल में आज के बाद की प्रविष्टियाँ शामिल हैं</string>
+    <plurals name="ledger_future_entries">
+        <item quantity="one">आज के बाद %1$d प्रविष्टि दिखाई जा रही है</item>
+        <item quantity="other">आज के बाद %1$d प्रविष्टियाँ दिखाई जा रही हैं</item>
+    </plurals>
+
+    <!-- Ledger empty states: entries view -->
+    <string name="ledger_empty_future_hidden">आज के बाद की प्रविष्टियाँ छिपी हुई हैं।</string>
+    <string name="ledger_empty_no_entries">अभी कोई प्रविष्टि नहीं।</string>
+    <string name="ledger_empty_no_match_filter">इस फ़िल्टर से कोई प्रविष्टि मेल नहीं खाती।</string>
+    <string name="ledger_empty_no_match">कोई प्रविष्टि मेल नहीं खाती।</string>
+    <string name="ledger_action_add_first_entry">अपनी पहली प्रविष्टि जोड़ें</string>
+    <string name="ledger_action_show_future_entries">आज के बाद की प्रविष्टियाँ दिखाएँ</string>
+
+    <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
+    <string name="ledger_accounts_no_match">कोई खाता मेल नहीं खाता।</string>
+    <string name="ledger_accounts_all_hidden">सभी खाते छिपे हुए हैं।</string>
+    <string name="ledger_action_create_account">खाता बनाएँ</string>
+    <string name="ledger_action_manage_accounts">खाते प्रबंधित करें</string>
+
+    <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
+    <string name="ledger_categories_no_match">कोई श्रेणी मेल नहीं खाती।</string>
+    <string name="ledger_categories_future_hidden">आज के बाद का खर्च छिपा हुआ है।</string>
+    <string name="ledger_categories_no_spending">अभी कोई खर्च नहीं।</string>
+    <string name="ledger_action_add_categories">श्रेणियाँ जोड़ें</string>
+
+    <!-- Category totals list -->
+    <plurals name="ledger_entry_count">
+        <item quantity="one">%1$d प्रविष्टि</item>
+        <item quantity="other">%1$d प्रविष्टियाँ</item>
+    </plurals>
+    <string name="ledger_budget_progress">%2$s में से %1$s</string>
+
+    <!-- Accounts list overflow menu -->
+    <string name="ledger_more_options">और विकल्प</string>
+    <string name="ledger_view_entries">प्रविष्टियाँ देखें</string>
+    <string name="ledger_adjust_balance">बैलेंस समायोजित करें</string>
+    <string name="ledger_adjust_latest_period_only">केवल तभी उपलब्ध है जब नवीनतम अवधि दिखाई जा रही हो।</string>
+
+    <!-- Adjust Balance dialog -->
+    <string name="ledger_adjust_current_balance">मौजूदा बैलेंस: %1$s %2$s</string>
+    <string name="ledger_adjust_bank_balance">बैंक बैलेंस</string>
+    <string name="ledger_adjust_explainer">चुनी गई श्रेणी के अंतर्गत एक प्रविष्टि बनाई जाएगी।</string>
+    <string name="ledger_adjust_explainer_income">चुनी गई श्रेणी के अंतर्गत एक आय प्रविष्टि बनाई जाएगी।</string>
+    <string name="ledger_adjust_explainer_expense">चुनी गई श्रेणी के अंतर्गत एक खर्च प्रविष्टि बनाई जाएगी।</string>
+    <string name="ledger_adjust_confirm">समायोजित करें</string>
+
+    <!-- Accounts screen -->
+    <string name="accounts_new">नया खाता</string>
+    <string name="accounts_edit">खाता संपादित करें</string>
+    <string name="accounts_empty_none">अभी कोई खाता नहीं।</string>
+    <string name="accounts_empty_no_match">कोई खाता मेल नहीं खाता।</string>
+    <string name="accounts_initial_balance">प्रारंभिक बैलेंस</string>
+    <string name="accounts_currency">मुद्रा</string>
+    <string name="accounts_currency_locked">मुद्रा बदली नहीं जा सकती: इस खाते में प्रविष्टियाँ हैं।</string>
+    <string name="accounts_hidden">छिपा हुआ</string>
+    <string name="accounts_hidden_help">प्रविष्टियाँ बनी रहती हैं, लेकिन खाता बहीखाते, खाता चयन और फ़िल्टर से हट जाता है।</string>
+    <string name="accounts_delete_locked">यह खाता हटाया नहीं जा सकता: इसमें प्रविष्टियाँ हैं।</string>
+    <string name="accounts_delete">खाता हटाएँ</string>
+    <string name="accounts_duplicate_name">इस नाम का खाता पहले से मौजूद है</string>
+    <string name="accounts_hide_title">खाता छिपाएँ?</string>
+    <string name="accounts_hide_confirm">छिपाएँ</string>
+    <string name="accounts_hide_body">%1$s का बैलेंस %2$s %3$s है। इसे छिपाने पर खाता बहीखाते, खाता चयन और फ़िल्टर से हट जाता है। इसकी प्रविष्टियाँ आपके इतिहास में बनी रहती हैं और इसे कभी भी फिर से दिखाया जा सकता है।</string>
+
+    <!-- Categories screen -->
+    <string name="categories_new">नई श्रेणी</string>
+    <string name="categories_edit">श्रेणी संपादित करें</string>
+    <string name="categories_empty_none">अभी कोई श्रेणी नहीं।</string>
+    <string name="categories_empty_no_match">कोई श्रेणी मेल नहीं खाती।</string>
+    <string name="categories_icon">आइकन</string>
+    <string name="categories_type">प्रकार</string>
+    <string name="categories_duplicate_name">इस नाम की श्रेणी पहले से मौजूद है</string>
+    <string name="categories_delete_locked">यह श्रेणी हटाई नहीं जा सकती: इसमें प्रविष्टियाँ हैं।</string>
+    <string name="categories_delete">श्रेणी हटाएँ</string>
+    <string name="category_type_both">दोनों</string>
+    <string name="category_type_both_row">आय/खर्च के रूप में</string>
+    <string name="category_icon_restaurant">खाना-पीना</string>
+    <string name="category_icon_movie">मनोरंजन</string>
+    <string name="category_icon_shopping_cart">किराना</string>
+    <string name="category_icon_account_balance">बैंक और वित्त</string>
+    <string name="category_icon_savings">बचत और वेतन</string>
+    <string name="category_icon_shopping_bag">खरीदारी</string>
+    <string name="category_icon_home">घर</string>
+    <string name="category_icon_local_hospital">स्वास्थ्य</string>
+    <string name="category_icon_favorite_border">उपहार और दान</string>
+    <string name="category_icon_pets">पालतू जानवर</string>
+    <string name="category_icon_school">शिक्षा</string>
+    <string name="category_icon_flight">यात्रा</string>
+    <string name="category_icon_spa">व्यक्तिगत देखभाल</string>
+    <string name="category_icon_car">कार</string>
+    <string name="category_icon_public_transport">सार्वजनिक परिवहन</string>
+
+    <!-- Settings screen -->
+    <string name="settings_language">भाषा</string>
+    <string name="settings_theme">थीम</string>
+    <string name="settings_theme_system">सिस्टम</string>
+    <string name="settings_theme_light">हल्का</string>
+    <string name="settings_theme_dark">गहरा</string>
+    <string name="settings_default_currency">डिफ़ॉल्ट मुद्रा</string>
+    <string name="settings_privacy">गोपनीयता</string>
+    <string name="settings_hide_totals">कुल राशि छिपाएँ</string>
+    <string name="settings_nav_rates">मुद्रा दरें</string>
+    <string name="settings_nav_budgets">बजट</string>
+    <string name="settings_nav_insights">विश्लेषण</string>
+    <string name="insights_vs_previous">%1$s की तुलना में: %2$s</string>
+    <string name="insights_expenses">खर्च</string>
+    <string name="insights_income">आय</string>
+    <string name="insights_previous_period">पिछले 12 महीने</string>
+    <string name="insights_next_period">अगले 12 महीने</string>
+    <string name="insights_net">शुद्ध</string>
+    <string name="insights_no_entries">मासिक रुझान देखने के लिए एक प्रविष्टि जोड़ें</string>
+    <string name="insights_average">12 महीनों का औसत: %1$s</string>
+    <string name="settings_import_ivy">Ivy से आयात करें</string>
+    <string name="settings_backup">बैकअप</string>
+    <string name="settings_backup_db">डेटाबेस का बैकअप लें</string>
+    <string name="settings_restore_backup">बैकअप से पुनर्स्थापित करें</string>
+    <string name="settings_export_csv">CSV में निर्यात करें</string>
+    <string name="settings_working_import">आयात हो रहा है…</string>
+    <string name="settings_working_backup">बैकअप लिया जा रहा है…</string>
+    <string name="settings_working_restore">पुनर्स्थापित किया जा रहा है…</string>
+    <string name="settings_working_export">निर्यात हो रहा है…</string>
+    <string name="settings_import_summary">%1$d खाते, %2$d श्रेणियाँ, %3$d लेन-देन आयात किए</string>
+    <string name="settings_import_split_note">\nनोट: %1$d लेन-देन उनके खाते की मुद्रा से भिन्न मुद्रा में थे और उन्हें नए "IVY: …" खातों में आयात किया गया।</string>
+    <string name="settings_import_failed">आयात विफल: %1$s</string>
+    <string name="settings_backup_saved">बैकअप सहेजा गया।</string>
+    <string name="settings_backup_failed">बैकअप विफल: %1$s</string>
+    <string name="settings_restore_summary">%1$d खाते, %2$d श्रेणियाँ, %3$d प्रविष्टियाँ पुनर्स्थापित कीं</string>
+    <string name="settings_restore_failed">पुनर्स्थापना विफल: %1$s</string>
+    <string name="settings_export_done">CSV निर्यात किया गया।</string>
+    <string name="settings_export_failed">निर्यात विफल: %1$s</string>
+    <string name="settings_import_confirm_body">इससे आपके सभी मौजूदा खाते, श्रेणियाँ और लेन-देन बदल दिए जाएँगे। जारी रखें?</string>
+    <string name="settings_restore_confirm_body">इससे आपके सभी मौजूदा खाते, श्रेणियाँ, लेन-देन और सेटिंग्स बदल दिए जाएँगे। जारी रखें?</string>
+    <string name="settings_import_confirm">आयात करें</string>
+    <string name="settings_restore_confirm">पुनर्स्थापित करें</string>
+
+    <!-- Rates screen -->
+    <string name="rates_refresh">ताज़ा करें</string>
+    <string name="rates_refresh_failed">ताज़ा करना विफल: %1$s</string>
+    <string name="rates_from_date">%1$s की दरें</string>
+    <string name="rates_update_automatically">स्वतः अपडेट करें</string>
+    <string name="rates_auto_update_help">कैश की गई दरें एक दिन से पुरानी होने पर नई दरें डाउनलोड करता है। मैन्युअल रूप से दर्ज दरें रखने के लिए इसे बंद करें।</string>
+    <string name="rates_edit_rate">%1$s की दर संपादित करें</string>
+    <string name="rates_set">दरें सेट करें</string>
+    <string name="rates_missing">कोई विनिमय दर उपलब्ध नहीं है। आप उन्हें मैन्युअल रूप से सेट कर सकते हैं।</string>
+    <string name="rates_outdated">विनिमय दरें एक सप्ताह से अधिक पुरानी हैं। आप उन्हें मैन्युअल रूप से सेट कर सकते हैं।</string>
+    <string name="rates_rate_label">दर</string>
+    <string name="rates_positive_number">धनात्मक संख्या दर्ज करें।</string>
+
+    <!-- Budgets -->
+    <string name="budget_new">नया बजट</string>
+    <string name="budget_edit">बजट संपादित करें</string>
+    <string name="budget_delete">बजट हटाएँ</string>
+    <string name="budget_choose_category">श्रेणी चुनें</string>
+    <string name="budget_monthly_limit">मासिक सीमा</string>
+    <string name="budget_empty">अभी कोई बजट नहीं है। किसी श्रेणी के मासिक खर्च पर नज़र रखने के लिए एक बजट जोड़ें।</string>
+</resources>

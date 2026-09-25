@@ -38,7 +38,7 @@ class LocaleFileParityTest : StringSpec({
     val defaultPlurals = pluralsOf(defaultFile)
     val placeholder = Regex("%\\d+\\$[sd]")
 
-    val locales = listOf("values-it", "values-zh-rCN", "values-zh-rHK", "values-zh")
+    val locales = listOf("values-it", "values-hi", "values-zh-rCN", "values-zh-rHK", "values-zh")
 
     locales.forEach { locale ->
         "($locale) defines exactly the default string keys with matching placeholders" {
@@ -55,7 +55,7 @@ class LocaleFileParityTest : StringSpec({
             plurals.keys shouldBe defaultPlurals.keys
             plurals.forEach { (key, items) ->
                 val defaultItems = defaultPlurals.getValue(key)
-                if (locale == "values-it") {
+                if (locale == "values-it" || locale == "values-hi") {
                     items.keys shouldBe defaultItems.keys
                 } else {
                     // zh only ever needs the "other" quantity (CLDR).

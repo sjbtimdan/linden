@@ -8,6 +8,10 @@ private val ITALIAN_MONTHS = listOf(
     "gen", "feb", "mar", "apr", "mag", "giu",
     "lug", "ago", "set", "ott", "nov", "dic",
 )
+private val HINDI_MONTHS = listOf(
+    "जन", "फ़र", "मार्च", "अप्रै", "मई", "जून",
+    "जुल", "अग", "सित", "अक्तू", "नव", "दिस",
+)
 
 /**
  * The language used for date display. Dates never follow the raw system
@@ -18,34 +22,37 @@ private val ITALIAN_MONTHS = listOf(
 internal enum class DateLanguage {
     English,
     Italian,
+    Hindi,
     Chinese,
 
     ;
 
-    /** Short month name for [monthNumber] (1..12): "Aug", "ago", "8月". */
+    /** Short month name for [monthNumber] (1..12): "Aug", "ago", "अग", "8月". */
     internal fun monthShort(monthNumber: Int): String = when (this) {
         English -> ENGLISH_MONTHS[monthNumber - 1]
         Italian -> ITALIAN_MONTHS[monthNumber - 1]
+        Hindi -> HINDI_MONTHS[monthNumber - 1]
         Chinese -> "${monthNumber}月"
     }
 
-    /** Localized single date, e.g. "Aug 13, 2026", "13 ago 2026", "2026年8月13日". */
+    /** Localized single date, e.g. "Aug 13, 2026", "13 ago 2026", "13 अग 2026", "2026年8月13日". */
     internal fun dateText(day: Int, monthNumber: Int, year: Int): String = when (this) {
         English -> "${monthShort(monthNumber)} $day, $year"
-        Italian -> "$day ${monthShort(monthNumber)} $year"
+        Italian, Hindi -> "$day ${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}${day}日"
     }
 
-    /** Localized month-and-year label, e.g. "Aug 2026", "ago 2026", "2026年8月". */
+    /** Localized month-and-year label, e.g. "Aug 2026", "ago 2026", "अग 2026", "2026年8月". */
     internal fun monthYearText(monthNumber: Int, year: Int): String = when (this) {
-        English, Italian -> "${monthShort(monthNumber)} $year"
+        English, Italian, Hindi -> "${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}"
     }
 }
 
-/** Maps a BCP-47-style language code (e.g. "it", "zh-Hant-TW") onto a [DateLanguage]. */
+/** Maps a BCP-47-style language code (e.g. "it", "hi", "zh-Hant-TW") onto a [DateLanguage]. */
 internal fun dateLanguage(languageCode: String?): DateLanguage = when {
     languageCode.orEmpty().startsWith("it", ignoreCase = true) -> DateLanguage.Italian
+    languageCode.orEmpty().startsWith("hi", ignoreCase = true) -> DateLanguage.Hindi
     languageCode.orEmpty().startsWith("zh", ignoreCase = true) -> DateLanguage.Chinese
     else -> DateLanguage.English
 }

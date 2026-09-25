@@ -92,7 +92,7 @@ private fun weekLabel(start: LocalDate, end: LocalDate, language: DateLanguage):
             DateLanguage.English ->
                 "$startMonth ${start.day}, ${start.year} – $endMonth ${end.day}, ${end.year}"
 
-            DateLanguage.Italian ->
+            DateLanguage.Italian, DateLanguage.Hindi ->
                 "${start.day} $startMonth ${start.year} – ${end.day} $endMonth ${end.year}"
 
             DateLanguage.Chinese ->
@@ -103,7 +103,7 @@ private fun weekLabel(start: LocalDate, end: LocalDate, language: DateLanguage):
             DateLanguage.English ->
                 "$startMonth ${start.day} – $endMonth ${end.day}, ${start.year}"
 
-            DateLanguage.Italian ->
+            DateLanguage.Italian, DateLanguage.Hindi ->
                 "${start.day} $startMonth – ${end.day} $endMonth ${start.year}"
 
             DateLanguage.Chinese ->
@@ -114,7 +114,7 @@ private fun weekLabel(start: LocalDate, end: LocalDate, language: DateLanguage):
             DateLanguage.English ->
                 "$startMonth ${start.day}–${end.day}, ${start.year}"
 
-            DateLanguage.Italian ->
+            DateLanguage.Italian, DateLanguage.Hindi ->
                 "${start.day}–${end.day} $startMonth ${start.year}"
 
             DateLanguage.Chinese ->

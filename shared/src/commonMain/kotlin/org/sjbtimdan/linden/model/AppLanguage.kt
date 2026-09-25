@@ -7,7 +7,7 @@ package org.sjbtimdan.linden.model
  * language in Settings. The remaining values pin the app to one of the
  * supported languages via their BCP-47 [tag], which drives both the locale
  * override applied at the app root and the resource qualifiers the
- * translations ship under (values/values-it/values-zh-rCN/values-zh-rHK).
+ * translations ship under (values/values-it/values-hi/values-zh-rCN/values-zh-rHK).
  * Traditional Chinese is Hong Kong (zh-HK); other zh-Hant regions are not
  * target markets.
  */
@@ -15,6 +15,7 @@ enum class AppLanguage(val tag: String?) {
     SYSTEM(null),
     ENGLISH("en"),
     ITALIAN("it"),
+    HINDI("hi"),
     CHINESE_SIMPLIFIED("zh-CN"),
     CHINESE_TRADITIONAL_HK("zh-HK"),
     ;
@@ -25,14 +26,17 @@ enum class AppLanguage(val tag: String?) {
 
         /**
          * Maps the platform's full BCP-47 tag onto the closest supported app
-         * language: Italian and Chinese systems get their own language (Chinese
-         * split by script/region: Hans or CN → Simplified, Hant or HK/MO/TW →
-         * Traditional), every other system language falls back to [ENGLISH].
+         * language: Italian, Hindi and Chinese systems get their own language
+         * (Chinese split by script/region: Hans or CN → Simplified, Hant or
+         * HK/MO/TW → Traditional), every other system language falls back to
+         * [ENGLISH].
          */
         fun fromSystemLanguage(systemTag: String?): AppLanguage = when {
             systemTag.isNullOrBlank() -> ENGLISH
 
             systemTag.startsWith("it", ignoreCase = true) -> ITALIAN
+
+            systemTag.startsWith("hi", ignoreCase = true) -> HINDI
 
             systemTag.startsWith("zh", ignoreCase = true) -> {
                 val lower = systemTag.lowercase()
