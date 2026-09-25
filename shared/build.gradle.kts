@@ -229,9 +229,14 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
         commandLine("git", "status", "--porcelain")
         isIgnoreExitValue = true
     }.standardOutput.asText.get().isNotBlank()
+    val gitTagged = providers.exec {
+        commandLine("git", "describe", "--tags", "--exact-match")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().isNotEmpty()
     inputs.property("version", version)
     inputs.property("gitCommit", gitCommit)
     inputs.property("gitDirty", gitDirty)
+    inputs.property("gitTagged", gitTagged)
     outputs.dir(outputDir)
     doLast {
         val buildTime = Instant.now().toString()
@@ -246,6 +251,7 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
             |    const val VERSION = "$version"
             |    const val GIT_COMMIT = "$gitCommit"
             |    const val GIT_DIRTY = $gitDirty
+            |    const val GIT_TAGGED = $gitTagged
             |    const val BUILD_TIME = "$buildTime"
             |}
             |""".trimMargin(),

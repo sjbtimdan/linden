@@ -80,9 +80,9 @@ class SettingsScreenTest : StringSpec({
     "shows the build version footer" {
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
-            val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""
+            val commit = if (BuildInfo.GIT_TAGGED) "" else " (${BuildInfo.GIT_COMMIT})"
             onNodeWithText(
-                "Linden v${BuildInfo.VERSION} (${BuildInfo.GIT_COMMIT}$dirty)",
+                "Linden v${BuildInfo.VERSION}$commit",
             ).assertExists()
         }
     }

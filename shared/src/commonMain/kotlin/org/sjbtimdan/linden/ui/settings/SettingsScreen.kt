@@ -556,6 +556,6 @@ private fun AppLanguage.label(): String = when (this) {
 }
 
 private fun buildVersionLabel(): String {
-    val dirty = if (BuildInfo.GIT_DIRTY) " (dirty)" else ""
-    return "Linden v${BuildInfo.VERSION} (${BuildInfo.GIT_COMMIT}$dirty)"
+    val commit = if (BuildInfo.GIT_TAGGED) "" else " (${BuildInfo.GIT_COMMIT})"
+    return "Linden v${BuildInfo.VERSION}$commit"
 }
