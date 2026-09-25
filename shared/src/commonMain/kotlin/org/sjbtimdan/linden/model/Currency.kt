@@ -8,6 +8,7 @@ enum class Currency(
     EUR("€"),
     GBP("£"),
     HKD("HK$"),
+    INR("₹"),
     JPY("¥"),
     SGD("S$"),
     USD("$"),
