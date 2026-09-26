@@ -81,12 +81,12 @@ fun AmountCalculator(
     }
 
     fun enter(): Boolean {
-        press { model.onEquals() }
         val value = model.commitValue
         if (value == null) {
             onInvalid()
             return false
         }
+        press { model.onEquals() }
         onEnter(value)
         return true
     }

@@ -83,6 +83,24 @@ class CalculatorModelTest : StringSpec({
         CalculatorModel(null).type("100+=").display shouldBe "200.00"
     }
 
+    "evaluates a pending operation at commit without mutating the model" {
+        val model = CalculatorModel(null).type("100+")
+        model.commitValue shouldBe "200.00"
+        model.display shouldBe "100.00"
+        model.type("=").display shouldBe "200.00"
+    }
+
+    "commits the evaluated result of a pending operation with a second operand" {
+        CalculatorModel(null).type("100+3").commitValue shouldBe "103.00"
+        CalculatorModel(null).type("100/3").commitValue shouldBe "33.33"
+    }
+
+    "rejects a commit whose pending operation is not a positive amount" {
+        CalculatorModel(null).type("100-").commitValue.shouldBeNull()
+        CalculatorModel(null).type("5/0").commitValue.shouldBeNull()
+        CalculatorModel(null).type("99999999999999*99999999999999").commitValue.shouldBeNull()
+    }
+
     "backspace removes the last digit" {
         CalculatorModel(null).type("123bb").display shouldBe "1"
     }

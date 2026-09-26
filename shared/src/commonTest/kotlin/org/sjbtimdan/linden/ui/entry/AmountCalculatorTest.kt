@@ -287,6 +287,70 @@ class AmountCalculatorTest : StringSpec({
         }
     }
 
+    "Add action after a dangling operator commits the value it was enabled for" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                var added = false
+                showForm(draft(""), onAmountChange = { committed = it }, onAdd = { added = true })
+                openCalculator()
+                switchToCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("+").performClick()
+                waitForIdle()
+                onNodeWithTag("calculatorAdd").assertIsEnabled()
+
+                onNodeWithTag("calculatorAdd").performClick()
+                waitForIdle()
+
+                committed shouldBe "200.00"
+                added shouldBe true
+            }
+        }
+    }
+
+    "Add action is enabled for the evaluated amount of a pending expression" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                var offered: String? = null
+                var added = false
+                setContent {
+                    AmountCalculator(
+                        initialMinor = null,
+                        currencySymbol = null,
+                        onEnter = { committed = it },
+                        onInvalid = {},
+                        onCancel = {},
+                        onAdd = { added = true },
+                        addEnabled = { value ->
+                            offered = value
+                            true
+                        },
+                    )
+                }
+                switchToCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("+").performClick()
+                onNodeWithText("5").performClick()
+                waitForIdle()
+
+                offered shouldBe "105.00"
+                onNodeWithTag("calculatorAdd").performClick()
+                waitForIdle()
+
+                committed shouldBe "105.00"
+                added shouldBe true
+            }
+        }
+    }
+
     "simple keypad clears with C" {
         onTestMain {
             runComposeUiTest {

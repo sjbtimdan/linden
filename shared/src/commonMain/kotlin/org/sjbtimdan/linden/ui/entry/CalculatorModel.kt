@@ -26,16 +26,23 @@ class CalculatorModel(initialMinor: Long?) {
     private var error = false
 
     /**
-     * Commits the current value as an amount string ("33.33"), or null when it
-     * is not a valid positive amount (empty, zero, negative, error, overflow).
-     * Pending operations are not evaluated here — call [onEquals] first.
+     * The amount this calculator would commit as a string ("33.33"), or null when
+     * it is not a valid positive amount (empty, zero, negative, error, overflow).
+     * A pending operation is evaluated exactly like [onEquals] — repeating the
+     * accumulator when no second operand was typed — without mutating the model,
+     * so callers can offer and commit the same value.
      */
     val commitValue: String?
         get() {
             if (error) return null
-            val value = if (entry.isEmpty()) acc else parseEntry(entry)
-            if (value == null) return null
-            val minor = value.toMinorUnitsOrNull() ?: return null
+            val a = acc
+            val o = op
+            val value = if (a != null && o != null) {
+                apply(a, o, entryFraction() ?: a) ?: return null
+            } else {
+                if (entry.isEmpty()) a else parseEntry(entry)
+            }
+            val minor = value?.toMinorUnitsOrNull() ?: return null
             if (minor <= 0) return null
             return formatMinorUnits(minor)
         }
