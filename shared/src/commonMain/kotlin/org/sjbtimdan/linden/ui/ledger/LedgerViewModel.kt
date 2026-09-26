@@ -258,10 +258,12 @@ class LedgerViewModel(
     /**
      * Current balance of each visible account in its own currency (minor units), used for balance
      * adjustments. Entries dated in the future never count, matching [accountBalancesAtPeriodEnd].
+     * Reads the shared all-entries flow instead of a query bounded at construction, so entries
+     * created after the ViewModel has been alive for a while still count.
      */
     val currentAccountBalances: StateFlow<Map<Long, Long>> = combine(
         visibleAccounts,
-        entryDao.getUpTo(today().sqlUpperBound()),
+        allEntries,
     ) { accounts, entries ->
         val now = today()
         accountBalancesMinor(entryDeltas(entries.filter { it.dayIn(zone) <= now }), accounts)

@@ -1684,6 +1684,29 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "currentAccountBalances includes entries created after the ViewModel has been alive for days" {
+        val clock = FakeClock(today = LocalDate(2026, 8, 15))
+        withLedgerViewModel(clock = clock) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, at(1_784_000_000_000), TimeZone.UTC))
+            waitForIdle()
+            viewModel.currentAccountBalances.value shouldBe mapOf(main.id to 9_550L)
+
+            // The app stays open past the date covered by the old construction-time
+            // query cutoff; an entry created now must still count as current.
+            clock.today = LocalDate(2026, 8, 20)
+            clock.now = at(1_787_184_000_000)
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200, clock.now, TimeZone.UTC))
+            waitForIdle()
+
+            viewModel.currentAccountBalances.value shouldBe mapOf(main.id to 8_350L)
+        }
+    }
+
     "adjusting again creates a separate entry" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
