@@ -50,6 +50,9 @@ class IvyImporter(
 
     suspend fun import(input: InputStream): IvyImportResult {
         val backup = decodeBackup(input)
+        if (backup.accounts.isEmpty() && backup.categories.isEmpty() && backup.transactions.isEmpty()) {
+            throw IvyImportException("The backup is not a valid Ivy backup: it is empty")
+        }
         val defaultCurrency = SettingsDao(database.settingsQueries).getDefaultCurrency()
         val transactions = backup.transactions.filter { it.dateTime != null }
         val importState = ImportState()

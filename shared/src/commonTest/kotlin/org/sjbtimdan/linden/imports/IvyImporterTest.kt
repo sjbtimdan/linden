@@ -208,6 +208,43 @@ class IvyImporterTest : StringSpec({
         database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Survivor")
     }
 
+    "import rejects a JSON object that is not Ivy-shaped without deleting data" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database, clock = FakeClock())
+        val accountDao = org.sjbtimdan.linden.data.AccountDao(database.accountQueries)
+        val categoryDao = org.sjbtimdan.linden.data.CategoryDao(database.categoryQueries)
+        val entryDao = EntryDao(database.entryQueries)
+        accountDao.create("Survivor", Currency.CHF)
+        categoryDao.create("Survivor Category", CategoryType.Expense)
+        val account = accountDao.getAll().first().first()
+        val category = categoryDao.getAll().first().first()
+        entryDao.create(ExpenseEntry(0, category, "Survivor entry", account, 100))
+
+        val error = shouldThrow<IvyImportException> {
+            importer.import(ByteArrayInputStream(buildIvyZip("""{"manifest": {"version": 1}, "files": []}""")))
+        }
+        error.message shouldContain "not a valid Ivy backup"
+
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Survivor")
+        database.categoryQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Survivor Category")
+        entryDao.getAll().first().map { it.description } shouldBe listOf("Survivor entry")
+    }
+
+    "import rejects an Ivy backup with no accounts, categories or transactions without deleting data" {
+        val database = lindenDatabase()
+        val importer = IvyImporter(database, clock = FakeClock())
+        val accountDao = org.sjbtimdan.linden.data.AccountDao(database.accountQueries)
+        accountDao.create("Survivor", Currency.CHF)
+
+        shouldThrow<IvyImportException> {
+            importer.import(
+                ByteArrayInputStream(buildIvyZip("""{"accounts": [], "categories": [], "transactions": []}""")),
+            )
+        }
+
+        database.accountQueries.selectAll().awaitAsList().map { it.name } shouldBe listOf("Survivor")
+    }
+
     "import rolls back when a transaction is invalid" {
         val database = lindenDatabase()
         val importer = IvyImporter(database, clock = FakeClock())
