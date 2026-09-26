@@ -1,3 +1,13 @@
+## Version 0.9.0
+
+<en-US>
+- The Added receipt only undoes from its Undo button and clears itself after five seconds.
+- Tapping the tick on that receipt or the trash icon on the delete bar dismisses the offer without undoing.
+- The entry form only points out a missing amount, category or account after you start editing, and in the order of the fields.
+- Settings shows a page heading.
+- Linden is now licensed under GPL-3.0.
+</en-US>
+
 ## Version 0.8.0
 
 <en-US>
