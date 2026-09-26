@@ -35,6 +35,7 @@
     <string name="common_category">Category</string>
     <string name="common_invalid_amount">Enter a valid amount</string>
     <string name="common_name">Name</string>
+    <string name="common_name_required">A name is required</string>
     <string name="common_search">Search</string>
 
     <!-- Entry types; category type labels reuse the expense/income words -->

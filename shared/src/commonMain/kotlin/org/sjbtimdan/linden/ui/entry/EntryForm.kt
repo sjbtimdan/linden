@@ -44,6 +44,7 @@ import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
+import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.resources.entry_account
 import org.sjbtimdan.linden.resources.entry_amount
 import org.sjbtimdan.linden.resources.entry_amount_positive
@@ -145,6 +146,7 @@ fun EntryForm(
     val duplicateCategoryNameError = stringResource(Res.string.categories_duplicate_name)
     val duplicateAccountNameError = stringResource(Res.string.accounts_duplicate_name)
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
+    val nameRequiredError = stringResource(Res.string.common_name_required)
 
     // Create dialogs, opened from the "+ New" chips or from hoisted state a
     // host seeded via the missing-requirement hint. The host's state wins when
@@ -488,7 +490,9 @@ fun EntryForm(
             onDelete = {},
             onSave = {
                 val name = dialogState.name.trim()
-                if (name.isNotEmpty()) {
+                if (name.isEmpty()) {
+                    setCreateCategory(dialogState.copy(nameError = nameRequiredError))
+                } else {
                     val saved = onCreateCategory?.invoke(name, dialogState.type, dialogState.icon) ?: false
                     if (saved) {
                         setCreateCategory(null)
@@ -523,7 +527,9 @@ fun EntryForm(
             onDelete = {},
             onSave = {
                 val name = dialogState.name.trim()
-                if (name.isNotEmpty()) {
+                if (name.isEmpty()) {
+                    setCreateAccount(dialogState.copy(nameError = nameRequiredError))
+                } else {
                     // Blank means zero; any other unparseable value is an error, not zero.
                     val initialBalance = if (dialogState.initialBalanceText.isBlank()) {
                         0L

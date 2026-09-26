@@ -46,6 +46,7 @@ import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_new
+import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
@@ -63,6 +64,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val duplicateNameError = stringResource(Res.string.categories_duplicate_name)
+    val nameRequiredError = stringResource(Res.string.common_name_required)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -188,7 +190,9 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
             },
             onSave = {
                 val name = state.name.trim()
-                if (name.isNotEmpty()) {
+                if (name.isEmpty()) {
+                    dialogState = state.copy(nameError = nameRequiredError)
+                } else {
                     val existing = state.category
                     val saved = if (existing != null) {
                         viewModel.updateCategory(

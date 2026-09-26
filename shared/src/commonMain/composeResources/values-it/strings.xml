@@ -35,6 +35,7 @@
     <string name="common_category">Categoria</string>
     <string name="common_invalid_amount">Inserisci un importo valido</string>
     <string name="common_name">Nome</string>
+    <string name="common_name_required">Il nome è obbligatorio</string>
     <string name="common_search">Cerca</string>
 
     <!-- Entry types; category type labels reuse the expense/income words -->

@@ -48,7 +48,11 @@ class CategoryListScreenTest : StringSpec({
             onNodeWithText("New Category").performClick()
             onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
 
+            onAllNodes(hasSetTextAction())[1].performTextInput("Groceries")
             onNodeWithText("Save").performClick()
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            viewModel.categories.value.shouldHaveSize(1)
         }
     }
 
@@ -70,6 +74,24 @@ class CategoryListScreenTest : StringSpec({
             onNodeWithText("A category with this name already exists").assertIsDisplayed()
             onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
             viewModel.categories.value.shouldHaveSize(1)
+        }
+    }
+
+    "creating a category with an empty name shows a required-name error and keeps the dialog open" {
+        withViewModel { viewModel ->
+            setContent {
+                CategoryListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("New Category").performClick()
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("A name is required").assertIsDisplayed()
+            onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
+            viewModel.categories.value.shouldHaveSize(0)
         }
     }
 

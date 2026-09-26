@@ -49,6 +49,7 @@ import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
 import org.sjbtimdan.linden.resources.common_invalid_amount
+import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ErrorSnackbar
@@ -78,6 +79,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     // Error copy for the dialog's plain save lambda, resolved in composition.
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
     val duplicateNameError = stringResource(Res.string.accounts_duplicate_name)
+    val nameRequiredError = stringResource(Res.string.common_name_required)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -252,7 +254,9 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             },
             onSave = {
                 val name = state.name.trim()
-                if (name.isNotEmpty()) {
+                if (name.isEmpty()) {
+                    dialogState = state.copy(nameError = nameRequiredError)
+                } else {
                     // Blank means zero; any other unparseable value is an error, not zero.
                     val initialBalance = if (state.initialBalanceText.isBlank()) {
                         0L

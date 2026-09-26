@@ -35,6 +35,7 @@
     <string name="common_category">श्रेणी</string>
     <string name="common_invalid_amount">मान्य राशि दर्ज करें</string>
     <string name="common_name">नाम</string>
+    <string name="common_name_required">नाम आवश्यक है</string>
     <string name="common_search">खोजें</string>
 
     <!-- Entry types; category type labels reuse the expense/income words -->

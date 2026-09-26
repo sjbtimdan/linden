@@ -908,6 +908,27 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "creating a category from the chip with an empty name shows a required-name error" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Category").performClick()
+            onNodeWithText("New category").performClick()
+            waitForIdle()
+
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("A name is required").assertIsDisplayed()
+            categoryDao.getAll().first().shouldHaveSize(1)
+            entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
+
     "creating an account from the chip selects it in the form" {
         withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
@@ -928,6 +949,27 @@ class EntryPointTest : StringSpec({
             val created = accountDao.getAll().first { list -> list.any { it.name == "Wallet" } }
                 .first { it.name == "Wallet" }
             viewModel.draft.value?.accountId shouldBe created.id
+        }
+    }
+
+    "creating an account from the chip with an empty name shows a required-name error" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("New account").performClick()
+            waitForIdle()
+
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("A name is required").assertIsDisplayed()
+            accountDao.getAll().first().shouldHaveSize(1)
+            entryDao.getAll().first().shouldBeEmpty()
         }
     }
 

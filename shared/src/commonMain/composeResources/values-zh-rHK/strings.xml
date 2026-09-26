@@ -35,6 +35,7 @@
     <string name="common_category">分類</string>
     <string name="common_invalid_amount">請輸入有效金額</string>
     <string name="common_name">名稱</string>
+    <string name="common_name_required">請輸入名稱</string>
     <string name="common_search">搜尋</string>
 
     <!-- Entry types; category type labels reuse the expense/income words -->

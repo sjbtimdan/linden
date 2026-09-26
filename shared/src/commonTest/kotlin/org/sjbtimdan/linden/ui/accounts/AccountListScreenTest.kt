@@ -101,6 +101,24 @@ class AccountListScreenTest : StringSpec({
         }
     }
 
+    "creating an account with an empty name shows a required-name error and keeps the dialog open" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("New Account").performClick()
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("A name is required").assertIsDisplayed()
+            onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
+            viewModel.accounts.value.shouldHaveSize(0)
+        }
+    }
+
     "editing an account to a duplicate name shows an error and keeps the dialog open" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF)
@@ -121,6 +139,27 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("An account with this name already exists").assertIsDisplayed()
             onNodeWithText("Edit Account").assertIsDisplayed()
             viewModel.accounts.value.map { it.name } shouldBe listOf("Main", "Savings")
+        }
+    }
+
+    "editing an account to an empty name shows a required-name error and keeps the dialog open" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Main").performClick()
+            onAllNodesWithContentDescription("Clear")[0].performClick()
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("A name is required").assertIsDisplayed()
+            onNodeWithText("Edit Account").assertIsDisplayed()
+            viewModel.accounts.value.map { it.name } shouldBe listOf("Main")
         }
     }
 
