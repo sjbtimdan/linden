@@ -105,6 +105,7 @@ import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.OptionChipRow
 import org.sjbtimdan.linden.ui.entry.displayName
+import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatDate
 import org.sjbtimdan.linden.ui.entry.parseAmount
@@ -792,7 +793,7 @@ private fun AdjustBalanceDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = targetBalanceText,
-                    onValueChange = onTargetBalanceChange,
+                    onValueChange = { onTargetBalanceChange(filterAmountInput(it)) },
                     label = { Text(stringResource(Res.string.ledger_adjust_bank_balance)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

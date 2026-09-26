@@ -4,6 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithTag
@@ -98,6 +99,29 @@ class AmountFilterChipTest : StringSpec({
                 onNodeWithText("Apply").performClick()
 
                 applied shouldBe AmountFilter(AmountOperator.LessThan, 10_000)
+            }
+        }
+    }
+
+    "letters cannot be typed into the amount filter value" {
+        onTestMain {
+            runComposeUiTest {
+                var applied: AmountFilter? = null
+                setContent {
+                    AmountFilterChip(
+                        filter = null,
+                        onApply = { applied = it },
+                        onClear = {},
+                        modifier = Modifier.testTag(chipTag),
+                    )
+                }
+
+                onNodeWithTag(chipTag).performClick()
+                onNodeWithTag(valueTag).performTextInput("5o0o")
+                onNodeWithText("Apply").assertIsEnabled()
+                onNodeWithText("Apply").performClick()
+
+                applied shouldBe AmountFilter(AmountOperator.GreaterThan, 5_000)
             }
         }
     }

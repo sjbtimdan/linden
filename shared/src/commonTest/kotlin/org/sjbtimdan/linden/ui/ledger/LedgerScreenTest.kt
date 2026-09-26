@@ -1283,6 +1283,32 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "letters cannot be typed into the adjust balance target" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
+            onNodeWithContentDescription("More options").performClick()
+            onNodeWithText("Adjust Balance").performClick()
+
+            onAllNodes(hasSetTextAction())[0].performTextClearance()
+            onAllNodes(hasSetTextAction())[0].performTextInput("1o2o5o")
+            onNodeWithText("An income entry will be created under the chosen category.").assertIsDisplayed()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Adjust").performClick()
+
+            val entries = entryDao.getAll().first()
+            entries.shouldHaveSize(1)
+            entries.first().amount shouldBe 2_500
+        }
+    }
+
     "adjusting to the same balance in the accounts view is disabled" {
         withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)

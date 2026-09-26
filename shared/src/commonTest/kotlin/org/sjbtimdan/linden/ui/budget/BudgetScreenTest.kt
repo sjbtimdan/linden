@@ -53,4 +53,22 @@ class BudgetScreenTest : StringSpec({
             onNodeWithText("Salary").assertDoesNotExist()
         }
     }
+
+    "letters cannot be typed into the monthly limit field" {
+        withBudgetViewModel { categoryDao, viewModel ->
+            categoryDao.create("Groceries", CategoryType.Expense)
+
+            setContent {
+                BudgetScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            onNodeWithText("New Budget").performClick()
+            onNodeWithContentDescription("Choose category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNode(hasSetTextAction()).performTextInput("8o0o")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("80.00").assertIsDisplayed()
+        }
+    }
 })

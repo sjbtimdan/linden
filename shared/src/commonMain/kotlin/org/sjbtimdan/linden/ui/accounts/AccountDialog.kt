@@ -49,6 +49,7 @@ import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_name
 import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.theme.DialogShape
 
 data class AccountDialogState(
@@ -122,7 +123,7 @@ fun AccountDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = initialBalanceText,
-                    onValueChange = onInitialBalanceChange,
+                    onValueChange = { onInitialBalanceChange(filterAmountInput(it)) },
                     label = { Text(stringResource(Res.string.accounts_initial_balance)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

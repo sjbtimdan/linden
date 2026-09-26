@@ -35,17 +35,48 @@ class MoneyFormatTest : StringSpec({
         parseAmount(" -500 ") shouldBe -50_000
     }
 
+    "parseAmount accepts a leading plus sign" {
+        parseAmount("+42") shouldBe 4_200
+        parseAmount("+42.50") shouldBe 4_250
+        parseAmount(" +500 ") shouldBe 50_000
+    }
+
+    "parseAmount accepts locale separators and digits" {
+        parseAmount("1'234.50") shouldBe 123_450
+        parseAmount("1’234.50") shouldBe 123_450
+        parseAmount("1'234,50") shouldBe 123_450
+        parseAmount("1\u00A0234,50") shouldBe 123_450
+        parseAmount("١٬٢٣٤٫٥٦") shouldBe 123_456
+        parseAmount("۱۲۳٫۴۵") shouldBe 12_345
+    }
+
     "parseAmount rejects invalid input" {
         parseAmount("") shouldBe null
         parseAmount("  ") shouldBe null
         parseAmount(".") shouldBe null
         parseAmount("abc") shouldBe null
         parseAmount("12.3.4") shouldBe null
-        parseAmount("+42") shouldBe null
+        parseAmount("+") shouldBe null
+        parseAmount("5+2") shouldBe null
         parseAmount("-") shouldBe null
         parseAmount("1,00,0") shouldBe null
         parseAmount("1,0000") shouldBe null
         parseAmount("12,3456") shouldBe null
+    }
+
+    "filterAmountInput keeps amount characters and drops the rest" {
+        filterAmountInput("abc12.5xyz") shouldBe "12.5"
+        filterAmountInput("1,000.00") shouldBe "1,000.00"
+        filterAmountInput("1.000,00") shouldBe "1.000,00"
+        filterAmountInput("+42") shouldBe "+42"
+        filterAmountInput("-42") shouldBe "-42"
+        filterAmountInput("1’234.56") shouldBe "1’234.56"
+        filterAmountInput("12\u221234") shouldBe "12\u221234"
+        filterAmountInput("١٬٢٣٤٫٥٦") shouldBe "١٬٢٣٤٫٥٦"
+        filterAmountInput("12٣") shouldBe "12٣"
+        filterAmountInput("12€") shouldBe "12"
+        filterAmountInput("") shouldBe ""
+        filterAmountInput("abc") shouldBe ""
     }
 
     "parse and format round-trip" {

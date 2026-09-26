@@ -198,11 +198,30 @@ class AccountListScreenTest : StringSpec({
             onNodeWithText("Main").performClick()
             onNodeWithText("Edit Account").assertIsDisplayed()
             onAllNodesWithContentDescription("Clear")[1].performClick()
-            onAllNodes(hasSetTextAction())[2].performTextInput("abc")
+            onAllNodes(hasSetTextAction())[2].performTextInput("12.3.4")
             onNodeWithText("Save").performClick()
 
             onNodeWithText("Enter a valid amount").assertIsDisplayed()
             viewModel.accounts.value.single().initialBalance shouldBe 5_000
+        }
+    }
+
+    "letters cannot be typed into the initial balance field" {
+        withAccountViewModel { viewModel ->
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("New Account").performClick()
+            onAllNodes(hasSetTextAction())[1].performTextInput("Main")
+            onAllNodes(hasSetTextAction())[2].performTextInput("1o5o0")
+            onNodeWithText("Save").performClick()
+
+            onNodeWithText("Main").assertIsDisplayed()
+            viewModel.accounts.value.single().initialBalance shouldBe 15_000
         }
     }
 

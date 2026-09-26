@@ -68,6 +68,7 @@ import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenContainer
@@ -288,7 +289,7 @@ private fun BudgetDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = limitText,
-                    onValueChange = onLimitChange,
+                    onValueChange = { onLimitChange(filterAmountInput(it)) },
                     label = { Text(stringResource(Res.string.budget_monthly_limit)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

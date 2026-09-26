@@ -20,4 +20,13 @@ class MoneyFormatJvmTest : StringSpec({
         formatAmount(12_345_678, Locale.US) shouldBe "123,456.78"
         formatAmount(12_345_678, Locale.GERMANY) shouldBe "123.456,78"
     }
+
+    "parseAmount round-trips formatAmount for each locale's numbering system" {
+        listOf("en-US", "de-DE", "de-CH", "fr-CH", "fr-FR", "it-IT", "hi-IN", "zh-HK", "ar-EG", "fa-IR")
+            .forEach { tag ->
+                val locale = Locale.forLanguageTag(tag)
+                parseAmount(formatAmount(123_456_789, locale)) shouldBe 123_456_789
+            }
+        parseAmount(formatAmount(-123_456_789, Locale.forLanguageTag("de-CH"))) shouldBe -123_456_789
+    }
 })

@@ -30,6 +30,7 @@ import org.sjbtimdan.linden.resources.entry_amount
 import org.sjbtimdan.linden.resources.ledger_amount_all
 import org.sjbtimdan.linden.resources.ledger_apply
 import org.sjbtimdan.linden.resources.ledger_filter_by_amount
+import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.parseAmount
 
 /**
@@ -98,7 +99,7 @@ fun AmountFilterChip(
                 }
                 OutlinedTextField(
                     value = amountText,
-                    onValueChange = { amountText = it },
+                    onValueChange = { amountText = filterAmountInput(it) },
                     label = { Text(stringResource(Res.string.entry_amount)) },
                     singleLine = true,
                     modifier = Modifier
