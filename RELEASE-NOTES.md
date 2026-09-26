@@ -1,3 +1,12 @@
+## Version 0.8.0
+
+<en-US>
+- Hide Totals now hides every amount in the app, not just the totals.
+- An amount typed as a calculation is saved as its result, like 12+3.50 becoming 15.50.
+- The undo bar for a deleted entry now appears at the bottom of the ledger.
+- Importing a file that is not a valid Ivy backup reports an error instead of deleting your data.
+</en-US>
+
 ## Version 0.7.0
 
 <en-US>
