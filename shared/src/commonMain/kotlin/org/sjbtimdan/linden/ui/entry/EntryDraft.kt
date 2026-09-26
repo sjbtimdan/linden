@@ -42,22 +42,22 @@ data class EntryDraft(
     fun firstMissingRequirement(accounts: List<Account>): MissingRequirement? {
         val amountValue = amount
         if (amountValue == null || amountValue <= 0) return MissingRequirement.AMOUNT
-        if (accountId == null) {
-            return when (type) {
-                EntryType.Expense, EntryType.Income -> MissingRequirement.ACCOUNT
-                EntryType.Transfer -> MissingRequirement.SOURCE_ACCOUNT
-            }
-        }
         return when (type) {
-            EntryType.Expense, EntryType.Income ->
-                if (categoryId == null) MissingRequirement.CATEGORY else null
+            // Expense/income check in the order the form shows them below the
+            // amount: Category first, then Account.
+            EntryType.Expense, EntryType.Income -> when {
+                categoryId == null -> MissingRequirement.CATEGORY
+                accountId == null -> MissingRequirement.ACCOUNT
+                else -> null
+            }
 
             EntryType.Transfer -> {
+                val accountIdValue = accountId ?: return MissingRequirement.SOURCE_ACCOUNT
                 val toAccountIdValue = toAccountId ?: return MissingRequirement.DESTINATION_ACCOUNT
-                if (toAccountIdValue == accountId) return MissingRequirement.DIFFERENT_DESTINATION
+                if (toAccountIdValue == accountIdValue) return MissingRequirement.DIFFERENT_DESTINATION
                 val toAccount = accounts.firstOrNull { it.id == toAccountIdValue }
                     ?: return MissingRequirement.DESTINATION_ACCOUNT
-                val account = accounts.firstOrNull { it.id == accountId }
+                val account = accounts.firstOrNull { it.id == accountIdValue }
                     ?: return MissingRequirement.SOURCE_ACCOUNT
                 if (account.currency == toAccount.currency) {
                     null

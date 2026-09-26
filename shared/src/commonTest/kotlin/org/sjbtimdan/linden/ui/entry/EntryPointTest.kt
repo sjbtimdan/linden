@@ -305,6 +305,8 @@ class EntryPointTest : StringSpec({
             onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
             onNodeWithText("Groceries").assertDoesNotExist()
             onNodeWithText("Main").assertDoesNotExist()
+            // The emptied form is not flagged as missing an amount.
+            onNodeWithText("Enter an amount").assertDoesNotExist()
             entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
         }
     }
@@ -387,7 +389,7 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "the save hint names the missing fields in order" {
+    "the save hint stays hidden until the user edits, then names the missing fields in form order" {
         withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -395,22 +397,49 @@ class EntryPointTest : StringSpec({
                 EntryPoint(viewModel = viewModel)
             }
 
-            onNodeWithText("Enter an amount").assertIsDisplayed()
+            // Opening the screen is not an error.
+            onNodeWithText("Enter an amount").assertDoesNotExist()
             onNodeWithText("Add").assertIsNotEnabled()
 
+            // Typing the amount flags the next box down: Category above Account.
             enterAmount("12.50")
-            onNodeWithText("Choose an account").assertIsDisplayed()
-
-            onNodeWithText("Account").performClick()
-            onNodeWithText("Main").performClick()
             onNodeWithText("Choose a category").assertIsDisplayed()
 
             onNodeWithText("Category").performClick()
             onNodeWithText("Groceries").performClick()
+            onNodeWithText("Choose an account").assertIsDisplayed()
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
             onNodeWithText("Enter an amount").assertDoesNotExist()
             onNodeWithText("Choose an account").assertDoesNotExist()
             onNodeWithText("Choose a category").assertDoesNotExist()
             onNodeWithText("Add").assertIsEnabled()
+        }
+    }
+
+    "the save hint does not reappear right after a successful save" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            // The saved entry resets the amount, but that is not an error: the
+            // receipt confirms the add and the hint waits for the next edit.
+            onNodeWithText("Added").assertIsDisplayed()
+            onNodeWithText("Enter an amount").assertDoesNotExist()
+            onNodeWithText("Add").assertIsNotEnabled()
+            entryDao.getAll().first().shouldHaveSize(1)
         }
     }
 
@@ -429,6 +458,8 @@ class EntryPointTest : StringSpec({
             onNodeWithText("To account").performClick()
             onNodeWithText("Savings").performClick()
 
+            // Picking accounts is an edit, but the amount was never entered:
+            // the hint flags the sent amount first, then the received one.
             onNodeWithText("Enter an amount").assertIsDisplayed()
             enterAmount("100", label = "Amount (sent)")
 

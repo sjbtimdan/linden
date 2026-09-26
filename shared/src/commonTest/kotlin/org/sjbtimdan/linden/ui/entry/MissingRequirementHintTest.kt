@@ -50,6 +50,13 @@ class MissingRequirementHintTest : StringSpec({
 
     "names the first missing requirement when the fields can be satisfied" {
         missingRequirement(draft(), listOf(main), listOf(groceries)) shouldBe MissingRequirement.AMOUNT
+        // The form shows Category above Account, so an empty form names Category first.
+        missingRequirement(
+            draft(accountId = null).copy(amountText = "4.50", categoryId = null),
+            listOf(main),
+            listOf(groceries),
+        ) shouldBe
+            MissingRequirement.CATEGORY
         missingRequirement(
             draft(accountId = null).copy(amountText = "4.50"),
             listOf(main),

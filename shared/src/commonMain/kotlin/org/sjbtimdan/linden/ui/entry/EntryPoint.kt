@@ -133,12 +133,24 @@ fun EntryPoint(
     var draftTouched by rememberSaveable { mutableStateOf(false) }
     val markTouched: () -> Unit = { draftTouched = true }
 
+    // Whether the user has edited the form since the last save or clear. Opening
+    // the screen, a prefill from the last entry, and the reset after a save are
+    // not user edits, so the missing-requirement hint stays hidden until one.
+    var draftEdited by rememberSaveable { mutableStateOf(false) }
+    val markEdited: () -> Unit = {
+        markTouched()
+        draftEdited = true
+    }
+
     // Saves the draft from either the form's Add row or the calculator's Add
     // button; both only fire while the draft is valid. The persistent last-added
     // receipt is the confirmation, so no snackbar is shown.
     val addDraft: () -> Unit = {
         scope.launch {
-            if (viewModel.saveDraft()) markTouched()
+            if (viewModel.saveDraft()) {
+                markTouched()
+                draftEdited = false
+            }
         }
     }
 
@@ -246,31 +258,31 @@ fun EntryPoint(
                     categories = categories,
                     onAmountChange = {
                         viewModel.onAmountChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onCategoryChange = {
                         viewModel.onCategoryChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onAccountChange = {
                         viewModel.onAccountChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onToAccountChange = {
                         viewModel.onToAccountChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onToAmountChange = {
                         viewModel.onToAmountChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onDescriptionChange = {
                         viewModel.onDescriptionChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onCreatedAtChange = {
                         viewModel.onCreatedAtChange(it)
-                        markTouched()
+                        markEdited()
                     },
                     onFieldFocusChange = { fieldFocused = it },
                     editEpoch = editEpoch,
@@ -280,18 +292,18 @@ fun EntryPoint(
                     quickEntries = quickEntries,
                     onQuickEntry = {
                         viewModel.applyQuickEntry(it)
-                        markTouched()
+                        markEdited()
                     },
                     onAdd = addDraft,
                     defaultCurrency = defaultCurrency,
                     onCreateCategory = { name, type, icon ->
                         val created = viewModel.createCategory(name, type, icon)
-                        if (created) markTouched()
+                        if (created) markEdited()
                         created
                     },
                     onCreateAccount = { name, currency, initialBalance, selectAsTo ->
                         val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
-                        if (created) markTouched()
+                        if (created) markEdited()
                         created
                     },
                     categoryDialogState = createCategoryDialog,
@@ -302,9 +314,12 @@ fun EntryPoint(
             }
         }
 
-        // Explains why Add is disabled unless the form's own links already
-        // point at the blocker (missing accounts or categories).
+        // Explains why Add is disabled, but only once the user has edited the
+        // form: a fresh screen or the reset after a save is not an error. The
+        // blockers that cannot be picked around (nothing to create an entry
+        // with) still show immediately as their fix is to create one.
         val missingHint = missingRequirement(draft, accounts, categories)
+            ?.takeIf { draftEdited || it.isCreateAction }
 
         // When nothing exists to pick, the hint becomes an action that opens the
         // same create dialogs as the form's "+ New" chips.
@@ -385,6 +400,7 @@ fun EntryPoint(
                     onClick = {
                         viewModel.clearDraft()
                         draftTouched = false
+                        draftEdited = false
                     },
                     enabled = draft != null,
                     modifier = Modifier.weight(1f),

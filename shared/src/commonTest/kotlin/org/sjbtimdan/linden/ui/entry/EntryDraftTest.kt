@@ -97,8 +97,11 @@ class EntryDraftTest : StringSpec({
             .isValid(accounts) shouldBe false
     }
 
-    "firstMissingRequirement names the first missing field of an expense" {
+    "firstMissingRequirement names the first missing field of an expense in form order" {
         draft(amountText = "").firstMissingRequirement(accounts) shouldBe MissingRequirement.AMOUNT
+        // Category sits above Account in the form, so it is named first.
+        draft(accountId = null, categoryId = null).firstMissingRequirement(accounts) shouldBe
+            MissingRequirement.CATEGORY
         draft(accountId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
         draft(categoryId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.CATEGORY
         draft().firstMissingRequirement(accounts).shouldBeNull()
