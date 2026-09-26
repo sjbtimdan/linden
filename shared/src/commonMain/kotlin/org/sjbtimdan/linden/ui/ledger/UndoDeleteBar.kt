@@ -30,6 +30,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_deleted
 import org.sjbtimdan.linden.resources.entry_undo
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.amountLabel
 import org.sjbtimdan.linden.ui.entry.subtitle
 import org.sjbtimdan.linden.ui.entry.tintColor
@@ -46,6 +47,7 @@ import org.sjbtimdan.linden.ui.theme.CardShape
 @Composable
 fun LedgerViewModel.UndoDeleteBar(modifier: Modifier = Modifier) {
     val entry by lastDeleted.collectAsState()
+    val hidden by hideTotal.collectAsState()
     // Leaving the screen cancels the offer: the last delete becomes final
     // instead of the bar reappearing on the next visit.
     DisposableEffect(Unit) {
@@ -86,7 +88,7 @@ fun LedgerViewModel.UndoDeleteBar(modifier: Modifier = Modifier) {
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = deleted.amountLabel(),
+            text = if (hidden) HIDDEN_AMOUNT else deleted.amountLabel(),
             style = MaterialTheme.typography.titleSmall,
             color = tint,
             maxLines = 1,

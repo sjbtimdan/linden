@@ -47,6 +47,7 @@ import org.sjbtimdan.linden.resources.insights_no_entries
 import org.sjbtimdan.linden.resources.insights_previous_period
 import org.sjbtimdan.linden.resources.insights_vs_previous
 import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.dateLanguage
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -295,7 +296,7 @@ private fun AmountRow(
         }
         Text(
             text = when {
-                hideTotal -> "••••••"
+                hideTotal -> HIDDEN_AMOUNT
                 valueMinor == null -> "–"
                 else -> amountLabel(valueMinor, currency)
             },
@@ -332,7 +333,7 @@ private fun NetRow(label: String, incomeMinor: Long?, expenseMinor: Long?, curre
             )
         }
         Text(
-            text = if (hideTotal) "••••••" else formatTotal(income - expense, currency),
+            text = if (hideTotal) HIDDEN_AMOUNT else formatTotal(income - expense, currency),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,

@@ -103,6 +103,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.EntryRow
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.OptionChipRow
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
@@ -476,6 +477,7 @@ fun LedgerScreen(
             val canAdjustBalance = periodSpansToday
             AccountsList(
                 balances = shownBalances,
+                hideAmounts = hideTotal,
                 emptyMessage = when {
                     accountFilter.isNotEmpty() && accountBalances.isNotEmpty() ->
                         stringResource(Res.string.ledger_accounts_no_match)
@@ -524,6 +526,7 @@ fun LedgerScreen(
             CategoryTotalsList(
                 categories = shownCategories,
                 currency = defaultCurrency,
+                hideAmounts = hideTotal,
                 emptyMessage = when {
                     categoryFilter.isNotEmpty() && categoryTotals.isNotEmpty() ->
                         stringResource(Res.string.ledger_categories_no_match)
@@ -615,6 +618,7 @@ fun LedgerScreen(
                             EntryRow(
                                 entry = item.entry,
                                 onClick = { viewModel.openEditDialog(item.entry) },
+                                hideAmounts = hideTotal,
                                 zone = viewModel.zone,
                             )
                         }
@@ -675,6 +679,7 @@ fun LedgerScreen(
         AdjustBalanceDialog(
             account = state.account.account,
             currentBalance = state.currentBalance,
+            hideAmounts = hideTotal,
             targetBalanceText = state.targetBalanceText,
             categoryQuery = state.categoryQuery,
             categories = visibleCategories,
@@ -742,6 +747,7 @@ private fun FiltersHeader(expanded: Boolean, onToggle: () -> Unit, onSearchClick
 private fun AdjustBalanceDialog(
     account: Account,
     currentBalance: Long,
+    hideAmounts: Boolean,
     targetBalanceText: String,
     categoryQuery: String,
     categories: List<Category>,
@@ -784,7 +790,7 @@ private fun AdjustBalanceDialog(
                 Text(
                     text = stringResource(
                         Res.string.ledger_adjust_current_balance,
-                        formatAmount(currentBalance),
+                        if (hideAmounts) HIDDEN_AMOUNT else formatAmount(currentBalance),
                         account.currency.symbol,
                     ),
                     style = MaterialTheme.typography.bodyMedium,

@@ -102,6 +102,31 @@ class EntryRowTest : StringSpec({
         }
     }
 
+    "masks the amount while keeping the title and subtitle when amounts are hidden" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    EntryRow(
+                        entry = ExpenseEntry(
+                            id = 1,
+                            category = groceries,
+                            description = "Coffee",
+                            account = main,
+                            amount = 450,
+                        ),
+                        onClick = {},
+                        hideAmounts = true,
+                    )
+                }
+
+                onNodeWithText("Coffee").assertIsDisplayed()
+                onNodeWithText("Main").assertIsDisplayed()
+                onNodeWithText("− 4.50 CHF").assertDoesNotExist()
+                onNodeWithText("••••••").assertIsDisplayed()
+            }
+        }
+    }
+
     "income row shows a plus-signed amount with the account currency symbol" {
         onTestMain {
             runComposeUiTest {

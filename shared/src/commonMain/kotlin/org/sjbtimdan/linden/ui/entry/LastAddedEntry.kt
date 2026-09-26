@@ -38,9 +38,10 @@ import org.sjbtimdan.linden.ui.theme.CardShape
  * Add/Clear actions. Tapping it undoes the add: the entry returns to the form
  * as an editable draft. Styled like a ledger row but inert, so it reads as a
  * confirmation of what was added rather than part of the draft above it.
+ * [hideAmounts] masks the receipt's amount while "Hide Totals" is on.
  */
 @Composable
-fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
     val tint = entry.tintColor()
     Row(
         modifier = modifier
@@ -76,7 +77,7 @@ fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modif
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = entry.amountLabel(),
+            text = if (hideAmounts) HIDDEN_AMOUNT else entry.amountLabel(),
             style = MaterialTheme.typography.titleSmall,
             color = tint,
             maxLines = 1,

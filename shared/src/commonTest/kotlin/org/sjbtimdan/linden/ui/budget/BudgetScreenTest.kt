@@ -71,4 +71,20 @@ class BudgetScreenTest : StringSpec({
             onNodeWithText("80.00").assertIsDisplayed()
         }
     }
+
+    "masks the monthly limit when Hide Totals is on" {
+        withBudgetViewModel(hideEntryTotal = true) { budgetDao, categoryDao, viewModel ->
+            categoryDao.create("Groceries", CategoryType.Expense)
+            budgetDao.upsert("Groceries", 80_000)
+
+            setContent {
+                BudgetScreen(viewModel = viewModel, onNavigateBack = {})
+            }
+
+            // The budget stays identifiable; only its limit is masked.
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("800.00").assertDoesNotExist()
+            onNodeWithText("••••••").assertIsDisplayed()
+        }
+    }
 })

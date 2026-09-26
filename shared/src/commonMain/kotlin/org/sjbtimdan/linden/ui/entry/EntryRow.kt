@@ -64,13 +64,15 @@ internal fun Entry.tintColor(): Color = when (type) {
 /**
  * A single entry row. [showTime] controls the trailing time-of-day line: rows
  * are grouped under day headers that already carry the date, so the line only
- * shows the time to tell same-day entries apart.
+ * shows the time to tell same-day entries apart. [hideAmounts] masks the amount
+ * while "Hide Totals" is on, leaving the title and subtitle readable.
  */
 @Composable
 fun EntryRow(
     entry: Entry,
     onClick: () -> Unit,
     showTime: Boolean = true,
+    hideAmounts: Boolean = false,
     zone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     val tint = entry.tintColor()
@@ -120,7 +122,7 @@ fun EntryRow(
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = entry.amountLabel(),
+            text = if (hideAmounts) HIDDEN_AMOUNT else entry.amountLabel(),
             style = MaterialTheme.typography.titleMedium,
             color = tint,
             maxLines = 1,

@@ -37,6 +37,7 @@ import org.sjbtimdan.linden.resources.ledger_adjust_latest_period_only
 import org.sjbtimdan.linden.resources.ledger_more_options
 import org.sjbtimdan.linden.resources.ledger_view_entries
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
@@ -47,12 +48,14 @@ import org.sjbtimdan.linden.ui.theme.CardShape
  * offers the same drill-in plus Adjust Balance, which is disabled with a
  * reason while [canAdjustBalance] is false so the action never pretends to
  * work. [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided
- * one: a button pointing at the next step for a brand-new user.
+ * one: a button pointing at the next step for a brand-new user. [hideAmounts]
+ * masks each balance while "Hide Totals" is on.
  */
 @Composable
 fun AccountsList(
     balances: List<AccountWithBalance>,
     modifier: Modifier = Modifier,
+    hideAmounts: Boolean = false,
     emptyMessage: String,
     emptyActionLabel: String? = null,
     onEmptyAction: (() -> Unit)? = null,
@@ -97,7 +100,11 @@ fun AccountsList(
                         )
                     }
                     Text(
-                        text = "${formatAmountCompact(item.balance)} ${account.currency.symbol}",
+                        text = if (hideAmounts) {
+                            HIDDEN_AMOUNT
+                        } else {
+                            "${formatAmountCompact(item.balance)} ${account.currency.symbol}"
+                        },
                         style = MaterialTheme.typography.titleMedium,
                     )
                     var menuOpen by remember { mutableStateOf(false) }

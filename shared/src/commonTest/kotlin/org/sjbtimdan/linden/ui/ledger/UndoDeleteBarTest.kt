@@ -48,6 +48,34 @@ class UndoDeleteBarTest : StringSpec({
         }
     }
 
+    "masks the deleted entry's amount while Hide Totals is on" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            defaultCurrency = Currency.CHF,
+            rates = emptyList(),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+            settingsDao.setHideEntryTotal(true)
+
+            setContent {
+                viewModel.UndoDeleteBar()
+            }
+
+            viewModel.deleteDialogEntry()
+            waitForIdle()
+
+            onNodeWithText("Coffee · Main").assertIsDisplayed()
+            onNodeWithText("− 4.50 CHF").assertDoesNotExist()
+            onNodeWithText("••••••").assertIsDisplayed()
+        }
+    }
+
     "leaving the screen clears the offer and makes the delete final" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)

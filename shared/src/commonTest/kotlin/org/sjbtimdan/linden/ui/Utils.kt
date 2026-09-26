@@ -128,6 +128,7 @@ fun withViewModel(block: suspend ComposeUiTest.(CategoryListViewModel) -> Unit) 
 
 @OptIn(ExperimentalTestApi::class)
 fun withAccountViewModel(
+    hideEntryTotal: Boolean = false,
     block: suspend ComposeUiTest.(AccountDao, EntryDao, CategoryDao, AccountListViewModel) -> Unit,
 ) {
     onTestMain {
@@ -137,32 +138,48 @@ fun withAccountViewModel(
             val entryDao = EntryDao(database.entryQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
             val settingsDao = SettingsDao(database.settingsQueries)
-            val viewModel = AccountListViewModel(accountDao, entryDao, settingsDao, testAllEntries(entryDao))
+            if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
+            val viewModel = AccountListViewModel(
+                accountDao,
+                entryDao,
+                settingsDao,
+                testAllEntries(entryDao),
+                initialHideEntryTotal = hideEntryTotal,
+            )
             block(accountDao, entryDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withAccountViewModel(block: suspend ComposeUiTest.(AccountListViewModel) -> Unit) =
-    withAccountViewModel { _, _, _, viewModel -> block(viewModel) }
+fun withAccountViewModel(
+    hideEntryTotal: Boolean = false,
+    block: suspend ComposeUiTest.(AccountListViewModel) -> Unit,
+) = withAccountViewModel(hideEntryTotal) { _, _, _, viewModel -> block(viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
-fun withBudgetViewModel(block: suspend ComposeUiTest.(BudgetDao, CategoryDao, BudgetViewModel) -> Unit) {
+fun withBudgetViewModel(
+    hideEntryTotal: Boolean = false,
+    block: suspend ComposeUiTest.(BudgetDao, CategoryDao, BudgetViewModel) -> Unit,
+) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val budgetDao = BudgetDao(database.budgetQueries)
             val categoryDao = CategoryDao(database.categoryQueries)
-            val viewModel = BudgetViewModel(budgetDao, categoryDao)
+            val settingsDao = SettingsDao(database.settingsQueries)
+            if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
+            val viewModel = BudgetViewModel(budgetDao, categoryDao, settingsDao, initialHideEntryTotal = hideEntryTotal)
             block(budgetDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
-fun withBudgetViewModel(block: suspend ComposeUiTest.(CategoryDao, BudgetViewModel) -> Unit) =
-    withBudgetViewModel { _, categoryDao, viewModel -> block(categoryDao, viewModel) }
+fun withBudgetViewModel(
+    hideEntryTotal: Boolean = false,
+    block: suspend ComposeUiTest.(CategoryDao, BudgetViewModel) -> Unit,
+) = withBudgetViewModel(hideEntryTotal) { _, categoryDao, viewModel -> block(categoryDao, viewModel) }
 
 @OptIn(ExperimentalTestApi::class)
 fun withSettingsViewModel(

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
@@ -19,8 +20,13 @@ class AccountListViewModel(
     entryDao: EntryDao,
     settingsDao: SettingsDao,
     allEntries: StateFlow<List<Entry>>,
+    initialHideEntryTotal: Boolean = false,
 ) : SearchableListViewModel() {
     val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
+
+    /** Whether amounts are masked by the "Hide totals" setting. */
+    val hideTotal: StateFlow<Boolean> =
+        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
 
     val accounts: StateFlow<List<Account>> = accountDao.getAll().filteredBySearch()
 

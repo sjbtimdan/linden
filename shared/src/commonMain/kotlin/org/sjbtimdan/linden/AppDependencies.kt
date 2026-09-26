@@ -111,8 +111,19 @@ class AppDependencies(
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
-    val accountListViewModel = AccountListViewModel(accountDao, entryDao, settingsDao, allEntries)
-    val budgetViewModel = BudgetViewModel(budgetDao, categoryDao)
+    val accountListViewModel = AccountListViewModel(
+        accountDao,
+        entryDao,
+        settingsDao,
+        allEntries,
+        initialHideEntryTotal = initialHideEntryTotal,
+    )
+    val budgetViewModel = BudgetViewModel(
+        budgetDao,
+        categoryDao,
+        settingsDao,
+        initialHideEntryTotal = initialHideEntryTotal,
+    )
     val entryViewModel = EntryPointViewModel(
         entryDao,
         accountDao,

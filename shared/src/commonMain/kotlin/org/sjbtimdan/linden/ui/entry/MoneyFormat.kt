@@ -7,6 +7,12 @@ package org.sjbtimdan.linden.ui.entry
 expect fun formatAmount(amount: Long): String
 
 /**
+ * Placeholder rendered in place of an amount while "Hide Totals" is on, shared
+ * by every amount row and card so the mask reads identically app-wide.
+ */
+const val HIDDEN_AMOUNT = "••••••"
+
+/**
  * Parses a user-typed amount ("42.50", "42,5", "1,000.00", "-500") into minor
  * units, or null when invalid; a leading "-" (or "+") is accepted, the former
  * yielding a negative result. Digits and separators are normalized first, so any

@@ -67,6 +67,24 @@ class LastAddedEntryTest : StringSpec({
         }
     }
 
+    "masks the receipt amount while keeping the title when amounts are hidden" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onClick = {},
+                        hideAmounts = true,
+                    )
+                }
+
+                onNodeWithText("Coffee · Main").assertIsDisplayed()
+                onNodeWithText("− 4.50 CHF").assertDoesNotExist()
+                onNodeWithText("••••••").assertIsDisplayed()
+            }
+        }
+    }
+
     "tapping the receipt undoes the add" {
         onTestMain {
             runComposeUiTest {

@@ -335,6 +335,7 @@ fun EntryPoint(
             lastAdded?.let { entry ->
                 LastAddedEntry(
                     entry = entry,
+                    hideAmounts = hideTotal,
                     onClick = {
                         viewModel.undoLastAdded()
                         markTouched()
@@ -385,7 +386,7 @@ private fun TotalBalanceCard(
     compact: Boolean,
     onToggleHidden: () -> Unit,
 ) {
-    val amountLabel = if (hidden) "••••••" else total?.let(::formatAmountCompact) ?: "–"
+    val amountLabel = if (hidden) HIDDEN_AMOUNT else total?.let(::formatAmountCompact) ?: "–"
     if (compact) {
         // Slim one-line variant shown while a draft is being captured.
         Surface(

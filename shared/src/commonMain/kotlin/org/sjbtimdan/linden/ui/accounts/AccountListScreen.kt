@@ -55,6 +55,7 @@ import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
@@ -71,6 +72,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     val accountsWithEntries by viewModel.accountsWithEntries.collectAsState()
     val allTimeBalances by viewModel.allTimeBalances.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
     var dialogState by remember { mutableStateOf<AccountDialogState?>(null) }
     // Set when hiding an account with a non-zero all-time balance: the confirm
     // dialog must be answered before the account is actually hidden.
@@ -202,7 +204,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "${formatAmountCompact(account.initialBalance)} ${account.currency.symbol}",
+                                text = if (hideTotal) {
+                                    HIDDEN_AMOUNT
+                                } else {
+                                    "${formatAmountCompact(account.initialBalance)} ${account.currency.symbol}"
+                                },
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
@@ -298,7 +304,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             body = stringResource(
                 Res.string.accounts_hide_body,
                 account?.name.orEmpty(),
-                formatAmount(balance),
+                if (hideTotal) HIDDEN_AMOUNT else formatAmount(balance),
                 account?.currency?.symbol.orEmpty(),
             ),
             confirmLabel = stringResource(Res.string.accounts_hide_confirm),

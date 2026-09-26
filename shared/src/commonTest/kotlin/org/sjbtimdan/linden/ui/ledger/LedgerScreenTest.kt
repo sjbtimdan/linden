@@ -814,7 +814,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "hides the top total when Hide Totals is enabled" {
+    "hides the top total and row amounts when Hide Totals is enabled" {
         withLedgerViewModel(
             clock = FakeClock(),
             defaultCurrency = Currency.CHF,
@@ -830,13 +830,68 @@ class LedgerScreenTest : StringSpec({
             // Both the entry row and the top total show the amount.
             onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
             onAllNodesWithText("***").assertCountEquals(0)
+            onAllNodesWithText("••••••").assertCountEquals(0)
 
             settingsDao.setHideEntryTotal(true)
             waitForIdle()
 
-            // Hiding masks the total with a *** placeholder; only the row amount stays.
-            onAllNodesWithText("− 4.50 CHF").assertCountEquals(1)
+            // Hiding masks every amount: the top total with ***, the row with the
+            // app-wide hidden-amount placeholder.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(0)
             onNodeWithText("***").assertIsDisplayed()
+            onAllNodesWithText("••••••").assertCountEquals(1)
+        }
+    }
+
+    "masks account balances when Hide Totals is enabled" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            defaultCurrency = Currency.CHF,
+            rates = emptyList(),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            onNodeWithText("20.00 CHF").assertIsDisplayed()
+
+            settingsDao.setHideEntryTotal(true)
+            waitForIdle()
+
+            // The account stays identifiable; only its balance is masked.
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("20.00 CHF").assertDoesNotExist()
+            onAllNodesWithText("••••••").assertCountEquals(1)
+        }
+    }
+
+    "masks category totals when Hide Totals is enabled" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            defaultCurrency = Currency.CHF,
+            rates = emptyList(),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Categories").performClick()
+            // The top total and the category row both show the amount.
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(2)
+
+            settingsDao.setHideEntryTotal(true)
+            waitForIdle()
+
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onAllNodesWithText("− 4.50 CHF").assertCountEquals(0)
+            onAllNodesWithText("••••••").assertCountEquals(1)
         }
     }
 

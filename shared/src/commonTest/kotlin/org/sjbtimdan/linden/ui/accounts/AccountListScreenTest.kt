@@ -365,6 +365,24 @@ class AccountListScreenTest : StringSpec({
         }
     }
 
+    "masks initial balances when Hide Totals is on" {
+        withAccountViewModel(hideEntryTotal = true) { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF, initialBalance = 150_050)
+
+            setContent {
+                AccountListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {},
+                )
+            }
+
+            // The account stays identifiable; only the amount is masked.
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithText("1,500.50 CHF").assertDoesNotExist()
+            onNodeWithText("••••••").assertIsDisplayed()
+        }
+    }
+
     "search filters the account list and clears on the clear button" {
         withAccountViewModel { viewModel ->
             viewModel.createAccount("Main", Currency.CHF)

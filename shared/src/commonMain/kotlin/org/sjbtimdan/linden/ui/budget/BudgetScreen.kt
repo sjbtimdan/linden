@@ -68,6 +68,7 @@ import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
@@ -88,6 +89,7 @@ private data class BudgetDialogState(
 fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     val budgets by viewModel.budgets.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
     var dialogState by remember { mutableStateOf<BudgetDialogState?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -184,7 +186,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                             )
                         }
                         Text(
-                            text = formatAmount(budget.limitMinor),
+                            text = if (hideTotal) HIDDEN_AMOUNT else formatAmount(budget.limitMinor),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }

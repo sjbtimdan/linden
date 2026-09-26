@@ -35,6 +35,7 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.ledger_budget_progress
 import org.sjbtimdan.linden.resources.ledger_entry_count
 import org.sjbtimdan.linden.resources.ledger_uncategorized
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
@@ -43,13 +44,16 @@ import org.sjbtimdan.linden.ui.theme.accentColor
 /**
  * Category totals at the end of the selected period, or the empty state.
  * [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided one:
- * a button pointing at the next step for a brand-new user.
+ * a button pointing at the next step for a brand-new user. [hideAmounts] masks
+ * each total and drops the budget progress while "Hide Totals" is on, so the
+ * spending amounts behind the mask never leak.
  */
 @Composable
 fun CategoryTotalsList(
     categories: List<CategoryWithTotal>,
     currency: Currency,
     modifier: Modifier,
+    hideAmounts: Boolean = false,
     emptyMessage: String,
     emptyActionLabel: String? = null,
     onEmptyAction: (() -> Unit)? = null,
@@ -124,17 +128,19 @@ fun CategoryTotalsList(
                             )
                         }
                         Text(
-                            text = formatTotal(item.total, currency),
+                            text = if (hideAmounts) HIDDEN_AMOUNT else formatTotal(item.total, currency),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
-                    item.budget?.let { budget ->
-                        Spacer(modifier = Modifier.height(6.dp))
-                        BudgetProgressBar(
-                            spent = item.total,
-                            limit = budget,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                    if (!hideAmounts) {
+                        item.budget?.let { budget ->
+                            Spacer(modifier = Modifier.height(6.dp))
+                            BudgetProgressBar(
+                                spent = item.total,
+                                limit = budget,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
             }
