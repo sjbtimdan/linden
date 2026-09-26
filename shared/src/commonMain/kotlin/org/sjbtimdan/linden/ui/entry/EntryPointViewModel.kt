@@ -100,9 +100,17 @@ class EntryPointViewModel(
 
     /**
      * The entry most recently saved from this screen, shown as a read-only
-     * "already added" confirmation until the user clears the form.
+     * "already added" confirmation with a short-lived undo offer.
      */
     val lastAdded: StateFlow<Entry?> = _lastAdded.asStateFlow()
+
+    /**
+     * Dismisses the last-added receipt without touching the draft or the entry;
+     * the add becomes final. Also called when the undo offer times out.
+     */
+    fun dismissLastAdded() {
+        _lastAdded.value = null
+    }
 
     /** Fills the draft from a quick-entry chip, keeping the current date and time. */
     fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->

@@ -195,7 +195,7 @@ class EntryPointTest : StringSpec({
         }
     }
 
-    "tapping the added receipt pulls the entry back into the form" {
+    "tapping the undo action on the added receipt pulls the entry back into the form" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)
 
@@ -214,7 +214,7 @@ class EntryPointTest : StringSpec({
             waitForIdle()
             entryDao.getAll().first().shouldHaveSize(1)
 
-            onNodeWithTag("lastAddedEntry").performClick()
+            onNodeWithTag("undoAddedEntry").performClick()
             waitForIdle()
 
             // The entry left the ledger and its values are back in an editable form.
@@ -225,6 +225,33 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Groceries").assertIsDisplayed()
             onNodeWithText("Main").assertIsDisplayed()
             onNodeWithText("Add").assertIsEnabled()
+        }
+    }
+
+    "the added receipt disappears after the undo window" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            onNodeWithTag("lastAddedEntry").assertIsDisplayed()
+
+            mainClock.advanceTimeBy(5_000)
+            waitForIdle()
+
+            // The undo offer expired; the entry stays in the ledger.
+            onNodeWithTag("lastAddedEntry").assertDoesNotExist()
+            entryDao.getAll().first().shouldHaveSize(1)
         }
     }
 

@@ -35,13 +35,13 @@ import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
  * Read-only receipt of the entry that was just saved, shown above the
- * Add/Clear actions. Tapping it undoes the add: the entry returns to the form
- * as an editable draft. Styled like a ledger row but inert, so it reads as a
- * confirmation of what was added rather than part of the draft above it.
+ * Add/Clear actions. [onUndo] pulls the entry back into the form as an
+ * editable draft; only the Undo action is tappable, so a stray tap on the
+ * receipt (the confirmation icon included) can never remove the entry.
  * [hideAmounts] masks the receipt's amount while "Hide Totals" is on.
  */
 @Composable
-fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
+fun LastAddedEntry(entry: Entry, onUndo: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
     val tint = entry.tintColor()
     Row(
         modifier = modifier
@@ -50,7 +50,6 @@ fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modif
             .clip(CardShape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
-            .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .testTag("lastAddedEntry"),
         verticalAlignment = Alignment.CenterVertically,
@@ -89,7 +88,9 @@ fun LastAddedEntry(entry: Entry, onClick: () -> Unit, modifier: Modifier = Modif
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .clickable(role = Role.Button, onClick = onUndo)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .testTag("undoAddedEntry"),
         )
     }
 }

@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
@@ -63,8 +64,15 @@ import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenContainerWithIme
 import org.sjbtimdan.linden.ui.theme.CardElevation
+import kotlin.time.Duration.Companion.seconds
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
+
+/**
+ * How long the last-added receipt stays as an undo offer before it dismisses
+ * itself; after that the add is final.
+ */
+private val LAST_ADDED_UNDO_WINDOW = 5.seconds
 
 @Composable
 fun EntryPoint(
@@ -103,6 +111,15 @@ fun EntryPoint(
     // screen (and thus the draft) is created fresh.
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
+    }
+
+    // The last-added receipt is both a confirmation and an undo offer: it
+    // dismisses itself after a short window, after which the add is final.
+    LaunchedEffect(lastAdded?.id) {
+        if (lastAdded != null) {
+            delay(LAST_ADDED_UNDO_WINDOW)
+            viewModel.dismissLastAdded()
+        }
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
@@ -330,13 +347,14 @@ fun EntryPoint(
             }
 
             // Receipt of the entry just saved, clearly marked as added so the
-            // prefilled form below is not mistaken for an unsaved draft. Tapping
-            // it pulls the entry back into the form as an undo.
+            // prefilled form below is not mistaken for an unsaved draft. Only
+            // its Undo action pulls the entry back into the form; a tap on the
+            // receipt itself does nothing.
             lastAdded?.let { entry ->
                 LastAddedEntry(
                     entry = entry,
                     hideAmounts = hideTotal,
-                    onClick = {
+                    onUndo = {
                         viewModel.undoLastAdded()
                         markTouched()
                     },

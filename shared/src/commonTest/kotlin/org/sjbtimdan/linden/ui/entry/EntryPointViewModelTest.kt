@@ -299,6 +299,23 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 
+    "dismissLastAdded hides the receipt but keeps the entry" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+
+            viewModel.dismissLastAdded()
+
+            viewModel.lastAdded.value.shouldBeNull()
+            viewModel.draft.value?.amountText shouldBe ""
+            entryDao.getAll().first().shouldHaveSize(1)
+        }
+    }
+
     "undoLastAdded removes the entry and restores it as an editable draft" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

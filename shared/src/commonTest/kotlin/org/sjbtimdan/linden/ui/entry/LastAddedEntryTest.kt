@@ -27,7 +27,7 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onClick = {})
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = {})
                 }
 
                 onNodeWithTag("lastAddedEntry").assertIsDisplayed()
@@ -43,7 +43,7 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, null, main, 450), onClick = {})
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, null, main, 450), onUndo = {})
                 }
 
                 onNodeWithText("Groceries · Main").assertIsDisplayed()
@@ -57,7 +57,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = TransferEntry(1, null, "Move", main, 10_000, toAccount = savings, toAmount = 9_500),
-                        onClick = {},
+                        onUndo = {},
                     )
                 }
 
@@ -73,7 +73,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
-                        onClick = {},
+                        onUndo = {},
                         hideAmounts = true,
                     )
                 }
@@ -85,30 +85,30 @@ class LastAddedEntryTest : StringSpec({
         }
     }
 
-    "tapping the receipt undoes the add" {
+    "tapping the receipt body does not undo the add" {
         onTestMain {
             runComposeUiTest {
                 var undone = false
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onClick = { undone = true })
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = { undone = true })
                 }
 
                 onNodeWithTag("lastAddedEntry").performClick()
 
-                undone shouldBe true
+                undone shouldBe false
             }
         }
     }
 
-    "tapping the undo label undoes the add" {
+    "tapping the undo action undoes the add" {
         onTestMain {
             runComposeUiTest {
                 var undone = false
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onClick = { undone = true })
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = { undone = true })
                 }
 
-                onNodeWithText("Undo").performClick()
+                onNodeWithTag("undoAddedEntry").performClick()
 
                 undone shouldBe true
             }
