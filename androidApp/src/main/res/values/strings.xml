@@ -1,6 +1,3 @@
 <resources>
     <string name="app_name">linden</string>
-
-    <!-- Disable Firebase Analytics Advertising ID collection (privacy: no AD_ID usage). -->
-    <bool name="google_analytics_adid_collection_enabled" translatable="false">false</bool>
 </resources>
