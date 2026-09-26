@@ -385,6 +385,10 @@ class LedgerViewModel(
     private val _saving = MutableStateFlow(false)
     val saving: StateFlow<Boolean> = _saving.asStateFlow()
 
+    /** The entry most recently deleted from the edit dialog, held so the delete can be undone. */
+    private val _lastDeleted = MutableStateFlow<Entry?>(null)
+    val lastDeleted: StateFlow<Entry?> = _lastDeleted.asStateFlow()
+
     fun openEditDialog(entry: Entry) {
         draftState.value = EntryDraft.forEdit(entry)
     }
@@ -448,12 +452,13 @@ class LedgerViewModel(
 
     /** Deletes the entry being edited and closes the dialog once the write succeeds. */
     fun deleteDialogEntry() {
-        val id = draftState.value?.editing?.id ?: return
+        val entry = draftState.value?.editing ?: return
         if (_saving.value) return
         _saving.value = true
         viewModelScope.launch {
             try {
-                entryDao.delete(id)
+                entryDao.delete(entry.id)
+                _lastDeleted.value = entry
                 draftState.value = null
             } catch (e: CancellationException) {
                 throw e
@@ -463,6 +468,30 @@ class LedgerViewModel(
                 _saving.value = false
             }
         }
+    }
+
+    /**
+     * Re-inserts the entry removed by [deleteDialogEntry], so an accidental
+     * delete can be taken back. Every field is restored, including the
+     * timestamps; the row gets a fresh id, as nothing references entry ids.
+     */
+    fun undoLastDeleted() {
+        val entry = _lastDeleted.value ?: return
+        _lastDeleted.value = null
+        viewModelScope.launch {
+            try {
+                entryDao.create(entry)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
+        }
+    }
+
+    /** Dismisses the undo offer, making the last delete final. */
+    fun clearLastDeleted() {
+        _lastDeleted.value = null
     }
 
     fun dismissDialog() {

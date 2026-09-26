@@ -535,7 +535,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "deleting an entry from the edit dialog removes it" {
+    "deleting an entry from the edit dialog removes it and offers undo" {
         withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -548,6 +548,26 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Delete").performClick()
 
             onNodeWithText("No entries yet.").assertIsDisplayed()
+            onNodeWithText("Entry deleted").assertIsDisplayed()
+            onNodeWithText("Undo").assertIsDisplayed()
+        }
+    }
+
+    "undoing a delete brings the entry back" {
+        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithText("Coffee").performClick()
+            onNodeWithText("Delete").performClick()
+            onNodeWithText("Undo").performClick()
+
+            onNodeWithText("Coffee").assertIsDisplayed()
+            onNodeWithText("Entry deleted").assertDoesNotExist()
         }
     }
 

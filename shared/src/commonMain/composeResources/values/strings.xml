@@ -47,6 +47,7 @@
     <string name="entry_added">Added</string>
     <string name="entry_add_to_ledger">Add To Ledger</string>
     <string name="entry_undo">Undo</string>
+    <string name="entry_deleted">Entry deleted</string>
     <string name="entry_total_balance">Total balance</string>
     <string name="entry_show_total">Show total</string>
     <string name="entry_hide_total">Hide total</string>

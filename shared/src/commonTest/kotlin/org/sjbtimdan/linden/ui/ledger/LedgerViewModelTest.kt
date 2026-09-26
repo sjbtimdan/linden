@@ -794,6 +794,73 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "deleteDialogEntry offers the deleted entry for undo" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+
+            viewModel.deleteDialogEntry()
+
+            viewModel.lastDeleted.value shouldBe created
+        }
+    }
+
+    "deleting another entry replaces the previous undo offer" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            val entries = entryDao.getAll().first().filterIsInstance<ExpenseEntry>()
+            val coffee = entries.first { it.description == "Coffee" }
+            val lunch = entries.first { it.description == "Lunch" }
+
+            viewModel.openEditDialog(coffee)
+            viewModel.deleteDialogEntry()
+            viewModel.openEditDialog(lunch)
+            viewModel.deleteDialogEntry()
+
+            viewModel.lastDeleted.value shouldBe lunch
+        }
+    }
+
+    "undoLastDeleted restores every field of the deleted entry and clears the offer" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = at(1_000)))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+            viewModel.deleteDialogEntry()
+
+            viewModel.undoLastDeleted()
+
+            viewModel.lastDeleted.value.shouldBeNull()
+            val restored = entryDao.getAll().first().single()
+            restored.description shouldBe "Coffee"
+            restored.amount shouldBe 450L
+            restored.account shouldBe main
+            restored.category shouldBe groceries
+            restored.createdAt shouldBe created.createdAt
+            restored.createdZone shouldBe created.createdZone
+        }
+    }
+
+    "clearLastDeleted finalizes the delete" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+            viewModel.deleteDialogEntry()
+
+            viewModel.clearLastDeleted()
+
+            viewModel.lastDeleted.value.shouldBeNull()
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
+        }
+    }
+
     "dismissDialog closes the dialog" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
@@ -1699,8 +1766,45 @@ class LedgerViewModelTest : StringSpec({
                 viewModel.deleteDialogEntry()
 
                 viewModel.dialogState.value.shouldNotBeNull()
+                viewModel.lastDeleted.value.shouldBeNull()
                 viewModel.error.value.shouldNotBeNull()
                 viewModel.saving.value shouldBe false
+            }
+        }
+    }
+
+    "undoLastDeleted reports an error when the restore fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                val (main, groceries) = seed(accountDao, categoryDao)
+                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+                viewModel.openEditDialog(created)
+                viewModel.deleteDialogEntry()
+
+                entryDao.failWrites = true
+                viewModel.undoLastDeleted()
+
+                viewModel.lastDeleted.value.shouldBeNull()
+                viewModel.error.value.shouldNotBeNull()
+                entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
             }
         }
     }

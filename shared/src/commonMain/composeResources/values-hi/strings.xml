@@ -47,6 +47,7 @@
     <string name="entry_added">जोड़ा गया</string>
     <string name="entry_add_to_ledger">बहीखाते में जोड़ें</string>
     <string name="entry_undo">पूर्ववत करें</string>
+    <string name="entry_deleted">प्रविष्टि हटाई गई</string>
     <string name="entry_total_balance">कुल बैलेंस</string>
     <string name="entry_show_total">कुल दिखाएँ</string>
     <string name="entry_hide_total">कुल छिपाएँ</string>

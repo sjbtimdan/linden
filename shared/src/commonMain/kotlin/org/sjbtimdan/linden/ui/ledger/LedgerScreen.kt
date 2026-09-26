@@ -210,6 +210,7 @@ fun LedgerScreen(
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
+    viewModel.UndoDeleteSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainerWithIme(),
