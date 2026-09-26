@@ -62,6 +62,7 @@ import org.sjbtimdan.linden.resources.common_accounts
 import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.common_unknown_error
+import org.sjbtimdan.linden.resources.nav_settings
 import org.sjbtimdan.linden.resources.settings_backup
 import org.sjbtimdan.linden.resources.settings_backup_db
 import org.sjbtimdan.linden.resources.settings_backup_failed
@@ -139,6 +140,12 @@ fun SettingsScreen(
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
+        Text(
+            text = stringResource(Res.string.nav_settings),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
+
         Text(
             text = stringResource(Res.string.settings_language),
             style = MaterialTheme.typography.titleMedium,

@@ -77,6 +77,13 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
+    "shows the Settings title" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("Settings").assertExists()
+        }
+    }
+
     "shows the build version footer" {
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
