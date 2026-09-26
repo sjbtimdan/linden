@@ -211,7 +211,6 @@ fun LedgerScreen(
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
-    viewModel.UndoDeleteSnackbar(snackbarHostState)
 
     Column(
         modifier = Modifier.screenContainerWithIme(),
@@ -623,9 +622,10 @@ fun LedgerScreen(
                 }
             }
         }
-    }
 
-    SnackbarHost(hostState = snackbarHostState)
+        SnackbarHost(hostState = snackbarHostState)
+        viewModel.UndoDeleteBar()
+    }
 
     dialogState?.let { state ->
         // Editing may open an entry that lives on a hidden account (its history is

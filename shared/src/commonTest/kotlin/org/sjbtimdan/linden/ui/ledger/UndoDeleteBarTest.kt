@@ -1,10 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
@@ -21,7 +17,7 @@ import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
-class UndoDeleteSnackbarTest : StringSpec({
+class UndoDeleteBarTest : StringSpec({
     "shows the undo offer after a delete and restores the entry when tapped" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
@@ -33,17 +29,14 @@ class UndoDeleteSnackbarTest : StringSpec({
             viewModel.openEditDialog(created)
 
             setContent {
-                val hostState = remember { SnackbarHostState() }
-                Box {
-                    SnackbarHost(hostState = hostState)
-                    viewModel.UndoDeleteSnackbar(hostState)
-                }
+                viewModel.UndoDeleteBar()
             }
 
             viewModel.deleteDialogEntry()
             waitForIdle()
 
             onNodeWithText("Entry deleted").assertIsDisplayed()
+            onNodeWithText("Coffee · Main").assertIsDisplayed()
             onNodeWithText("Undo").assertIsDisplayed()
 
             onNodeWithText("Undo").performClick()
@@ -67,19 +60,15 @@ class UndoDeleteSnackbarTest : StringSpec({
 
             val visible = mutableStateOf(true)
             setContent {
-                val hostState = remember { SnackbarHostState() }
-                Box {
-                    SnackbarHost(hostState = hostState)
-                    if (visible.value) viewModel.UndoDeleteSnackbar(hostState)
-                }
+                if (visible.value) viewModel.UndoDeleteBar()
             }
 
             viewModel.deleteDialogEntry()
             waitForIdle()
             onNodeWithText("Entry deleted").assertIsDisplayed()
 
-            // Navigating away disposes the snackbar host: the offer must not
-            // survive to reappear (and resurrect the entry) on the next visit.
+            // Navigating away disposes the bar: the offer must not survive to
+            // reappear (and resurrect the entry) on the next visit.
             runOnIdle { visible.value = false }
             waitForIdle()
 
