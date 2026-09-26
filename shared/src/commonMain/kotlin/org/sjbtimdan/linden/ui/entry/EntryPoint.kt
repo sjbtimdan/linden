@@ -71,6 +71,11 @@ fun EntryPoint(
     viewModel: EntryPointViewModel,
     onNavigateToRates: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
+    // Test seam: desktop has no system back, so the real BackHandler is a no-op
+    // and tests inject a handler they can invoke.
+    systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
+        BackHandler(enabled, onBack)
+    },
 ) {
     // Only visible accounts can back a new entry: pickers, suggestions and the
     // seed all exclude hidden ones, so the form never offers an account to hide.
@@ -125,22 +130,18 @@ fun EntryPoint(
     var createCategoryDialog by remember { mutableStateOf<CategoryDialogState?>(null) }
     var createAccountDialog by remember { mutableStateOf<AccountDialogState?>(null) }
 
-    // The back arrow exits editing: clearFocus closes text fields and dropdowns,
-    // bumping editEpoch closes EntryForm's calculators. The draft stays — Clear
-    // is the full reset.
+    // The back arrow and the system back both exit editing: clearFocus closes
+    // text fields and dropdowns, bumping editEpoch closes EntryForm's
+    // calculators. Neither clears the draft — a half-finished entry survives a
+    // back press, and Clear is the full reset.
     var editEpoch by remember { mutableStateOf(0) }
     val exitEditing: () -> Unit = {
         focusManager.clearFocus()
         keyboardController?.hide()
         editEpoch++
     }
-    val cancelEditing: () -> Unit = {
-        if (fieldFocused) exitEditing() else viewModel.clearDraft()
-    }
 
-    BackHandler(enabled = draft != null) {
-        cancelEditing()
-    }
+    systemBackHandler(draft != null, exitEditing)
 
     Column(
         modifier = Modifier
@@ -205,7 +206,7 @@ fun EntryPoint(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = cancelEditing) {
+                IconButton(onClick = exitEditing) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(Res.string.common_back),

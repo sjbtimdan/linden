@@ -31,6 +31,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -278,6 +279,39 @@ class EntryPointTest : StringSpec({
             onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("Lunch")).assertIsDisplayed()
             onNodeWithTag("saveEntry").assertIsDisplayed()
+            entryDao.getAll().first().shouldHaveSize(0)
+        }
+    }
+
+    "system back keeps a half-finished entry instead of clearing it" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            var systemBack: (() -> Unit)? = null
+            setContent {
+                EntryPoint(
+                    viewModel = viewModel,
+                    systemBackHandler = { enabled, onBack -> if (enabled) systemBack = onBack },
+                )
+            }
+
+            enterAmount("12.50")
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            waitForIdle()
+
+            // Both pickers committed and dropped focus, as in the reported repro.
+            systemBack shouldNotBe null
+            systemBack!!.invoke()
+            waitForIdle()
+
+            // Back exits editing but never wipes the draft.
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+            onNodeWithText("Groceries").assertIsDisplayed()
+            onNodeWithText("Main").assertIsDisplayed()
+            onNodeWithTag("saveEntry").assertIsEnabled()
             entryDao.getAll().first().shouldHaveSize(0)
         }
     }
