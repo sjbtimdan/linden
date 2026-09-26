@@ -27,7 +27,7 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = {})
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = {}, onDismiss = {})
                 }
 
                 onNodeWithTag("lastAddedEntry").assertIsDisplayed()
@@ -43,7 +43,7 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, null, main, 450), onUndo = {})
+                    LastAddedEntry(entry = ExpenseEntry(1, groceries, null, main, 450), onUndo = {}, onDismiss = {})
                 }
 
                 onNodeWithText("Groceries · Main").assertIsDisplayed()
@@ -58,6 +58,7 @@ class LastAddedEntryTest : StringSpec({
                     LastAddedEntry(
                         entry = TransferEntry(1, null, "Move", main, 10_000, toAccount = savings, toAmount = 9_500),
                         onUndo = {},
+                        onDismiss = {},
                     )
                 }
 
@@ -74,6 +75,7 @@ class LastAddedEntryTest : StringSpec({
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
                         onUndo = {},
+                        onDismiss = {},
                         hideAmounts = true,
                     )
                 }
@@ -90,11 +92,36 @@ class LastAddedEntryTest : StringSpec({
             runComposeUiTest {
                 var undone = false
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = { undone = true })
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onUndo = { undone = true },
+                        onDismiss = {},
+                    )
                 }
 
                 onNodeWithTag("lastAddedEntry").performClick()
 
+                undone shouldBe false
+            }
+        }
+    }
+
+    "tapping the confirmation icon dismisses without undoing" {
+        onTestMain {
+            runComposeUiTest {
+                var undone = false
+                var dismissed = false
+                setContent {
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onUndo = { undone = true },
+                        onDismiss = { dismissed = true },
+                    )
+                }
+
+                onNodeWithTag("dismissAddedEntry").performClick()
+
+                dismissed shouldBe true
                 undone shouldBe false
             }
         }
@@ -105,7 +132,11 @@ class LastAddedEntryTest : StringSpec({
             runComposeUiTest {
                 var undone = false
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = { undone = true })
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onUndo = { undone = true },
+                        onDismiss = {},
+                    )
                 }
 
                 onNodeWithTag("undoAddedEntry").performClick()

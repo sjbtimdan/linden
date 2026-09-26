@@ -228,6 +228,31 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "tapping the confirmation icon dismisses the added receipt without undoing" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            onNodeWithTag("dismissAddedEntry").performClick()
+            waitForIdle()
+
+            // The receipt is gone but the entry stays in the ledger.
+            onNodeWithTag("lastAddedEntry").assertDoesNotExist()
+            entryDao.getAll().first().shouldHaveSize(1)
+        }
+    }
+
     "the added receipt disappears after the undo window" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)

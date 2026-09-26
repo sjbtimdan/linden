@@ -347,9 +347,9 @@ fun EntryPoint(
             }
 
             // Receipt of the entry just saved, clearly marked as added so the
-            // prefilled form below is not mistaken for an unsaved draft. Only
-            // its Undo action pulls the entry back into the form; a tap on the
-            // receipt itself does nothing.
+            // prefilled form below is not mistaken for an unsaved draft. Its
+            // Undo action pulls the entry back into the form, while its leading
+            // icon dismisses the receipt; a tap on the body does nothing.
             lastAdded?.let { entry ->
                 LastAddedEntry(
                     entry = entry,
@@ -358,6 +358,7 @@ fun EntryPoint(
                         viewModel.undoLastAdded()
                         markTouched()
                     },
+                    onDismiss = viewModel::dismissLastAdded,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }

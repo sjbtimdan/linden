@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.entry_added
 import org.sjbtimdan.linden.resources.entry_undo
 import org.sjbtimdan.linden.ui.theme.CardElevation
@@ -36,12 +38,19 @@ import org.sjbtimdan.linden.ui.theme.CardShape
 /**
  * Read-only receipt of the entry that was just saved, shown above the
  * Add/Clear actions. [onUndo] pulls the entry back into the form as an
- * editable draft; only the Undo action is tappable, so a stray tap on the
- * receipt (the confirmation icon included) can never remove the entry.
- * [hideAmounts] masks the receipt's amount while "Hide Totals" is on.
+ * editable draft; the leading confirmation icon dismisses the receipt via
+ * [onDismiss], so the body itself stays inert and a stray tap can neither
+ * remove the entry nor hide the offer. [hideAmounts] masks the receipt's
+ * amount while "Hide Totals" is on.
  */
 @Composable
-fun LastAddedEntry(entry: Entry, onUndo: () -> Unit, modifier: Modifier = Modifier, hideAmounts: Boolean = false) {
+fun LastAddedEntry(
+    entry: Entry,
+    onUndo: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    hideAmounts: Boolean = false,
+) {
     val tint = entry.tintColor()
     Row(
         modifier = modifier
@@ -56,9 +65,14 @@ fun LastAddedEntry(entry: Entry, onUndo: () -> Unit, modifier: Modifier = Modifi
     ) {
         Icon(
             imageVector = Icons.Filled.CheckCircle,
-            contentDescription = null,
+            contentDescription = stringResource(Res.string.common_dismiss),
             tint = tint,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier
+                .clip(CircleShape)
+                .clickable(role = Role.Button, onClick = onDismiss)
+                .padding(8.dp)
+                .size(20.dp)
+                .testTag("dismissAddedEntry"),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {

@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.ledger
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
@@ -73,6 +74,34 @@ class UndoDeleteBarTest : StringSpec({
             onNodeWithText("Coffee · Main").assertIsDisplayed()
             onNodeWithText("− 4.50 CHF").assertDoesNotExist()
             onNodeWithText("••••••").assertIsDisplayed()
+        }
+    }
+
+    "tapping the delete icon dismisses the offer and makes the delete final" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+
+            setContent {
+                viewModel.UndoDeleteBar()
+            }
+
+            viewModel.deleteDialogEntry()
+            waitForIdle()
+            onNodeWithText("Entry deleted").assertIsDisplayed()
+
+            onNodeWithTag("dismissUndoDelete").performClick()
+            waitForIdle()
+
+            // The offer is gone and the entry stays deleted.
+            viewModel.lastDeleted.value.shouldBeNull()
+            onNodeWithText("Entry deleted").assertDoesNotExist()
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
         }
     }
 
