@@ -157,7 +157,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                     hidden = account.hidden,
                                 )
                             }
-                            .padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
+                            .padding(horizontal = 12.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
