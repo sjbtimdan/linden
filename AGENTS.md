@@ -55,7 +55,7 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
 ./gradlew :desktopApp:compileKotlin         # verify Desktop app
 ./gradlew :shared:jvmTest                   # run Kotest suite (commonTest + jvmTest)
 ./gradlew fastCheck                         # jvmTest only, no Kover gate — fast dev loop
-./integration-test.sh                       # manual-only integration tests (real on-disk DB, seeded from integrationTestData/)
+./integration-test.sh                       # manual-only integration tests (wraps :shared:integrationTest; real on-disk DB, seeded from integrationTestData/)
 ./gradlew :androidApp:assembleDebug         # full Android debug build
 ./gradlew :desktopApp:run                   # run Desktop app
 ./gradlew check                             # full check — CI runs this too (.github/workflows/check.yml)
@@ -67,8 +67,9 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
 
 Formatting is enforced by Detekt (plugin `dev.detekt`) with the ktlint-wrapper ruleset — see
 `detekt.yml` at the repo root and `.editorconfig` (max line 140, 4-space indent, trailing commas allowed).
-`./gradlew check` runs the per-module `detekt` tasks. There is no pre-commit hook (`git config core.hooksPath`
-still points at `.githooks`, but that directory doesn't exist), so run `./gradlew detekt --auto-correct` yourself after edits.
+`./gradlew check` runs the per-module `detekt` tasks. The detekt `toolVersion` is also hardcoded in each module's
+`build.gradle.kts`, so a version bump touches both it and the catalog. There is no pre-commit hook (`git config
+core.hooksPath` still points at `.githooks`, but that directory doesn't exist), so run `./gradlew detekt --auto-correct` yourself after edits.
 
 The `:shared` Android target compiles via `compileAndroidMain`, **not** `compileDebugKotlin`
 (that task only exists on `:androidApp`). `:shared` uses the AGP 9 `com.android.kotlin.multiplatform.library` plugin
@@ -112,8 +113,10 @@ git describe). It is generated code — never edit it.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. All currencies
   (CHF/CNY/EUR/GBP/HKD/INR/JPY/SGD/USD) use a 2-decimal minor unit. `formatAmount` in `ui/entry/MoneyFormat.kt` is an
   `expect`/`actual` using the platform locale (`java.text.NumberFormat`, thousands grouping); `parseAmount` is pure
-  common code that accepts grouped input ("1,000", "1.000", "1 000"). `formatAmountCompact` (pure common code) shortens
-  read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b" (fixed '.', trimmed zeros, half-up rounding);
+  common code that accepts grouped input ("1,000", "1.000", "1 000") and normalizes Unicode digits, apostrophe
+  grouping and Arabic separators. Every minor-unit text field must filter keystrokes through `filterAmountInput`.
+  `formatAmountCompact` (pure common code) shortens read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b"
+  (fixed '.', trimmed zeros, half-up rounding);
   never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
   `parseAmount` accepts a leading `-` (negative balance/liability); accounts may be negative, entries never are (CHECK-enforced).
 - Adjust Balance (accounts view of the ledger): `LedgerViewModel.adjustBalance` reconciles an account to a target
@@ -154,8 +157,9 @@ git describe). It is generated code — never edit it.
 - `ui/BackHandler` is a `@Composable expect`: the Android actual wires `androidx.activity.compose.BackHandler` so the
   system back cancels in-progress edits; the JVM actual is a no-op. `ui/AppLocale` (apply-language override) is also
   `expect`/`actual`.
-- Balance/total aggregation is pushed into SQL (`Entry.sq` `accountDeltas` / `categoryTotals` queries) and converted
-  to the default currency once per currency group. `accountsWithEntries` blocks changing the currency of an account
+- Balance/total aggregation happens in Kotlin (`entryDeltas` / `accountBalancesMinor` in
+  `ui/accounts/AccountBalance.kt`, `sumInDefaultMinor` in `ui/ledger/PeriodTotal.kt`), converted once per currency
+  group into the default currency. `accountsWithEntries` (`Entry.sq`) blocks changing the currency of an account
   that has entries.
 - `IvyImporter` replaces all rows in one transaction, infers `CategoryType` (Expense/Income/Both) from usage, maps
   "initial balance"/"adjust balance" titles onto `Account.initialBalance`, and routes currency-mismatched transactions
@@ -164,7 +168,8 @@ git describe). It is generated code — never edit it.
   type filters; "nothing in the future" and "balance at period end" rules are enforced in `LedgerViewModel`. The
   show-future toggle/notice is window-relative: it appears only when the shown window still has days ahead of today
   (`windowStart <= today < windowEnd`, or unbounded `All`); a wholly past or wholly future window shows all rows
-  with no toggle (`LedgerViewModel.hideFutureBound` is the single date cutoff).
+  with no toggle (`LedgerViewModel.hideFutureBound` is the single date cutoff). Entry deletion offers undo through
+  the inline `UndoDeleteBar` (no timeout); leaving the screen calls `clearLastDeleted`, making the delete final.
 - Insights (`ui/insights`) pages a 12-month expense/income trend chart and breaks a selected month down by category;
   Budgets live in `ui/budget` (`BudgetScreen`, `CategoryBudget`).
 
@@ -172,9 +177,9 @@ git describe). It is generated code — never edit it.
 
 - Conventional commits
 - Version catalog at `gradle/libs.versions.toml`
-- Kotlin 2.4.20, Compose Multiplatform 1.12.0 (material3 pinned separately at `1.12.0-alpha03`), AGP 9.4.0,
-  SQLDelight 2.3.2, Ktor 3.5.2, Kotest 6.2.4, Kover 0.9.9, Detekt 2.0.0-alpha.6, Firebase BoM 34.19.0
-  (Gradle wrapper 9.7.1; compileSdk/targetSdk 37, minSdk 24, JVM target 11)
+- Kotlin 2.4.20, AGP 9.4.x, Compose Multiplatform 1.12.x — material3 is pinned separately at `1.12.0-alpha03`,
+  it is not managed by the CMP umbrella — Gradle 9.8 wrapper, compileSdk/targetSdk 37, minSdk 24, JVM target 17.
+  CI uses Temurin JDK 21 (`.github/workflows/check.yml`).
 - **Every new class ships with a unit test**, unless it is pure configuration (constants/values with no behavior).
 - Tests: Kotest (`StringSpec`, `shouldBe`), JUnit Platform, Compose UI tests via `runComposeUiTest` (v2 API).
   `createTestSqlDriver()` has a JVM-only actual, so the suite runs via `:shared:jvmTest`. Reuse the commonTest helpers
