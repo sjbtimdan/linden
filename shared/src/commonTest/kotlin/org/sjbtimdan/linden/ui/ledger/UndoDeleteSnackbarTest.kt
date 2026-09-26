@@ -3,12 +3,14 @@ package org.sjbtimdan.linden.ui.ledger
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import kotlinx.coroutines.flow.first
@@ -50,6 +52,39 @@ class UndoDeleteSnackbarTest : StringSpec({
             viewModel.lastDeleted.value.shouldBeNull()
             entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldHaveSize(1)
             onNodeWithText("Entry deleted").assertDoesNotExist()
+        }
+    }
+
+    "leaving the screen clears the offer and makes the delete final" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
+            viewModel.openEditDialog(created)
+
+            val visible = mutableStateOf(true)
+            setContent {
+                val hostState = remember { SnackbarHostState() }
+                Box {
+                    SnackbarHost(hostState = hostState)
+                    if (visible.value) viewModel.UndoDeleteSnackbar(hostState)
+                }
+            }
+
+            viewModel.deleteDialogEntry()
+            waitForIdle()
+            onNodeWithText("Entry deleted").assertIsDisplayed()
+
+            // Navigating away disposes the snackbar host: the offer must not
+            // survive to reappear (and resurrect the entry) on the next visit.
+            runOnIdle { visible.value = false }
+            waitForIdle()
+
+            viewModel.lastDeleted.value.shouldBeNull()
+            entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
         }
     }
 })
