@@ -11,6 +11,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.dayIn
+import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
 
 /** One category of the selected month: totals, budget and previous-month total. */
 data class CategoryBreakdownRow(
@@ -95,9 +96,6 @@ fun categoryBreakdown(
         }
     }
 
-    val ratesByQuote = rates
-        .filter { it.baseCurrency == defaultCurrency }
-        .associate { it.quoteCurrency to it.rate }
     val budgetByName = budgets.associateBy { it.categoryName.lowercase() }
     return MonthBreakdown(
         expenses = buckets.expense.values
@@ -105,10 +103,10 @@ fun categoryBreakdown(
             .map { accumulator ->
                 CategoryBreakdownRow(
                     category = accumulator.category,
-                    amountMinor = convertedTotal(accumulator.curSums, defaultCurrency, ratesByQuote),
+                    amountMinor = sumInDefaultMinor(accumulator.curSums, defaultCurrency, rates),
                     previousMinor = accumulator.prevSums
                         .takeUnless { it.isEmpty() }
-                        ?.let { convertedTotal(it, defaultCurrency, ratesByQuote) },
+                        ?.let { sumInDefaultMinor(it, defaultCurrency, rates) },
                     budgetMinor = budgetByName[accumulator.category.name.lowercase()]?.limitMinor,
                     count = accumulator.count,
                 )
@@ -122,10 +120,10 @@ fun categoryBreakdown(
             .map { accumulator ->
                 CategoryBreakdownRow(
                     category = accumulator.category,
-                    amountMinor = convertedTotal(accumulator.curSums, defaultCurrency, ratesByQuote),
+                    amountMinor = sumInDefaultMinor(accumulator.curSums, defaultCurrency, rates),
                     previousMinor = accumulator.prevSums
                         .takeUnless { it.isEmpty() }
-                        ?.let { convertedTotal(it, defaultCurrency, ratesByQuote) },
+                        ?.let { sumInDefaultMinor(it, defaultCurrency, rates) },
                     budgetMinor = null,
                     count = accumulator.count,
                 )

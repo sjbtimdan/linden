@@ -9,6 +9,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.ui.entry.DateLanguage
+import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
 import kotlin.math.roundToLong
 
 /**
@@ -65,9 +66,6 @@ fun monthlyTotals(
         series.merge(entry.account.currency, entry.amount, Long::plus)
     }
 
-    val ratesByQuote = rates
-        .filter { it.baseCurrency == defaultCurrency }
-        .associate { it.quoteCurrency to it.rate }
     val currentIndex = monthIndexOf(currentMonth)
     return List(windowMonths) { offset ->
         val index = firstIndex + offset
@@ -75,8 +73,8 @@ fun monthlyTotals(
         MonthTotal(
             year = index / 12,
             monthNumber = index % 12 + 1,
-            expenseMinor = convertedTotal(month.expense, defaultCurrency, ratesByQuote),
-            incomeMinor = convertedTotal(month.income, defaultCurrency, ratesByQuote),
+            expenseMinor = sumInDefaultMinor(month.expense, defaultCurrency, rates),
+            incomeMinor = sumInDefaultMinor(month.income, defaultCurrency, rates),
             isCurrent = index == currentIndex,
         )
     }
@@ -88,26 +86,6 @@ private class MonthSums(
     val expense: MutableMap<Currency, Long>,
     val income: MutableMap<Currency, Long>,
 )
-
-/**
- * Sums one series' per-currency amounts in the default currency; null when a
- * currency has no stored rate (the series total would be incomplete). An
- * empty series totals zero.
- */
-internal fun convertedTotal(
-    sums: Map<Currency, Long>,
-    defaultCurrency: Currency,
-    ratesByQuote: Map<Currency, Double>,
-): Long? {
-    if (sums.isEmpty()) return 0L
-    var total = 0L
-    for ((currency, amount) in sums) {
-        val converted = toDefaultMinorUnits(amount, currency, defaultCurrency, ratesByQuote)
-            ?: return null
-        total += converted
-    }
-    return total
-}
 
 /**
  * Amount difference of [current]'s expense against its predecessor's, in
@@ -157,20 +135,4 @@ internal fun averageMonthlyExpense(months: List<MonthTotal>): Long? {
     val totals = months.mapNotNull { it.expenseMinor }
     if (totals.isEmpty()) return null
     return (totals.sum().toDouble() / totals.size).roundToLong()
-}
-
-/**
- * Converts [amount] from [from] into [defaultCurrency] minor units via
- * [ratesByQuote] (rates from the default currency into each quote currency).
- * A missing rate yields null; same-currency amounts pass through unchanged.
- */
-private fun toDefaultMinorUnits(
-    amount: Long,
-    from: Currency,
-    defaultCurrency: Currency,
-    ratesByQuote: Map<Currency, Double>,
-): Long? {
-    if (from == defaultCurrency) return amount
-    val rate = ratesByQuote[from] ?: return null
-    return (amount.toDouble() / rate).roundToLong()
 }

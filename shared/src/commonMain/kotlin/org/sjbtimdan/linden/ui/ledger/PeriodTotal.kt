@@ -7,8 +7,10 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.ui.accounts.entryDeltas
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
+import org.sjbtimdan.linden.ui.money.ratesByQuote
+import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
+import org.sjbtimdan.linden.ui.money.toDefaultMinor
 import kotlin.math.abs
-import kotlin.math.roundToLong
 
 /**
  * Net total of [entries] (income minus expenses, transfers excluded) converted to
@@ -56,53 +58,10 @@ internal fun entriesNetInDefaultMinor(entries: List<Entry>, defaultCurrency: Cur
     return incomeTotal + expenseTotal
 }
 
-/**
- * Rates that convert from the default currency to each quote currency, indexed by
- * quote currency. A rate from [base] maps the quote's value into the default currency.
- */
-internal fun ratesByQuote(rates: List<FxRate>, base: Currency): Map<Currency, Double> =
-    rates.filter { it.baseCurrency == base }.associate { it.quoteCurrency to it.rate }
-
-/**
- * Converts [amount] from [from] into [defaultCurrency] minor units using [ratesByQuote].
- * The division is performed in [Double] and rounds to the nearest minor unit; period
- * totals are display-only, so sub-minor rounding is acceptable.
- */
-internal fun toDefaultMinor(
-    amount: Long,
-    from: Currency,
-    defaultCurrency: Currency,
-    ratesByQuote: Map<Currency, Double>,
-): Long? {
-    if (from == defaultCurrency) return amount
-    val rate = ratesByQuote[from] ?: return null
-    return (amount.toDouble() / rate).roundToLong()
-}
-
 /** [entries] grouped by their entry currency, each group's amounts summed in that currency. */
 internal fun sumByCurrency(entries: List<Entry>): List<Pair<Currency, Long>> = entries
     .groupBy { it.account.currency }
     .map { (currency, group) -> currency to group.sumOf { it.amount } }
-
-/**
- * Sums [groups] (amounts in their source currencies) converted to [defaultCurrency]
- * minor units. Returns null when a source currency has no stored rate against the
- * default currency, since the total would be incomplete.
- */
-internal fun sumInDefaultMinor(
-    groups: Collection<Pair<Currency, Long>>,
-    defaultCurrency: Currency,
-    rates: List<FxRate>,
-): Long? {
-    val ratesByQuote = ratesByQuote(rates, defaultCurrency)
-    var total = 0L
-    for ((from, amount) in groups) {
-        val converted = toDefaultMinor(amount, from, defaultCurrency, ratesByQuote)
-            ?: return null
-        total += converted
-    }
-    return total
-}
 
 /** Formats [minor] as a signed amount with currency symbol, e.g. "− 12.30 CHF". */
 fun formatTotal(minor: Long, currency: Currency): String {
