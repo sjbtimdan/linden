@@ -162,7 +162,7 @@ class EntrySuggestionsProvider(
         )
     }
 
-    /** Whole entries the user is likely to repeat right now, boosted by field matches. */
+    /** Whole entries the user is likely to repeat at the draft's date and time, boosted by field matches. */
     val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
         predictQuickEntries(
             entries = entries,
@@ -170,6 +170,7 @@ class EntrySuggestionsProvider(
             now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
             topN = QUICK_ENTRY_TOP_N,
+            target = state.createdAt,
         )
     }
 

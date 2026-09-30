@@ -31,7 +31,8 @@ class QuickEntryPredictorTest : StringSpec({
     fun predict(
         entries: List<Entry>,
         input: FieldPredictionInput = FieldPredictionInput(EntryType.Expense, null, null, null, null),
-    ) = predictQuickEntries(entries, input, now, timeZone, QUICK_ENTRY_TOP_N)
+        target: Instant = now,
+    ) = predictQuickEntries(entries, input, now, timeZone, QUICK_ENTRY_TOP_N, target)
 
     fun expense(
         id: Long,
@@ -282,8 +283,36 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(1, "Coffee", now.minus(1.days)),
                 expense(2, "Coffee", now.minus(2.days)),
             )
-            predict(entries).map { it.entry.description }
-                .shouldContainExactly("Coffee")
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee")
+        }
+
+        "ranks for the target date rather than now" {
+            // now = 2027-01-15T08:00:00Z (Friday, day 15); the target is
+            // 2027-02-02T08:00:00Z (Tuesday, day 2). Coffee matches the current
+            // weekday, Service Charge the target's day of month.
+            val target = now.plus(18.days)
+            val entries = listOf(
+                expense(1, "Coffee", now.minus(1.days)),
+                expense(2, "Coffee", now.minus(1.days)),
+                expense(3, "Service Charge", target.minus(31.days)),
+                expense(4, "Service Charge", target.minus(62.days)),
+            )
+
+            predict(entries).map { it.entry.description }.shouldContainExactly("Coffee", "Service Charge")
+            predict(entries, target = target).map { it.entry.description }
+                .shouldContainExactly("Service Charge", "Coffee")
+        }
+
+        "keeps excluding descriptions entered today when a target is given" {
+            val entries = listOf(
+                expense(1, "Coffee", now),
+                expense(2, "Coffee", now.minus(1.days)),
+                expense(3, "Train", now.minus(1.days)),
+                expense(4, "Train", now.minus(2.days)),
+            )
+
+            predict(entries, target = now.plus(5.days)).map { it.entry.description }
+                .shouldContainExactly("Train")
         }
     }
 })

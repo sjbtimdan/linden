@@ -15,12 +15,13 @@ data class QuickEntry(
 )
 
 /**
- * Returns the whole entries a new entry is most likely to repeat right now.
+ * Returns the whole entries an entry dated [target] is most likely to repeat.
  *
- * Candidates are ranked by time of day — hour, weekday, month — multiplied by
- * recency decay and a logarithmic frequency weight so that recent,
- * frequently-entered entries dominate. Entries that appear only once are
- * filtered out. Entries matching the draft's entered amount/account/category
+ * Candidates are ranked by time of day — hour, weekday, month and day of
+ * month — against [target], the moment the new entry is dated, multiplied by
+ * recency decay against [now] and a logarithmic frequency weight so that
+ * recent, frequently-entered entries dominate. Entries that appear only once
+ * are filtered out. Entries matching the draft's entered amount/account/category
  * (or typed description) float above the rest as a group — each group keeps its
  * time ordering, so the strongest time match wins within it — and unmatched
  * entries stay below rather than disappear. All entries of the draft's type are
@@ -29,10 +30,11 @@ data class QuickEntry(
  *
  * Entries without a description are ignored: a chip shows the description, so
  * auto-generated entries without one can't be picked. A description entered
- * today is excluded entirely — the user just entered it, so it isn't suggested
- * again even when it recurs. Recurring entries are deduplicated by description,
- * so the same thing can't fill the list even when it occurs at different
- * hours, amounts, categories, or accounts. Each result carries the [RecurrenceCadence] detected for its
+ * today — [now]'s day, regardless of [target] — is excluded entirely: the user
+ * just entered it, so it isn't suggested again even when it recurs. Recurring
+ * entries are deduplicated by description, so the same thing can't fill the
+ * list even when it occurs at different hours, amounts, categories, or
+ * accounts. Each result carries the [RecurrenceCadence] detected for its
  * description, so a chip can label a subscription.
  */
 fun predictQuickEntries(
@@ -41,6 +43,7 @@ fun predictQuickEntries(
     now: Instant,
     timeZone: TimeZone,
     topN: Int,
+    target: Instant = now,
 ): List<QuickEntry> {
     val frequency = entries
         .filter { it.type == input.type && !it.description.isNullOrBlank() }
@@ -65,7 +68,7 @@ fun predictQuickEntries(
                 ln(1.0 + (frequency[entry.description!!.lowercase()] ?: 0))
             ScoredEntry(
                 entry = entry,
-                timeScore = timeAffinityScore(entry.createdAt, now, timeZone) * weight,
+                timeScore = timeAffinityScore(entry.createdAt, target, timeZone) * weight,
                 fieldScore = fieldMatchScore(entry, input) * weight,
             )
         }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.DEFAULT_ACCOUNTS
@@ -28,6 +29,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.onTestMain
@@ -187,6 +189,28 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "quick entries re-rank when the draft date changes" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val zone = TimeZone.currentSystemDefault()
+            fun occurred(daysBeforeNow: Int) = TEST_NOW.minus(daysBeforeNow, DateTimeUnit.DAY, zone)
+            // Coffee lands on TEST_NOW's weekday, Train on the day after; two
+            // occurrences each so the frequency filter passes.
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = occurred(7)))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = occurred(14)))
+            entryDao.create(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = occurred(6)))
+            entryDao.create(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = occurred(13)))
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
+
+            provider.quickEntries.awaitDescriptions(listOf("Coffee", "Train"))
+
+            // The next day's weekday favors Train, so the chips re-rank.
+            draft.value = draft.value?.copy(createdAt = TEST_NOW.plus(1, DateTimeUnit.DAY, zone))
+
+            provider.quickEntries.awaitDescriptions(listOf("Train", "Coffee"))
+        }
+    }
+
     "cold start suggests the seeded defaults in seeder order" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             seedDefaults(accountDao, categoryDao)
@@ -268,6 +292,10 @@ private suspend fun <T> StateFlow<List<T>>.awaitNotEmpty(): List<T> =
 /** Awaits the emission that eventually matches [expected], tolerating stale intermediate values. */
 private suspend fun <T> StateFlow<List<T>>.awaitEquals(expected: List<T>): List<T> =
     withTimeout(5.seconds) { first { it == expected } }
+
+/** Awaits quick entries whose descriptions match [expected] in order. */
+private suspend fun StateFlow<List<QuickEntry>>.awaitDescriptions(expected: List<String>): List<QuickEntry> =
+    withTimeout(5.seconds) { first { entries -> entries.map { it.entry.description } == expected } }
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
     accountDao.create("Main", Currency.CHF)
