@@ -351,5 +351,44 @@ class QuickEntryPredictorTest : StringSpec({
             predict(entries, target = due).map { it.entry.description }
                 .shouldContainExactly("Yoga", "Coffee")
         }
+
+        "hides a monthly entry already logged near the target date" {
+            val target = now.plus(18.days)
+            val coffee = (1L..10L).map { expense(it + 10, "Coffee", now.minus(it.days)) }
+            val tax = listOf(
+                expense(1, "Tax", target.minus(31.days)),
+                expense(2, "Tax", target.minus(61.days)),
+                expense(3, "Tax", target.minus(91.days)),
+            )
+
+            // Without a nearby occurrence the monthly series is due and shows.
+            predict(tax + coffee, target = target).map { it.entry.description }
+                .shouldContainExactly("Tax", "Coffee")
+
+            // Once one is logged near the target, the series is not suggested.
+            predict(listOf(expense(4, "Tax", target.minus(1.days))) + tax + coffee, target = target)
+                .map { it.entry.description }
+                .shouldContainExactly("Coffee")
+        }
+
+        "keeps suggesting a weekly entry logged near the target date" {
+            val target = now.plus(2.days)
+            val entries = listOf(
+                expense(1, "Yoga", target.minus(1.days)),
+                expense(2, "Yoga", target.minus(8.days)),
+                expense(3, "Yoga", target.minus(15.days)),
+            )
+
+            predict(entries, target = target).map { it.entry.description }.shouldContainExactly("Yoga")
+        }
+
+        "keeps suggesting a non-recurring entry logged near the target date" {
+            val entries = listOf(
+                expense(1, "Lunch", now.minus(1.days)),
+                expense(2, "Lunch", now.minus(4.days)),
+            )
+
+            predict(entries).map { it.entry.description }.shouldContainExactly("Lunch")
+        }
     }
 })

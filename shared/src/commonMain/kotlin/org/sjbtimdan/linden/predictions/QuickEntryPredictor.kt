@@ -28,7 +28,12 @@ data class QuickEntry(
  * Descriptions whose detected cadence puts their next expected occurrence — the
  * most recent entry plus the weekly/monthly interval — within
  * [DUE_WINDOW_DAYS] of [target] float to the very top, above field matches, so
- * dating an entry to a recurring bill's usual day surfaces that bill. The
+ * dating an entry to a recurring bill's usual day surfaces that bill. A
+ * monthly description that already has an occurrence within [DUE_WINDOW_DAYS]
+ * of [target] is not suggested at all — that date is already covered — while
+ * everything else stays suggestible: weekly cycles are short enough that the
+ * due tier already covers them, and non-recurring descriptions remain
+ * repeatable, so a second coffee on the same day is still one tap. The
  * remaining candidates are ranked by time of day — hour, weekday, month and
  * day of month — against [target], the moment the new entry is dated,
  * multiplied by recency decay against [now] and a logarithmic frequency weight
@@ -79,17 +84,23 @@ fun predictQuickEntries(
         .groupBy { it.description!!.lowercase() }
         .flatMap { (description, group) ->
             val cadence = recurringCadence(group, description)
-            val due = cadence != null && isDue(group.maxOf { it.createdAt }, cadence, target)
-            group.map { entry ->
-                val weight = recencyWeight(entry.createdAt, now) *
-                    ln(1.0 + (frequency[description] ?: 0))
-                ScoredEntry(
-                    entry = entry,
-                    timeScore = timeAffinityScore(entry.createdAt, target, timeZone) * weight,
-                    fieldScore = fieldMatchScore(entry, input) * weight,
-                    cadence = cadence,
-                    due = due,
-                )
+            val loggedNearTarget = cadence == RecurrenceCadence.Monthly &&
+                group.any { withinTargetWindow(it.createdAt, target) }
+            if (loggedNearTarget) {
+                emptyList()
+            } else {
+                val due = cadence != null && isDue(group.maxOf { it.createdAt }, cadence, target)
+                group.map { entry ->
+                    val weight = recencyWeight(entry.createdAt, now) *
+                        ln(1.0 + (frequency[description] ?: 0))
+                    ScoredEntry(
+                        entry = entry,
+                        timeScore = timeAffinityScore(entry.createdAt, target, timeZone) * weight,
+                        fieldScore = fieldMatchScore(entry, input) * weight,
+                        cadence = cadence,
+                        due = due,
+                    )
+                }
             }
         }
         // Recurring entries whose next occurrence lands on the target date float
@@ -107,13 +118,17 @@ fun predictQuickEntries(
         .map { QuickEntry(it.entry, it.cadence) }
 }
 
+/** Whether [instant] falls within [DUE_WINDOW_DAYS] of [target]. */
+private fun withinTargetWindow(instant: Instant, target: Instant): Boolean =
+    abs((instant - target).inWholeDays) <= DUE_WINDOW_DAYS
+
 /** Whether a recurring group's next occurrence (its last entry plus the interval) lands near [target]. */
 private fun isDue(last: Instant, cadence: RecurrenceCadence, target: Instant): Boolean {
     val interval = when (cadence) {
         RecurrenceCadence.Weekly -> WEEKLY_DAYS.days
         RecurrenceCadence.Monthly -> MONTHLY_DAYS.days
     }
-    return abs((target - (last + interval)).inWholeDays) <= DUE_WINDOW_DAYS
+    return withinTargetWindow(last + interval, target)
 }
 
 private data class ScoredEntry(

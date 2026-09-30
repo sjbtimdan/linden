@@ -247,6 +247,45 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "a recurring entry already logged on the draft date is not suggested" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val zone = TimeZone.currentSystemDefault()
+            val target = TEST_NOW.plus(1, DateTimeUnit.DAY, zone)
+            // Tax is logged monthly and already has an occurrence on the target
+            // date, so only the non-recurring Coffee stays suggested.
+            entryDao.create(ExpenseEntry(0, groceries, "Tax", main, 1_700_000, createdAt = target))
+            (1..2).forEach { monthsAgo ->
+                entryDao.create(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Tax",
+                        main,
+                        1_700_000,
+                        createdAt = target.minus(30 * monthsAgo, DateTimeUnit.DAY, zone),
+                    ),
+                )
+            }
+            (2..7).forEach { daysAgo ->
+                entryDao.create(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Coffee",
+                        main,
+                        450,
+                        createdAt = TEST_NOW.minus(daysAgo, DateTimeUnit.DAY, zone),
+                    ),
+                )
+            }
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
+                .copy(createdAt = target)
+
+            provider.quickEntries.awaitDescriptions(listOf("Coffee"))
+        }
+    }
+
     "cold start suggests the seeded defaults in seeder order" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             seedDefaults(accountDao, categoryDao)
