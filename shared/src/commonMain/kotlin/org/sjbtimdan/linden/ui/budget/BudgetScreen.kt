@@ -17,12 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -30,12 +27,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,7 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Budget
@@ -60,14 +54,15 @@ import org.sjbtimdan.linden.resources.budget_edit
 import org.sjbtimdan.linden.resources.budget_empty
 import org.sjbtimdan.linden.resources.budget_monthly_limit
 import org.sjbtimdan.linden.resources.budget_new
-import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_category
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.DialogCancelButton
+import org.sjbtimdan.linden.ui.DialogDeleteButton
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.entry.AmountField
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
@@ -289,44 +284,19 @@ private fun BudgetDialog(
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
+                AmountField(
                     value = limitText,
+                    label = stringResource(Res.string.budget_monthly_limit),
+                    suffix = null,
+                    warning = limitError,
                     onValueChange = { onLimitChange(filterAmountInput(it)) },
-                    label = { Text(stringResource(Res.string.budget_monthly_limit)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = limitError != null,
-                    supportingText = limitError?.let { error -> { Text(error) } },
-                    trailingIcon = if (limitText.isNotEmpty()) {
-                        {
-                            IconButton(
-                                onClick = { onLimitChange("") },
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.common_clear),
-                                )
-                            }
-                        }
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 if (isEditing) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    OutlinedButton(
-                        onClick = onDelete,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.budget_delete))
-                    }
+                    DialogDeleteButton(
+                        label = stringResource(Res.string.budget_delete),
+                        onDelete = onDelete,
+                    )
                 }
             }
         },
@@ -338,10 +308,6 @@ private fun BudgetDialog(
                 Text(stringResource(Res.string.common_save))
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.common_cancel))
-            }
-        },
+        dismissButton = { DialogCancelButton(onDismiss) },
     )
 }

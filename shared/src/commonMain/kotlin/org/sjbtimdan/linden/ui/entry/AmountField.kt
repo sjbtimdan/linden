@@ -2,21 +2,19 @@ package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
-import org.jetbrains.compose.resources.stringResource
-import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.ui.ClearIconButton
 
-/** Amount input that opens the calculator on focus. */
+/**
+ * Amount input with a decimal keyboard, optional warning text, a clear action and
+ * an optional focus hook: entry screens use it to open the calculator, dialogs
+ * leave it unset.
+ */
 @Composable
 fun AmountField(
     value: String,
@@ -24,7 +22,7 @@ fun AmountField(
     suffix: String?,
     warning: String?,
     onValueChange: (String) -> Unit,
-    onFocus: () -> Unit,
+    onFocus: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
@@ -36,11 +34,7 @@ fun AmountField(
         isError = warning != null,
         supportingText = warning?.let { warning -> { Text(warning) } },
         trailingIcon = if (value.isNotEmpty()) {
-            {
-                IconButton(
-                    onClick = { onValueChange("") },
-                ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
-            }
+            { ClearIconButton(onClear = { onValueChange("") }) }
         } else {
             null
         },

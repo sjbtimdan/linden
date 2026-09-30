@@ -9,11 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -42,7 +38,6 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.accounts_duplicate_name
 import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.common_category
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.resources.entry_account
@@ -61,6 +56,7 @@ import org.sjbtimdan.linden.resources.entry_quick_entry
 import org.sjbtimdan.linden.resources.entry_recurring
 import org.sjbtimdan.linden.resources.entry_to_account
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.ClearIconButton
 import org.sjbtimdan.linden.ui.accounts.AccountDialog
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
 import org.sjbtimdan.linden.ui.categories.CategoryDialog
@@ -369,11 +365,7 @@ fun EntryForm(
                 label = { Text(stringResource(Res.string.entry_description_optional)) },
                 singleLine = true,
                 trailingIcon = if (state.description.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = { onDescriptionChange("") },
-                        ) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear)) }
-                    }
+                    { ClearIconButton(onClear = { onDescriptionChange("") }) }
                 } else {
                     null
                 },

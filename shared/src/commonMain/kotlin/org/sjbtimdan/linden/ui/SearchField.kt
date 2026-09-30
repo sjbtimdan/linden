@@ -2,17 +2,14 @@ package org.sjbtimdan.linden.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_search
 
 /** Full-width search field with a clear action, shared by the list screens. */
@@ -30,11 +27,7 @@ fun SearchField(value: String, onValueChange: (String) -> Unit) {
             )
         },
         trailingIcon = if (value.isNotEmpty()) {
-            {
-                IconButton(onClick = { onValueChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.common_clear))
-                }
-            }
+            { ClearIconButton(onClear = { onValueChange("") }) }
         } else {
             null
         },

@@ -24,7 +24,6 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_delete
 import org.sjbtimdan.linden.resources.common_duplicate
 import org.sjbtimdan.linden.resources.common_save
@@ -33,6 +32,7 @@ import org.sjbtimdan.linden.resources.entry_title_new
 import org.sjbtimdan.linden.resources.entry_type_expense
 import org.sjbtimdan.linden.resources.entry_type_income
 import org.sjbtimdan.linden.resources.entry_type_transfer
+import org.sjbtimdan.linden.ui.DialogCancelButton
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import kotlin.time.Instant
 
@@ -168,9 +168,7 @@ fun EntryDialog(
                         Text(stringResource(Res.string.common_duplicate))
                     }
                 }
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
+                DialogCancelButton(onDismiss)
             }
         },
     )

@@ -9,10 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,10 +24,10 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.ledger_filter_accounts
 import org.sjbtimdan.linden.resources.ledger_filter_categories
 import org.sjbtimdan.linden.resources.ledger_search_entries
+import org.sjbtimdan.linden.ui.ClearIconButton
 import org.sjbtimdan.linden.ui.entry.OptionChipRow
 
 /**
@@ -77,16 +75,7 @@ internal fun LedgerSearchPanel(
                     )
                 },
                 trailingIcon = if (query.isNotEmpty()) {
-                    {
-                        IconButton(
-                            onClick = { onQueryChange("") },
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(Res.string.common_clear),
-                            )
-                        }
-                    }
+                    { ClearIconButton(onClear = { onQueryChange("") }) }
                 } else {
                     null
                 },

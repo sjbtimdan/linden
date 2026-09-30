@@ -28,10 +28,10 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_cancel
 import org.sjbtimdan.linden.resources.common_ok
 import org.sjbtimdan.linden.resources.entry_date_time_section
 import org.sjbtimdan.linden.resources.entry_select_time
+import org.sjbtimdan.linden.ui.DialogCancelButton
 import kotlin.time.Instant
 
 /** Date and time buttons with their picker dialogs. */
@@ -75,9 +75,7 @@ fun DateAndTimeButtons(createdAt: Instant, createdZone: TimeZone, onChange: (Ins
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
+                DialogCancelButton(onDismiss = { showDatePicker = false })
             },
         ) {
             DatePicker(state = datePickerState)
@@ -112,9 +110,7 @@ fun DateAndTimeButtons(createdAt: Instant, createdZone: TimeZone, onChange: (Ins
                 Text(stringResource(Res.string.entry_select_time))
             },
             dismissButton = {
-                TextButton(onClick = { showTimePicker = false }) {
-                    Text(stringResource(Res.string.common_cancel))
-                }
+                DialogCancelButton(onDismiss = { showTimePicker = false })
             },
         ) {
             TimePicker(state = timePickerState)

@@ -11,24 +11,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,12 +56,13 @@ import org.sjbtimdan.linden.resources.category_icon_shopping_cart
 import org.sjbtimdan.linden.resources.category_icon_spa
 import org.sjbtimdan.linden.resources.category_type_both
 import org.sjbtimdan.linden.resources.category_type_both_row
-import org.sjbtimdan.linden.resources.common_cancel
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_name
 import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.resources.entry_type_expense
 import org.sjbtimdan.linden.resources.entry_type_income
+import org.sjbtimdan.linden.ui.ClearIconButton
+import org.sjbtimdan.linden.ui.DialogCancelButton
+import org.sjbtimdan.linden.ui.DialogDeleteButton
 import org.sjbtimdan.linden.ui.theme.DialogShape
 
 data class CategoryDialogState(
@@ -116,16 +110,7 @@ fun CategoryDialog(
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },
                     trailingIcon = if (name.isNotEmpty()) {
-                        {
-                            IconButton(
-                                onClick = { onNameChange("") },
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.common_clear),
-                                )
-                            }
-                        }
+                        { ClearIconButton(onClear = { onNameChange("") }) }
                     } else {
                         null
                     },
@@ -175,19 +160,11 @@ fun CategoryDialog(
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
-                    OutlinedButton(
-                        onClick = onDelete,
+                    DialogDeleteButton(
+                        label = stringResource(Res.string.categories_delete),
                         enabled = canDelete,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.categories_delete))
-                    }
+                        onDelete = onDelete,
+                    )
                 }
             }
         },
@@ -196,11 +173,7 @@ fun CategoryDialog(
                 Text(stringResource(Res.string.common_save))
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.common_cancel))
-            }
-        },
+        dismissButton = { DialogCancelButton(onDismiss) },
     )
 }
 

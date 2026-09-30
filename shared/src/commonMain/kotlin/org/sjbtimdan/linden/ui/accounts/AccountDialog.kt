@@ -8,29 +8,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
@@ -45,10 +34,12 @@ import org.sjbtimdan.linden.resources.accounts_hidden
 import org.sjbtimdan.linden.resources.accounts_hidden_help
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
-import org.sjbtimdan.linden.resources.common_cancel
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_name
 import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.ui.ClearIconButton
+import org.sjbtimdan.linden.ui.DialogCancelButton
+import org.sjbtimdan.linden.ui.DialogDeleteButton
+import org.sjbtimdan.linden.ui.entry.AmountField
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.theme.DialogShape
 
@@ -105,46 +96,19 @@ fun AccountDialog(
                     isError = nameError != null,
                     supportingText = nameError?.let { error -> { Text(error) } },
                     trailingIcon = if (name.isNotEmpty()) {
-                        {
-                            IconButton(
-                                onClick = { onNameChange("") },
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.common_clear),
-                                )
-                            }
-                        }
+                        { ClearIconButton(onClear = { onNameChange("") }) }
                     } else {
                         null
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
+                AmountField(
                     value = initialBalanceText,
+                    label = stringResource(Res.string.accounts_initial_balance),
+                    suffix = currency.symbol,
+                    warning = initialBalanceError,
                     onValueChange = { onInitialBalanceChange(filterAmountInput(it)) },
-                    label = { Text(stringResource(Res.string.accounts_initial_balance)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = initialBalanceError != null,
-                    supportingText = initialBalanceError?.let { error -> { Text(error) } },
-                    trailingIcon = if (initialBalanceText.isNotEmpty()) {
-                        {
-                            IconButton(
-                                onClick = { onInitialBalanceChange("") },
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = stringResource(Res.string.common_clear),
-                                )
-                            }
-                        }
-                    } else {
-                        null
-                    },
-                    suffix = { Text(currency.symbol) },
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -209,19 +173,11 @@ fun AccountDialog(
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
                     }
-                    OutlinedButton(
-                        onClick = onDelete,
+                    DialogDeleteButton(
+                        label = stringResource(Res.string.accounts_delete),
                         enabled = canDelete,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.accounts_delete))
-                    }
+                        onDelete = onDelete,
+                    )
                 }
             }
         },
@@ -230,10 +186,6 @@ fun AccountDialog(
                 Text(stringResource(Res.string.common_save))
             }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.common_cancel))
-            }
-        },
+        dismissButton = { DialogCancelButton(onDismiss) },
     )
 }
