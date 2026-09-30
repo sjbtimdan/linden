@@ -4,9 +4,12 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.ExpenseEntry
 
 class DefaultDataSeederTest : StringSpec({
     "seeds the default categories and accounts into an empty database" {
@@ -86,6 +89,26 @@ class DefaultDataSeederTest : StringSpec({
 
         DefaultDataSeeder(database).seedIfEmpty(Currency.CHF)
 
+        accountDao.getAll().first() shouldBe emptyList()
+    }
+
+    "does not seed when the database already has an entry" {
+        val database = lindenDatabase()
+        val categoryDao = CategoryDao(database.categoryQueries)
+        val accountDao = AccountDao(database.accountQueries)
+        EntryDao(database.entryQueries).create(
+            ExpenseEntry(
+                id = 0,
+                category = Category(1, "Custom", CategoryType.Expense),
+                description = "Coffee",
+                account = Account(1, "Cash", Currency.CHF),
+                amount = 450,
+            ),
+        )
+
+        DefaultDataSeeder(database).seedIfEmpty(Currency.CHF)
+
+        categoryDao.getAll().first() shouldBe emptyList()
         accountDao.getAll().first() shouldBe emptyList()
     }
 

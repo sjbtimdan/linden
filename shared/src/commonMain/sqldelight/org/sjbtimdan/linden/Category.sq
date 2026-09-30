@@ -23,6 +23,11 @@ SELECT *
 FROM CategoryEntity
 ORDER BY name ASC;
 
+categoryExists:
+SELECT id
+FROM CategoryEntity
+LIMIT 1;
+
 deleteById:
 DELETE FROM CategoryEntity
 WHERE id = ?;

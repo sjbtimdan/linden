@@ -1,6 +1,6 @@
 package org.sjbtimdan.linden.data
 
-import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
@@ -29,9 +29,9 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
         }
     }
 
-    private suspend fun isEmpty(): Boolean = database.accountQueries.selectAll().awaitAsList().isEmpty() &&
-        database.categoryQueries.selectAll().awaitAsList().isEmpty() &&
-        database.entryQueries.selectAllRows().awaitAsList().isEmpty()
+    private suspend fun isEmpty(): Boolean = database.accountQueries.accountExists().awaitAsOneOrNull() == null &&
+        database.categoryQueries.categoryExists().awaitAsOneOrNull() == null &&
+        database.entryQueries.entryExists().awaitAsOneOrNull() == null
 }
 
 /** Starter expense categories, in seeding order. Also the cold-start suggestion fallback. */

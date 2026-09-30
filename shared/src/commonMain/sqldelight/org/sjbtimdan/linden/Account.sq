@@ -40,6 +40,11 @@ FROM AccountEntity
 WHERE name = ?
 LIMIT 1;
 
+accountExists:
+SELECT id
+FROM AccountEntity
+LIMIT 1;
+
 deleteById:
 DELETE FROM AccountEntity WHERE id = ?;
 
