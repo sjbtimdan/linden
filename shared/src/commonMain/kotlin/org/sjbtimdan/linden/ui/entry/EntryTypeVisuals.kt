@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.entry
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.ui.graphics.vector.ImageVector
 import org.sjbtimdan.linden.model.EntryType
@@ -25,3 +26,6 @@ fun quickEntryLabel(quickEntry: QuickEntry): String {
         null -> description
     }
 }
+
+/** Icon of a quick-entry chip: a repeat mark when the entry recurs, none otherwise. */
+fun quickEntryIcon(quickEntry: QuickEntry): ImageVector? = if (quickEntry.cadence != null) Icons.Filled.Repeat else null

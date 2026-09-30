@@ -425,6 +425,7 @@ fun EntryForm(
                     options = quickEntries,
                     optionLabel = ::quickEntryLabel,
                     onSelect = onQuickEntry,
+                    optionIcon = ::quickEntryIcon,
                 )
             }
         }
