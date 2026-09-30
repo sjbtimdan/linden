@@ -27,9 +27,5 @@ FROM FxRateEntity
 WHERE baseCurrency = ?
 LIMIT 1;
 
-deleteByBase:
-DELETE FROM FxRateEntity
-WHERE baseCurrency = ?;
-
 deleteAll:
 DELETE FROM FxRateEntity;

@@ -35,10 +35,6 @@ class FxRateDao(private val queries: FxRateQueries) {
 
     fun ratesFor(base: Currency): Flow<List<FxRate>> = queries.selectByBase(base.name).asListFlow { it.toFxRate() }
 
-    suspend fun deleteRates(base: Currency) {
-        queries.deleteByBase(base.name)
-    }
-
     private fun FxRateEntity.toFxRate() = FxRate(
         baseCurrency = Currency.fromCode(baseCurrency),
         quoteCurrency = Currency.fromCode(quoteCurrency),

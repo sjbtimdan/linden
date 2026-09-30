@@ -28,21 +28,17 @@ internal const val MIN_RECURRING_MATCHES = 2
  *
  * Entries are matched by description (case-insensitive), sorted by date, and
  * the gaps between consecutive occurrences are checked for a consistent weekly
- * (~7 days) or monthly (~30 days) interval. At least [minOccurrences] entries
- * are required so a one-off pair is never flagged as a subscription, and at
+ * (~7 days) or monthly (~30 days) interval. At least [MIN_RECURRING_OCCURRENCES]
+ * entries are required so a one-off pair is never flagged as a subscription, and at
  * least [RECURRING_MAJORITY_FRACTION] of the gaps must fit the cadence so that
  * one-off outliers don't hide it. Returns null when no regular interval is
  * found.
  */
-fun recurringCadence(
-    entries: List<Entry>,
-    description: String,
-    minOccurrences: Int = MIN_RECURRING_OCCURRENCES,
-): RecurrenceCadence? {
+fun recurringCadence(entries: List<Entry>, description: String): RecurrenceCadence? {
     val matching = entries
         .filter { it.description?.equals(description, ignoreCase = true) == true }
         .sortedBy { it.createdAt }
-    if (matching.size < minOccurrences) return null
+    if (matching.size < MIN_RECURRING_OCCURRENCES) return null
     val gaps = matching.zipWithNext { a, b -> (b.createdAt - a.createdAt).inWholeDays }
     return when {
         gaps.matchesCadence(WEEKLY_DAYS, WEEKLY_TOLERANCE_DAYS) -> RecurrenceCadence.Weekly

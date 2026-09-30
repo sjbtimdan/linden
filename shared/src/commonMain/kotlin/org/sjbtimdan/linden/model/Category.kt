@@ -24,22 +24,22 @@ enum class CategoryType {
     Both,
 }
 
-enum class CategoryIcon(val label: String) {
-    Restaurant("Food & Dining"),
-    Movie("Entertainment"),
-    ShoppingCart("Groceries"),
-    AccountBalance("Bank & Finance"),
-    Savings("Savings & Salary"),
-    ShoppingBag("Shopping"),
-    Home("Home"),
-    LocalHospital("Health"),
-    FavoriteBorder("Gifts & Donations"),
-    Pets("Pets"),
-    School("Education"),
-    Flight("Travel"),
-    Spa("Personal Care"),
-    DirectionsCar("Car"),
-    DirectionsBus("Public Transport"),
+enum class CategoryIcon {
+    Restaurant,
+    Movie,
+    ShoppingCart,
+    AccountBalance,
+    Savings,
+    ShoppingBag,
+    Home,
+    LocalHospital,
+    FavoriteBorder,
+    Pets,
+    School,
+    Flight,
+    Spa,
+    DirectionsCar,
+    DirectionsBus,
     ;
 
     fun imageVector(): ImageVector = when (this) {

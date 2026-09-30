@@ -77,12 +77,6 @@ class SettingsDao(private val queries: SettingsQueries) {
     fun autoUpdateRatesFlow(): Flow<Boolean> = valueFlow(AUTO_UPDATE_RATES_KEY)
         .map { it?.toBoolean() ?: true }
 
-    /** True once the user has opened the Rates screen (unlocks the Entry-tab warning). */
-    suspend fun getRatesSeen(): Boolean {
-        val entity = queries.selectByKey(RATES_SEEN_KEY).awaitAsOneOrNull()
-        return entity?.value_?.toBoolean() == true
-    }
-
     suspend fun setRatesSeen(seen: Boolean) {
         queries.insertOrReplace(RATES_SEEN_KEY, seen.toString())
     }

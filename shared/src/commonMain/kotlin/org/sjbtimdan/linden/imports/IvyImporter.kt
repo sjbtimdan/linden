@@ -474,7 +474,6 @@ private data class IvyCategory(
 
 @Serializable
 private data class IvyTransaction(
-    val id: String,
     val type: String,
     @Serializable(with = MinorUnitsSerializer::class)
     val amount: Long,

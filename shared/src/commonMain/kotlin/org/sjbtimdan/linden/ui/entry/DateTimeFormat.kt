@@ -7,13 +7,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
-/**
- * Formats an instant as a localized date plus "HH:mm" in [zone], e.g.
- * "Aug 10, 2026, 14:30" for English. The date half follows [DateLanguage].
- */
-fun formatDateTime(instant: Instant, zone: TimeZone): String =
-    "${formatDate(instant, zone)}, ${formatTime(instant, zone)}"
-
 /** Formats an instant's date in [zone] per the active [DateLanguage], e.g. "Aug 10, 2026". */
 fun formatDate(instant: Instant, zone: TimeZone): String = formatDate(instant, zone, dateLanguage(platformLocaleTag()))
 

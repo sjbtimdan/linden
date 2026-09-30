@@ -436,10 +436,10 @@ class RatesViewModelTest : StringSpec({
                 clock = FakeClock(now = NOW),
             )
 
-            settingsDao.getRatesSeen() shouldBe false
+            settingsDao.ratesSeenFlow().first() shouldBe false
             viewModel.markRatesSeen()
             withTimeout(5_000.milliseconds) { settingsDao.ratesSeenFlow().first { it } }
-            settingsDao.getRatesSeen() shouldBe true
+            settingsDao.ratesSeenFlow().first() shouldBe true
         }
     }
 })

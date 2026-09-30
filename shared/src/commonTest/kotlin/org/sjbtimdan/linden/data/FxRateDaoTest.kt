@@ -43,15 +43,6 @@ class FxRateDaoTest : StringSpec({
             rates.map { it.copy(baseCurrency = Currency.EUR, rate = 1.0) }
     }
 
-    "deleteRates removes all rates for a base" {
-        val database = lindenDatabase()
-        val dao = FxRateDao(database.fxRateQueries)
-
-        dao.replaceRates(rates, FETCHED_AT)
-        dao.deleteRates(Currency.CHF)
-        dao.ratesFor(Currency.CHF).first() shouldBe emptyList()
-    }
-
     "lastFetchedAt returns the stored fetch time for a base" {
         val database = lindenDatabase()
         val dao = FxRateDao(database.fxRateQueries)
