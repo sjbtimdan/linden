@@ -1,10 +1,8 @@
 package org.sjbtimdan.linden.ui.accounts
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
@@ -48,63 +46,35 @@ class AccountListViewModel(
 
     /** Hides or reveals [id]; hidden accounts stay in history but leave the ledger, pickers and filters. */
     fun setHidden(id: Long, hidden: Boolean) {
-        viewModelScope.launch {
-            try {
-                accountDao.setHidden(id, hidden)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { accountDao.setHidden(id, hidden) }
     }
 
     /** Creates an account; returns false when the name is empty or already taken (case-insensitive). */
     fun createAccount(name: String, currency: Currency, initialBalance: Long = 0): Boolean {
         val trimmed = uniqueName(accounts.value, name) ?: return false
-        viewModelScope.launch {
-            try {
-                accountDao.create(trimmed, currency, initialBalance)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { accountDao.create(trimmed, currency, initialBalance) }
         return true
     }
 
     /** Updates an account; returns false when the name is empty or taken by another account (case-insensitive). */
     fun updateAccount(account: Account): Boolean {
         val trimmed = uniqueName(accounts.value, account.name, excludingId = account.id) ?: return false
-        viewModelScope.launch {
-            try {
-                val current = accounts.value.firstOrNull { it.id == account.id }
-                val currencyChanged = current != null && current.currency != account.currency
-                // Changing the currency of an account with entries would reinterpret
-                // every historical entry in the new currency, so it is refused.
-                if (currencyChanged && account.id in accountsWithEntries.value) return@launch
-                accountDao.update(account.copy(name = trimmed))
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
+        launchWrite {
+            val current = accounts.value.firstOrNull { it.id == account.id }
+            val currencyChanged = current != null && current.currency != account.currency
+            // Changing the currency of an account with entries would reinterpret
+            // every historical entry in the new currency, so it is refused.
+            if (currencyChanged && account.id in accountsWithEntries.value) return@launchWrite
+            accountDao.update(account.copy(name = trimmed))
         }
         return true
     }
 
     /** Deletes an account; ignored when the account still has entries on it. */
     fun deleteAccount(id: Long) {
-        viewModelScope.launch {
-            try {
-                if (id in accountsWithEntries.value) return@launch
-                accountDao.delete(id)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
+        launchWrite {
+            if (id in accountsWithEntries.value) return@launchWrite
+            accountDao.delete(id)
         }
     }
 }

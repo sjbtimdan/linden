@@ -2,10 +2,13 @@ package org.sjbtimdan.linden.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.util.stateFlow
 
 /**
@@ -15,6 +18,23 @@ import org.sjbtimdan.linden.util.stateFlow
  */
 abstract class AppViewModel : ViewModel() {
     protected fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateFlow(viewModelScope, initial)
+
+    /**
+     * Runs [block] in [viewModelScope], reporting any failure through [reportError].
+     * [CancellationException] is rethrown, so cancellation is not reported as a write
+     * failure.
+     */
+    protected fun launchWrite(block: suspend CoroutineScope.() -> Unit) {
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportError(e.message)
+            }
+        }
+    }
 
     private val _error = MutableStateFlow<String?>(null)
 

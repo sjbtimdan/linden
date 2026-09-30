@@ -1,7 +1,5 @@
 package org.sjbtimdan.linden.ui.ledger
 
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +8,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -432,7 +429,7 @@ class LedgerViewModel(
         val entry = state.toEntry(accounts.value, categories.value) ?: return false
         if (_saving.value) return false
         _saving.value = true
-        viewModelScope.launch {
+        launchWrite {
             try {
                 // Duplicate turns the dialog into a New draft (no edited entry), which creates.
                 if (state.editing == null) {
@@ -441,10 +438,6 @@ class LedgerViewModel(
                     entryDao.update(entry)
                 }
                 draftState.value = null
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
             } finally {
                 _saving.value = false
             }
@@ -457,15 +450,11 @@ class LedgerViewModel(
         val entry = draftState.value?.editing ?: return
         if (_saving.value) return
         _saving.value = true
-        viewModelScope.launch {
+        launchWrite {
             try {
                 entryDao.delete(entry.id)
                 _lastDeleted.value = entry
                 draftState.value = null
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
             } finally {
                 _saving.value = false
             }
@@ -480,15 +469,7 @@ class LedgerViewModel(
     fun undoLastDeleted() {
         val entry = _lastDeleted.value ?: return
         _lastDeleted.value = null
-        viewModelScope.launch {
-            try {
-                entryDao.create(entry)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { entryDao.create(entry) }
     }
 
     /** Dismisses the undo offer, making the last delete final. */
@@ -508,18 +489,12 @@ class LedgerViewModel(
      * expense entry. When the delta is zero nothing is created.
      */
     fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = clock.now()) {
-        viewModelScope.launch {
-            try {
-                val current = currentAccountBalances.value[account.id] ?: account.initialBalance
-                val adjustment = balanceAdjustment(current, targetBalance)
-                val entry = adjustmentEntry(adjustment, account, category, now, zone)
-                    ?: return@launch
-                entryDao.create(entry)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
+        launchWrite {
+            val current = currentAccountBalances.value[account.id] ?: account.initialBalance
+            val adjustment = balanceAdjustment(current, targetBalance)
+            val entry = adjustmentEntry(adjustment, account, category, now, zone)
+                ?: return@launchWrite
+            entryDao.create(entry)
         }
     }
 

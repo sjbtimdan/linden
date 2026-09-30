@@ -1,14 +1,12 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -80,15 +78,7 @@ abstract class EntryEditorViewModel(
     fun onCreatedAtChange(instant: Instant) = draftState.update { it?.copy(createdAt = instant) }
 
     fun createEntry(entry: Entry) {
-        viewModelScope.launch {
-            try {
-                entryDao.create(entry)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { entryDao.create(entry) }
     }
 
     /**
@@ -97,17 +87,11 @@ abstract class EntryEditorViewModel(
      */
     fun createCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Boolean {
         val trimmed = uniqueName(categories.value, name) ?: return false
-        viewModelScope.launch {
-            try {
-                categoryDao.create(trimmed, type, icon)
-                val created = categoryDao.getAll().first { list -> list.any { it.name == trimmed } }
-                    .first { it.name == trimmed }
-                draftState.update { it?.copy(categoryId = created.id) }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
+        launchWrite {
+            categoryDao.create(trimmed, type, icon)
+            val created = categoryDao.getAll().first { list -> list.any { it.name == trimmed } }
+                .first { it.name == trimmed }
+            draftState.update { it?.copy(categoryId = created.id) }
         }
         return true
     }
@@ -124,46 +108,24 @@ abstract class EntryEditorViewModel(
         selectAsTo: Boolean = false,
     ): Boolean {
         val trimmed = uniqueName(accounts.value, name) ?: return false
-        viewModelScope.launch {
-            try {
-                accountDao.create(trimmed, currency, initialBalance)
-                val created = accountDao.getAll().first { list -> list.any { it.name == trimmed } }
-                    .first { it.name == trimmed }
-                draftState.update { state ->
-                    state?.let {
-                        if (selectAsTo) it.copy(toAccountId = created.id) else it.copy(accountId = created.id)
-                    }
+        launchWrite {
+            accountDao.create(trimmed, currency, initialBalance)
+            val created = accountDao.getAll().first { list -> list.any { it.name == trimmed } }
+                .first { it.name == trimmed }
+            draftState.update { state ->
+                state?.let {
+                    if (selectAsTo) it.copy(toAccountId = created.id) else it.copy(accountId = created.id)
                 }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
             }
         }
         return true
     }
 
     fun updateEntry(entry: Entry) {
-        viewModelScope.launch {
-            try {
-                entryDao.update(entry)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { entryDao.update(entry) }
     }
 
     fun deleteEntry(id: Long) {
-        viewModelScope.launch {
-            try {
-                entryDao.delete(id)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                reportError(e.message)
-            }
-        }
+        launchWrite { entryDao.delete(id) }
     }
 }
