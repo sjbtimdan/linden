@@ -1,3 +1,12 @@
+## Version 0.10.0
+
+<en-US>
+- Quick entries now put repeating payments that are due on the chosen date first, marked with a repeat icon.
+- A monthly entry already logged around the chosen date is no longer suggested again.
+- Picking a quick entry keeps an amount you had already typed instead of replacing it.
+- An amount filter that matches nothing now says "No entries match this filter." instead of "No entries yet."
+</en-US>
+
 ## Version 0.9.0
 
 <en-US>
