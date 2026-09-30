@@ -1805,6 +1805,25 @@ class LedgerScreenTest : StringSpec({
             onNodeWithTag("activeAmountFilterChip").assertIsDisplayed()
         }
     }
+
+    "an amount filter matching nothing reports a filter miss, not an empty ledger" {
+        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            expandFilters()
+            onNodeWithTag("amountFilterChip").performClick()
+            onNodeWithTag("amountFilterValue").performTextInput("10.00")
+            onNodeWithText("Apply").performClick()
+
+            onNodeWithText("No entries match this filter.").assertIsDisplayed()
+            onNodeWithText("No entries yet.").assertDoesNotExist()
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

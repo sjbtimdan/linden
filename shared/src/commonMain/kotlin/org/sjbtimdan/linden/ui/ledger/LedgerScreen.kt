@@ -2,39 +2,25 @@ package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,78 +35,35 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
 import org.jetbrains.compose.resources.stringResource
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.accounts_empty_none
 import org.sjbtimdan.linden.resources.categories_empty_none
-import org.sjbtimdan.linden.resources.common_cancel
-import org.sjbtimdan.linden.resources.common_category
-import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.common_search
 import org.sjbtimdan.linden.resources.ledger_accounts_all_hidden
 import org.sjbtimdan.linden.resources.ledger_accounts_no_match
 import org.sjbtimdan.linden.resources.ledger_action_add_categories
-import org.sjbtimdan.linden.resources.ledger_action_add_first_entry
 import org.sjbtimdan.linden.resources.ledger_action_create_account
 import org.sjbtimdan.linden.resources.ledger_action_manage_accounts
-import org.sjbtimdan.linden.resources.ledger_action_show_future_entries
-import org.sjbtimdan.linden.resources.ledger_adjust_balance
-import org.sjbtimdan.linden.resources.ledger_adjust_bank_balance
-import org.sjbtimdan.linden.resources.ledger_adjust_confirm
-import org.sjbtimdan.linden.resources.ledger_adjust_current_balance
-import org.sjbtimdan.linden.resources.ledger_adjust_explainer
-import org.sjbtimdan.linden.resources.ledger_adjust_explainer_expense
-import org.sjbtimdan.linden.resources.ledger_adjust_explainer_income
 import org.sjbtimdan.linden.resources.ledger_categories_future_hidden
 import org.sjbtimdan.linden.resources.ledger_categories_no_match
 import org.sjbtimdan.linden.resources.ledger_categories_no_spending
-import org.sjbtimdan.linden.resources.ledger_clear_all
 import org.sjbtimdan.linden.resources.ledger_collapse_filters
-import org.sjbtimdan.linden.resources.ledger_empty_future_hidden
-import org.sjbtimdan.linden.resources.ledger_empty_no_entries
-import org.sjbtimdan.linden.resources.ledger_empty_no_match
-import org.sjbtimdan.linden.resources.ledger_empty_no_match_filter
 import org.sjbtimdan.linden.resources.ledger_expand_filters
-import org.sjbtimdan.linden.resources.ledger_filter_accounts
-import org.sjbtimdan.linden.resources.ledger_filter_categories
 import org.sjbtimdan.linden.resources.ledger_filters_header
-import org.sjbtimdan.linden.resources.ledger_search_entries
 import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
-import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
-import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.entry.EntryDialog
-import org.sjbtimdan.linden.ui.entry.EntryRow
-import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
-import org.sjbtimdan.linden.ui.entry.OptionChipRow
 import org.sjbtimdan.linden.ui.entry.displayName
-import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
-import org.sjbtimdan.linden.ui.entry.formatDate
-import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenContainerWithIme
-import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
-
-private data class AdjustBalanceDialogState(
-    val account: AccountWithBalance,
-    val currentBalance: Long,
-    val targetBalanceText: String,
-    val categoryQuery: String = "",
-)
 
 /**
  * Type options offered by the categories view: transfers never have a category,
@@ -181,14 +124,6 @@ fun LedgerScreen(
     // Starts collapsed so the tabs, period bar and list lead; active filters stay
     // visible as removable chips below the period bar.
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
-    // Search narrows entry text in the entries view and names in the other two — the label says which.
-    val searchLabel = stringResource(
-        when (viewMode) {
-            LedgerViewMode.Entries -> Res.string.ledger_search_entries
-            LedgerViewMode.Accounts -> Res.string.ledger_filter_accounts
-            LedgerViewMode.Categories -> Res.string.ledger_filter_categories
-        },
-    )
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
     LaunchedEffect(requestSearchFocus) {
@@ -234,83 +169,18 @@ fun LedgerScreen(
 
         AnimatedVisibility(visible = filtersExpanded) {
             Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = viewModel::setSearchQuery,
-                        label = { Text(searchLabel) },
-                        singleLine = true,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = null,
-                            )
-                        },
-                        trailingIcon = if (searchQuery.isNotEmpty()) {
-                            {
-                                IconButton(
-                                    onClick = { viewModel.setSearchQuery("") },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = stringResource(Res.string.common_clear),
-                                    )
-                                }
-                            }
-                        } else {
-                            null
-                        },
-                        shape = RoundedCornerShape(24.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .focusRequester(searchFocusRequester)
-                            .testTag("searchField"),
-                    )
-                }
-
-                // Typing a category or account name in the entries view offers
-                // structural filter chips; tapping one pins the exact entity and
-                // clears the free text so the two never combine. Chips carry a
-                // kind-specific icon so a mixed row still reads clearly.
-                if (viewMode == LedgerViewMode.Entries) {
-                    val suggestions = rankFilterSuggestions(
-                        query = searchQuery,
-                        categories = categories,
-                        accounts = visibleAccounts,
-                        activeCategoryId = categoryFilter,
-                        activeAccountId = accountFilter,
-                    )
-                    if (suggestions.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OptionChipRow(
-                            options = suggestions,
-                            optionLabel = { it.name },
-                            optionIcon = { suggestion ->
-                                when (suggestion.kind) {
-                                    FilterSuggestionKind.Account -> Icons.Filled.AccountBalanceWallet
-
-                                    FilterSuggestionKind.Category ->
-                                        categories.firstOrNull { it.id == suggestion.id }
-                                            ?.icon?.imageVector() ?: Icons.Filled.Category
-                                }
-                            },
-                            onSelect = { suggestion ->
-                                when (suggestion.kind) {
-                                    FilterSuggestionKind.Account ->
-                                        viewModel.setAccountFilter(suggestion.id)
-
-                                    FilterSuggestionKind.Category ->
-                                        viewModel.setCategoryFilter(suggestion.id)
-                                }
-                                viewModel.setSearchQuery("")
-                            },
-                            modifier = Modifier.testTag("filterSuggestions"),
-                        )
-                    }
-                }
+                LedgerSearchPanel(
+                    query = searchQuery,
+                    onQueryChange = viewModel::setSearchQuery,
+                    viewMode = viewMode,
+                    categories = categories,
+                    accounts = visibleAccounts,
+                    activeCategoryId = categoryFilter,
+                    activeAccountId = accountFilter,
+                    onCategorySelected = viewModel::setCategoryFilter,
+                    onAccountSelected = viewModel::setAccountFilter,
+                    focusRequester = searchFocusRequester,
+                )
 
                 // The accounts view has no chip filters: a balance mixes every
                 // entry type, so its panel only holds the search field. The other
@@ -387,79 +257,70 @@ fun LedgerScreen(
 
         // Active filters as removable chips — the passive signal that the list is
         // narrowed, whether the filter panel is expanded or collapsed.
-        val activeTypeFilter = typeFilter
-        val activeAmountFilter = amountFilter
-        val uncategorizedName = stringResource(Res.string.ledger_uncategorized)
-        val unknownAccountName = stringResource(Res.string.ledger_unknown_account)
-        val activeFilterChips = listOfNotNull(
-            searchQuery.takeIf { it.isNotBlank() },
-            activeTypeFilter?.displayName(),
-            categoryFilter?.let { id ->
-                categories.firstOrNull { it.id == id }?.name ?: uncategorizedName
-            },
-            accountFilter?.let { id ->
-                accounts.firstOrNull { it.id == id }?.name ?: unknownAccountName
-            },
-            activeAmountFilter?.displayLabel(),
-        )
-        if (viewMode == LedgerViewMode.Entries && activeFilterChips.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+        if (viewMode == LedgerViewMode.Entries) {
+            val activeFilters = buildList {
                 if (searchQuery.isNotBlank()) {
-                    EntryFilterChip(
-                        name = searchQuery.trim(),
-                        onClick = { viewModel.setSearchQuery("") },
-                        modifier = Modifier.testTag("activeSearchFilterChip"),
+                    add(
+                        ActiveFilter(
+                            name = searchQuery.trim(),
+                            testTag = "activeSearchFilterChip",
+                            onClear = { viewModel.setSearchQuery("") },
+                        ),
                     )
                 }
-                if (activeTypeFilter != null) {
-                    EntryFilterChip(
-                        name = activeTypeFilter.displayName(),
-                        onClick = { viewModel.setTypeFilter(null) },
-                        modifier = Modifier.testTag("activeTypeFilterChip"),
+                typeFilter?.let { type ->
+                    add(
+                        ActiveFilter(
+                            name = type.displayName(),
+                            testTag = "activeTypeFilterChip",
+                            onClear = { viewModel.setTypeFilter(null) },
+                        ),
                     )
                 }
                 categoryFilter?.let { id ->
-                    val name = categories.firstOrNull { it.id == id }?.name ?: uncategorizedName
-                    EntryFilterChip(
-                        name = name,
-                        onClick = viewModel::clearCategoryFilter,
-                        leadingColor = accentColor(name),
-                        modifier = Modifier.testTag("categoryFilterChip"),
+                    val name = categories.firstOrNull { it.id == id }?.name
+                        ?: stringResource(Res.string.ledger_uncategorized)
+                    add(
+                        ActiveFilter(
+                            name = name,
+                            testTag = "categoryFilterChip",
+                            onClear = viewModel::clearCategoryFilter,
+                            leadingColor = accentColor(name),
+                        ),
                     )
                 }
                 accountFilter?.let { id ->
-                    EntryFilterChip(
-                        name = accounts.firstOrNull { it.id == id }?.name ?: unknownAccountName,
-                        onClick = viewModel::clearAccountFilter,
-                        modifier = Modifier.testTag("accountFilterChip"),
+                    add(
+                        ActiveFilter(
+                            name = accounts.firstOrNull { it.id == id }?.name
+                                ?: stringResource(Res.string.ledger_unknown_account),
+                            testTag = "accountFilterChip",
+                            onClear = viewModel::clearAccountFilter,
+                        ),
                     )
                 }
-                if (activeAmountFilter != null) {
-                    EntryFilterChip(
-                        name = activeAmountFilter.displayLabel(),
-                        onClick = viewModel::clearAmountFilter,
-                        modifier = Modifier.testTag("activeAmountFilterChip"),
+                amountFilter?.let { filter ->
+                    add(
+                        ActiveFilter(
+                            name = filter.displayLabel(),
+                            testTag = "activeAmountFilterChip",
+                            onClear = viewModel::clearAmountFilter,
+                        ),
                     )
                 }
-                if (activeFilterChips.size > 1) {
-                    TextButton(
-                        onClick = {
-                            viewModel.setSearchQuery("")
-                            viewModel.setTypeFilter(null)
-                            viewModel.clearCategoryFilter()
-                            viewModel.clearAccountFilter()
-                            viewModel.clearAmountFilter()
-                        },
-                        modifier = Modifier.testTag("clearAllFilters"),
-                    ) {
-                        Text(stringResource(Res.string.ledger_clear_all))
-                    }
-                }
+            }
+            if (activeFilters.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                ActiveFilterChips(
+                    filters = activeFilters,
+                    onClearAll = {
+                        viewModel.setSearchQuery("")
+                        viewModel.setTypeFilter(null)
+                        viewModel.clearCategoryFilter()
+                        viewModel.clearAccountFilter()
+                        viewModel.clearAmountFilter()
+                    },
+                )
             }
         }
 
@@ -553,78 +414,34 @@ fun LedgerScreen(
                     .weight(1f),
             )
         } else if (displayedEntries.isEmpty()) {
-            // Guided empty state with a call to action for a brand-new dataset;
-            // once entries exist anywhere the plain message explains the narrowing.
-            val nothingFiltered = searchQuery.isBlank() &&
-                typeFilter == null &&
-                categoryFilter == null &&
-                accountFilter == null &&
-                amountFilter == null
-            val guided = nothingFiltered && !hasAnyEntries
-            // An empty list can hide upcoming entries: they exist in the window
-            // but are dated after today, so the empty state must say so and
-            // offer the show-future toggle instead of reporting no matches.
-            val upcomingHidden = !showFuture && upcomingCount > 0 && nothingFiltered
-            // Guided and upcoming-hidden states are mutually exclusive: guided
-            // needs an empty database, upcoming-hidden needs upcoming entries.
-            val revealUpcoming: () -> Unit = { viewModel.setShowFuture(true) }
-            val emptyStateAction: (() -> Unit)? = when {
-                guided -> onNavigateToEntry
-                upcomingHidden -> revealUpcoming
-                else -> null
-            }
-            EmptyState(
-                message = when {
-                    upcomingHidden -> stringResource(Res.string.ledger_empty_future_hidden)
-
-                    guided -> stringResource(Res.string.ledger_empty_no_entries)
-
-                    (categoryFilter != null || accountFilter != null) &&
-                        searchQuery.isBlank() &&
-                        typeFilter == null &&
-                        periodSelection.period == LedgerPeriod.All ->
-                        stringResource(Res.string.ledger_empty_no_match_filter)
-
-                    searchQuery.isBlank() && typeFilter == null && periodSelection.period == LedgerPeriod.All ->
-                        stringResource(Res.string.ledger_empty_no_entries)
-
-                    else -> stringResource(Res.string.ledger_empty_no_match)
-                },
-                actionLabel = when {
-                    guided -> stringResource(Res.string.ledger_action_add_first_entry)
-                    upcomingHidden -> stringResource(Res.string.ledger_action_show_future_entries)
-                    else -> null
-                },
-                onAction = emptyStateAction,
+            LedgerEntriesEmpty(
+                state = ledgerEntriesEmptyState(
+                    searchQuery = searchQuery,
+                    typeFilter = typeFilter,
+                    categoryFilter = categoryFilter,
+                    accountFilter = accountFilter,
+                    amountFilter = amountFilter,
+                    periodIsAll = periodSelection.period == LedgerPeriod.All,
+                    showFuture = showFuture,
+                    upcomingCount = upcomingCount,
+                    hasAnyEntries = hasAnyEntries,
+                ),
+                onAddFirstEntry = onNavigateToEntry,
+                onRevealUpcoming = { viewModel.setShowFuture(true) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
             )
         } else {
-            LazyColumn(
+            LedgerEntriesList(
+                items = listItems,
+                hideAmounts = hideTotal,
+                zone = viewModel.zone,
+                onEntryClick = viewModel::openEditDialog,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .testTag("entryList"),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                listItems.forEach { item ->
-                    when (item) {
-                        is DayHeaderItem -> stickyHeader(item.key) {
-                            DayHeader(label = item.label)
-                        }
-
-                        is EntryListItem -> item(item.key) {
-                            EntryRow(
-                                entry = item.entry,
-                                onClick = { viewModel.openEditDialog(item.entry) },
-                                hideAmounts = hideTotal,
-                                zone = viewModel.zone,
-                            )
-                        }
-                    }
-                }
-            }
+                    .weight(1f),
+            )
         }
 
         SnackbarHost(hostState = snackbarHostState)
@@ -659,43 +476,11 @@ fun LedgerScreen(
     }
 
     adjustState?.let { state ->
-        val targetBalance = parseAmount(state.targetBalanceText)
-        val allCategories by viewModel.categories.collectAsState()
-        var usedCategories by remember(state.account.account.id) { mutableStateOf<List<Category>>(emptyList()) }
-        LaunchedEffect(state.account.account.id) {
-            usedCategories = viewModel.usedCategories(state.account.account.id)
-        }
-        val usedIds = usedCategories.map { it.id }.toSet()
-        val orderedCategories = usedCategories +
-            allCategories.filterNot { it.id in usedIds }.sortedBy { it.name }
-        val query = state.categoryQuery.trim()
-        val visibleCategories = if (query.isEmpty()) {
-            orderedCategories
-        } else {
-            orderedCategories.filter { it.name.contains(query, ignoreCase = true) }
-        }
-        // The category is selected by an exact (case-insensitive) match on the text field.
-        val selectedCategory = orderedCategories.firstOrNull { it.name.equals(query, ignoreCase = true) }
-        AdjustBalanceDialog(
-            account = state.account.account,
-            currentBalance = state.currentBalance,
+        AdjustBalanceHost(
+            viewModel = viewModel,
+            state = state,
             hideAmounts = hideTotal,
-            targetBalanceText = state.targetBalanceText,
-            categoryQuery = state.categoryQuery,
-            categories = visibleCategories,
-            selectedCategoryId = selectedCategory?.id,
-            onCategoryQueryChange = { adjustState = state.copy(categoryQuery = it) },
-            onCategorySelect = { id ->
-                val name = orderedCategories.firstOrNull { it.id == id }?.name ?: return@AdjustBalanceDialog
-                adjustState = state.copy(categoryQuery = name)
-            },
-            onTargetBalanceChange = { adjustState = state.copy(targetBalanceText = it) },
-            onSave = {
-                if (targetBalance != null && selectedCategory != null) {
-                    viewModel.adjustBalance(state.account.account, targetBalance, selectedCategory)
-                    adjustState = null
-                }
-            },
+            onStateChange = { adjustState = it },
             onDismiss = { adjustState = null },
         )
     }
@@ -740,133 +525,6 @@ private fun FiltersHeader(expanded: Boolean, onToggle: () -> Unit, onSearchClick
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun AdjustBalanceDialog(
-    account: Account,
-    currentBalance: Long,
-    hideAmounts: Boolean,
-    targetBalanceText: String,
-    categoryQuery: String,
-    categories: List<Category>,
-    selectedCategoryId: Long?,
-    onCategoryQueryChange: (String) -> Unit,
-    onCategorySelect: (Long) -> Unit,
-    onTargetBalanceChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val targetBalance = parseAmount(targetBalanceText)
-    val adjustment = targetBalance?.let { balanceAdjustment(currentBalance, it) }
-    val canSave = adjustment != null && !adjustment.isZero && selectedCategoryId != null
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = DialogShape,
-        title = { Text(stringResource(Res.string.ledger_adjust_balance)) },
-        text = {
-            Column {
-                val explainer = when {
-                    adjustment == null || adjustment.isZero ->
-                        stringResource(Res.string.ledger_adjust_explainer)
-
-                    adjustment.delta > 0 -> stringResource(Res.string.ledger_adjust_explainer_income)
-
-                    else -> stringResource(Res.string.ledger_adjust_explainer_expense)
-                }
-                Text(
-                    text = explainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = account.name,
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(
-                        Res.string.ledger_adjust_current_balance,
-                        if (hideAmounts) HIDDEN_AMOUNT else formatAmount(currentBalance),
-                        account.currency.symbol,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = targetBalanceText,
-                    onValueChange = { onTargetBalanceChange(filterAmountInput(it)) },
-                    label = { Text(stringResource(Res.string.ledger_adjust_bank_balance)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    suffix = { Text(account.currency.symbol) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = categoryQuery,
-                    onValueChange = onCategoryQueryChange,
-                    label = { Text(stringResource(Res.string.common_category)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    categories.forEach { category ->
-                        FilterChip(
-                            selected = category.id == selectedCategoryId,
-                            onClick = { onCategorySelect(category.id) },
-                            label = { Text(category.name) },
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onSave, enabled = canSave) {
-                Text(stringResource(Res.string.ledger_adjust_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.common_cancel))
-            }
-        },
-    )
-}
-
-internal sealed interface LedgerListItem {
-    val key: Any
-}
-
-internal data class DayHeaderItem(
-    override val key: Any,
-    val label: String,
-) : LedgerListItem
-
-internal data class EntryListItem(val entry: Entry) : LedgerListItem {
-    override val key: Any get() = entry.id
-}
-
-/** Builds the flat list of headers and entries shown by the ledger list. */
-internal fun ledgerListItems(entries: List<Entry>, zone: TimeZone): List<LedgerListItem> = buildList {
-    var previousDay: LocalDate? = null
-    entries.forEach { entry ->
-        val day = entry.dayIn(zone)
-        if (day != previousDay) {
-            add(DayHeaderItem("day-$day", formatDate(entry.createdAt, zone)))
-            previousDay = day
-        }
-        add(EntryListItem(entry))
     }
 }
 
