@@ -31,6 +31,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.onTestMain
@@ -193,6 +194,41 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.draft.value.let { draft ->
                 draft?.amountText shouldBe "7.25"
                 draft?.description shouldBe "Train"
+            }
+        }
+    }
+
+    "applyQuickEntry keeps an amount the user already entered" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("9.99")
+
+            viewModel.applyQuickEntry(QuickEntry(ExpenseEntry(1, groceries, "Coffee", main, 450), cadence = null))
+
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.amountText shouldBe "9.99"
+                draft.description shouldBe "Coffee"
+                draft.categoryId shouldBe groceries.id
+                draft.accountId shouldBe main.id
+            }
+        }
+    }
+
+    "applyQuickEntry fills the amount when none has been entered" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+
+            viewModel.applyQuickEntry(QuickEntry(ExpenseEntry(1, groceries, "Coffee", main, 450), cadence = null))
+
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.amountText shouldBe formatAmount(450)
+                draft.description shouldBe "Coffee"
+                draft.categoryId shouldBe groceries.id
+                draft.accountId shouldBe main.id
             }
         }
     }

@@ -144,6 +144,28 @@ data class EntryDraft(
         createdZone = zone,
     )
 
+    /**
+     * Returns this draft repeating [entry] as a new entry: the entry supplies
+     * the type, category, accounts and description, while this draft's date and
+     * time stay. Amounts already entered here are kept — tapping a quick entry
+     * must not undo an amount the user has typed — and are kept as a pair, so a
+     * sent amount is never paired with the entry's unrelated received amount.
+     * Only a draft without an entered amount takes the entry's amounts, so a
+     * quick entry still completes an empty form.
+     */
+    fun repeatEntry(entry: Entry): EntryDraft {
+        val repeated = EntryDraft.forEdit(entry).copy(
+            editing = null,
+            createdAt = createdAt,
+            createdZone = createdZone,
+        )
+        return if (amountText.isBlank() && toAmountText.isBlank()) {
+            repeated
+        } else {
+            repeated.copy(amountText = amountText, toAmountText = toAmountText)
+        }
+    }
+
     companion object {
         fun forNew(type: EntryType = EntryType.Expense, previous: Entry? = null, clock: AppClock): EntryDraft {
             val empty = EntryDraft(

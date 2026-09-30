@@ -1349,6 +1349,34 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "selecting a quick entry keeps the amount the user entered" {
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val twoDaysAgo = TEST_NOW.minus(2.days)
+            val yesterday = TEST_NOW.minus(1.days)
+            // Two occurrences of each description so the frequency filter passes;
+            // Train is the most recent, so the form is prefilled with it and
+            // "Coffee" only labels the quick-entry chip.
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = twoDaysAgo))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = twoDaysAgo))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = yesterday))
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Train", main, 450, createdAt = yesterday))
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            waitForText("Quick entry")
+            enterAmount("9.99")
+            onNodeWithText("Coffee").performClick()
+            waitForIdle()
+
+            // The amount survives; the chip still fills the rest of the form.
+            onNode(hasSetTextAction() and hasText("9.99")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+        }
+    }
+
     "quick entry chips hide for a type without matching history" {
         withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

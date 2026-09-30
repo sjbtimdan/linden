@@ -112,15 +112,12 @@ class EntryPointViewModel(
         _lastAdded.value = null
     }
 
-    /** Fills the draft from a quick-entry chip, keeping the current date and time. */
+    /**
+     * Fills the draft from a quick-entry chip, keeping the current date and time
+     * and any amount already entered.
+     */
     fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->
-        state?.let {
-            EntryDraft.forEdit(quickEntry.entry).copy(
-                editing = null,
-                createdAt = it.createdAt,
-                createdZone = it.createdZone,
-            )
-        }
+        state?.repeatEntry(quickEntry.entry)
     }
 
     private val _selectedType = MutableStateFlow(EntryType.Expense)

@@ -353,6 +353,80 @@ class EntryDraftTest : StringSpec({
         )
     }
 
+    "repeatEntry keeps an entered amount and takes the entry's other fields" {
+        val entry = ExpenseEntry(
+            7,
+            groceries,
+            "Coffee",
+            main,
+            450,
+            createdAt = createdAt + 60.seconds,
+            createdZone = TimeZone.of("Europe/Zurich"),
+        )
+        val current = draft(
+            amountText = "9.99",
+            categoryId = null,
+            accountId = savingsChf.id,
+            description = "Typed",
+        )
+
+        val repeated = current.repeatEntry(entry)
+
+        repeated.amountText shouldBe "9.99"
+        repeated.toAmountText shouldBe ""
+        repeated.type shouldBe EntryType.Expense
+        repeated.categoryId shouldBe groceries.id
+        repeated.accountId shouldBe main.id
+        repeated.description shouldBe "Coffee"
+        repeated.editing.shouldBeNull()
+        repeated.createdAt shouldBe createdAt
+        repeated.createdZone shouldBe createdZone
+    }
+
+    "repeatEntry fills the amount when none has been entered" {
+        val entry = ExpenseEntry(
+            7,
+            groceries,
+            "Coffee",
+            main,
+            450,
+            createdAt = createdAt + 60.seconds,
+            createdZone = TimeZone.of("Europe/Zurich"),
+        )
+        val current = draft(amountText = "", accountId = savingsChf.id, description = "Typed")
+
+        val repeated = current.repeatEntry(entry)
+
+        repeated.amountText shouldBe formatAmount(450)
+        repeated.categoryId shouldBe groceries.id
+        repeated.accountId shouldBe main.id
+        repeated.description shouldBe "Coffee"
+        repeated.createdAt shouldBe createdAt
+        repeated.createdZone shouldBe createdZone
+    }
+
+    "repeatEntry keeps the entered transfer amounts as a pair" {
+        val transfer = TransferEntry(9, null, "Top up", main, 10_000, toAccount = savingsEur, toAmount = 9_500)
+        val current = draft(
+            type = EntryType.Transfer,
+            amountText = "20.00",
+            categoryId = null,
+            accountId = savingsEur.id,
+            toAccountId = main.id,
+            toAmountText = "",
+        )
+
+        val repeated = current.repeatEntry(transfer)
+
+        // The entry's received 95.00 does not match the entered sent 20.00,
+        // so neither amount is taken from it.
+        repeated.amountText shouldBe "20.00"
+        repeated.toAmountText shouldBe ""
+        repeated.accountId shouldBe main.id
+        repeated.toAccountId shouldBe savingsEur.id
+        repeated.description shouldBe "Top up"
+    }
+
     "categoriesForType offers expense and income categories where they fit" {
         val both = Category(3, "General", CategoryType.Both)
         val all = listOf(groceries, salary, both)
