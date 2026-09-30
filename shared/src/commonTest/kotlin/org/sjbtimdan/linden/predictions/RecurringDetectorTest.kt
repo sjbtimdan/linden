@@ -59,6 +59,32 @@ class RecurringDetectorTest : StringSpec({
             detect(entries, "Rent") shouldBe RecurrenceCadence.Monthly
         }
 
+        "tolerates a one-off entry among regular gaps" {
+            // A small one-off logged under "Tax" inserts an 8- and a 22-day
+            // gap between the real monthly payments.
+            val entries = listOf(
+                expense(1, "Tax", now),
+                expense(2, "Tax", now.minus(30.days)),
+                expense(3, "Tax", now.minus(52.days)),
+                expense(4, "Tax", now.minus(60.days)),
+                expense(5, "Tax", now.minus(90.days)),
+                expense(6, "Tax", now.minus(120.days)),
+                expense(7, "Tax", now.minus(150.days)),
+                expense(8, "Tax", now.minus(180.days)),
+            )
+            detect(entries, "Tax") shouldBe RecurrenceCadence.Monthly
+        }
+
+        "returns null when most gaps are irregular" {
+            val entries = listOf(
+                expense(1, "Coffee", now),
+                expense(2, "Coffee", now.minus(3.days)),
+                expense(3, "Coffee", now.minus(33.days)),
+                expense(4, "Coffee", now.minus(36.days)),
+            )
+            detect(entries, "Coffee") shouldBe null
+        }
+
         "returns null for irregular intervals" {
             val entries = listOf(
                 expense(1, "Coffee", now),

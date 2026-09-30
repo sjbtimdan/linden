@@ -314,5 +314,42 @@ class QuickEntryPredictorTest : StringSpec({
             predict(entries, target = now.plus(5.days)).map { it.entry.description }
                 .shouldContainExactly("Train")
         }
+
+        "floats a monthly entry due on the target date above frequent ones" {
+            // Service Charge recurs monthly on the 2nd; Coffee is logged most days.
+            val due = now.plus(18.days)
+            val entries = listOf(
+                expense(1, "Service Charge", due.minus(31.days)),
+                expense(2, "Service Charge", due.minus(62.days)),
+                expense(3, "Service Charge", due.minus(93.days)),
+            ) + (1L..10L).map { expense(it + 10, "Coffee", now.minus(it.days)) }
+
+            predict(entries, target = due).map { it.entry.description }
+                .shouldContainExactly("Service Charge", "Coffee")
+        }
+
+        "does not float a monthly entry away from its next occurrence" {
+            val due = now.plus(18.days)
+            val entries = listOf(
+                expense(1, "Service Charge", due.minus(31.days)),
+                expense(2, "Service Charge", due.minus(62.days)),
+                expense(3, "Service Charge", due.minus(93.days)),
+            ) + (1L..10L).map { expense(it + 10, "Coffee", now.minus(it.days)) }
+
+            predict(entries, target = due.plus(10.days)).map { it.entry.description }
+                .shouldContainExactly("Coffee", "Service Charge")
+        }
+
+        "floats a weekly entry due on the target date" {
+            val due = now.plus(2.days)
+            val entries = listOf(
+                expense(1, "Yoga", due.minus(7.days)),
+                expense(2, "Yoga", due.minus(14.days)),
+                expense(3, "Yoga", due.minus(21.days)),
+            ) + (1L..10L).map { expense(it + 10, "Coffee", now.minus(it.days)) }
+
+            predict(entries, target = due).map { it.entry.description }
+                .shouldContainExactly("Yoga", "Coffee")
+        }
     }
 })

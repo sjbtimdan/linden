@@ -162,7 +162,7 @@ class EntrySuggestionsProvider(
         )
     }
 
-    /** Whole entries the user is likely to repeat at the draft's date and time, boosted by field matches. */
+    /** Whole entries the user is likely to repeat at the draft's date and time, recurring dues first, boosted by field matches. */
     val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
         predictQuickEntries(
             entries = entries,

@@ -211,6 +211,42 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "a recurring entry due on the draft date floats to the top" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val zone = TimeZone.currentSystemDefault()
+            // Tax is logged monthly on TEST_NOW's day and is due again; Coffee
+            // is logged more often but is not recurring.
+            (1..3).forEach { monthsAgo ->
+                entryDao.create(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Tax",
+                        main,
+                        1_700_000,
+                        createdAt = TEST_NOW.minus(30 * monthsAgo, DateTimeUnit.DAY, zone),
+                    ),
+                )
+            }
+            (2..7).forEach { daysAgo ->
+                entryDao.create(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Coffee",
+                        main,
+                        450,
+                        createdAt = TEST_NOW.minus(daysAgo, DateTimeUnit.DAY, zone),
+                    ),
+                )
+            }
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
+
+            provider.quickEntries.awaitDescriptions(listOf("Tax", "Coffee"))
+        }
+    }
+
     "cold start suggests the seeded defaults in seeder order" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             seedDefaults(accountDao, categoryDao)
