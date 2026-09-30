@@ -94,6 +94,7 @@
     <string name="entry_backspace">Backspace</string>
     <string name="entry_enter">Invio</string>
     <string name="entry_recommended">Consigliato</string>
+    <string name="entry_recurring">Ricorrente</string>
 
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">Voci</string>

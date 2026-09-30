@@ -94,6 +94,7 @@
     <string name="entry_backspace">बैकस्पेस</string>
     <string name="entry_enter">दर्ज करें</string>
     <string name="entry_recommended">अनुशंसित</string>
+    <string name="entry_recurring">आवर्ती</string>
 
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">प्रविष्टियाँ</string>

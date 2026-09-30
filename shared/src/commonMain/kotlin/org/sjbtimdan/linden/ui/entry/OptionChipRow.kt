@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
@@ -22,6 +24,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_recommended
 
+/** Container and content colours of one option chip. */
+data class OptionChipColors(val container: Color, val content: Color)
+
 @Composable
 fun <T> OptionChipRow(
     options: List<T>,
@@ -31,6 +36,8 @@ fun <T> OptionChipRow(
     isSelected: (T) -> Boolean = { false },
     isPredicted: (T) -> Boolean = { false },
     optionIcon: ((T) -> ImageVector?)? = null,
+    optionColors: ((T) -> OptionChipColors?)? = null,
+    optionContentDescription: ((T) -> String?)? = null,
     trailingChip: (@Composable () -> Unit)? = null,
 ) {
     FlowRow(
@@ -43,25 +50,28 @@ fun <T> OptionChipRow(
             val isPredictedChip = !isSelectedChip && isPredicted(option)
             // Semantics blocks are not composable, so resolve the label up front.
             val recommendedLabel = stringResource(Res.string.entry_recommended)
+            val colors = optionChipColors(
+                scheme = MaterialTheme.colorScheme,
+                selected = isSelectedChip,
+                predicted = isPredictedChip,
+                custom = optionColors?.invoke(option),
+            )
+            val description = if (isPredictedChip) {
+                recommendedLabel
+            } else {
+                optionContentDescription?.invoke(option)
+            }
             // A bare tap handler, not a Material chip: focusable chip internals steal
             // focus on press, unmounting this row mid-gesture before the click ends.
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = when {
-                    isSelectedChip -> MaterialTheme.colorScheme.secondaryContainer
-                    isPredictedChip -> MaterialTheme.colorScheme.primaryContainer
-                    else -> MaterialTheme.colorScheme.surfaceVariant
-                },
-                contentColor = when {
-                    isSelectedChip -> MaterialTheme.colorScheme.onSecondaryContainer
-                    isPredictedChip -> MaterialTheme.colorScheme.onPrimaryContainer
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                color = colors.container,
+                contentColor = colors.content,
                 modifier = Modifier
                     .semantics(mergeDescendants = true) {
                         selected = isSelectedChip
-                        if (isPredictedChip) {
-                            contentDescription = recommendedLabel
+                        if (description != null) {
+                            contentDescription = description
                         }
                     }
                     .pointerInput(option) {
@@ -96,4 +106,17 @@ fun <T> OptionChipRow(
         }
         trailingChip?.invoke()
     }
+}
+
+/** Colours of one option chip: the selected and predicted states outrank a custom colour. */
+internal fun optionChipColors(
+    scheme: ColorScheme,
+    selected: Boolean,
+    predicted: Boolean,
+    custom: OptionChipColors?,
+): OptionChipColors = when {
+    selected -> OptionChipColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
+    predicted -> OptionChipColors(scheme.primaryContainer, scheme.onPrimaryContainer)
+    custom != null -> custom
+    else -> OptionChipColors(scheme.surfaceVariant, scheme.onSurfaceVariant)
 }

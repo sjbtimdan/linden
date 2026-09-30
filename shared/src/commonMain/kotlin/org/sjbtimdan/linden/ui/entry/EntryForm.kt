@@ -58,6 +58,7 @@ import org.sjbtimdan.linden.resources.entry_new_category
 import org.sjbtimdan.linden.resources.entry_new_category_with_name
 import org.sjbtimdan.linden.resources.entry_ok
 import org.sjbtimdan.linden.resources.entry_quick_entry
+import org.sjbtimdan.linden.resources.entry_recurring
 import org.sjbtimdan.linden.resources.entry_to_account
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.accounts.AccountDialog
@@ -147,6 +148,13 @@ fun EntryForm(
     val duplicateAccountNameError = stringResource(Res.string.accounts_duplicate_name)
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
     val nameRequiredError = stringResource(Res.string.common_name_required)
+    // Recurring quick-entry chips get a subtle tint and a screen-reader label:
+    // the chip itself only shows the description and the repeat icon.
+    val recurringChipColors = OptionChipColors(
+        container = MaterialTheme.colorScheme.tertiaryContainer,
+        content = MaterialTheme.colorScheme.onTertiaryContainer,
+    )
+    val recurringChipDescription = stringResource(Res.string.entry_recurring)
 
     // Create dialogs, opened from the "+ New" chips or from hoisted state a
     // host seeded via the missing-requirement hint. The host's state wins when
@@ -423,9 +431,11 @@ fun EntryForm(
                 )
                 OptionChipRow(
                     options = quickEntries,
-                    optionLabel = ::quickEntryLabel,
+                    optionLabel = { it.entry.description.orEmpty() },
                     onSelect = onQuickEntry,
                     optionIcon = ::quickEntryIcon,
+                    optionColors = { if (it.cadence != null) recurringChipColors else null },
+                    optionContentDescription = { if (it.cadence != null) recurringChipDescription else null },
                 )
             }
         }

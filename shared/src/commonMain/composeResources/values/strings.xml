@@ -94,6 +94,7 @@
     <string name="entry_backspace">Backspace</string>
     <string name="entry_enter">Enter</string>
     <string name="entry_recommended">Recommended</string>
+    <string name="entry_recurring">Recurring</string>
 
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">Entries</string>

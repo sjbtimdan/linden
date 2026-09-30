@@ -94,6 +94,7 @@
     <string name="entry_backspace">退格</string>
     <string name="entry_enter">確定</string>
     <string name="entry_recommended">推薦</string>
+    <string name="entry_recurring">定期</string>
 
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">記錄</string>

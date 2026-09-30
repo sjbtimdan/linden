@@ -1,5 +1,7 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
@@ -150,6 +152,43 @@ class OptionChipRowTest : StringSpec({
 
                 onNodeWithText("Savings").assertIsSelected()
                 onNode(hasText("Savings") and hasContentDescription("Recommended")).assertDoesNotExist()
+            }
+        }
+    }
+
+    "a per-option colour replaces the default and null options fall back" {
+        val scheme = lightColorScheme()
+        val custom = OptionChipColors(Color.Magenta, Color.Black)
+
+        optionChipColors(scheme, selected = false, predicted = false, custom = custom) shouldBe custom
+        optionChipColors(scheme, selected = false, predicted = false, custom = null) shouldBe
+            OptionChipColors(scheme.surfaceVariant, scheme.onSurfaceVariant)
+    }
+
+    "the selected and predicted states outrank a per-option colour" {
+        val scheme = lightColorScheme()
+        val custom = OptionChipColors(Color.Magenta, Color.Black)
+
+        optionChipColors(scheme, selected = true, predicted = false, custom = custom) shouldBe
+            OptionChipColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
+        optionChipColors(scheme, selected = false, predicted = true, custom = custom) shouldBe
+            OptionChipColors(scheme.primaryContainer, scheme.onPrimaryContainer)
+    }
+
+    "per-option content descriptions are announced" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    OptionChipRow(
+                        options = listOf("Checking", "Savings"),
+                        optionLabel = { it },
+                        onSelect = {},
+                        optionContentDescription = { if (it == "Savings") "Recurring" else null },
+                    )
+                }
+
+                onNode(hasText("Savings") and hasContentDescription("Recurring")).assertIsDisplayed()
+                onNode(hasText("Checking") and hasContentDescription("Recurring")).assertDoesNotExist()
             }
         }
     }
