@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
+<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.1 | Updated: 2026-10-01 -->
 
 # Decisions Log
 
@@ -360,6 +360,58 @@ never individually deleted (no `deleteById` in `Category.sq`); `EntryDao.toEntry
 - `ui/accounts/AccountListViewModel.kt` - `accountsWithEntries` delete/currency guard
 - `data/EntryDao.kt` - `toEntry` `requireNotNull` on dangling references
 - `backup/LindenBackupManager.kt`, `imports/IvyImporter.kt` - Parent-before-child insert ordering
+
+---
+
+## Decision: Backup Strategy — Android Auto Backup + Manual Export
+
+**Date**: 2026-10-01
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+Users need their data to survive device loss. The alternative considered was a built-in auto-backup that writes a
+backup to a user-chosen external folder (e.g. Google Drive via SAF) on a daily schedule, with Always / Wi-Fi Only /
+Never options and in-app error surfacing. The app already has manual backup/restore (zipped JSON dump of all tables)
+and CSV export in Settings, and `androidApp` already declares `android:allowBackup="true"`.
+
+### Decision
+Rely on Android Auto Backup (already enabled by `android:allowBackup="true"`) instead of building a custom
+external-folder auto-backup feature. Settings → Back up database / Restore / Export to CSV remain the only
+user-visible, cross-platform backup paths.
+
+### Rationale
+- Auto Backup covers the whole app data set — `databases/linden.db` (entries, accounts, categories, settings, FX
+  rates, budgets) plus shared preferences — with no app code.
+- It runs automatically (≥24h cadence, idle + charging + Wi-Fi), and the system shuts the app down during backup,
+  so there is no torn-database-snapshot risk to handle.
+- Restore happens on (re)install — Play, adb, or device setup — before first launch, which the app's first-run
+  currency gate already handles.
+- A custom implementation would need SAF persisted tree permissions, a network policy, scheduling/idempotence,
+  retention, and error UI — significant machinery for a worse outcome (silent, maintenance-free backup is exactly
+  what Auto Backup provides).
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| Custom auto-backup to external folder (SAF / Drive) | Visible files, user-controlled destination, restorable on demand | SAF permissions, network gating, scheduling, retention, error UI, concurrency work | Auto Backup already provides the core value for free |
+| Google Drive REST API + OAuth | Full control | OAuth setup, Play Console config, KMP-unfriendly SDK | Overkill; a SAF variant would still be needed for desktop |
+| WorkManager background backup | Runs without app open | Headless DB + DI + same concurrency work | Unnecessary; device-loss recovery is covered |
+
+### Impact
+**Positive**: Zero code; silent, OS-maintained device-loss recovery; DB and prefs covered; no race conditions to
+manage; manual export remains for cross-platform/manual use
+**Negative**: No user-visible backup file; no error surfacing (failures are silent); restore is install-time only,
+latest-backup-only, all-or-nothing; Android-only; backups are keyed to the signing certificate (Play App Signing
+keeps release consistent; debug builds differ)
+**Risk**: If a future requirement demands on-demand/visible restore or desktop coverage, the custom feature must be
+built; revisit this decision then
+
+### Related
+- `androidApp/src/main/AndroidManifest.xml` - `android:allowBackup="true"` (the entire enablement)
+- `backup/LindenBackupManager.kt` - Manual zipped-JSON backup/restore
+- `ui/settings/SettingsScreen.kt` - Backup / CSV export actions
+- [Auto Backup](https://developer.android.com/identity/data/autobackup) / [Testing](https://developer.android.com/identity/data/testingbackup)
 
 ---
 
