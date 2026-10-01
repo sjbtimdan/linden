@@ -85,23 +85,40 @@ val CardShape = RoundedCornerShape(20.dp)
 /** Subtle shadow elevation for list-row cards. */
 val CardElevation = 2.dp
 
+/** Fixed-width digits app-wide so amounts, dates and times line up and stop shifting as values change. */
+private fun TextStyle.tabularDigits(): TextStyle = copy(fontFeatureSettings = "\"tnum\" 1")
+
+private val BaseTypography = Typography()
+
 private val LindenTypography = Typography(
+    displayLarge = BaseTypography.displayLarge.tabularDigits(),
+    displayMedium = BaseTypography.displayMedium.tabularDigits(),
+    displaySmall = BaseTypography.displaySmall.tabularDigits(),
+    headlineLarge = BaseTypography.headlineLarge.tabularDigits(),
+    headlineMedium = BaseTypography.headlineMedium.tabularDigits(),
+    headlineSmall = BaseTypography.headlineSmall.tabularDigits(),
     titleLarge = TextStyle(
         fontWeight = FontWeight.SemiBold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
-    ),
+    ).tabularDigits(),
     titleMedium = TextStyle(
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.1.sp,
-    ),
+    ).tabularDigits(),
+    titleSmall = BaseTypography.titleSmall.tabularDigits(),
+    bodyLarge = BaseTypography.bodyLarge.tabularDigits(),
+    bodyMedium = BaseTypography.bodyMedium.tabularDigits(),
+    bodySmall = BaseTypography.bodySmall.tabularDigits(),
     labelLarge = TextStyle(
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
-    ),
+    ).tabularDigits(),
+    labelMedium = BaseTypography.labelMedium.tabularDigits(),
+    labelSmall = BaseTypography.labelSmall.tabularDigits(),
 )
 
 @Composable
