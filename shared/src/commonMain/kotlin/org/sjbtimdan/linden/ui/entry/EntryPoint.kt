@@ -1,6 +1,5 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,24 +8,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,15 +42,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_clear
 import org.sjbtimdan.linden.resources.entry_add
-import org.sjbtimdan.linden.resources.entry_hide_total
-import org.sjbtimdan.linden.resources.entry_show_total
-import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
@@ -63,7 +54,6 @@ import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenContainerWithIme
-import org.sjbtimdan.linden.ui.theme.CardElevation
 import kotlin.time.Duration.Companion.seconds
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
@@ -406,109 +396,6 @@ fun EntryPoint(
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(Res.string.common_clear))
-                }
-            }
-        }
-    }
-}
-
-/** Total across all accounts in the default currency; null while a rate is missing. */
-@Composable
-private fun TotalBalanceCard(
-    total: Long?,
-    currency: Currency,
-    hidden: Boolean,
-    compact: Boolean,
-    onToggleHidden: () -> Unit,
-) {
-    val amountLabel = if (hidden) HIDDEN_AMOUNT else total?.let(::formatAmountCompact) ?: "–"
-    if (compact) {
-        // Slim one-line variant shown while a draft is being captured.
-        Surface(
-            modifier = Modifier.fillMaxWidth().testTag("totalBalanceCompact"),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = CardElevation,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Row(
-                modifier = Modifier.padding(start = 16.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.entry_total_balance),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = amountLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 1,
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = currency.symbol,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                IconButton(onClick = onToggleHidden) {
-                    Icon(
-                        imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
-                        contentDescription = if (hidden) {
-                            stringResource(Res.string.entry_show_total)
-                        } else {
-                            stringResource(Res.string.entry_hide_total)
-                        },
-                    )
-                }
-            }
-        }
-    } else {
-        Surface(
-            modifier = Modifier.fillMaxWidth().testTag("totalBalanceCard"),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = CardElevation,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(Res.string.entry_total_balance),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.weight(1f),
-                    )
-                    IconButton(onClick = onToggleHidden) {
-                        Icon(
-                            imageVector = if (hidden) VisibilityOffIcon else VisibilityIcon,
-                            contentDescription = if (hidden) {
-                                stringResource(Res.string.entry_show_total)
-                            } else {
-                                stringResource(Res.string.entry_hide_total)
-                            },
-                        )
-                    }
-                }
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = amountLabel,
-                        style = MaterialTheme.typography.displaySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        maxLines = 1,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = currency.symbol,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(bottom = 6.dp),
-                    )
                 }
             }
         }
