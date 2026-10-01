@@ -84,12 +84,13 @@ fun EntryRow(
     showTime: Boolean = true,
     hideAmounts: Boolean = false,
     zone: TimeZone = TimeZone.currentSystemDefault(),
+    modifier: Modifier = Modifier,
 ) {
     val tint = entry.tintColor()
     val accent = entry.category?.let { accentColor(it.name) } ?: tint
     val accentContent = accentContentColor(accent)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .shadow(CardElevation, CardShape, clip = false)
             .clip(CardShape)

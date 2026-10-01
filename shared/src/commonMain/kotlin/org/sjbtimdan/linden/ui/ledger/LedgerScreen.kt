@@ -1,6 +1,13 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -541,22 +548,32 @@ private fun TotalLabel(total: Long?, currency: Currency, hidden: Boolean = false
         total != null && total > 0 -> colors.incomeContainer
         else -> MaterialTheme.colorScheme.surfaceContainer
     }
+    val animatedContainer by animateColorAsState(container, label = "totalContainer")
+    val animatedTint by animateColorAsState(
+        tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
+        label = "totalTint",
+    )
     Surface(
         shape = RoundedCornerShape(50),
-        color = container,
+        color = animatedContainer,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        AnimatedContent(
+            targetState = when {
+                hidden -> "***"
+                total != null -> formatTotal(total, currency)
+                else -> "–"
+            },
+            transitionSpec = {
+                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                    (slideOutVertically { height -> -height / 2 } + fadeOut())
+            },
+            label = "totalValue",
+        ) { text ->
             Text(
-                text = when {
-                    hidden -> "***"
-                    total != null -> formatTotal(total, currency)
-                    else -> "–"
-                },
+                text = text,
                 style = MaterialTheme.typography.labelLarge,
-                color = tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                color = animatedTint,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
     }

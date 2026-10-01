@@ -64,6 +64,7 @@ internal fun LedgerEntriesList(
                         onClick = { onEntryClick(item.entry) },
                         hideAmounts = hideAmounts,
                         zone = zone,
+                        modifier = Modifier.animateItem(),
                     )
                 }
             }

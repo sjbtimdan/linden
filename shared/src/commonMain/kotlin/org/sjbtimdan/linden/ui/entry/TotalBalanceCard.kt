@@ -1,5 +1,11 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -146,15 +152,24 @@ private fun ExpandedTotalContent(
         }
         Spacer(modifier = Modifier.height(2.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(
-                text = amountLabel,
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = contentColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            AnimatedContent(
+                targetState = amountLabel,
+                transitionSpec = {
+                    (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                        (slideOutVertically { height -> -height / 2 } + fadeOut())
+                },
+                label = "heroAmount",
                 modifier = Modifier.weight(1f, fill = false),
-            )
+            ) { text ->
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Spacer(modifier = Modifier.width(10.dp))
             CurrencyBadge(
                 symbol = currencySymbol,
@@ -183,13 +198,22 @@ private fun CompactTotalRow(
             color = contentColor.copy(alpha = HERO_LABEL_ALPHA),
             modifier = Modifier.weight(1f),
         )
-        Text(
-            text = amountLabel,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = contentColor,
-            maxLines = 1,
-        )
+        AnimatedContent(
+            targetState = amountLabel,
+            transitionSpec = {
+                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                    (slideOutVertically { height -> -height / 2 } + fadeOut())
+            },
+            label = "heroAmountCompact",
+        ) { text ->
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = contentColor,
+                maxLines = 1,
+            )
+        }
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = currencySymbol,
