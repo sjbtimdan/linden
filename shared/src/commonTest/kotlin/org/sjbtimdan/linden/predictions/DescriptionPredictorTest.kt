@@ -22,7 +22,6 @@ class DescriptionPredictorTest : StringSpec({
     val main = Account(1, "Main", Currency.CHF)
     val savings = Account(2, "Savings", Currency.CHF)
     val food = Category(1, "Food", CategoryType.Expense)
-    val timeZone = TimeZone.UTC
 
     fun input(
         type: EntryType = EntryType.Expense,
@@ -33,7 +32,7 @@ class DescriptionPredictorTest : StringSpec({
     ) = DescriptionPredictionInput(type, categoryId, accountId, amount, description)
 
     fun predict(entries: List<Entry>, predictionInput: DescriptionPredictionInput, topN: Int = PREDICTION_TOP_N) =
-        predictDescriptions(entries, predictionInput, now, timeZone, topN)
+        predictDescriptions(entries, predictionInput, now, topN)
 
     "returns empty when no inputs are given" {
         predict(listOf(expense(1, food, "Coffee", main, 450, now)), input()).shouldBeEmpty()
@@ -95,6 +94,33 @@ class DescriptionPredictorTest : StringSpec({
             .shouldContainExactly("Coffee")
     }
 
+    "only considers the selected category while no text is typed" {
+        val transport = Category(2, "Transport", CategoryType.Expense)
+        val entries = listOf(
+            expense(1, food, "Coffee", main, 450, now),
+            expense(2, transport, "Petrol", main, 450, now),
+        )
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))
+            .shouldContainExactly("Coffee")
+    }
+
+    "falls back to all categories when the selected category has no history" {
+        val transport = Category(2, "Transport", CategoryType.Expense)
+        val entries = listOf(expense(1, transport, "Petrol", main, 450, now))
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))
+            .shouldContainExactly("Petrol")
+    }
+
+    "a typed description can match entries outside the selected category" {
+        val transport = Category(2, "Transport", CategoryType.Expense)
+        val entries = listOf(
+            expense(1, food, "Coffee", main, 999, now),
+            expense(2, transport, "Shell", main, 450, now),
+        )
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450, description = "Shell"))
+            .shouldContainExactly("Shell")
+    }
+
     "only considers entries of the same type" {
         val income = IncomeEntry(1, food, "Salary", main, 450, createdAt = now, createdZone = TimeZone.UTC)
         val entries = listOf(expense(2, food, "Coffee", main, 450, now))
@@ -103,13 +129,13 @@ class DescriptionPredictorTest : StringSpec({
             .shouldContainExactly("Salary")
     }
 
-    "excludes entries older than six months" {
+    "considers entries older than six months" {
         val entries = listOf(
             expense(1, food, "Recent", main, 450, now.minus(5.days)),
             expense(2, food, "Ancient", main, 450, now.minus(200.days)),
         )
         predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))
-            .shouldContainExactly("Recent")
+            .shouldContainExactly("Recent", "Ancient")
     }
 
     "excludes blank descriptions" {
@@ -150,7 +176,7 @@ class DescriptionPredictorTest : StringSpec({
             .shouldContainExactly("Coffee", "Tea")
     }
 
-    "groups descriptions case-insensitively and sums their scores" {
+    "groups descriptions case-insensitively and boosts repeated ones" {
         val entries = listOf(
             expense(1, food, "Coffee", main, 450, now),
             expense(2, food, "coffee", main, 450, now),
@@ -186,6 +212,19 @@ class DescriptionPredictorTest : StringSpec({
         )
         predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))
             .shouldContainExactly("Coffee", "Tea")
+    }
+
+    "a single exact match outranks a frequently repeated loose match" {
+        val entries = listOf(
+            expense(1, food, "Fusion", main, 600, now.minus(1.days)),
+            expense(2, food, "Fusion", main, 600, now.minus(2.days)),
+            expense(3, food, "Fusion", main, 600, now.minus(3.days)),
+            expense(4, food, "Fusion", main, 600, now.minus(4.days)),
+            expense(5, food, "Fusion", main, 600, now.minus(5.days)),
+            expense(6, food, "Bakery", main, 450, now.minus(1.days)),
+        )
+        predict(entries, input(categoryId = food.id, accountId = main.id, amount = 450))
+            .first() shouldBe "Bakery"
     }
 })
 

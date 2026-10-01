@@ -170,6 +170,11 @@ tasks.withType<Test>().configureEach {
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
+    // -D flags reach the Gradle JVM, not forked test JVMs; forward the manual
+    // prediction quality harness flag so the documented CLI command works.
+    providers.systemProperty("descriptionQualityTest").orNull?.let {
+        systemProperty("descriptionQualityTest", it)
+    }
 }
 
 // Integration tests live in their own source set (jvmIntegrationTest) so they

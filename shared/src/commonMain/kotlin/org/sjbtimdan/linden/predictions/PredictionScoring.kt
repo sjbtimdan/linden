@@ -22,6 +22,7 @@ internal const val RECENCY_DECAY_PER_MONTH = 0.85
 internal const val DAYS_PER_MONTH = 30.44
 internal const val DESCRIPTION_EXACT_WEIGHT = 3.0
 internal const val DESCRIPTION_PARTIAL_WEIGHT = 1.5
+internal const val DESCRIPTION_FREQUENCY_PRIOR_WEIGHT = 0.5
 internal const val TIME_OF_DAY_WEIGHT = 1.5
 internal const val TIME_OF_DAY_TOLERANCE_HOURS = 2
 internal const val TIME_OF_DAY_NEAR_WEIGHT = 0.75

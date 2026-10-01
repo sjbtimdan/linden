@@ -75,7 +75,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
-    "entries older than the prediction horizon are not considered" {
+    "field predictions ignore entries older than the prediction horizon" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Old", Currency.CHF)
@@ -90,7 +90,19 @@ class EntrySuggestionsProviderTest : StringSpec({
 
             provider.accountSuggestions.awaitNotEmpty() shouldContainExactly listOf(main.id)
             provider.categorySuggestions.awaitNotEmpty() shouldContainExactly listOf(groceries.id)
-            provider.descriptionSuggestions.awaitNotEmpty() shouldContainExactly listOf("Lunch")
+        }
+    }
+
+    "descriptions consider entries beyond the field prediction horizon" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val monthsAgo = TEST_NOW.minus(7, DateTimeUnit.MONTH, TimeZone.currentSystemDefault())
+            entryDao.create(ExpenseEntry(0, groceries, "Old Coffee", main, 450, createdAt = monthsAgo))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 450, createdAt = TEST_NOW))
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock())
+                .copy(amountText = "4.50", categoryId = groceries.id, accountId = main.id)
+
+            provider.descriptionSuggestions.awaitNotEmpty() shouldContainExactly listOf("Lunch", "Old Coffee")
         }
     }
 

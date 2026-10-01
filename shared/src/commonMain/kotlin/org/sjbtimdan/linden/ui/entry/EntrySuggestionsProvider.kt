@@ -47,10 +47,11 @@ private const val DESCRIPTION_DEBOUNCE_MILLIS = 150L
  * descriptions and quick-entry chips for the current draft, recomputed whenever
  * it changes. The field predictions only consider entries of the draft's type
  * from the last [PREDICTION_HORIZON_MONTHS] months, matching the predictors'
- * data contract; quick entry considers all of them because it ranks by time of
- * day rather than recency. Editing an existing entry never predicts. Predictions
- * run on the default dispatcher and description keystrokes are debounced, so
- * typing never recomputes on the main thread.
+ * data contract; description and quick-entry predictions consider all of them
+ * (descriptions decay older entries by recency, quick entry ranks by time of
+ * day). Editing an existing entry never predicts. Predictions run on the
+ * default dispatcher and description keystrokes are debounced, so typing never
+ * recomputes on the main thread.
  *
  * Kept outside [EntryEditorViewModel] so ViewModels whose dialog never shows
  * suggestions (history) don't pay for the extra entry window and its flows.
@@ -71,8 +72,10 @@ class EntrySuggestionsProvider(
     }
 
     /**
-     * All entries of the draft's type, no date cutoff: quick entry ranks by
-     * time of day, so entries outside the prediction horizon must be candidates.
+     * All entries of the draft's type, no date cutoff: description prediction
+     * decays older entries by recency instead of cutting them off, and quick
+     * entry ranks by time of day, so entries outside the prediction horizon
+     * must be candidates.
      */
     private val allTypeEntries: StateFlow<List<Entry>> = typeEntries(entryDao::getAllByType)
 
@@ -146,7 +149,7 @@ class EntrySuggestionsProvider(
     }
 
     /** Most likely descriptions for the current draft. */
-    val descriptionSuggestions: StateFlow<List<String>> = suggestion(predictionEntries) { state, entries, _ ->
+    val descriptionSuggestions: StateFlow<List<String>> = suggestion(allTypeEntries) { state, entries, _ ->
         predictDescriptions(
             entries = entries,
             input = DescriptionPredictionInput(
@@ -157,7 +160,6 @@ class EntrySuggestionsProvider(
                 description = state.description,
             ),
             now = clock.now(),
-            timeZone = TimeZone.currentSystemDefault(),
             topN = PREDICTION_TOP_N,
         )
     }
