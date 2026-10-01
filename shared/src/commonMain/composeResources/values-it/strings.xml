@@ -227,6 +227,7 @@
     <string name="settings_nav_rates">Tassi di cambio</string>
     <string name="settings_nav_budgets">Budget</string>
     <string name="settings_nav_insights">Statistiche</string>
+    <string name="settings_your_data">I tuoi dati</string>
     <string name="insights_vs_previous">rispetto a %1$s: %2$s</string>
     <string name="insights_expenses">Spese</string>
     <string name="insights_income">Entrate</string>

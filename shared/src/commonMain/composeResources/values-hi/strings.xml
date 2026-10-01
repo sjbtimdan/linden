@@ -233,6 +233,7 @@
     <string name="settings_nav_rates">मुद्रा दरें</string>
     <string name="settings_nav_budgets">बजट</string>
     <string name="settings_nav_insights">विश्लेषण</string>
+    <string name="settings_your_data">आपका डेटा</string>
     <string name="insights_vs_previous">%1$s की तुलना में: %2$s</string>
     <string name="insights_expenses">खर्च</string>
     <string name="insights_income">आय</string>

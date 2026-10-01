@@ -227,6 +227,7 @@
     <string name="settings_nav_rates">汇率</string>
     <string name="settings_nav_budgets">预算</string>
     <string name="settings_nav_insights">统计</string>
+    <string name="settings_your_data">你的数据</string>
     <string name="insights_vs_previous">较%1$s：%2$s</string>
     <string name="insights_expenses">支出</string>
     <string name="insights_income">收入</string>

@@ -19,11 +19,10 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
@@ -96,6 +95,7 @@ import org.sjbtimdan.linden.resources.settings_working_backup
 import org.sjbtimdan.linden.resources.settings_working_export
 import org.sjbtimdan.linden.resources.settings_working_import
 import org.sjbtimdan.linden.resources.settings_working_restore
+import org.sjbtimdan.linden.resources.settings_your_data
 import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -143,219 +143,193 @@ fun SettingsScreen(
         Text(
             text = stringResource(Res.string.nav_settings),
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
-
-        Text(
-            text = stringResource(Res.string.settings_language),
-            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp),
         )
+
+        SettingsSectionHeader(stringResource(Res.string.settings_language))
 
         // No "follow system" option: the selected chip is the concrete language
         // in effect, which resolves from the platform locale until the user
         // pins one (unsupported system languages fall back to English).
         val effectiveLanguage = AppLanguage.resolve(language, platformLocaleTag())
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            languageOptions.forEach { option ->
-                FilterChip(
-                    selected = effectiveLanguage == option,
-                    onClick = { viewModel.setLanguage(option) },
-                    label = { Text(option.label()) },
-                    modifier = Modifier.testTag("language-${option.name}"),
-                )
-            }
-        }
-
-        Text(
-            text = stringResource(Res.string.settings_theme),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
-        )
-
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            ThemeMode.entries.forEachIndexed { index, mode ->
-                SegmentedButton(
-                    selected = themeMode == mode,
-                    onClick = { viewModel.setThemeMode(mode) },
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = ThemeMode.entries.size,
-                    ),
-                ) {
-                    Text(
-                        text = mode.displayName(),
+        SettingsCard {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                languageOptions.forEach { option ->
+                    FilterChip(
+                        selected = effectiveLanguage == option,
+                        onClick = { viewModel.setLanguage(option) },
+                        label = { Text(option.label()) },
+                        modifier = Modifier.testTag("language-${option.name}"),
                     )
                 }
             }
         }
 
-        Text(
-            text = stringResource(Res.string.settings_default_currency),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
-        )
+        SettingsSectionHeader(stringResource(Res.string.settings_your_data))
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Currency.entries.forEach { entry ->
-                FilterChip(
-                    selected = defaultCurrency == entry,
-                    onClick = { viewModel.setDefaultCurrency(entry) },
-                    label = { Text(entry.name) },
-                )
-            }
-        }
-
-        Text(
-            text = stringResource(Res.string.settings_privacy),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.settings_hide_totals),
-                style = MaterialTheme.typography.bodyLarge,
+        SettingsCard {
+            SettingsNavRow(
+                icon = Icons.AutoMirrored.Filled.List,
+                label = stringResource(Res.string.common_categories),
+                onClick = onNavigateToCategories,
             )
-            Switch(
-                checked = hideEntryTotal,
-                onCheckedChange = viewModel::setHideEntryTotal,
+            HorizontalDivider()
+            SettingsNavRow(
+                icon = Icons.Filled.Person,
+                label = stringResource(Res.string.common_accounts),
+                onClick = onNavigateToAccounts,
+            )
+            HorizontalDivider()
+            SettingsNavRow(
+                icon = Icons.Filled.CurrencyExchange,
+                label = stringResource(Res.string.settings_nav_rates),
+                onClick = onNavigateToRates,
+            )
+            HorizontalDivider()
+            SettingsNavRow(
+                icon = Icons.Filled.Savings,
+                label = stringResource(Res.string.settings_nav_budgets),
+                onClick = onNavigateToBudgets,
+            )
+            HorizontalDivider()
+            SettingsNavRow(
+                icon = Icons.Filled.BarChart,
+                label = stringResource(Res.string.settings_nav_insights),
+                onClick = onNavigateToInsights,
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(8.dp))
+        SettingsSectionHeader(stringResource(Res.string.settings_theme))
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(onClick = onNavigateToCategories) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.List,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.common_categories))
-            }
-            Button(onClick = onNavigateToAccounts) {
-                Icon(
-                    imageVector = Icons.Filled.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.common_accounts))
-            }
-            Button(onClick = onNavigateToRates) {
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_nav_rates))
-            }
-            Button(onClick = onNavigateToBudgets) {
-                Icon(
-                    imageVector = Icons.Filled.Savings,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_nav_budgets))
-            }
-            Button(onClick = onNavigateToInsights) {
-                Icon(
-                    imageVector = Icons.Filled.BarChart,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_nav_insights))
+        SettingsCard {
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+            ) {
+                ThemeMode.entries.forEachIndexed { index, mode ->
+                    SegmentedButton(
+                        selected = themeMode == mode,
+                        onClick = { viewModel.setThemeMode(mode) },
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = ThemeMode.entries.size,
+                        ),
+                    ) {
+                        Text(
+                            text = mode.displayName(),
+                        )
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(8.dp))
+        SettingsSectionHeader(stringResource(Res.string.settings_default_currency))
 
-        Text(
-            text = stringResource(Res.string.settings_backup),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
+        SettingsCard {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Currency.entries.forEach { entry ->
+                    FilterChip(
+                        selected = defaultCurrency == entry,
+                        onClick = { viewModel.setDefaultCurrency(entry) },
+                        label = { Text(entry.name) },
+                    )
+                }
+            }
+        }
 
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilledTonalButton(
-                onClick = { backupFilePicker() },
-                enabled = !transferInProgress,
+        SettingsSectionHeader(stringResource(Res.string.settings_privacy))
+
+        SettingsCard {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                Text(
+                    text = stringResource(Res.string.settings_hide_totals),
+                    style = MaterialTheme.typography.bodyLarge,
                 )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_backup_db))
+                Switch(
+                    checked = hideEntryTotal,
+                    onCheckedChange = viewModel::setHideEntryTotal,
+                )
             }
-            OutlinedButton(
-                onClick = { showRestoreConfirmation = true },
-                enabled = !transferInProgress,
+        }
+
+        SettingsSectionHeader(stringResource(Res.string.settings_backup))
+
+        SettingsCard {
+            FlowRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_restore_backup))
-            }
-            OutlinedButton(
-                onClick = { exportFilePicker() },
-                enabled = exportState !is BackupState.Working,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_export_csv))
-            }
-            FilledTonalButton(
-                onClick = { showImportConfirmation = true },
-                enabled = importState !is BackupState.Working,
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(stringResource(Res.string.settings_import_ivy))
+                FilledTonalButton(
+                    onClick = { backupFilePicker() },
+                    enabled = !transferInProgress,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(Res.string.settings_backup_db))
+                }
+                FilledTonalButton(
+                    onClick = { exportFilePicker() },
+                    enabled = exportState !is BackupState.Working,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(Res.string.settings_export_csv))
+                }
+                OutlinedButton(
+                    onClick = { showRestoreConfirmation = true },
+                    enabled = !transferInProgress,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(Res.string.settings_restore_backup))
+                }
+                OutlinedButton(
+                    onClick = { showImportConfirmation = true },
+                    enabled = importState !is BackupState.Working,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(stringResource(Res.string.settings_import_ivy))
+                }
             }
         }
 
@@ -427,8 +401,6 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(32.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = buildVersionLabel(),

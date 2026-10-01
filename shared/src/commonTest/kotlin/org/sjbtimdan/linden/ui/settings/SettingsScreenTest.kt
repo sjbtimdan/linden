@@ -10,6 +10,7 @@ import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
@@ -98,7 +99,7 @@ class SettingsScreenTest : StringSpec({
         withSettingsViewModel(initialCurrency = Currency.CHF) { viewModel ->
             setContent { SettingsScreen(viewModel) }
             onNodeWithText("CHF").assertIsSelected()
-            onNodeWithText("EUR").performClick()
+            onNodeWithText("EUR").performScrollTo().performClick()
             onNodeWithText("EUR").assertIsSelected()
 
             viewModel.defaultCurrency.value shouldBe Currency.EUR
@@ -109,7 +110,7 @@ class SettingsScreenTest : StringSpec({
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
             onNode(isToggleable()).assertIsOff()
-            onNode(isToggleable()).performClick()
+            onNode(isToggleable()).performScrollTo().performClick()
             onNode(isToggleable()).assertIsOn()
 
             viewModel.hideEntryTotal.value shouldBe true
@@ -146,6 +147,43 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
+    "shows the Your Data section header" {
+        withSettingsViewModel { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("Your Data").assertExists()
+        }
+    }
+
+    "clicking Budgets row triggers navigation" {
+        withSettingsViewModel { viewModel ->
+            var navigatedToBudgets = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onNavigateToBudgets = { navigatedToBudgets = true },
+                )
+            }
+            onNodeWithText("Budgets").performClick()
+            navigatedToBudgets shouldBe true
+        }
+    }
+
+    "clicking Insights row triggers navigation" {
+        withSettingsViewModel { viewModel ->
+            var navigatedToInsights = false
+
+            setContent {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    onNavigateToInsights = { navigatedToInsights = true },
+                )
+            }
+            onNodeWithText("Insights").performClick()
+            navigatedToInsights shouldBe true
+        }
+    }
+
     "clicking Import in the confirmation dialog triggers the file picker" {
         withSettingsViewModel { viewModel ->
             var pickerInvoked = false
@@ -157,7 +195,7 @@ class SettingsScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Import from Ivy").performClick()
+            onNodeWithText("Import from Ivy").performScrollTo().performClick()
             onNodeWithText(
                 "This will replace all your current accounts, categories and transactions. Continue?",
             ).assertExists()
@@ -178,7 +216,7 @@ class SettingsScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Import from Ivy").performClick()
+            onNodeWithText("Import from Ivy").performScrollTo().performClick()
             onNodeWithText("Cancel").performClick()
 
             pickerInvoked shouldBe false
@@ -264,7 +302,7 @@ class SettingsScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Back up database").performClick()
+            onNodeWithText("Back up database").performScrollTo().performClick()
 
             pickerInvoked shouldBe true
         }
@@ -281,7 +319,7 @@ class SettingsScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Restore from backup").performClick()
+            onNodeWithText("Restore from backup").performScrollTo().performClick()
             onNodeWithText(
                 "This will replace all your current accounts, categories, transactions and settings. Continue?",
             ).assertExists()
@@ -302,7 +340,7 @@ class SettingsScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("Restore from backup").performClick()
+            onNodeWithText("Restore from backup").performScrollTo().performClick()
             onNodeWithText("Cancel").performClick()
 
             pickerInvoked shouldBe false

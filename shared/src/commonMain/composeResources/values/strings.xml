@@ -233,6 +233,7 @@
     <string name="settings_nav_rates">Currency rates</string>
     <string name="settings_nav_budgets">Budgets</string>
     <string name="settings_nav_insights">Insights</string>
+    <string name="settings_your_data">Your Data</string>
     <string name="insights_vs_previous">vs %1$s: %2$s</string>
     <string name="insights_expenses">Expenses</string>
     <string name="insights_income">Income</string>
