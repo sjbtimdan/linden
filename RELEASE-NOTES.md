@@ -1,3 +1,14 @@
+## Version 0.11.0
+
+<en-US>
+- The total balance on the Entry screen is now a gradient hero card.
+- Ledger entries and day headers are color-coded by category.
+- Ledger rows animate in and out, and totals roll when they change.
+- Amounts use fixed-width digits so they no longer jitter.
+- The selected bottom tab is marked with a gradient pill.
+- Settings is grouped into cards, with your data pages in one list under Language.
+</en-US>
+
 ## Version 0.10.0
 
 <en-US>
