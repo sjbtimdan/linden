@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -631,13 +632,11 @@ class LedgerScreenTest : StringSpec({
 
             val listTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
             var pinnedTop: Dp? = null
-            for (day in 8..12) {
-                runCatching {
-                    val top = onNodeWithText("Sep $day, 2001").getUnclippedBoundsInRoot().top
-                    if (pinnedTop == null || top < pinnedTop) pinnedTop = top
-                }
+            onAllNodesWithTag("dayHeader").fetchSemanticsNodes().forEach { node ->
+                val top = with(node.layoutInfo.density) { node.boundsInRoot.top.toDp() }
+                if (pinnedTop == null || top < pinnedTop) pinnedTop = top
             }
-            // The pinned date must sit flush at the top of the list, not over the first entry.
+            // The pinned day header must sit flush at the top of the list, not over the first entry.
             pinnedTop shouldBe listTop
         }
     }

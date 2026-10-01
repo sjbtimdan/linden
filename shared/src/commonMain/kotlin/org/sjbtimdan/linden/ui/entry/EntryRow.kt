@@ -19,7 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -32,7 +34,11 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_type_transfer
 import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.theme.accentColor
+import org.sjbtimdan.linden.ui.theme.accentContentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
+
+private val AccentRailWidth = 4.dp
 
 @Composable
 internal fun Entry.title(): String {
@@ -62,10 +68,14 @@ internal fun Entry.tintColor(): Color = when (type) {
 }
 
 /**
- * A single entry row. [showTime] controls the trailing time-of-day line: rows
- * are grouped under day headers that already carry the date, so the line only
- * shows the time to tell same-day entries apart. [hideAmounts] masks the amount
- * while "Hide Totals" is on, leaving the title and subtitle readable.
+ * A single entry row, colored by its category accent (transfers, which carry
+ * none, fall back to the entry-type tint): a full-height rail on the leading
+ * edge and a solid icon disc, while the amount keeps the type tint so the
+ * direction of the money stays readable. [showTime] controls the trailing
+ * time-of-day line: rows are grouped under day headers that already carry the
+ * date, so the line only shows the time to tell same-day entries apart.
+ * [hideAmounts] masks the amount while "Hide Totals" is on, leaving the title
+ * and subtitle readable.
  */
 @Composable
 fun EntryRow(
@@ -76,6 +86,8 @@ fun EntryRow(
     zone: TimeZone = TimeZone.currentSystemDefault(),
 ) {
     val tint = entry.tintColor()
+    val accent = entry.category?.let { accentColor(it.name) } ?: tint
+    val accentContent = accentContentColor(accent)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -83,6 +95,9 @@ fun EntryRow(
             .clip(CardShape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
+            .drawBehind {
+                drawRect(color = accent, size = Size(AccentRailWidth.toPx(), size.height))
+            }
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -91,13 +106,13 @@ fun EntryRow(
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(tint.copy(alpha = 0.22f)),
+                .background(accent),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = entry.category?.icon?.imageVector() ?: entry.type.icon(),
                 contentDescription = null,
-                tint = tint,
+                tint = accentContent,
                 modifier = Modifier.size(20.dp),
             )
         }

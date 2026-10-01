@@ -3,8 +3,10 @@ package org.sjbtimdan.linden.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 
 private const val CATEGORY_PALETTE_SIZE = 8
+private const val ACCENT_LUMINANCE_SPLIT = 0.3f
 
 /**
  * Deterministic accents for categories. The same name always maps to the same
@@ -48,3 +50,11 @@ internal fun categoryColor(name: String): Color = CategoryPalette[categoryColorI
 /** Theme-aware accent color for a stable name (categories, accounts). Only valid inside [LindenTheme]. */
 @Composable
 fun accentColor(name: String): Color = LocalCategoryPalette.current[categoryColorIndex(name)]
+
+/**
+ * Content color (icon glyph) on a solid [accent] fill: white on the darker
+ * light-theme accents, near-black on the lightened dark-theme ones. The
+ * luminance split keeps every palette accent above 3:1 icon contrast.
+ */
+internal fun accentContentColor(accent: Color): Color =
+    if (accent.luminance() > ACCENT_LUMINANCE_SPLIT) Color(0xFF1A1C19) else Color.White
