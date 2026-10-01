@@ -1,6 +1,8 @@
 package org.sjbtimdan.linden
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -85,6 +87,19 @@ class AppTest : StringSpec({
 
             onNodeWithText("Set rates").performClick()
             onNodeWithText("Refresh").assertExists()
+        }
+    }
+
+    "the active tab is marked selected in the bottom navigation" {
+        withApp { dependencies ->
+            setContent { App(dependencies) }
+
+            onNodeWithText("Entry").assertIsSelected()
+            onNodeWithText("Ledger").assertIsNotSelected()
+
+            onNodeWithText("Ledger").performClick()
+            onNodeWithText("Ledger").assertIsSelected()
+            onNodeWithText("Entry").assertIsNotSelected()
         }
     }
 })

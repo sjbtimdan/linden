@@ -11,14 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +32,7 @@ import org.sjbtimdan.linden.resources.nav_entry
 import org.sjbtimdan.linden.resources.nav_ledger
 import org.sjbtimdan.linden.resources.nav_settings
 import org.sjbtimdan.linden.ui.ApplyLanguageOverride
+import org.sjbtimdan.linden.ui.BottomNavItem
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
@@ -105,38 +103,23 @@ fun App(dependencies: AppDependencies) {
                 contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 bottomBar = {
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        NavigationBarItem(
+                        BottomNavItem(
+                            label = stringResource(Res.string.nav_ledger),
+                            icon = Icons.AutoMirrored.Filled.List,
                             selected = currentScreen == Screen.Ledger,
-                            onClick = { currentScreen = Screen.Ledger },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Search,
-                                    contentDescription = null,
-                                )
-                            },
-                            label = { Text(stringResource(Res.string.nav_ledger)) },
+                            onSelect = { currentScreen = Screen.Ledger },
                         )
-                        NavigationBarItem(
+                        BottomNavItem(
+                            label = stringResource(Res.string.nav_entry),
+                            icon = Icons.Filled.AddCircle,
                             selected = currentScreen == Screen.Entry,
-                            onClick = { currentScreen = Screen.Entry },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.List,
-                                    contentDescription = null,
-                                )
-                            },
-                            label = { Text(stringResource(Res.string.nav_entry)) },
+                            onSelect = { currentScreen = Screen.Entry },
                         )
-                        NavigationBarItem(
+                        BottomNavItem(
+                            label = stringResource(Res.string.nav_settings),
+                            icon = Icons.Default.Settings,
                             selected = currentScreen == Screen.Settings,
-                            onClick = { currentScreen = Screen.Settings },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = null,
-                                )
-                            },
-                            label = { Text(stringResource(Res.string.nav_settings)) },
+                            onSelect = { currentScreen = Screen.Settings },
                         )
                     }
                 },
