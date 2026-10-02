@@ -69,7 +69,11 @@ internal fun TotalBalanceCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = lindenColors()
-    val amountLabel = if (hidden) HIDDEN_AMOUNT else total?.let(::formatAmountCompact) ?: "–"
+    val amountLabel = if (hidden) {
+        HIDDEN_AMOUNT
+    } else {
+        total?.let { formatAmountCompact(it, currency.decimalDigits) } ?: "–"
+    }
     Box(
         modifier = modifier
             .fillMaxWidth()

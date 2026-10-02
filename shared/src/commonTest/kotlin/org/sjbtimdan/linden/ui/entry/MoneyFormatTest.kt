@@ -97,6 +97,32 @@ class MoneyFormatTest : StringSpec({
         formatAmountCompact(-1_234_567_890_000L) shouldBe "-12.346b"
     }
 
+    "formatAmount rounds to whole units for zero-decimal currencies" {
+        formatAmount(0, decimalDigits = 0) shouldBe "0"
+        formatAmount(10_500, decimalDigits = 0) shouldBe "105"
+        formatAmount(100_000, decimalDigits = 0) shouldBe "1,000"
+        formatAmount(1_050, decimalDigits = 0) shouldBe "11"
+        formatAmount(-10_500, decimalDigits = 0) shouldBe "-105"
+        formatAmount(-10, decimalDigits = 0) shouldBe "0"
+    }
+
+    "parseAmount only groups separators for zero-decimal currencies" {
+        parseAmount("1000", decimalDigits = 0) shouldBe 100_000
+        parseAmount("1,000", decimalDigits = 0) shouldBe 100_000
+        parseAmount("1.000", decimalDigits = 0) shouldBe 100_000
+        parseAmount("1 000", decimalDigits = 0) shouldBe 100_000
+        parseAmount("-500", decimalDigits = 0) shouldBe -50_000
+        parseAmount("10.5", decimalDigits = 0) shouldBe null
+        parseAmount("10,50", decimalDigits = 0) shouldBe null
+        parseAmount("1,000.00", decimalDigits = 0) shouldBe null
+        parseAmount("0.05", decimalDigits = 0) shouldBe null
+    }
+
+    "formatAmountCompact keeps zero-decimal amounts whole in the fallback" {
+        formatAmountCompact(450, decimalDigits = 0) shouldBe "5"
+        formatAmountCompact(100_000_000, decimalDigits = 0) shouldBe "1m"
+    }
+
     "formatAmountCompact keeps leading zeros of the fractional digits" {
         // 1,059,299.14 must not render as "1.59m".
         formatAmountCompact(105_929_914) shouldBe "1.059m"

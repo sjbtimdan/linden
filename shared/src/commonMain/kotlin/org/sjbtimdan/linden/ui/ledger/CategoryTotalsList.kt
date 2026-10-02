@@ -138,6 +138,7 @@ fun CategoryTotalsList(
                             BudgetProgressBar(
                                 spent = item.total,
                                 limit = budget,
+                                decimalDigits = currency.decimalDigits,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -149,7 +150,7 @@ fun CategoryTotalsList(
 }
 
 @Composable
-internal fun BudgetProgressBar(spent: Long, limit: Long, modifier: Modifier = Modifier) {
+internal fun BudgetProgressBar(spent: Long, limit: Long, decimalDigits: Int = 2, modifier: Modifier = Modifier) {
     val absoluteSpent = if (spent < 0) -spent else spent
     val fraction = if (limit <= 0) 0f else (absoluteSpent.toFloat() / limit.toFloat()).coerceIn(0f, 1f)
     val overBudget = limit > 0 && absoluteSpent > limit
@@ -172,8 +173,8 @@ internal fun BudgetProgressBar(spent: Long, limit: Long, modifier: Modifier = Mo
         Text(
             text = stringResource(
                 Res.string.ledger_budget_progress,
-                formatAmount(absoluteSpent),
-                formatAmount(limit),
+                formatAmount(absoluteSpent, decimalDigits),
+                formatAmount(limit, decimalDigits),
             ),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

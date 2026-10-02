@@ -8,6 +8,7 @@ import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.AppViewModel
 
 class BudgetViewModel(
@@ -19,6 +20,10 @@ class BudgetViewModel(
     val budgets: StateFlow<List<Budget>> = budgetDao.budgetsFlow().stateFlow(emptyList())
 
     val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
+
+    /** Currency budget limits are entered and shown in. */
+    val defaultCurrency: StateFlow<Currency> =
+        settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
 
     /** Whether amounts are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =

@@ -2,14 +2,16 @@ package org.sjbtimdan.linden.model
 
 enum class Currency(
     val symbol: String,
+    val decimalDigits: Int = 2,
 ) {
     CHF("CHF"),
     CNY("CN¥"),
     EUR("€"),
     GBP("£"),
     HKD("HK$"),
+    IDR("Rp", decimalDigits = 0),
     INR("₹"),
-    JPY("¥"),
+    JPY("¥", decimalDigits = 0),
     SGD("S$"),
     USD("$"),
     ;

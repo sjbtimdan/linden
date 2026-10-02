@@ -110,13 +110,17 @@ git describe). It is generated code — never edit it.
   `Ready`. `FirstRunScreen` prompts for a currency, then `completeFirstRun(currency)` writes it and triggers
   `DefaultDataSeeder` (default categories/accounts). Nothing is written at startup otherwise. `testTag("loading")`
   marks the spinner; startup failure shows `StartupError`.
-- Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. All currencies
-  (CHF/CNY/EUR/GBP/HKD/INR/JPY/SGD/USD) use a 2-decimal minor unit. `formatAmount` in `ui/entry/MoneyFormat.kt` is an
-  `expect`/`actual` using the platform locale (`java.text.NumberFormat`, thousands grouping); `parseAmount` is pure
-  common code that accepts grouped input ("1,000", "1.000", "1 000") and normalizes Unicode digits, apostrophe
+- Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Every currency
+  (CHF/CNY/EUR/GBP/HKD/IDR/INR/JPY/SGD/USD) is stored at a fixed 2-decimal scale; `Currency.decimalDigits` is the
+  display/input precision — 0 for zero-decimal IDR/JPY, 2 for the rest. `formatAmount(amount, decimalDigits)` in
+  `ui/entry/MoneyFormat.kt` is an `expect`/`actual` using the platform locale (`java.text.NumberFormat`, thousands
+  grouping); for zero-decimal currencies it rounds to whole units and always prints a bare integer. All currency-aware
+  display/parse sites pass `currency.decimalDigits`, and zero-decimal parsing rejects fractional input. `parseAmount` is
+  pure common code that accepts grouped input ("1,000", "1.000", "1 000") and normalizes Unicode digits, apostrophe
   grouping and Arabic separators. Every minor-unit text field must filter keystrokes through `filterAmountInput`.
-  `formatAmountCompact` (pure common code) shortens read-only displays of amounts ≥ 1,000,000.00 to "1.25m"/"1.235b"
-  (fixed '.', trimmed zeros, half-up rounding);
+  `formatAmountCompact(amount, decimalDigits)` (pure common code) shortens read-only displays of amounts ≥ 1,000,000.00
+  to "1.25m"/"1.235b" (fixed '.', trimmed zeros, half-up rounding; below the threshold it falls back to `formatAmount`
+  with the same decimal digits);
   never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
   `parseAmount` accepts a leading `-` (negative balance/liability); accounts may be negative, entries never are (CHECK-enforced).
 - Adjust Balance (accounts view of the ledger): `LedgerViewModel.adjustBalance` reconciles an account to a target

@@ -153,7 +153,10 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                                     account = account,
                                     name = account.name,
                                     currency = account.currency,
-                                    initialBalanceText = formatAmount(account.initialBalance),
+                                    initialBalanceText = formatAmount(
+                                        account.initialBalance,
+                                        account.currency.decimalDigits,
+                                    ),
                                     hidden = account.hidden,
                                 )
                             }
@@ -203,12 +206,12 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                             }
                         }
                         Column(horizontalAlignment = Alignment.End) {
+                            val balanceLabel = "${formatAmountCompact(
+                                account.initialBalance,
+                                account.currency.decimalDigits,
+                            )} ${account.currency.symbol}"
                             Text(
-                                text = if (hideTotal) {
-                                    HIDDEN_AMOUNT
-                                } else {
-                                    "${formatAmountCompact(account.initialBalance)} ${account.currency.symbol}"
-                                },
+                                text = if (hideTotal) HIDDEN_AMOUNT else balanceLabel,
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
@@ -267,7 +270,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                     val initialBalance = if (state.initialBalanceText.isBlank()) {
                         0L
                     } else {
-                        parseAmount(state.initialBalanceText)
+                        parseAmount(state.initialBalanceText, state.currency.decimalDigits)
                     }
                     if (initialBalance == null) {
                         dialogState = state.copy(initialBalanceError = invalidAmountError)
@@ -304,7 +307,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
             body = stringResource(
                 Res.string.accounts_hide_body,
                 account?.name.orEmpty(),
-                if (hideTotal) HIDDEN_AMOUNT else formatAmount(balance),
+                if (hideTotal) HIDDEN_AMOUNT else formatAmount(balance, account?.currency?.decimalDigits ?: 2),
                 account?.currency?.symbol.orEmpty(),
             ),
             confirmLabel = stringResource(Res.string.accounts_hide_confirm),

@@ -10,13 +10,18 @@ private const val MAX_FRAC_DIGITS = 4
 /**
  * Exact decimal calculator state machine for amount entry. Arithmetic runs on
  * reduced fractions (Long numerator/denominator) so chains like `100 / 3 * 3`
- * stay exact (100.00, not 99.99); values are rounded to two decimals only for
- * display and commit. Evaluation is left-to-right with no operator precedence.
+ * stay exact (100.00, not 99.99); values are rounded to [decimalDigits] decimals
+ * only for display and commit. Evaluation is left-to-right with no operator
+ * precedence. Zero-decimal currencies (IDR, JPY) round to whole units and their
+ * display has no dot.
  */
-class CalculatorModel(initialMinor: Long?) {
+class CalculatorModel(
+    initialMinor: Long?,
+    private val decimalDigits: Int = 2,
+) {
 
     /** Current display text: the typed entry, a rounded result, or "Err". */
-    var display: String = initialMinor?.let(::formatMinorUnits) ?: "0.00"
+    var display: String = initialMinor?.let { formatMinorUnits(it, decimalDigits) } ?: zeroDisplay()
         private set
 
     private var entry = ""
@@ -44,7 +49,7 @@ class CalculatorModel(initialMinor: Long?) {
             }
             val minor = value?.toMinorUnitsOrNull() ?: return null
             if (minor <= 0) return null
-            return formatMinorUnits(minor)
+            return formatMinorUnits(minor, decimalDigits)
         }
 
     fun onDigit(digit: Char) {
@@ -63,6 +68,7 @@ class CalculatorModel(initialMinor: Long?) {
     }
 
     fun onDot() {
+        if (decimalDigits == 0) return
         if (error) reset()
         if (resultMode) {
             entry = ""
@@ -147,10 +153,12 @@ class CalculatorModel(initialMinor: Long?) {
         display = when {
             error -> "Err"
             entry.isNotEmpty() -> entry
-            acc != null -> acc?.toDisplayStringOrNull() ?: "Err"
-            else -> "0.00"
+            acc != null -> acc?.toDisplayStringOrNull(decimalDigits) ?: "Err"
+            else -> zeroDisplay()
         }
     }
+
+    private fun zeroDisplay(): String = formatMinorUnits(0, decimalDigits)
 }
 
 /** A reduced fraction; [den] is always positive. */
@@ -256,12 +264,18 @@ private fun Fraction.toMinorUnitsOrNull(): Long? {
     return if (roundUp) q + if (scaled >= 0) 1 else -1 else q
 }
 
-private fun Fraction.toDisplayStringOrNull(): String? = toMinorUnitsOrNull()?.let(::formatMinorUnits)
+private fun Fraction.toDisplayStringOrNull(decimalDigits: Int): String? =
+    toMinorUnitsOrNull()?.let { formatMinorUnits(it, decimalDigits) }
 
-/** Formats minor units as a plain two-decimal string, e.g. 1000 -> "10.00". */
-private fun formatMinorUnits(minor: Long): String {
+/** Formats minor units as a plain string with [decimalDigits] decimals, e.g. 1000 -> "10.00". */
+private fun formatMinorUnits(minor: Long, decimalDigits: Int): String {
     val negative = minor < 0
     val absolute = if (negative) -minor else minor
-    val text = "${absolute / 100}.${(absolute % 100).toString().padStart(2, '0')}"
-    return if (negative) "-$text" else text
+    val text = if (decimalDigits == 0) {
+        val rounded = absolute / 100 + if (absolute % 100 >= 50) 1 else 0
+        rounded.toString()
+    } else {
+        "${absolute / 100}.${(absolute % 100).toString().padStart(2, '0')}"
+    }
+    return if (negative && text != "0") "-$text" else text
 }

@@ -275,6 +275,22 @@ class EntryDraftTest : StringSpec({
         state.description shouldBe "Salary"
     }
 
+    "editing a zero-decimal entry pre-fills whole units and round-trips" {
+        val tokyo = Account(4, "Tokyo", Currency.JPY)
+        val entry = ExpenseEntry(
+            10,
+            groceries,
+            "Ramen",
+            tokyo,
+            100_000,
+            createdAt = createdAt,
+            createdZone = createdZone,
+        )
+        val state = EntryDraft.forEdit(entry)
+        state.amountText shouldBe formatAmount(100_000, Currency.JPY.decimalDigits)
+        state.amount shouldBe 100_000
+    }
+
     "editing a same-currency transfer shows the sent amount as received and keeps the category" {
         val entry = TransferEntry(9, groceries, null, main, 10_000, toAccount = savingsChf, toAmount = null)
         val state = EntryDraft.forEdit(entry)

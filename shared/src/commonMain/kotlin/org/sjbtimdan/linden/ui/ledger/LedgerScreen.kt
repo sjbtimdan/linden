@@ -374,7 +374,7 @@ fun LedgerScreen(
                     adjustState = AdjustBalanceDialogState(
                         account = item,
                         currentBalance = current,
-                        targetBalanceText = formatAmount(current),
+                        targetBalanceText = formatAmount(current, item.account.currency.decimalDigits),
                     )
                 },
                 modifier = Modifier

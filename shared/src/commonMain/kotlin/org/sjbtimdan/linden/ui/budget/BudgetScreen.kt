@@ -84,6 +84,7 @@ private data class BudgetDialogState(
 fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     val budgets by viewModel.budgets.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
     var dialogState by remember { mutableStateOf<BudgetDialogState?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -149,7 +150,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                                 dialogState = BudgetDialogState(
                                     budget = budget,
                                     categoryName = budget.categoryName,
-                                    limitText = formatAmount(budget.limitMinor),
+                                    limitText = formatAmount(budget.limitMinor, defaultCurrency.decimalDigits),
                                 )
                             }
                             .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -181,7 +182,11 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                             )
                         }
                         Text(
-                            text = if (hideTotal) HIDDEN_AMOUNT else formatAmount(budget.limitMinor),
+                            text = if (hideTotal) {
+                                HIDDEN_AMOUNT
+                            } else {
+                                formatAmount(budget.limitMinor, defaultCurrency.decimalDigits)
+                            },
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
@@ -211,7 +216,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 }
             },
             onSave = {
-                val limit = parseAmount(state.limitText)
+                val limit = parseAmount(state.limitText, defaultCurrency.decimalDigits)
                 if (limit == null || limit <= 0) {
                     dialogState = state.copy(limitError = invalidLimitError)
                 } else if (viewModel.saveBudget(state.categoryName, limit)) {

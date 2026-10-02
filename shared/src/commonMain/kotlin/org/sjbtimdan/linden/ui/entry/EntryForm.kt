@@ -437,6 +437,7 @@ fun EntryForm(
         AmountCalculator(
             initialMinor = state.amount,
             currencySymbol = fromAccount?.currency?.symbol,
+            decimalDigits = fromAccount?.currency?.decimalDigits ?: 2,
             contextLabel = calculatorContextLabel(
                 purpose = amountLabel,
                 from = fromAccount,
@@ -460,6 +461,7 @@ fun EntryForm(
         AmountCalculator(
             initialMinor = state.toAmount,
             currencySymbol = toAccount?.currency?.symbol,
+            decimalDigits = toAccount?.currency?.decimalDigits ?: 2,
             contextLabel = calculatorContextLabel(
                 purpose = receivedAmountLabel,
                 from = fromAccount,
@@ -537,7 +539,7 @@ fun EntryForm(
                     val initialBalance = if (dialogState.initialBalanceText.isBlank()) {
                         0L
                     } else {
-                        parseAmount(dialogState.initialBalanceText)
+                        parseAmount(dialogState.initialBalanceText, dialogState.currency.decimalDigits)
                     }
                     if (initialBalance == null) {
                         setCreateAccount(dialogState.copy(initialBalanceError = invalidAmountError))

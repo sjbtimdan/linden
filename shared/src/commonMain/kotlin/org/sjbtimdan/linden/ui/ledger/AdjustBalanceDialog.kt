@@ -67,7 +67,7 @@ internal fun AdjustBalanceHost(
     onStateChange: (AdjustBalanceDialogState) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val targetBalance = parseAmount(state.targetBalanceText)
+    val targetBalance = parseAmount(state.targetBalanceText, state.account.account.currency.decimalDigits)
     val allCategories by viewModel.categories.collectAsState()
     var usedCategories by remember(state.account.account.id) { mutableStateOf<List<Category>>(emptyList()) }
     LaunchedEffect(state.account.account.id) {
@@ -123,7 +123,7 @@ private fun AdjustBalanceDialog(
     onSave: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val targetBalance = parseAmount(targetBalanceText)
+    val targetBalance = parseAmount(targetBalanceText, account.currency.decimalDigits)
     val adjustment = targetBalance?.let { balanceAdjustment(currentBalance, it) }
     val canSave = adjustment != null && !adjustment.isZero && selectedCategoryId != null
 
@@ -155,7 +155,11 @@ private fun AdjustBalanceDialog(
                 Text(
                     text = stringResource(
                         Res.string.ledger_adjust_current_balance,
-                        if (hideAmounts) HIDDEN_AMOUNT else formatAmount(currentBalance),
+                        if (hideAmounts) {
+                            HIDDEN_AMOUNT
+                        } else {
+                            formatAmount(currentBalance, account.currency.decimalDigits)
+                        },
                         account.currency.symbol,
                     ),
                     style = MaterialTheme.typography.bodyMedium,

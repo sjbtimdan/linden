@@ -131,6 +131,24 @@ class CalculatorModelTest : StringSpec({
         model.commitValue shouldBe "100.00"
     }
 
+    "zero-decimal currencies display whole units without a dot" {
+        val model = CalculatorModel(10_500, decimalDigits = 0)
+        model.display shouldBe "105"
+        model.commitValue shouldBe "105"
+        CalculatorModel(null, decimalDigits = 0).type("=").display shouldBe "0"
+    }
+
+    "zero-decimal currencies round results to whole units" {
+        CalculatorModel(null, decimalDigits = 0).type("100/3=").display shouldBe "33"
+        CalculatorModel(null, decimalDigits = 0).type("100/3=").commitValue shouldBe "33"
+        CalculatorModel(null, decimalDigits = 0).type("1/2=").display shouldBe "1"
+    }
+
+    "zero-decimal currencies ignore the decimal point key" {
+        CalculatorModel(null, decimalDigits = 0).type("1.5").display shouldBe "15"
+        CalculatorModel(null, decimalDigits = 0).type(".5").display shouldBe "5"
+    }
+
     "ignores equals with nothing entered" {
         val model = CalculatorModel(null).type("=")
         model.display shouldBe "0.00"

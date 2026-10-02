@@ -200,11 +200,14 @@ data class EntryDraft(
             is TransferEntry -> EntryDraft(
                 editing = entry,
                 type = EntryType.Transfer,
-                amountText = formatAmount(entry.amount),
+                amountText = formatAmount(entry.amount, entry.account.currency.decimalDigits),
                 categoryId = entry.category?.id,
                 accountId = entry.account.id,
                 toAccountId = entry.toAccount.id,
-                toAmountText = formatAmount(entry.toAmount ?: entry.amount),
+                toAmountText = formatAmount(
+                    entry.toAmount ?: entry.amount,
+                    entry.toAccount.currency.decimalDigits,
+                ),
                 description = entry.description.orEmpty(),
                 createdAt = entry.createdAt,
                 createdZone = entry.createdZone,
@@ -213,7 +216,7 @@ data class EntryDraft(
             is ExpenseEntry, is IncomeEntry -> EntryDraft(
                 editing = entry,
                 type = entry.type,
-                amountText = formatAmount(entry.amount),
+                amountText = formatAmount(entry.amount, entry.account.currency.decimalDigits),
                 categoryId = entry.category?.id,
                 accountId = entry.account.id,
                 toAccountId = null,

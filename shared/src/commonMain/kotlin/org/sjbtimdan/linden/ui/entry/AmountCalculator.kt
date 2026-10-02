@@ -64,6 +64,7 @@ fun AmountCalculator(
     modifier: Modifier = Modifier,
     initialMinor: Long?,
     currencySymbol: String?,
+    decimalDigits: Int = 2,
     onEnter: (String) -> Unit,
     onInvalid: () -> Unit,
     onCancel: () -> Unit,
@@ -71,7 +72,7 @@ fun AmountCalculator(
     onAdd: (() -> Unit)? = null,
     addEnabled: (String) -> Boolean = { true },
 ) {
-    val model = remember(initialMinor) { CalculatorModel(initialMinor) }
+    val model = remember(initialMinor, decimalDigits) { CalculatorModel(initialMinor, decimalDigits) }
     var display by remember { mutableStateOf(model.display) }
     var calculatorMode by remember { mutableStateOf(false) }
 
@@ -178,7 +179,12 @@ fun AmountCalculator(
             }
 
             val keys = if (calculatorMode) keypad else simpleKeypad
-            keys.forEach { row ->
+            val visibleKeys = if (decimalDigits == 0) {
+                keys.map { row -> row.filterNot { it.label == "." } }
+            } else {
+                keys
+            }
+            visibleKeys.forEach { row ->
                 keyRow(Modifier.weight(1f, fill = false).heightIn(max = keyHeight)) {
                     row.forEach { key ->
                         CalculatorKey(

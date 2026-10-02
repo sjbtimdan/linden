@@ -1,10 +1,12 @@
 package org.sjbtimdan.linden.ui.entry
 
 /**
- * Formats minor units as a locale-aware amount with thousands grouping and two
- * decimal digits (e.g. 1_000_000 == "10,000.00" in en-US, "10.000,00" in de-DE).
+ * Formats minor units as a locale-aware amount with thousands grouping and
+ * [decimalDigits] decimal digits (e.g. 1_000_000 == "10,000.00" in en-US,
+ * "10.000,00" in de-DE). Currencies with no minor unit (IDR, JPY) pass 0 and
+ * round to the nearest whole unit.
  */
-expect fun formatAmount(amount: Long): String
+expect fun formatAmount(amount: Long, decimalDigits: Int = 2): String
 
 /**
  * Placeholder rendered in place of an amount while "Hide Totals" is on, shared
@@ -21,8 +23,11 @@ const val HIDDEN_AMOUNT = "••••••"
  * the decimal separator; earlier ones and spaces group the integer part. A
  * trailing separator with exactly 3 digits is grouping — minor units always have
  * 2 digits — so "1,000", "1.000" and "1 000" parse as 1000.
+ *
+ * [decimalDigits] is 0 for currencies with no minor unit (IDR, JPY): separators
+ * only ever group there, and a fractional part ("10.5") is rejected.
  */
-fun parseAmount(input: String): Long? {
+fun parseAmount(input: String, decimalDigits: Int = 2): Long? {
     val text = normalizeAmountCharacters(input.trim())
     if (text.isEmpty()) return null
 
@@ -37,6 +42,7 @@ fun parseAmount(input: String): Long? {
     if (fractionPart.any { !it.isDigit() }) return null
 
     val separatorIsGrouping = decimalIndex != -1 && fractionPart.length == 3 && integerPart.isNotEmpty()
+    if (decimalDigits == 0 && decimalIndex != -1 && !separatorIsGrouping) return null
     if (!separatorIsGrouping && fractionPart.length > 2) return null
 
     val groupingChars =
@@ -94,13 +100,13 @@ private const val BILLION_MINOR = 100_000_000_000L
  * amounts fall back to [formatAmount]. Display-only: not parseable by
  * [parseAmount], so never pre-fill an edit field with it.
  */
-fun formatAmountCompact(amount: Long): String {
+fun formatAmountCompact(amount: Long, decimalDigits: Int = 2): String {
     val negative = amount < 0
     val absolute = if (negative) -amount else amount
     val text = when {
         absolute >= BILLION_MINOR -> compact(absolute, BILLION_MINOR, "b")
         absolute >= MILLION_MINOR -> compact(absolute, MILLION_MINOR, "m")
-        else -> return formatAmount(amount)
+        else -> return formatAmount(amount, decimalDigits)
     }
     return if (negative) "-$text" else text
 }

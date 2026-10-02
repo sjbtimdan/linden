@@ -103,7 +103,10 @@ fun AccountsList(
                         text = if (hideAmounts) {
                             HIDDEN_AMOUNT
                         } else {
-                            "${formatAmountCompact(item.balance)} ${account.currency.symbol}"
+                            "${formatAmountCompact(
+                                item.balance,
+                                account.currency.decimalDigits,
+                            )} ${account.currency.symbol}"
                         },
                         style = MaterialTheme.typography.titleMedium,
                     )

@@ -248,7 +248,7 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
 
 /** Selected-month total, e.g. "1'234.56 CHF" (compact above one million). */
 internal fun amountLabel(valueMinor: Long, currency: Currency): String =
-    "${formatAmountCompact(valueMinor)} ${currency.symbol}"
+    "${formatAmountCompact(valueMinor, currency.decimalDigits)} ${currency.symbol}"
 
 /** Horizontal drag distance that counts as a page swipe. */
 internal val PAGE_SWIPE_DISTANCE = 96.dp

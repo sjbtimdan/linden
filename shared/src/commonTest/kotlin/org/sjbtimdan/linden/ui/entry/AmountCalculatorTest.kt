@@ -422,6 +422,59 @@ class AmountCalculatorTest : StringSpec({
         }
     }
 
+    "zero-decimal accounts hide the decimal key and commit whole units" {
+        onTestMain {
+            runComposeUiTest {
+                val jakarta = Account(2, "Jakarta", Currency.IDR)
+                var committed: String? = null
+                setContent {
+                    var state by remember {
+                        mutableStateOf(
+                            EntryDraft(
+                                editing = null,
+                                type = EntryType.Expense,
+                                amountText = "",
+                                categoryId = groceries.id,
+                                accountId = jakarta.id,
+                                toAccountId = null,
+                                toAmountText = "",
+                                description = "",
+                                createdAt = Instant.parse("2026-08-10T14:30:00Z"),
+                                createdZone = TimeZone.UTC,
+                            ),
+                        )
+                    }
+                    EntryForm(
+                        state = state,
+                        accounts = listOf(jakarta),
+                        categories = listOf(groceries),
+                        onAmountChange = {
+                            committed = it
+                            state = state.copy(amountText = it)
+                        },
+                        onCategoryChange = {},
+                        onAccountChange = {},
+                        onToAccountChange = {},
+                        onToAmountChange = {},
+                        onDescriptionChange = {},
+                        onCreatedAtChange = {},
+                    )
+                }
+                openCalculator()
+
+                onNodeWithText(".").assertDoesNotExist()
+                onNodeWithTag("calculatorDisplay").assertTextEquals("0")
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("5").performClick()
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+
+                committed shouldBe "15"
+            }
+        }
+    }
+
     "keypad hugs the bottom of the available space without stretching the keys" {
         onTestMain {
             runComposeUiTest {

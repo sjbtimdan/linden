@@ -70,5 +70,5 @@ fun formatTotal(minor: Long, currency: Currency): String {
         minor > 0 -> "+ "
         else -> ""
     }
-    return "$sign${formatAmountCompact(abs(minor))} ${currency.symbol}"
+    return "$sign${formatAmountCompact(abs(minor), currency.decimalDigits)} ${currency.symbol}"
 }

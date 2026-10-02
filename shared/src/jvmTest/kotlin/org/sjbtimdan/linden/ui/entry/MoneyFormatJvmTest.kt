@@ -14,6 +14,15 @@ class MoneyFormatJvmTest : StringSpec({
         formatAmount(-450, Locale.US) shouldBe "-4.50"
     }
 
+    "formatAmount hides and rounds decimals for zero-decimal currencies" {
+        formatAmount(10_500, Locale.US, 0) shouldBe "105"
+        formatAmount(100_500, Locale.US, 0) shouldBe "1,005"
+        formatAmount(100_500, Locale.GERMANY, 0) shouldBe "1.005"
+        formatAmount(1_050, Locale.US, 0) shouldBe "11"
+        formatAmount(-1_050, Locale.US, 0) shouldBe "-11"
+        formatAmount(-10, Locale.US, 0) shouldBe "0"
+    }
+
     "formatAmount groups thousands per locale" {
         formatAmount(1_000_000, Locale.US) shouldBe "10,000.00"
         formatAmount(1_000_000, Locale.GERMANY) shouldBe "10.000,00"

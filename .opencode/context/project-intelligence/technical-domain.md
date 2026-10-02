@@ -89,7 +89,7 @@ linden/
 
 | Decision | Rationale | Impact |
 |----------|-----------|--------|
-| Money as integer minor units (`Long`) | Avoids floating-point errors; `450` = 4.50 | All currencies use 2-decimal minor units; `amount` columns are `INTEGER` |
+| Money as integer minor units (`Long`) | Avoids floating-point errors; `450` = 4.50 | Every currency is stored at a fixed 2-decimal scale; `Currency.decimalDigits` controls display/input (0 for zero-decimal IDR/JPY); `amount` columns are `INTEGER` |
 | `Entry` as sealed interface | `ExpenseEntry`/`IncomeEntry`/`TransferEntry`; transfers carry `toAccount`/`toAmount` | Adding a field touches all subclass branches + `Entry.sq` + `EntryDao` mapping |
 | SQLDelight `generateAsync = true` | Async API: schema creation awaited, DB ops `suspend`, reactive reads via `.asFlow()`/`awaitAsList()` | `createLindenDatabase(driver)` wraps `Schema.create(driver).await()` |
 | Entry amount CHECK constraints | `Entry.sq`: `amount >= 0`, `to_amount` NULL-or-`>= 0` (schema v1) | Entries are never negative; DB enforces the invariant (SQLite can't add a CHECK in place) |

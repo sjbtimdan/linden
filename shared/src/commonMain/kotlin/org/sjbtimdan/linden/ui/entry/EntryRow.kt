@@ -55,9 +55,9 @@ internal fun Entry.subtitle(): String = when (this) {
 }
 
 internal fun Entry.amountLabel(): String = when (type) {
-    EntryType.Expense -> "− ${formatAmountCompact(amount)} ${account.currency.symbol}"
-    EntryType.Income -> "+ ${formatAmountCompact(amount)} ${account.currency.symbol}"
-    EntryType.Transfer -> "${formatAmountCompact(amount)} ${account.currency.symbol}"
+    EntryType.Expense -> "− ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
+    EntryType.Income -> "+ ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
+    EntryType.Transfer -> "${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
 }
 
 @Composable
