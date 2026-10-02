@@ -868,6 +868,66 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
+    "accounts view converts a foreign balance under the amount" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            accountDao.create("USD", Currency.USD, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
+            onNodeWithText("100.00 $", useUnmergedTree = true).assertIsDisplayed()
+            // 100.00 USD / 2.0 = 50.00 CHF; the default-currency row needs no line.
+            onNodeWithText("≈ 50.00 CHF", useUnmergedTree = true).assertIsDisplayed()
+            onAllNodesWithText("≈", substring = true, useUnmergedTree = true).assertCountEquals(1)
+        }
+    }
+
+    "accounts view shows a dash when a foreign rate is missing" {
+        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            accountDao.create("USD", Currency.USD, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+
+            // The header total and the account row both show a dash.
+            onAllNodesWithText("–", useUnmergedTree = true).assertCountEquals(2)
+        }
+    }
+
+    "masks account conversions when Hide Totals is enabled" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
+            accountDao.create("USD", Currency.USD, initialBalance = 10_000)
+
+            setContent {
+                LedgerScreen(viewModel = viewModel)
+            }
+
+            onNodeWithTag("viewModeTab-Accounts").performClick()
+            onNodeWithText("≈ 50.00 CHF").assertIsDisplayed()
+
+            settingsDao.setHideEntryTotal(true)
+            waitForIdle()
+
+            // Both the balance and its conversion are masked.
+            onNodeWithText("≈ 50.00 CHF", useUnmergedTree = true).assertDoesNotExist()
+            onAllNodesWithText("••••••", useUnmergedTree = true).assertCountEquals(2)
+        }
+    }
+
     "masks category totals when Hide Totals is enabled" {
         withLedgerViewModel(
             clock = FakeClock(),

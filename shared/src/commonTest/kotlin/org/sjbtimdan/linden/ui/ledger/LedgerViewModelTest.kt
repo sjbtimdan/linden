@@ -1082,6 +1082,43 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "account conversions convert foreign balances via stored rates" {
+        withLedgerViewModel(
+            clock = FakeClock(),
+            defaultCurrency = Currency.CHF,
+            rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Salary", CategoryType.Income)
+            val main = accountDao.getAll().first().first { it.name == "Main" }
+            val usd = accountDao.getAll().first().first { it.name == "USD" }
+            val salary = categoryDao.getAll().first().first()
+
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 1_000))
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+
+            // 1'000 CHF stays as-is; 200 USD / 2.0 = 100 CHF
+            viewModel.accountConversionsAtPeriodEnd.value shouldBe mapOf(
+                main.id to 1_000L,
+                usd.id to 100L,
+            )
+        }
+    }
+
+    "account conversions mark a foreign balance without a rate as null" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("USD", Currency.USD)
+            categoryDao.create("Salary", CategoryType.Income)
+            val usd = accountDao.getAll().first().first()
+            val salary = categoryDao.getAll().first().first()
+
+            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+
+            viewModel.accountConversionsAtPeriodEnd.value shouldBe mapOf(usd.id to null)
+        }
+    }
+
     "category totals show net per category" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

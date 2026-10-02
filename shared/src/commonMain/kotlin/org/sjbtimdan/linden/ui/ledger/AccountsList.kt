@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.ledger_adjust_balance
 import org.sjbtimdan.linden.resources.ledger_adjust_latest_period_only
@@ -44,16 +45,20 @@ import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
  * The account balances at the end of the selected period, or the empty state.
+ * A foreign account also shows its balance converted into [defaultCurrency] under
+ * the amount ([conversions] keyed by account id, null when the rate is missing).
  * Tapping a row drills into its entries ([onAccountClick]); the overflow menu
  * offers the same drill-in plus Adjust Balance, which is disabled with a
  * reason while [canAdjustBalance] is false so the action never pretends to
  * work. [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided
  * one: a button pointing at the next step for a brand-new user. [hideAmounts]
- * masks each balance while "Hide Totals" is on.
+ * masks each balance, and its conversion, while "Hide Totals" is on.
  */
 @Composable
 fun AccountsList(
     balances: List<AccountWithBalance>,
+    conversions: Map<Long, Long?>,
+    defaultCurrency: Currency,
     modifier: Modifier = Modifier,
     hideAmounts: Boolean = false,
     emptyMessage: String,
@@ -99,17 +104,35 @@ fun AccountsList(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    Text(
-                        text = if (hideAmounts) {
-                            HIDDEN_AMOUNT
-                        } else {
-                            "${formatAmountCompact(
-                                item.balance,
-                                account.currency.decimalDigits,
-                            )} ${account.currency.symbol}"
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = if (hideAmounts) {
+                                HIDDEN_AMOUNT
+                            } else {
+                                "${formatAmountCompact(
+                                    item.balance,
+                                    account.currency.decimalDigits,
+                                )} ${account.currency.symbol}"
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        if (account.currency != defaultCurrency) {
+                            val converted = conversions[account.id]
+                            val conversionText = when {
+                                hideAmounts -> HIDDEN_AMOUNT
+
+                                converted == null -> "–"
+
+                                else -> "≈ ${formatAmountCompact(converted, defaultCurrency.decimalDigits)}" +
+                                    " ${defaultCurrency.symbol}"
+                            }
+                            Text(
+                                text = conversionText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                     var menuOpen by remember { mutableStateOf(false) }
                     Box {
                         IconButton(onClick = { menuOpen = true }) {

@@ -101,6 +101,7 @@ fun LedgerScreen(
     val viewMode by viewModel.viewMode.collectAsState()
     val accountBalances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
     val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
+    val accountConversions by viewModel.accountConversionsAtPeriodEnd.collectAsState()
     val categoryTotals by viewModel.categoryTotals.collectAsState()
     val categoryTotal by viewModel.categoryTotal.collectAsState()
     val categoryFilter by viewModel.categoryFilter.collectAsState()
@@ -345,6 +346,8 @@ fun LedgerScreen(
             val canAdjustBalance = periodSpansToday
             AccountsList(
                 balances = shownBalances,
+                conversions = accountConversions,
+                defaultCurrency = defaultCurrency,
                 hideAmounts = hideTotal,
                 emptyMessage = when {
                     accountFilter.isNotEmpty() && accountBalances.isNotEmpty() ->

@@ -84,6 +84,27 @@ class AccountBalanceTest : StringSpec({
         accountTotalMinor(items, Currency.CHF, emptyList()) shouldBe null
     }
 
+    "conversions convert foreign balances and pass same-currency ones through" {
+        val items = listOf(
+            AccountWithBalance(main, 10_000),
+            AccountWithBalance(euros, 5_000),
+        )
+        val rates = listOf(
+            FxRate(baseCurrency = Currency.CHF, quoteCurrency = Currency.EUR, rate = 1.25, date = "2026-08-16"),
+        )
+
+        accountConversionsMinor(items, Currency.CHF, rates) shouldBe mapOf(
+            1L to 10_000L,
+            3L to 4_000L,
+        )
+    }
+
+    "conversions mark a foreign balance without a rate as null" {
+        val items = listOf(AccountWithBalance(euros, 5_000))
+
+        accountConversionsMinor(items, Currency.CHF, emptyList()) shouldBe mapOf(3L to null)
+    }
+
     "total of no accounts is zero" {
         accountTotalMinor(emptyList(), Currency.CHF, emptyList()) shouldBe 0
     }

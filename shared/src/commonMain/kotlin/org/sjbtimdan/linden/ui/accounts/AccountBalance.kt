@@ -7,7 +7,9 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.ui.money.ratesByQuote
 import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
+import org.sjbtimdan.linden.ui.money.toDefaultMinor
 
 /** An account paired with its current balance in the account's own currency (minor units). */
 data class AccountWithBalance(
@@ -50,3 +52,20 @@ fun accountBalancesMinor(deltas: Map<Long, Long>, accounts: List<Account>): Map<
  */
 fun accountTotalMinor(accounts: List<AccountWithBalance>, defaultCurrency: Currency, rates: List<FxRate>): Long? =
     sumInDefaultMinor(accounts.map { it.account.currency to it.balance }, defaultCurrency, rates)
+
+/**
+ * Each balance converted into [defaultCurrency] minor units, keyed by account id;
+ * null when a foreign account has no stored rate against the default currency.
+ * Same-currency balances pass through unchanged. Every balance is converted on its
+ * own, matching [accountTotalMinor], so the values sum to that total exactly.
+ */
+fun accountConversionsMinor(
+    accounts: List<AccountWithBalance>,
+    defaultCurrency: Currency,
+    rates: List<FxRate>,
+): Map<Long, Long?> {
+    val ratesByQuote = ratesByQuote(rates, defaultCurrency)
+    return accounts.associate { item ->
+        item.account.id to toDefaultMinor(item.balance, item.account.currency, defaultCurrency, ratesByQuote)
+    }
+}

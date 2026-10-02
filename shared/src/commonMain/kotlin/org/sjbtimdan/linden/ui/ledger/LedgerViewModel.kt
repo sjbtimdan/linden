@@ -30,6 +30,7 @@ import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.accounts.accountBalancesMinor
+import org.sjbtimdan.linden.ui.accounts.accountConversionsMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.accounts.adjustmentEntry
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
@@ -251,6 +252,19 @@ class LedgerViewModel(
     ) { balances, currency, rates ->
         accountTotalMinor(balances, currency, rates)
     }.stateFlow(null)
+
+    /**
+     * Each period-end balance converted into the default currency, keyed by account id;
+     * null for an account whose currency has no stored rate. Same-currency balances pass
+     * through unchanged, and the conversions sum to [accountTotalAtPeriodEnd] exactly.
+     */
+    val accountConversionsAtPeriodEnd: StateFlow<Map<Long, Long?>> = combine(
+        accountBalancesAtPeriodEnd,
+        defaultCurrency,
+        rates,
+    ) { balances, currency, rates ->
+        accountConversionsMinor(balances, currency, rates)
+    }.stateFlow(emptyMap())
 
     /**
      * Current balance of each visible account in its own currency (minor units), used for balance
