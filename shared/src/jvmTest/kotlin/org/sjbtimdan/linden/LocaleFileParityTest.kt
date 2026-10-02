@@ -9,7 +9,9 @@ import java.io.File
  * (values/strings.xml): every locale must define exactly the default's string
  * and plural keys with the same format-placeholder counts, so a missing key or
  * a dropped argument fails the build instead of showing English or crashing at
- * format time. Chinese (per CLDR) only ever uses the "other" plural quantity.
+ * format time. Chinese and Indonesian (per CLDR) only ever use the "other"
+ * plural quantity. Android resolves Indonesian through the legacy "in"
+ * language code, so values-in mirrors values-id.
  */
 class LocaleFileParityTest : StringSpec({
 
@@ -38,7 +40,18 @@ class LocaleFileParityTest : StringSpec({
     val defaultPlurals = pluralsOf(defaultFile)
     val placeholder = Regex("%\\d+\\$[sd]")
 
-    val locales = listOf("values-it", "values-hi", "values-zh-rCN", "values-zh-rHK", "values-zh")
+    val otherOnlyPluralLocales = setOf("values-id", "values-in", "values-zh-rCN", "values-zh-rHK", "values-zh")
+    val locales = listOf(
+        "values-it",
+        "values-fr",
+        "values-de",
+        "values-hi",
+        "values-id",
+        "values-in",
+        "values-zh-rCN",
+        "values-zh-rHK",
+        "values-zh",
+    )
 
     locales.forEach { locale ->
         "($locale) defines exactly the default string keys with matching placeholders" {
@@ -55,11 +68,11 @@ class LocaleFileParityTest : StringSpec({
             plurals.keys shouldBe defaultPlurals.keys
             plurals.forEach { (key, items) ->
                 val defaultItems = defaultPlurals.getValue(key)
-                if (locale == "values-it" || locale == "values-hi") {
-                    items.keys shouldBe defaultItems.keys
-                } else {
-                    // zh only ever needs the "other" quantity (CLDR).
+                if (locale in otherOnlyPluralLocales) {
+                    // zh and id only ever need the "other" quantity (CLDR).
                     items.keys shouldBe setOf("other")
+                } else {
+                    items.keys shouldBe defaultItems.keys
                 }
                 items.forEach { (quantity, value) ->
                     placeholder.findAll(value).count() shouldBe
@@ -73,5 +86,11 @@ class LocaleFileParityTest : StringSpec({
         val fallback = stringsOf(File(root, "values-zh/strings.xml"))
         val simplified = stringsOf(File(root, "values-zh-rCN/strings.xml"))
         fallback shouldBe simplified
+    }
+
+    "the legacy in fallback mirrors Indonesian" {
+        val fallback = stringsOf(File(root, "values-in/strings.xml"))
+        val indonesian = stringsOf(File(root, "values-id/strings.xml"))
+        fallback shouldBe indonesian
     }
 })

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell -->
+    <string name="nav_ledger">Catatan</string>
+    <string name="nav_entry">Entri</string>
+    <string name="nav_settings">Pengaturan</string>
+
+    <!-- Startup error -->
+    <string name="startup_error_title">Linden gagal dimulai</string>
+    <string name="startup_error_message">Terjadi kesalahan saat membuka data Anda.</string>
+    <string name="startup_error_retry">Coba lagi</string>
+
+    <!-- First run -->
+    <string name="first_run_title">Selamat datang di Linden</string>
+    <string name="first_run_subtitle">Pilih mata uang yang Anda gunakan. Anda dapat mengubahnya nanti di Pengaturan.</string>
+    <string name="first_run_continue">Lanjutkan</string>
+
+    <!-- Common actions -->
+    <string name="common_back">Kembali</string>
+    <string name="common_save">Simpan</string>
+    <string name="common_cancel">Batal</string>
+    <string name="common_clear">Bersihkan</string>
+    <string name="common_duplicate">Duplikat</string>
+    <string name="common_ok">OK</string>
+    <string name="common_delete">Hapus</string>
+    <string name="common_dismiss">Tutup</string>
+    <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
+    <string name="common_unknown_error">kesalahan tidak diketahui</string>
+    <string name="common_operation_failed">Operasi gagal: %1$s</string>
+
+    <!-- Shared labels with identical copy across screens -->
+    <string name="common_accounts">Akun</string>
+    <string name="common_all">Semua</string>
+    <string name="common_categories">Kategori</string>
+    <string name="common_category">Kategori</string>
+    <string name="common_invalid_amount">Masukkan jumlah yang valid</string>
+    <string name="common_name">Nama</string>
+    <string name="common_name_required">Nama wajib diisi</string>
+    <string name="common_search">Cari</string>
+
+    <!-- Entry types; category type labels reuse the expense/income words -->
+    <string name="entry_type_expense">Pengeluaran</string>
+    <string name="entry_type_income">Pemasukan</string>
+    <string name="entry_type_transfer">Transfer</string>
+
+    <!-- Entry point -->
+    <string name="entry_add">Tambah</string>
+    <string name="entry_added">Ditambahkan</string>
+    <string name="entry_add_to_ledger">Tambah ke Catatan</string>
+    <string name="entry_undo">Urungkan</string>
+    <string name="entry_deleted">Entri dihapus</string>
+    <string name="entry_total_balance">Saldo total</string>
+    <string name="entry_show_total">Tampilkan total</string>
+    <string name="entry_hide_total">Sembunyikan total</string>
+
+    <!-- Entry form -->
+    <string name="entry_amount">Jumlah</string>
+    <string name="entry_amount_sent">Jumlah (dikirim)</string>
+    <string name="entry_amount_received">Jumlah (diterima)</string>
+    <string name="entry_from_account">Dari akun</string>
+    <string name="entry_to_account">Ke akun</string>
+    <string name="entry_account">Akun</string>
+    <string name="entry_description_optional">Deskripsi (opsional)</string>
+    <string name="entry_ok">Oke</string>
+    <string name="entry_quick_entry">Entri cepat</string>
+    <string name="entry_amount_positive">Jumlah harus lebih besar dari nol</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">Kategori baru</string>
+    <string name="entry_new_category_with_name">Kategori baru "%1$s"</string>
+    <string name="entry_new_account">Akun baru</string>
+    <string name="entry_new_account_with_name">Akun baru "%1$s"</string>
+    <string name="entry_date_time_section">Tanggal &amp; waktu</string>
+    <string name="entry_select_time">Pilih waktu</string>
+
+    <!-- Entry dialog titles: %1$s is the localized entry type name -->
+    <string name="entry_title_new">Tambah %1$s</string>
+    <string name="entry_title_edit">Edit %1$s</string>
+
+    <!-- Draft validation hints (firstMissingRequirement) -->
+    <string name="entry_req_amount">Masukkan jumlah</string>
+    <string name="entry_req_account">Pilih akun</string>
+    <string name="entry_req_source">Pilih sumber dana</string>
+    <string name="entry_req_category">Pilih kategori</string>
+    <string name="entry_req_destination">Pilih tujuan dana</string>
+    <string name="entry_req_different_destination">Pilih akun tujuan yang berbeda</string>
+    <string name="entry_req_received">Masukkan jumlah yang diterima</string>
+    <string name="entry_req_no_accounts">Tambahkan akun untuk melanjutkan</string>
+    <string name="entry_req_no_categories">Belum ada kategori — buat satu</string>
+
+    <!-- Entry calculator and misc -->
+    <string name="entry_calculator">Kalkulator</string>
+    <string name="entry_simple_keypad">Papan tombol sederhana</string>
+    <string name="entry_backspace">Hapus mundur</string>
+    <string name="entry_enter">Masukkan</string>
+    <string name="entry_recommended">Direkomendasikan</string>
+    <string name="entry_recurring">Berulang</string>
+
+    <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
+    <string name="ledger_mode_entries">Entri</string>
+
+    <!-- Ledger search & filters -->
+    <string name="ledger_search_entries">Cari entri</string>
+    <string name="ledger_filter_accounts">Filter akun</string>
+    <string name="ledger_filter_categories">Filter kategori</string>
+    <string name="ledger_filters_header">Filter &amp; pencarian</string>
+    <string name="ledger_expand_filters">Perluas filter</string>
+    <string name="ledger_collapse_filters">Ciutkan filter</string>
+    <string name="ledger_remove_filter">Hapus filter</string>
+    <string name="ledger_clear_all">Bersihkan semua</string>
+    <string name="ledger_uncategorized">Tanpa kategori</string>
+    <string name="ledger_unknown_account">Akun tidak dikenal</string>
+    <string name="ledger_amount_all">Jumlah: Semua</string>
+    <string name="ledger_filter_by_amount">Filter berdasarkan jumlah</string>
+    <string name="ledger_apply">Terapkan</string>
+
+    <!-- Period navigator -->
+    <string name="ledger_period_day">Hari</string>
+    <string name="ledger_period_week">Minggu</string>
+    <string name="ledger_period_month">Bulan</string>
+    <string name="ledger_period_year">Tahun</string>
+    <!-- The "All" option uses the shared common_all -->
+    <string name="ledger_previous_period">Periode sebelumnya</string>
+    <string name="ledger_next_period">Periode berikutnya</string>
+    <string name="ledger_show_future_entries">Tampilkan entri mendatang</string>
+    <string name="ledger_hide_future_entries">Sembunyikan entri mendatang</string>
+
+    <!-- Future-entries notice -->
+    <string name="ledger_future_none_bounded">Tidak ada entri setelah hari ini dalam periode ini</string>
+    <string name="ledger_future_none">Tidak ada entri setelah hari ini</string>
+    <string name="ledger_future_balances">Saldo mencakup entri setelah hari ini</string>
+    <string name="ledger_future_totals">Total mencakup entri setelah hari ini</string>
+    <plurals name="ledger_future_entries">
+        <item quantity="other">Menampilkan %1$d entri setelah hari ini</item>
+    </plurals>
+
+    <!-- Ledger empty states: entries view -->
+    <string name="ledger_empty_future_hidden">Entri setelah hari ini disembunyikan.</string>
+    <string name="ledger_empty_no_entries">Belum ada entri.</string>
+    <string name="ledger_empty_no_match_filter">Tidak ada entri yang cocok dengan filter ini.</string>
+    <string name="ledger_empty_no_match">Tidak ada entri yang cocok.</string>
+    <string name="ledger_action_add_first_entry">Tambahkan entri pertama Anda</string>
+    <string name="ledger_action_show_future_entries">Tampilkan entri setelah hari ini</string>
+
+    <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
+    <string name="ledger_accounts_no_match">Tidak ada akun yang cocok.</string>
+    <string name="ledger_accounts_all_hidden">Semua akun disembunyikan.</string>
+    <string name="ledger_action_create_account">Buat akun</string>
+    <string name="ledger_action_manage_accounts">Kelola akun</string>
+
+    <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
+    <string name="ledger_categories_no_match">Tidak ada kategori yang cocok.</string>
+    <string name="ledger_categories_future_hidden">Pengeluaran setelah hari ini disembunyikan.</string>
+    <string name="ledger_categories_no_spending">Belum ada pengeluaran.</string>
+    <string name="ledger_action_add_categories">Tambahkan kategori</string>
+
+    <!-- Category totals list -->
+    <plurals name="ledger_entry_count">
+        <item quantity="other">%1$d entri</item>
+    </plurals>
+    <string name="ledger_budget_progress">%1$s dari %2$s</string>
+
+    <!-- Accounts list overflow menu -->
+    <string name="ledger_more_options">Opsi lainnya</string>
+    <string name="ledger_view_entries">Lihat entri</string>
+    <string name="ledger_adjust_balance">Sesuaikan Saldo</string>
+    <string name="ledger_adjust_latest_period_only">Hanya tersedia saat periode terbaru ditampilkan.</string>
+
+    <!-- Adjust Balance dialog -->
+    <string name="ledger_adjust_current_balance">Saldo saat ini: %1$s %2$s</string>
+    <string name="ledger_adjust_bank_balance">Saldo bank</string>
+    <string name="ledger_adjust_explainer">Entri akan dibuat pada kategori yang dipilih.</string>
+    <string name="ledger_adjust_explainer_income">Entri pemasukan akan dibuat pada kategori yang dipilih.</string>
+    <string name="ledger_adjust_explainer_expense">Entri pengeluaran akan dibuat pada kategori yang dipilih.</string>
+    <string name="ledger_adjust_confirm">Sesuaikan</string>
+
+    <!-- Accounts screen -->
+    <string name="accounts_new">Akun Baru</string>
+    <string name="accounts_edit">Edit Akun</string>
+    <string name="accounts_empty_none">Belum ada akun.</string>
+    <string name="accounts_empty_no_match">Tidak ada akun yang cocok.</string>
+    <string name="accounts_initial_balance">Saldo awal</string>
+    <string name="accounts_currency">Mata uang</string>
+    <string name="accounts_currency_locked">Mata uang tidak dapat diubah: akun ini memiliki entri.</string>
+    <string name="accounts_hidden">Disembunyikan</string>
+    <string name="accounts_hidden_help">Menyimpan entri, tetapi menghapus akun dari catatan, pemilih akun, dan filter.</string>
+    <string name="accounts_delete_locked">Akun ini tidak dapat dihapus: akun ini memiliki entri.</string>
+    <string name="accounts_delete">Hapus Akun</string>
+    <string name="accounts_duplicate_name">Akun dengan nama ini sudah ada</string>
+    <string name="accounts_hide_title">Sembunyikan akun?</string>
+    <string name="accounts_hide_confirm">Sembunyikan</string>
+    <string name="accounts_hide_body">%1$s memiliki saldo %2$s %3$s. Menyembunyikannya akan menghapus akun dari catatan, pemilih akun, dan filter. Entri-entrinya tetap tersimpan dalam riwayat Anda dan dapat ditampilkan kembali kapan saja.</string>
+
+    <!-- Categories screen -->
+    <string name="categories_new">Kategori Baru</string>
+    <string name="categories_edit">Edit Kategori</string>
+    <string name="categories_empty_none">Belum ada kategori.</string>
+    <string name="categories_empty_no_match">Tidak ada kategori yang cocok.</string>
+    <string name="categories_icon">Ikon</string>
+    <string name="categories_type">Jenis</string>
+    <string name="categories_duplicate_name">Kategori dengan nama ini sudah ada</string>
+    <string name="categories_delete_locked">Kategori ini tidak dapat dihapus: kategori ini memiliki entri.</string>
+    <string name="categories_delete">Hapus Kategori</string>
+    <string name="category_type_both">Keduanya</string>
+    <string name="category_type_both_row">Sebagai Pemasukan/Pengeluaran</string>
+    <string name="category_icon_restaurant">Makanan &amp; Minuman</string>
+    <string name="category_icon_movie">Hiburan</string>
+    <string name="category_icon_shopping_cart">Bahan makanan</string>
+    <string name="category_icon_account_balance">Bank &amp; Keuangan</string>
+    <string name="category_icon_savings">Tabungan &amp; Gaji</string>
+    <string name="category_icon_shopping_bag">Belanja</string>
+    <string name="category_icon_home">Rumah</string>
+    <string name="category_icon_local_hospital">Kesehatan</string>
+    <string name="category_icon_favorite_border">Hadiah &amp; Donasi</string>
+    <string name="category_icon_pets">Hewan peliharaan</string>
+    <string name="category_icon_school">Pendidikan</string>
+    <string name="category_icon_flight">Perjalanan</string>
+    <string name="category_icon_spa">Perawatan diri</string>
+    <string name="category_icon_car">Mobil</string>
+    <string name="category_icon_public_transport">Transportasi umum</string>
+
+    <!-- Settings screen -->
+    <string name="settings_language">Bahasa</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistem</string>
+    <string name="settings_theme_light">Terang</string>
+    <string name="settings_theme_dark">Gelap</string>
+    <string name="settings_default_currency">Mata uang default</string>
+    <string name="settings_privacy">Privasi</string>
+    <string name="settings_hide_totals">Sembunyikan total</string>
+    <string name="settings_nav_rates">Kurs mata uang</string>
+    <string name="settings_nav_budgets">Anggaran</string>
+    <string name="settings_nav_insights">Wawasan</string>
+    <string name="settings_your_data">Data Anda</string>
+    <string name="insights_vs_previous">vs %1$s: %2$s</string>
+    <string name="insights_expenses">Pengeluaran</string>
+    <string name="insights_income">Pemasukan</string>
+    <string name="insights_previous_period">12 bulan sebelumnya</string>
+    <string name="insights_next_period">12 bulan berikutnya</string>
+    <string name="insights_net">Neto</string>
+    <string name="insights_no_entries">Tambahkan entri untuk mulai melihat tren bulanan</string>
+    <string name="insights_average">Rata-rata 12 bulan: %1$s</string>
+    <string name="settings_import_ivy">Impor dari Ivy</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_db">Cadangkan basis data</string>
+    <string name="settings_restore_backup">Pulihkan dari backup</string>
+    <string name="settings_export_csv">Ekspor ke CSV</string>
+    <string name="settings_working_import">Mengimpor…</string>
+    <string name="settings_working_backup">Mencadangkan…</string>
+    <string name="settings_working_restore">Memulihkan…</string>
+    <string name="settings_working_export">Mengekspor…</string>
+    <string name="settings_import_summary">Berhasil mengimpor %1$d akun, %2$d kategori, %3$d transaksi</string>
+    <string name="settings_import_split_note">\nCatatan: %1$d transaksi menggunakan mata uang yang berbeda dari akunnya dan diimpor ke akun "IVY: …" baru.</string>
+    <string name="settings_import_failed">Impor gagal: %1$s</string>
+    <string name="settings_backup_saved">Backup disimpan.</string>
+    <string name="settings_backup_failed">Backup gagal: %1$s</string>
+    <string name="settings_restore_summary">Berhasil memulihkan %1$d akun, %2$d kategori, %3$d entri</string>
+    <string name="settings_restore_failed">Pemulihan gagal: %1$s</string>
+    <string name="settings_export_done">CSV diekspor.</string>
+    <string name="settings_export_failed">Ekspor gagal: %1$s</string>
+    <string name="settings_import_confirm_body">Tindakan ini akan menggantikan semua akun, kategori, dan transaksi Anda saat ini. Lanjutkan?</string>
+    <string name="settings_restore_confirm_body">Tindakan ini akan menggantikan semua akun, kategori, transaksi, dan pengaturan Anda saat ini. Lanjutkan?</string>
+    <string name="settings_import_confirm">Impor</string>
+    <string name="settings_restore_confirm">Pulihkan</string>
+
+    <!-- Rates screen -->
+    <string name="rates_refresh">Segarkan</string>
+    <string name="rates_refresh_failed">Penyegaran gagal: %1$s</string>
+    <string name="rates_from_date">Kurs dari %1$s</string>
+    <string name="rates_update_automatically">Perbarui otomatis</string>
+    <string name="rates_auto_update_help">Mengunduh kurs terbaru saat kurs tersimpan berusia lebih dari satu hari. Nonaktifkan untuk mempertahankan kurs yang dimasukkan secara manual.</string>
+    <string name="rates_edit_rate">Edit kurs %1$s</string>
+    <string name="rates_set">Atur kurs</string>
+    <string name="rates_missing">Tidak ada nilai tukar yang tersedia. Anda dapat mengaturnya secara manual.</string>
+    <string name="rates_outdated">Nilai tukar sudah berusia lebih dari seminggu. Anda dapat mengaturnya secara manual.</string>
+    <string name="rates_rate_label">Kurs</string>
+    <string name="rates_positive_number">Masukkan angka positif.</string>
+
+    <!-- Budgets -->
+    <string name="budget_new">Anggaran Baru</string>
+    <string name="budget_edit">Edit Anggaran</string>
+    <string name="budget_delete">Hapus Anggaran</string>
+    <string name="budget_choose_category">Pilih kategori</string>
+    <string name="budget_monthly_limit">Batas bulanan</string>
+    <string name="budget_empty">Belum ada anggaran. Tambahkan satu untuk melacak pengeluaran bulanan kategori.</string>
+</resources>

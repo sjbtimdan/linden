@@ -8,14 +8,20 @@ class DateLanguageTest : StringSpec({
     "maps language codes onto a date language" {
         dateLanguage(null) shouldBe DateLanguage.English
         dateLanguage("en") shouldBe DateLanguage.English
-        dateLanguage("de") shouldBe DateLanguage.English
-        dateLanguage("fr-CH") shouldBe DateLanguage.English
+        dateLanguage("es") shouldBe DateLanguage.English
         dateLanguage("it") shouldBe DateLanguage.Italian
         dateLanguage("IT") shouldBe DateLanguage.Italian
         dateLanguage("it-CH") shouldBe DateLanguage.Italian
+        dateLanguage("fr") shouldBe DateLanguage.French
+        dateLanguage("fr-CH") shouldBe DateLanguage.French
+        dateLanguage("de") shouldBe DateLanguage.German
+        dateLanguage("de-AT") shouldBe DateLanguage.German
         dateLanguage("hi") shouldBe DateLanguage.Hindi
         dateLanguage("HI") shouldBe DateLanguage.Hindi
         dateLanguage("hi-IN") shouldBe DateLanguage.Hindi
+        dateLanguage("id") shouldBe DateLanguage.Indonesian
+        dateLanguage("id-ID") shouldBe DateLanguage.Indonesian
+        dateLanguage("in-ID") shouldBe DateLanguage.Indonesian
         dateLanguage("zh") shouldBe DateLanguage.Chinese
         dateLanguage("zh-CN") shouldBe DateLanguage.Chinese
         dateLanguage("zh-Hans-CN") shouldBe DateLanguage.Chinese
@@ -37,6 +43,27 @@ class DateLanguageTest : StringSpec({
         )
     }
 
+    "keeps the French month table" {
+        (1..12).map(DateLanguage.French::monthShort) shouldBe listOf(
+            "janv.", "févr.", "mars", "avr.", "mai", "juin",
+            "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+        )
+    }
+
+    "keeps the German month table" {
+        (1..12).map(DateLanguage.German::monthShort) shouldBe listOf(
+            "Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
+            "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.",
+        )
+    }
+
+    "keeps the Indonesian month table" {
+        (1..12).map(DateLanguage.Indonesian::monthShort) shouldBe listOf(
+            "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+            "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+        )
+    }
+
     "keeps the Hindi month table" {
         (1..12).map(DateLanguage.Hindi::monthShort) shouldBe listOf(
             "जन", "फ़र", "मार्च", "अप्रै", "मई", "जून",
@@ -53,14 +80,20 @@ class DateLanguageTest : StringSpec({
     "date text follows the language layout" {
         DateLanguage.English.dateText(13, 8, 2026) shouldBe "Aug 13, 2026"
         DateLanguage.Italian.dateText(13, 8, 2026) shouldBe "13 ago 2026"
+        DateLanguage.French.dateText(13, 8, 2026) shouldBe "13 août 2026"
+        DateLanguage.German.dateText(13, 8, 2026) shouldBe "13. Aug. 2026"
         DateLanguage.Hindi.dateText(13, 8, 2026) shouldBe "13 अग 2026"
+        DateLanguage.Indonesian.dateText(13, 8, 2026) shouldBe "13 Agu 2026"
         DateLanguage.Chinese.dateText(13, 8, 2026) shouldBe "2026年8月13日"
     }
 
     "month-year text follows the language layout" {
         DateLanguage.English.monthYearText(8, 2026) shouldBe "Aug 2026"
         DateLanguage.Italian.monthYearText(8, 2026) shouldBe "ago 2026"
+        DateLanguage.French.monthYearText(8, 2026) shouldBe "août 2026"
+        DateLanguage.German.monthYearText(8, 2026) shouldBe "Aug. 2026"
         DateLanguage.Hindi.monthYearText(8, 2026) shouldBe "अग 2026"
+        DateLanguage.Indonesian.monthYearText(8, 2026) shouldBe "Agu 2026"
         DateLanguage.Chinese.monthYearText(8, 2026) shouldBe "2026年8月"
     }
 })

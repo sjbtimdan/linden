@@ -7,7 +7,9 @@ package org.sjbtimdan.linden.model
  * language in Settings. The remaining values pin the app to one of the
  * supported languages via their BCP-47 [tag], which drives both the locale
  * override applied at the app root and the resource qualifiers the
- * translations ship under (values/values-it/values-hi/values-zh-rCN/values-zh-rHK).
+ * translations ship under (values/values-it/values-fr/values-de/values-hi/
+ * values-id/values-zh-rCN/values-zh-rHK; Android also needs the legacy
+ * values-in mirror of Indonesian because its Locale reports "in").
  * Traditional Chinese is Hong Kong (zh-HK); other zh-Hant regions are not
  * target markets.
  */
@@ -15,28 +17,42 @@ enum class AppLanguage(val tag: String?) {
     SYSTEM(null),
     ENGLISH("en"),
     ITALIAN("it"),
+    FRENCH("fr"),
+    GERMAN("de"),
     HINDI("hi"),
+    INDONESIAN("id"),
     CHINESE_SIMPLIFIED("zh-CN"),
     CHINESE_TRADITIONAL_HK("zh-HK"),
     ;
 
     companion object {
         /** Parses a persisted tag; anything unknown (or null) means [SYSTEM]. */
-        fun fromTag(tag: String?): AppLanguage = entries.firstOrNull { it.tag == tag } ?: SYSTEM
+        fun fromTag(tag: String?): AppLanguage = when {
+            tag == "in" -> INDONESIAN
+            else -> entries.firstOrNull { it.tag == tag } ?: SYSTEM
+        }
 
         /**
          * Maps the platform's full BCP-47 tag onto the closest supported app
-         * language: Italian, Hindi and Chinese systems get their own language
-         * (Chinese split by script/region: Hans or CN → Simplified, Hant or
-         * HK/MO/TW → Traditional), every other system language falls back to
-         * [ENGLISH].
+         * language: Italian, French, German, Hindi, Indonesian and Chinese
+         * systems get their own language (Chinese split by script/region: Hans
+         * or CN → Simplified, Hant or HK/MO/TW → Traditional), every other
+         * system language falls back to [ENGLISH]. Android reports Indonesian
+         * as the legacy tag "in", so that maps here too.
          */
         fun fromSystemLanguage(systemTag: String?): AppLanguage = when {
             systemTag.isNullOrBlank() -> ENGLISH
 
             systemTag.startsWith("it", ignoreCase = true) -> ITALIAN
 
+            systemTag.startsWith("fr", ignoreCase = true) -> FRENCH
+
+            systemTag.startsWith("de", ignoreCase = true) -> GERMAN
+
             systemTag.startsWith("hi", ignoreCase = true) -> HINDI
+
+            systemTag.startsWith("id", ignoreCase = true) ||
+                systemTag.startsWith("in", ignoreCase = true) -> INDONESIAN
 
             systemTag.startsWith("zh", ignoreCase = true) -> {
                 val lower = systemTag.lowercase()

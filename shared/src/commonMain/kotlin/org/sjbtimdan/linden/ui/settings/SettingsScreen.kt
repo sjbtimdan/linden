@@ -512,7 +512,10 @@ private fun ThemeMode.displayName(): String = stringResource(
 private val languageOptions = listOf(
     AppLanguage.ENGLISH,
     AppLanguage.ITALIAN,
+    AppLanguage.FRENCH,
+    AppLanguage.GERMAN,
     AppLanguage.HINDI,
+    AppLanguage.INDONESIAN,
     AppLanguage.CHINESE_SIMPLIFIED,
     AppLanguage.CHINESE_TRADITIONAL_HK,
 )
@@ -527,7 +530,13 @@ private fun AppLanguage.label(): String = when (this) {
 
     AppLanguage.ITALIAN -> "Italiano"
 
+    AppLanguage.FRENCH -> "Français"
+
+    AppLanguage.GERMAN -> "Deutsch"
+
     AppLanguage.HINDI -> "हिन्दी"
+
+    AppLanguage.INDONESIAN -> "Bahasa Indonesia"
 
     AppLanguage.CHINESE_SIMPLIFIED -> "简体中文"
 
