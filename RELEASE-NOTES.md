@@ -1,3 +1,12 @@
+## Version 0.12.0
+
+<en-US>
+- New currency: Indonesian rupiah (IDR). Rupiah and yen are now shown in whole units, with no decimals.
+- French, German and Indonesian language support.
+- The Ledger's Accounts view shows what each foreign-currency balance is worth in your default currency.
+- Description suggestions now respect the category you pick and prefer recent entries.
+</en-US>
+
 ## Version 0.11.0
 
 <en-US>
