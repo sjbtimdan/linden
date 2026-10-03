@@ -78,3 +78,20 @@ are applied automatically.
 **Caveat:** Build-time verification only — no runtime test on a device/emulator yet.
 The definitive test is installing the minified release APK and exercising the full app
 (add entries, check FX rates, backup/restore, ledger views).
+
+## Native debug symbols
+
+The release AAB contains two prebuilt native libraries from dependencies:
+`libandroidx.graphics.path.so` (Compose graphics) and `libdatastore_shared_counter.so`
+(DataStore, pulled in via Firebase). Play Console warns on upload that the bundle has
+no native debug symbols; this is expected and safe to ignore:
+
+- Both `.so` files are shipped already stripped by their publishers (no `.symtab` or
+  `.debug_*` sections — verified), so there is no metadata for AGP to extract and the
+  warning cannot be cleared for them.
+- It is advisory, not a blocker: native debug symbols are not in Play's technical
+  quality requirements (only 64-bit and 16 KB page-size support are enforced). Native
+  frames inside those two libraries just stay unsymbolicated in Android vitals.
+- If Linden ever adds its own native code, set `ndk { debugSymbolLevel = "SYMBOL_TABLE" }`
+  on the release build type; AGP then packages symbols into the AAB automatically and
+  Play picks them up (requires an NDK — AGP 9.4 defaults to NDK 28.2.13676358).
