@@ -27,8 +27,9 @@ This also refreshes the master icon at `build/icon-render/linden-icon-1024.png`.
 
 ## Listing checklist
 
-- [x] Short description (< 80 chars) — `docs/store-listing.md`
-- [x] Full description (< 4000 chars) — `docs/store-listing.md`
+- [x] Short description (< 80 chars) — `docs/store-listings/`
+- [x] Full description (< 4000 chars) — `docs/store-listings/`
+- [x] Localized listings (it/fr/de/hi/id/zh-CN/zh-HK) — AI first pass in `docs/store-listings/`, native review pending
 - [x] App icon 512 × 512 — `play-icon-512.png`
 - [x] Feature graphic 1024 × 500 — `play-feature-graphic-1024x500.png`
 - [x] Phone screenshots (2–8) — capture from a device/emulator, 16:9–9:16

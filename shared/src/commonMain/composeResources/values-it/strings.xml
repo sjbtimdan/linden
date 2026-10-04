@@ -128,17 +128,17 @@
     <!-- Future-entries notice -->
     <string name="ledger_future_none_bounded">Nessuna voce dopo oggi in questo periodo</string>
     <string name="ledger_future_none">Nessuna voce dopo oggi</string>
-    <string name="ledger_future_balances">I saldi includono le voci di dopo oggi</string>
-    <string name="ledger_future_totals">I totali includono le voci di dopo oggi</string>
+    <string name="ledger_future_balances">I saldi includono le voci successive a oggi</string>
+    <string name="ledger_future_totals">I totali includono le voci successive a oggi</string>
     <plurals name="ledger_future_entries"><item quantity="one">Mostra %1$d voce dopo oggi</item><item quantity="other">Mostra %1$d voci dopo oggi</item></plurals>
 
     <!-- Ledger empty states: entries view -->
-    <string name="ledger_empty_future_hidden">Le voci di dopo oggi sono nascoste.</string>
+    <string name="ledger_empty_future_hidden">Le voci successive a oggi sono nascoste.</string>
     <string name="ledger_empty_no_entries">Ancora nessuna voce.</string>
     <string name="ledger_empty_no_match_filter">Nessuna voce corrisponde a questo filtro.</string>
     <string name="ledger_empty_no_match">Nessuna voce corrisponde.</string>
     <string name="ledger_action_add_first_entry">Aggiungi la tua prima voce</string>
-    <string name="ledger_action_show_future_entries">Mostra le voci di dopo oggi</string>
+    <string name="ledger_action_show_future_entries">Mostra le voci successive a oggi</string>
 
     <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
     <string name="ledger_accounts_no_match">Nessun conto corrisponde.</string>
@@ -148,7 +148,7 @@
 
     <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
     <string name="ledger_categories_no_match">Nessuna categoria corrisponde.</string>
-    <string name="ledger_categories_future_hidden">Le spese di dopo oggi sono nascoste.</string>
+    <string name="ledger_categories_future_hidden">Le spese successive a oggi sono nascoste.</string>
     <string name="ledger_categories_no_spending">Ancora nessuna spesa.</string>
     <string name="ledger_action_add_categories">Aggiungi categorie</string>
 

@@ -67,9 +67,9 @@
 
     <!-- Inline create chips in the entry form: %1$s is the typed query -->
     <string name="entry_new_category">Neue Kategorie</string>
-    <string name="entry_new_category_with_name">Neue Kategorie „%1$s"</string>
+    <string name="entry_new_category_with_name">Neue Kategorie „%1$s“</string>
     <string name="entry_new_account">Neues Konto</string>
-    <string name="entry_new_account_with_name">Neues Konto „%1$s"</string>
+    <string name="entry_new_account_with_name">Neues Konto „%1$s“</string>
     <string name="entry_date_time_section">Datum &amp; Uhrzeit</string>
     <string name="entry_select_time">Uhrzeit auswählen</string>
 
@@ -131,8 +131,8 @@
     <string name="ledger_future_balances">Salden enthalten Buchungen nach heute</string>
     <string name="ledger_future_totals">Summen enthalten Buchungen nach heute</string>
     <plurals name="ledger_future_entries">
-        <item quantity="one">Zeige %1$d Buchung nach heute</item>
-        <item quantity="other">Zeige %1$d Buchungen nach heute</item>
+        <item quantity="one">Es wird %1$d Buchung nach heute angezeigt</item>
+        <item quantity="other">Es werden %1$d Buchungen nach heute angezeigt</item>
     </plurals>
 
     <!-- Ledger empty states: entries view -->
@@ -252,12 +252,12 @@
     <string name="settings_working_restore">Wiederherstellen…</string>
     <string name="settings_working_export">Exportieren…</string>
     <string name="settings_import_summary">Importiert: %1$d Konten, %2$d Kategorien, %3$d Transaktionen</string>
-    <string name="settings_import_split_note">\nHinweis: %1$d Transaktion(en) waren in einer anderen Währung als ihr Konto und wurden in neue „IVY: …" Konten importiert.</string>
+    <string name="settings_import_split_note">\nHinweis: %1$d Transaktion(en) waren in einer anderen Währung als ihr Konto und wurden in neue „IVY: …“ Konten importiert.</string>
     <string name="settings_import_failed">Import fehlgeschlagen: %1$s</string>
     <string name="settings_backup_saved">Backup gespeichert.</string>
     <string name="settings_backup_failed">Backup fehlgeschlagen: %1$s</string>
     <string name="settings_restore_summary">Wiederhergestellt: %1$d Konten, %2$d Kategorien, %3$d Buchungen</string>
-    <string name="settings_restore_failed">Wiederherstellen fehlgeschlagen: %1$s</string>
+    <string name="settings_restore_failed">Wiederherstellung fehlgeschlagen: %1$s</string>
     <string name="settings_export_done">CSV exportiert.</string>
     <string name="settings_export_failed">Export fehlgeschlagen: %1$s</string>
     <string name="settings_import_confirm_body">Dadurch werden alle deine aktuellen Konten, Kategorien und Transaktionen ersetzt. Fortfahren?</string>
@@ -267,7 +267,7 @@
 
     <!-- Rates screen -->
     <string name="rates_refresh">Aktualisieren</string>
-    <string name="rates_refresh_failed">Aktualisieren fehlgeschlagen: %1$s</string>
+    <string name="rates_refresh_failed">Aktualisierung fehlgeschlagen: %1$s</string>
     <string name="rates_from_date">Kurse vom %1$s</string>
     <string name="rates_update_automatically">Automatisch aktualisieren</string>
     <string name="rates_auto_update_help">Lädt neue Kurse herunter, wenn die gespeicherten älter als einen Tag sind. Deaktiviere die Option, um manuell eingegebene Kurse beizubehalten.</string>
