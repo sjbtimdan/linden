@@ -92,7 +92,7 @@
     <string name="entry_calculator">Kalkulator</string>
     <string name="entry_simple_keypad">Papan tombol sederhana</string>
     <string name="entry_backspace">Hapus mundur</string>
-    <string name="entry_enter">Masukkan</string>
+    <string name="entry_enter">Enter</string>
     <string name="entry_recommended">Direkomendasikan</string>
     <string name="entry_recurring">Berulang</string>
 
@@ -265,7 +265,7 @@
 
     <!-- Rates screen -->
     <string name="rates_refresh">Segarkan</string>
-    <string name="rates_refresh_failed">Penyegaran gagal: %1$s</string>
+    <string name="rates_refresh_failed">Gagal menyegarkan: %1$s</string>
     <string name="rates_from_date">Kurs dari %1$s</string>
     <string name="rates_update_automatically">Perbarui otomatis</string>
     <string name="rates_auto_update_help">Mengunduh kurs terbaru saat kurs tersimpan berusia lebih dari satu hari. Nonaktifkan untuk mempertahankan kurs yang dimasukkan secara manual.</string>
@@ -282,5 +282,5 @@
     <string name="budget_delete">Hapus Anggaran</string>
     <string name="budget_choose_category">Pilih kategori</string>
     <string name="budget_monthly_limit">Batas bulanan</string>
-    <string name="budget_empty">Belum ada anggaran. Tambahkan satu untuk melacak pengeluaran bulanan kategori.</string>
+    <string name="budget_empty">Belum ada anggaran. Tambahkan satu anggaran untuk melacak pengeluaran bulanan kategori.</string>
 </resources>

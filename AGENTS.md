@@ -43,7 +43,9 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
 - `:androidApp` — Android entry (`MainActivity`, appId `org.sjbtimdan.linden`, minSdk 24, targetSdk 37, edge-to-edge).
   Firebase Crashlytics is wired here only (`google-services.json`, BoM, plugin applied on the module — not `apply false`);
   Firebase Analytics was removed before the first release so the no-tracking privacy policy stays true (this also drops
-  the merged `AD_ID`/ads-services/install-referrer permissions). Desktop has no crash reporting.
+  the merged `AD_ID`/ads-services/install-referrer permissions). The manifest declares `android:localeConfig`
+  (`res/xml/locales_config.xml`, the 8 app languages) so Android 13+ per-app language settings expose Linden; an in-app
+  pin still wins. Desktop has no crash reporting.
 - `:desktopApp` — Desktop/JVM entry (`Main.kt` → Compose `Window`, main class `org.sjbtimdan.linden.MainKt`).
 
 ## Commands
