@@ -26,6 +26,6 @@ UNDERSTAND YOUR SPENDING
 • Balances at period end, with future entries handled honestly
 
 YOUR DATA, YOURS
-Linden stores everything locally on your device. No sign-up, no ads, no tracking. Back up and restore your full history to a file whenever you like, or import existing data.
+Linden stores everything locally on your device. No tracking and no ads. If the app crashes, an anonymous crash report is sent so bugs get fixed — never your financial data. Back up and restore your full history to a file whenever you like, or import existing data.
 
 Linden is a personal finance tracker, not a bank. It never connects to your accounts.

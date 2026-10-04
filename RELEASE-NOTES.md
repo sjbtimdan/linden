@@ -1,3 +1,10 @@
+## Version 0.13.0
+
+<en-US>
+- First-run setup now picks your language and theme alongside your default currency, with a live preview.
+- No tracking and no ads.
+</en-US>
+
 ## Version 0.12.0
 
 <en-US>
