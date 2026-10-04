@@ -3,7 +3,7 @@
 <en-US>
 - First stable release: expenses, income and transfers in a local-first, multi-currency ledger.
 - First-run setup picks your language, currency and theme, with live preview.
-- No tracking and no ads.
+- No ads. Your financial data stays on your device or in your own Android backup.
 </en-US>
 
 ## Version 0.12.0

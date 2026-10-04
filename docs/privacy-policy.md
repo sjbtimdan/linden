@@ -4,12 +4,13 @@
 
 ## Overview
 
-Linden is a local-first expenses tracker. Your entries, accounts, categories and settings stay on your device.
+Linden is a local-first expenses tracker. Your entries, accounts, categories and settings stay on your device, or in your own Android backup when device backup is enabled. Anonymous usage analytics and crash reports help improve the app.
 
 ## Data Collection
 
-- **Crash reports.** If Linden crashes, a technical report (stack trace, app version, device model, OS version) is sent to Google Firebase Crashlytics to help fix bugs.
-- **No analytics, no tracking, no ads.** Linden has no usage analytics, no advertising, and no accounts.
+- **Usage analytics (Firebase Analytics).** Linden collects anonymous usage data — such as which screens are used, session information, app version and device type — together with a device/advertising identifier, to understand how the app is used and improve it. This data is not used to show ads, and it never includes your entries, accounts, categories or amounts.
+- **Crash reports (Firebase Crashlytics).** If Linden crashes, a technical report (stack trace, app version, device model, OS version) is sent to help fix bugs.
+- **No ads.** Linden shows no advertising.
 - **Exchange rates.** Currency conversion requests current rates from the [Frankfurter API](https://www.frankfurter.app/); only a currency code is sent.
 
 ## Data Storage
@@ -20,7 +21,7 @@ If Android's backup service is enabled on your device, the operating system may 
 
 ## Data Sharing
 
-Crash reports are processed by Google Firebase Crashlytics on our behalf. No other third party receives data from Linden.
+Usage analytics and crash reports are processed by Google Firebase on our behalf. No other third party receives data from Linden.
 
 ## Children's Privacy
 
@@ -29,6 +30,10 @@ Linden does not knowingly collect any data from anyone, including children.
 ## Changes to This Policy
 
 If this policy changes, the update will be reflected in this file with a revised date.
+
+## Terms of Use
+
+Linden is provided "as is", without warranty of any kind; see [Terms of Use](terms.md) for the full warranty and liability terms.
 
 ## Contact
 

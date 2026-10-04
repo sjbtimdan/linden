@@ -26,6 +26,6 @@ COMPRENEZ VOS DÉPENSES
 • Soldes en fin de période, avec les opérations futures gérées honnêtement
 
 VOS DONNÉES VOUS APPARTIENNENT
-Linden stocke tout localement sur votre appareil. Aucun suivi et aucune publicité. En cas de plantage, un rapport d'erreur anonyme est envoyé pour corriger les bugs — jamais vos données financières. Sauvegardez et restaurez tout votre historique dans un fichier quand vous voulez, ou importez des données existantes.
+Linden stocke tout localement sur votre appareil. Aucune publicité. Vos données financières restent sur votre appareil ou dans votre propre sauvegarde Android ; seules des données d'usage et d'erreur anonymes aident à améliorer l'application. Sauvegardez et restaurez tout votre historique dans un fichier quand vous voulez, ou importez des données existantes.
 
 Linden est un gestionnaire de finances personnelles, pas une banque. Il ne se connecte jamais à vos comptes.

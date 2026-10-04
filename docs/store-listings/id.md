@@ -26,6 +26,6 @@ PAHAMI PENGELUARAN ANDA
 • Saldo di akhir periode, dengan entri mendatang yang ditangani secara jujur
 
 DATA ANDA MILIK ANDA
-Linden menyimpan semuanya secara lokal di perangkat Anda. Tanpa pelacakan dan tanpa iklan. Jika aplikasi crash, laporan crash anonim dikirim untuk memperbaiki bug — bukan data keuangan Anda. Cadangkan dan pulihkan seluruh riwayat ke file kapan pun, atau impor data yang ada.
+Linden menyimpan semuanya secara lokal di perangkat Anda. Tanpa iklan. Data keuangan Anda tetap di perangkat Anda atau di cadangan Android Anda sendiri; hanya data penggunaan dan crash anonim yang membantu memperbaiki aplikasi. Cadangkan dan pulihkan seluruh riwayat ke file kapan pun, atau impor data yang ada.
 
 Linden adalah pelacak keuangan pribadi, bukan bank. Linden tidak pernah terhubung ke rekening Anda.

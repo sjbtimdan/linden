@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
     debugImplementation(libs.compose.uiTooling)
     detektPlugins(libs.detekt.ktlint.wrapper)
     constraints {
@@ -51,7 +52,7 @@ android {
         applicationId = "org.sjbtimdan.linden"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 14
+        versionCode = 15
         versionName = "1.0.0"
     }
     packaging {

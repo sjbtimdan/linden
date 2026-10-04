@@ -26,6 +26,6 @@ CAPISCI LE TUE SPESE
 • Saldi a fine periodo, con le voci future gestite con chiarezza
 
 I TUOI DATI, TUOI
-Linden salva tutto localmente sul tuo dispositivo. Nessun tracciamento e nessuna pubblicità. Se l'app si blocca, viene inviato un rapporto di errore anonimo per correggere i bug — mai i tuoi dati finanziari. Esegui il backup e ripristina l'intero storico su un file quando vuoi, oppure importa dati esistenti.
+Linden salva tutto localmente sul tuo dispositivo. Nessuna pubblicità. I tuoi dati finanziari restano sul tuo dispositivo o nel tuo backup Android; solo dati anonimi di utilizzo e di errore aiutano a migliorare l'app. Esegui il backup e ripristina l'intero storico su un file quando vuoi, oppure importa dati esistenti.
 
 Linden è un tracker di finanze personali, non una banca. Non si connette mai ai tuoi conti.

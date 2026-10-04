@@ -26,6 +26,6 @@ VERSTEHE DEINE AUSGABEN
 • Salden zum Periodenende, mit ehrlicher Behandlung zukünftiger Buchungen
 
 DEINE DATEN GEHÖREN DIR
-Linden speichert alles lokal auf deinem Gerät. Kein Tracking und keine Werbung. Wenn die App abstürzt, wird ein anonymer Fehlerbericht gesendet, um Bugs zu beheben — niemals deine Finanzdaten. Sichere und stelle deinen gesamten Verlauf jederzeit in einer Datei wieder her, oder importiere vorhandene Daten.
+Linden speichert alles lokal auf deinem Gerät. Keine Werbung. Deine Finanzdaten bleiben auf deinem Gerät oder in deiner eigenen Android-Sicherung; nur anonyme Nutzungs- und Fehlerdaten helfen, die App zu verbessern. Sichere und stelle deinen gesamten Verlauf jederzeit in einer Datei wieder her, oder importiere vorhandene Daten.
 
 Linden ist ein persönlicher Finanz-Tracker, keine Bank. Es verbindet sich nie mit deinen Konten.
