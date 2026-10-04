@@ -1,3 +1,11 @@
+## Version 1.0.0
+
+<en-US>
+- First stable release: expenses, income and transfers in a local-first, multi-currency ledger.
+- First-run setup picks your language, currency and theme, with live preview.
+- No tracking and no ads.
+</en-US>
+
 ## Version 0.12.0
 
 <en-US>
