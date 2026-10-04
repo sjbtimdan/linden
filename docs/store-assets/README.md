@@ -38,6 +38,7 @@ This also refreshes the master icon at `build/icon-render/linden-icon-1024.png`.
 - [ ] Promo video (optional) — YouTube URL
 - [ ] Privacy policy URL — host `docs/privacy-policy.md` at a public URL
 - [ ] Terms of Use URL (optional) — host `docs/terms.md` at a public URL
+- [ ] Production access application (personal accounts, 12 testers / 14 days) — see `docs/play-production-application.md`
 - [ ] Content rating questionnaire completed in Play Console
 - [ ] Data safety form completed (local financial data; Firebase Analytics usage + Crashlytics diagnostics; advertising ID declared)
 
