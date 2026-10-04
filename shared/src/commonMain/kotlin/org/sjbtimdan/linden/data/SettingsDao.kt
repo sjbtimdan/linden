@@ -30,6 +30,11 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(THEME_KEY, mode.name)
     }
 
+    fun themeFlow(): Flow<ThemeMode> = valueFlow(THEME_KEY)
+        .map { stored ->
+            stored?.let { value -> ThemeMode.entries.firstOrNull { it.name == value } } ?: ThemeMode.SYSTEM
+        }
+
     suspend fun getDefaultCurrency(): Currency {
         val entity = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull()
         return if (entity == null) {
@@ -73,6 +78,9 @@ class SettingsDao(private val queries: SettingsQueries) {
     suspend fun setLanguage(language: AppLanguage) {
         queries.insertOrReplace(LANGUAGE_KEY, language.tag ?: "system")
     }
+
+    fun languageFlow(): Flow<AppLanguage> = valueFlow(LANGUAGE_KEY)
+        .map { stored -> AppLanguage.fromTag(stored) }
 
     fun autoUpdateRatesFlow(): Flow<Boolean> = valueFlow(AUTO_UPDATE_RATES_KEY)
         .map { it?.toBoolean() ?: true }

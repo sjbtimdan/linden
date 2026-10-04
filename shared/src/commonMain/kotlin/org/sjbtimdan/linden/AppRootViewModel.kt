@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.ThemeMode
 
 /**
  * Owns the [AppDependencies] composition root for the lifetime of the host
@@ -49,14 +51,14 @@ class AppRootViewModel(
     }
 
     /**
-     * Completes the first-run setup with the chosen currency, then shows the
-     * app. The dependencies are reused: only the currency write and the
-     * deferred seeding happen here.
+     * Completes the first-run setup with the chosen language, currency and
+     * theme, then shows the app. The dependencies are reused: only the settings
+     * write and the deferred seeding happen here.
      */
-    fun completeFirstRun(currency: Currency) {
+    fun completeFirstRun(language: AppLanguage, currency: Currency, theme: ThemeMode) {
         val dependencies = (_state.value as? AppRootState.FirstRun)?.dependencies ?: return
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { dependencies.completeFirstRun(currency) }
+            withContext(Dispatchers.IO) { dependencies.completeFirstRun(language, currency, theme) }
             _state.value = AppRootState.Ready(dependencies)
         }
     }

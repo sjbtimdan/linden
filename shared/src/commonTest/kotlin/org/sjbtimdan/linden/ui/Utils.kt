@@ -192,6 +192,11 @@ fun withSettingsViewModel(
         runComposeUiTest {
             val database = lindenDatabase()
             val dao = SettingsDao(database.settingsQueries)
+            // Seed non-default choices into the settings table (the source the
+            // ViewModel observes), so the initial state and the flows agree.
+            if (initialTheme != ThemeMode.SYSTEM) dao.setTheme(initialTheme)
+            if (initialCurrency != Currency.CHF) dao.setDefaultCurrency(initialCurrency)
+            if (initialLanguage != AppLanguage.SYSTEM) dao.setLanguage(initialLanguage)
             val viewModel = SettingsViewModel(
                 settingsDao = dao,
                 importer = IvyImporter(database, clock = FakeClock()),

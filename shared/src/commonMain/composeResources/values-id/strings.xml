@@ -12,7 +12,7 @@
 
     <!-- First run -->
     <string name="first_run_title">Selamat datang di Linden</string>
-    <string name="first_run_subtitle">Pilih mata uang yang Anda gunakan. Anda dapat mengubahnya nanti di Pengaturan.</string>
+    <string name="first_run_subtitle">Pilih bahasa, mata uang, dan tema Anda. Anda dapat mengubahnya nanti di Pengaturan.</string>
     <string name="first_run_continue">Lanjutkan</string>
 
     <!-- Common actions -->

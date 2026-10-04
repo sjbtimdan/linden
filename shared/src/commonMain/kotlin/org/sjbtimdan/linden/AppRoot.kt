@@ -31,9 +31,9 @@ fun AppRoot(createDependencies: suspend () -> AppDependencies) {
     when (val current = state) {
         is AppRootState.Ready -> App(current.dependencies)
 
-        is AppRootState.FirstRun -> MaterialTheme {
-            FirstRunScreen(onComplete = viewModel::completeFirstRun)
-        }
+        // FirstRunScreen carries its own theme and language override so the
+        // welcome page can preview both choices live.
+        is AppRootState.FirstRun -> FirstRunScreen(onComplete = viewModel::completeFirstRun)
 
         AppRootState.Failed -> MaterialTheme {
             StartupError(onRetry = viewModel::retry)

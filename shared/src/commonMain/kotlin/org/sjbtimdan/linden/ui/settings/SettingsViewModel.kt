@@ -55,10 +55,16 @@ class SettingsViewModel(
     val hideEntryTotal: StateFlow<Boolean> = hideEntryTotalSetting.state
 
     init {
-        // Keep the currency in sync with the settings table: the first-run
-        // screen writes the currency before the app is shown, and a restored
-        // backup can change it too. The optimistic update in
-        // [setDefaultCurrency] still applies instantly.
+        // Keep theme, language and currency in sync with the settings table: the
+        // first-run screen writes them before the app is shown, and a restored
+        // backup can change them too. The optimistic updates in [setThemeMode],
+        // [setLanguage] and [setDefaultCurrency] still apply instantly.
+        viewModelScope.launch {
+            settingsDao.themeFlow().collect { _themeMode.value = it }
+        }
+        viewModelScope.launch {
+            settingsDao.languageFlow().collect { _language.value = it }
+        }
         viewModelScope.launch {
             settingsDao.defaultCurrencyFlow().collect { _defaultCurrency.value = it }
         }

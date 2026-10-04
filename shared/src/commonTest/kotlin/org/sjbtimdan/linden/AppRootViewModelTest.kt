@@ -73,16 +73,19 @@ class AppRootViewModelTest : StringSpec({
         }
     }
 
-    "completeFirstRun writes the currency, seeds, and reaches Ready" {
+    "completeFirstRun writes language, theme and currency, seeds, and reaches Ready" {
         onTestMain {
             val viewModel = AppRootViewModel { testDependencies(firstRun = true) }
             val dependencies = (viewModel.state.value as AppRootState.FirstRun).dependencies
 
-            viewModel.completeFirstRun(Currency.EUR)
+            viewModel.completeFirstRun(AppLanguage.FRENCH, Currency.EUR, ThemeMode.DARK)
             // The completion runs on Dispatchers.IO; wait for the Ready emission.
             viewModel.state.first { it is AppRootState.Ready }
 
-            SettingsDao(dependencies.database.settingsQueries).getDefaultCurrency() shouldBe Currency.EUR
+            val settings = SettingsDao(dependencies.database.settingsQueries)
+            settings.getLanguage() shouldBe AppLanguage.FRENCH
+            settings.getTheme() shouldBe ThemeMode.DARK
+            settings.getDefaultCurrency() shouldBe Currency.EUR
             val accounts = AccountDao(dependencies.database.accountQueries).getAll().first()
             accounts.map { it.currency } shouldBe listOf(Currency.EUR, Currency.EUR)
         }

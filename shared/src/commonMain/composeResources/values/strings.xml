@@ -12,7 +12,7 @@
 
     <!-- First run -->
     <string name="first_run_title">Welcome to Linden</string>
-    <string name="first_run_subtitle">Choose the currency you use. You can change it later in Settings.</string>
+    <string name="first_run_subtitle">Choose your language, currency and theme. You can change them later in Settings.</string>
     <string name="first_run_continue">Continue</string>
 
     <!-- Common actions -->

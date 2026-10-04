@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.data
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 
@@ -18,6 +19,26 @@ class SettingsDaoTest : StringSpec({
         val dao = SettingsDao(database.settingsQueries)
         dao.setTheme(ThemeMode.DARK)
         dao.getTheme() shouldBe ThemeMode.DARK
+    }
+
+    "themeFlow emits SYSTEM by default, follows updates and falls back on unknown values" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.themeFlow().first() shouldBe ThemeMode.SYSTEM
+        dao.setTheme(ThemeMode.LIGHT)
+        dao.themeFlow().first() shouldBe ThemeMode.LIGHT
+        database.settingsQueries.insertOrReplace(THEME_KEY, "NOPE")
+        dao.themeFlow().first() shouldBe ThemeMode.SYSTEM
+    }
+
+    "languageFlow emits SYSTEM by default, follows updates and falls back on unknown values" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+        dao.languageFlow().first() shouldBe AppLanguage.SYSTEM
+        dao.setLanguage(AppLanguage.FRENCH)
+        dao.languageFlow().first() shouldBe AppLanguage.FRENCH
+        database.settingsQueries.insertOrReplace(LANGUAGE_KEY, "nope")
+        dao.languageFlow().first() shouldBe AppLanguage.SYSTEM
     }
 
     "getDefaultCurrency returns CHF when no setting exists" {

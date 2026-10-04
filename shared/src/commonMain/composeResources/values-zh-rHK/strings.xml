@@ -12,7 +12,7 @@
 
     <!-- First run -->
     <string name="first_run_title">歡迎使用 Linden</string>
-    <string name="first_run_subtitle">選擇你使用的貨幣。之後可以在設定中更改。</string>
+    <string name="first_run_subtitle">選擇你的語言、貨幣和主題。之後可以在設定中更改。</string>
     <string name="first_run_continue">繼續</string>
 
     <!-- Common actions -->

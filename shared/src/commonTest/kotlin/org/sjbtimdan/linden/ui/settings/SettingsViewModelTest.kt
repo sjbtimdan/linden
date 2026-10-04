@@ -72,6 +72,32 @@ class SettingsViewModelTest : StringSpec({
         }
     }
 
+    "observes language and theme written to the database after startup" {
+        onTestMain {
+            val database = lindenDatabase()
+            val dao = SettingsDao(database.settingsQueries)
+            val viewModel = SettingsViewModel(
+                dao,
+                IvyImporter(database, clock = FakeClock()),
+                backupManager = LindenBackupManager(database),
+                csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
+                initialTheme = ThemeMode.SYSTEM,
+                initialCurrency = Currency.CHF,
+                initialLanguage = AppLanguage.SYSTEM,
+            )
+
+            // The first-run screen (and a restored backup) writes settings behind
+            // the ViewModel's back; the flows must pick the changes up.
+            dao.setLanguage(AppLanguage.FRENCH)
+            dao.setTheme(ThemeMode.DARK)
+
+            withTimeout(5_000.milliseconds) {
+                viewModel.language.first { it == AppLanguage.FRENCH }
+                viewModel.themeMode.first { it == ThemeMode.DARK }
+            }
+        }
+    }
+
     "setHideEntryTotal(true) updates the database" {
         onTestMain {
             val database = lindenDatabase()

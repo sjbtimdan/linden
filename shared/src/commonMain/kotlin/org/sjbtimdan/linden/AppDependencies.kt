@@ -155,11 +155,13 @@ class AppDependencies(
     )
 
     /**
-     * Completes the first-run setup: persists the chosen default currency and
-     * seeds the starter categories and accounts in that currency. Called once
-     * from the first-run screen before the app is shown.
+     * Completes the first-run setup: persists the chosen language, theme and
+     * default currency, then seeds the starter categories and accounts in that
+     * currency. Called once from the first-run screen before the app is shown.
      */
-    suspend fun completeFirstRun(currency: Currency) {
+    suspend fun completeFirstRun(language: AppLanguage, currency: Currency, theme: ThemeMode) {
+        settingsDao.setLanguage(language)
+        settingsDao.setTheme(theme)
         settingsDao.setDefaultCurrency(currency)
         seeder.seedIfEmpty(currency)
     }

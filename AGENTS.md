@@ -108,7 +108,8 @@ git describe). It is generated code — never edit it.
   placeholder counts. Dates render from `DateLanguage` tables, not the raw locale; app language is `AppLanguage`
   (pin stored in `SettingsDao` under `language`, absent = follow system). See living-notes for the full i18n rules.
 - **First-run flow**: `AppRoot`/`AppRootViewModel` start in `Loading`, then `FirstRun` (no default currency set) or
-  `Ready`. `FirstRunScreen` prompts for a currency, then `completeFirstRun(currency)` writes it and triggers
+  `Ready`. `FirstRunScreen` prompts for language, currency and theme (language and theme preview live via
+  `ApplyLanguageOverride`/`LindenTheme`), then `completeFirstRun(language, currency, theme)` writes them and triggers
   `DefaultDataSeeder` (default categories/accounts). Nothing is written at startup otherwise. `testTag("loading")`
   marks the spinner; startup failure shows `StartupError`.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Every currency

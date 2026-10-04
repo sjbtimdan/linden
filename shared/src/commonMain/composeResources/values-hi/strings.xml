@@ -12,7 +12,7 @@
 
     <!-- First run -->
     <string name="first_run_title">Linden में आपका स्वागत है</string>
-    <string name="first_run_subtitle">अपनी मुद्रा चुनें। आप इसे बाद में सेटिंग्स में बदल सकते हैं।</string>
+    <string name="first_run_subtitle">अपनी भाषा, मुद्रा और थीम चुनें। आप इन्हें बाद में सेटिंग्स में बदल सकते हैं।</string>
     <string name="first_run_continue">जारी रखें</string>
 
     <!-- Common actions -->

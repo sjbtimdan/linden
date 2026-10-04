@@ -88,9 +88,6 @@ import org.sjbtimdan.linden.resources.settings_restore_confirm_body
 import org.sjbtimdan.linden.resources.settings_restore_failed
 import org.sjbtimdan.linden.resources.settings_restore_summary
 import org.sjbtimdan.linden.resources.settings_theme
-import org.sjbtimdan.linden.resources.settings_theme_dark
-import org.sjbtimdan.linden.resources.settings_theme_light
-import org.sjbtimdan.linden.resources.settings_theme_system
 import org.sjbtimdan.linden.resources.settings_working_backup
 import org.sjbtimdan.linden.resources.settings_working_export
 import org.sjbtimdan.linden.resources.settings_working_import
@@ -98,7 +95,10 @@ import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.resources.settings_your_data
 import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.ConfirmDialog
+import org.sjbtimdan.linden.ui.displayName
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
+import org.sjbtimdan.linden.ui.label
+import org.sjbtimdan.linden.ui.languageOptions
 import org.sjbtimdan.linden.ui.screenContainer
 
 @Composable
@@ -497,50 +497,6 @@ private fun ImportResultRow(text: String, onDismiss: () -> Unit) {
             modifier = Modifier.size(20.dp),
         )
     }
-}
-
-@Composable
-private fun ThemeMode.displayName(): String = stringResource(
-    when (this) {
-        ThemeMode.SYSTEM -> Res.string.settings_theme_system
-        ThemeMode.LIGHT -> Res.string.settings_theme_light
-        ThemeMode.DARK -> Res.string.settings_theme_dark
-    },
-)
-
-/** The language options. */
-private val languageOptions = listOf(
-    AppLanguage.ENGLISH,
-    AppLanguage.ITALIAN,
-    AppLanguage.FRENCH,
-    AppLanguage.GERMAN,
-    AppLanguage.HINDI,
-    AppLanguage.INDONESIAN,
-    AppLanguage.CHINESE_SIMPLIFIED,
-    AppLanguage.CHINESE_TRADITIONAL_HK,
-)
-
-/** Picker label: each language's own name for itself. */
-@Composable
-private fun AppLanguage.label(): String = when (this) {
-    // SYSTEM is never offered: the picker resolves it before selecting.
-    AppLanguage.SYSTEM -> ""
-
-    AppLanguage.ENGLISH -> "English"
-
-    AppLanguage.ITALIAN -> "Italiano"
-
-    AppLanguage.FRENCH -> "Français"
-
-    AppLanguage.GERMAN -> "Deutsch"
-
-    AppLanguage.HINDI -> "हिन्दी"
-
-    AppLanguage.INDONESIAN -> "Bahasa Indonesia"
-
-    AppLanguage.CHINESE_SIMPLIFIED -> "简体中文"
-
-    AppLanguage.CHINESE_TRADITIONAL_HK -> "繁體中文（香港）"
 }
 
 private fun buildVersionLabel(): String {

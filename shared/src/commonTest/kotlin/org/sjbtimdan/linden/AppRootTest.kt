@@ -14,6 +14,7 @@ import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.ui.onTestMain
+import java.util.Locale
 
 @OptIn(ExperimentalTestApi::class)
 class AppRootTest : StringSpec({
@@ -95,33 +96,39 @@ class AppRootTest : StringSpec({
         }
     }
 
-    "shows the first-run currency prompt and completes into the app" {
+    "shows the first-run setup and completes into the app" {
         onTestMain {
             runComposeUiTest {
-                val dependencies = AppDependencies(
-                    database = lindenDatabase(),
-                    initialTheme = ThemeMode.SYSTEM,
-                    initialCurrency = Currency.CHF,
-                    initialHideEntryTotal = false,
-                    initialLanguage = AppLanguage.SYSTEM,
-                    firstRun = true,
-                    fxRatesSource = FakeFxRatesSource(),
-                )
+                val originalLocale = Locale.getDefault()
+                try {
+                    val dependencies = AppDependencies(
+                        database = lindenDatabase(),
+                        initialTheme = ThemeMode.SYSTEM,
+                        initialCurrency = Currency.CHF,
+                        initialHideEntryTotal = false,
+                        initialLanguage = AppLanguage.SYSTEM,
+                        firstRun = true,
+                        fxRatesSource = FakeFxRatesSource(),
+                    )
 
-                setContent {
-                    AppRoot { dependencies }
+                    setContent {
+                        AppRoot { dependencies }
+                    }
+
+                    waitForIdle()
+
+                    onNodeWithTag("firstRunScreen").assertIsDisplayed()
+
+                    onNodeWithTag("firstRunCurrency-USD").performClick()
+                    onNodeWithTag("firstRunContinue").performClick()
+                    waitForIdle()
+
+                    onNodeWithTag("firstRunScreen").assertDoesNotExist()
+                    onNodeWithText("Add").assertIsDisplayed()
+                } finally {
+                    // The welcome screen applies the language override on composition.
+                    Locale.setDefault(originalLocale)
                 }
-
-                waitForIdle()
-
-                onNodeWithTag("firstRunScreen").assertIsDisplayed()
-
-                onNodeWithTag("firstRunCurrency-USD").performClick()
-                onNodeWithTag("firstRunContinue").performClick()
-                waitForIdle()
-
-                onNodeWithTag("firstRunScreen").assertDoesNotExist()
-                onNodeWithText("Add").assertIsDisplayed()
             }
         }
     }

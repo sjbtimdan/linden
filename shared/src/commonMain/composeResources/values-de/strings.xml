@@ -12,7 +12,7 @@
 
     <!-- First run -->
     <string name="first_run_title">Willkommen bei Linden</string>
-    <string name="first_run_subtitle">Wähle die Währung, die du verwendest. Du kannst sie später in den Einstellungen ändern.</string>
+    <string name="first_run_subtitle">Wähle deine Sprache, Währung und dein Design. Du kannst sie später in den Einstellungen ändern.</string>
     <string name="first_run_continue">Weiter</string>
 
     <!-- Common actions -->
