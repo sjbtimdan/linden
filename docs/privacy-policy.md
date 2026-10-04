@@ -1,28 +1,26 @@
 # Privacy Policy
 
-**Last updated:** September 2, 2026
+**Last updated:** October 4, 2026
 
 ## Overview
 
-Linden is a local-only expenses tracker. We do not collect, store, or transmit any personal data.
+Linden is a local-first expenses tracker. Your entries, accounts, categories and settings stay on your device.
 
 ## Data Collection
 
-**None.** Linden operates entirely on your device. No analytics, no tracking, no telemetry.
+- **Crash reports.** If Linden crashes, a technical report (stack trace, app version, device model, OS version) is sent to Google Firebase Crashlytics to help fix bugs.
+- **No analytics, no tracking, no ads.** Linden has no usage analytics, no advertising, and no accounts.
+- **Exchange rates.** Currency conversion requests current rates from the [Frankfurter API](https://www.frankfurter.app/); only a currency code is sent.
 
 ## Data Storage
 
-All data (entries, accounts, categories, settings) is stored locally in an SQLite database on your device. Nothing is uploaded to any server.
+All financial data (entries, accounts, categories, settings) is stored locally in an SQLite database on your device and is never uploaded by Linden.
 
-## Network Usage
+If Android's backup service is enabled on your device, the operating system may include Linden's local database in your Google account backup. That backup is controlled by you and your device settings, not by Linden.
 
-Linden fetches foreign exchange rates from the [Frankfurter API](https://www.frankfurter.app/), a free, open-source public API. This request contains no personal information — only a currency code to retrieve current rates.
+## Data Sharing
 
-No other network requests are made.
-
-## Third-Party Services
-
-- **Frankfurter API** — Public FX rates (no API key required, no user data sent)
+Crash reports are processed by Google Firebase Crashlytics on our behalf. No other third party receives data from Linden.
 
 ## Children's Privacy
 

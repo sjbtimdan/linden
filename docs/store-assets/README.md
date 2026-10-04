@@ -31,13 +31,13 @@ This also refreshes the master icon at `build/icon-render/linden-icon-1024.png`.
 - [x] Full description (< 4000 chars) — `docs/store-listing.md`
 - [x] App icon 512 × 512 — `play-icon-512.png`
 - [x] Feature graphic 1024 × 500 — `play-feature-graphic-1024x500.png`
-- [ ] Phone screenshots (2–8) — capture from a device/emulator, 16:9–9:16
+- [x] Phone screenshots (2–8) — capture from a device/emulator, 16:9–9:16
 - [ ] 7" tablet screenshots (optional, up to 8)
 - [ ] 10" tablet screenshots (optional, up to 8)
 - [ ] Promo video (optional) — YouTube URL
-- [ ] Privacy policy URL — see `docs/privacy-policy.md`
+- [ ] Privacy policy URL — host `docs/privacy-policy.md` at a public URL
 - [ ] Content rating questionnaire completed in Play Console
-- [ ] Data safety form completed (app stores data locally, no collection)
+- [ ] Data safety form completed (local data; Crashlytics crash diagnostics; no analytics)
 
 ## Screenshot guidance
 

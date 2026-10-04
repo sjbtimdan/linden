@@ -27,7 +27,6 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.analytics)
     debugImplementation(libs.compose.uiTooling)
     detektPlugins(libs.detekt.ktlint.wrapper)
     constraints {
