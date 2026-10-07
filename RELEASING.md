@@ -95,3 +95,17 @@ no native debug symbols; this is expected and safe to ignore:
 - If Linden ever adds its own native code, set `ndk { debugSymbolLevel = "SYMBOL_TABLE" }`
   on the release build type; AGP then packages symbols into the AAB automatically and
   Play picks them up (requires an NDK — AGP 9.4 defaults to NDK 28.2.13676358).
+
+## Store listing assets
+
+Store assets live in `docs/store-assets/` (icon, feature graphic, screenshots);
+listing copy lives in `docs/store-listings/`. The phone screenshots carry these
+overlay captions:
+
+| File | Caption |
+|---|---|
+| `screen-1-ledger-entries.png` | All your money, one timeline |
+| `screen-2-entry-calculator.png` | Add entries in seconds |
+| `screen-3-ledger-accounts.png` | Track accounts in any currency |
+| `screen-4-ledger-categories.png` | Know where it goes |
+| `screen-5-insights.png` | 12 months at a glance |

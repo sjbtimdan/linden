@@ -42,15 +42,17 @@ This also refreshes the master icon at `build/icon-render/linden-icon-1024.png`.
 - [ ] Content rating questionnaire completed in Play Console
 - [ ] Data safety form completed (local financial data; Firebase Analytics usage + Crashlytics diagnostics; advertising ID declared)
 
-## Screenshot guidance
+## Screenshots
 
-Suggested shots (capture in this order so the strongest comes first):
+The committed set (`screenshots/`, 1080 × 1920, 24-bit PNG without alpha). Each
+carries its caption as an overlay:
 
-1. Ledger — entries view for the current month
-2. Add entry dialog with the amount calculator
-3. Accounts view with multi-currency balances
-4. Categories view with totals
-5. Settings — backup / theme / default currency
+1. `screen-1-ledger-entries.png` — Ledger entries — "All your money, one timeline"
+2. `screen-2-entry-calculator.png` — amount calculator — "Add entries in seconds"
+3. `screen-3-ledger-accounts.png` — accounts and currencies — "Track accounts in any currency"
+4. `screen-4-ledger-categories.png` — category totals — "Know where it goes"
+5. `screen-5-insights.png` — 12-month trend — "12 months at a glance"
 
-Capture with `adb exec-out screencap -p > shot.png` (or the emulator camera icon).
-Crop/letterbox to a consistent aspect ratio (16:9 or 9:16) before uploading.
+Regenerate: seed the demo database with `scripts/linden-seed-demo.py` (writes
+`~/.linden/linden.db` — back up the real one first), install the debug APK on a
+16:9 emulator, then capture with `adb exec-out screencap -p > shot.png`.
