@@ -70,6 +70,15 @@ class EntryDraftTest : StringSpec({
         draft(type = EntryType.Income, categoryId = null).isValid(accounts) shouldBe false
     }
 
+    "expense and income drafts require the referenced account to exist" {
+        draft(accountId = 99).isValid(accounts) shouldBe false
+        draft(accountId = 99).firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
+        draft(type = EntryType.Income, categoryId = salary.id, accountId = 99)
+            .isValid(accounts) shouldBe false
+        draft(type = EntryType.Income, categoryId = salary.id, accountId = 99)
+            .firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
+    }
+
     "same-currency transfers are valid without a received amount" {
         draft(
             type = EntryType.Transfer,
@@ -104,6 +113,8 @@ class EntryDraftTest : StringSpec({
             MissingRequirement.CATEGORY
         draft(accountId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
         draft(categoryId = null).firstMissingRequirement(accounts) shouldBe MissingRequirement.CATEGORY
+        // An account hidden or deleted while the draft referenced it blocks saving.
+        draft(accountId = 99).firstMissingRequirement(accounts) shouldBe MissingRequirement.ACCOUNT
         draft().firstMissingRequirement(accounts).shouldBeNull()
     }
 
@@ -132,6 +143,8 @@ class EntryDraftTest : StringSpec({
             draft(type = EntryType.Transfer, toAccountId = savingsEur.id, toAmountText = "9.50"),
             draft(type = EntryType.Transfer, toAccountId = savingsEur.id, toAmountText = ""),
             draft(type = EntryType.Transfer, accountId = 99, toAccountId = savingsChf.id),
+            draft(accountId = 99),
+            draft(type = EntryType.Income, categoryId = salary.id, accountId = 99),
         )
         candidates.forEach { candidate ->
             candidate.isValid(accounts) shouldBe (candidate.firstMissingRequirement(accounts) == null)

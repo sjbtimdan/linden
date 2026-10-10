@@ -48,6 +48,7 @@ data class EntryDraft(
             EntryType.Expense, EntryType.Income -> when {
                 categoryId == null -> MissingRequirement.CATEGORY
                 accountId == null -> MissingRequirement.ACCOUNT
+                accounts.none { it.id == accountId } -> MissingRequirement.ACCOUNT
                 else -> null
             }
 
