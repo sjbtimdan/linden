@@ -214,35 +214,41 @@ class LindenBackupManager(private val database: LindenDatabase) {
     private fun isZipArchive(bytes: ByteArray): Boolean =
         bytes.size >= ZIP_MAGIC.size && bytes[0] == ZIP_MAGIC[0] && bytes[1] == ZIP_MAGIC[1]
 
-    private suspend fun readBackup(): LindenBackup = LindenBackup(
-        accounts = database.accountQueries.selectAll().awaitAsList().map { account ->
-            BackupAccount(account.id, account.name, account.currency, account.initialBalance, account.hidden != 0L)
-        },
-        categories = database.categoryQueries.selectAll().awaitAsList().map { category ->
-            BackupCategory(category.id, category.name, category.type, category.icon)
-        },
-        entries = database.entryQueries.selectAllRows().awaitAsList().map { entry ->
-            BackupEntry(
-                id = entry.id,
-                type = entry.type,
-                categoryId = entry.category_id,
-                description = entry.description,
-                accountId = entry.account_id,
-                amount = entry.amount,
-                toAccountId = entry.to_account_id,
-                toAmount = entry.to_amount,
-                createdAt = entry.created_at,
-                createdZone = entry.created_zone,
-            )
-        },
-        settings = database.settingsQueries.selectAll().awaitAsList().map { setting ->
-            BackupSetting(setting.key, setting.value_)
-        },
-        fxRates = database.fxRateQueries.selectAll().awaitAsList().map { rate ->
-            BackupFxRate(rate.baseCurrency, rate.quoteCurrency, rate.rate, rate.date, rate.fetchedAt)
-        },
-        budgets = database.budgetQueries.selectAll().awaitAsList().map { budget ->
-            BackupBudget(budget.id, budget.category_name, budget.limit_minor)
-        },
-    )
+    /**
+     * Reads every table in one transaction so the backup is a consistent
+     * snapshot even while the app keeps writing.
+     */
+    private suspend fun readBackup(): LindenBackup = database.transactionWithResult {
+        LindenBackup(
+            accounts = database.accountQueries.selectAll().awaitAsList().map { account ->
+                BackupAccount(account.id, account.name, account.currency, account.initialBalance, account.hidden != 0L)
+            },
+            categories = database.categoryQueries.selectAll().awaitAsList().map { category ->
+                BackupCategory(category.id, category.name, category.type, category.icon)
+            },
+            entries = database.entryQueries.selectAllRows().awaitAsList().map { entry ->
+                BackupEntry(
+                    id = entry.id,
+                    type = entry.type,
+                    categoryId = entry.category_id,
+                    description = entry.description,
+                    accountId = entry.account_id,
+                    amount = entry.amount,
+                    toAccountId = entry.to_account_id,
+                    toAmount = entry.to_amount,
+                    createdAt = entry.created_at,
+                    createdZone = entry.created_zone,
+                )
+            },
+            settings = database.settingsQueries.selectAll().awaitAsList().map { setting ->
+                BackupSetting(setting.key, setting.value_)
+            },
+            fxRates = database.fxRateQueries.selectAll().awaitAsList().map { rate ->
+                BackupFxRate(rate.baseCurrency, rate.quoteCurrency, rate.rate, rate.date, rate.fetchedAt)
+            },
+            budgets = database.budgetQueries.selectAll().awaitAsList().map { budget ->
+                BackupBudget(budget.id, budget.category_name, budget.limit_minor)
+            },
+        )
+    }
 }
