@@ -32,7 +32,9 @@ import org.sjbtimdan.linden.resources.nav_entry
 import org.sjbtimdan.linden.resources.nav_ledger
 import org.sjbtimdan.linden.resources.nav_settings
 import org.sjbtimdan.linden.ui.ApplyLanguageOverride
+import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.BottomNavItem
+import org.sjbtimdan.linden.ui.TopLevelPager
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
@@ -73,11 +75,35 @@ internal val ScreenSaver: Saver<Screen, String> = Saver(
     restore = { Screen.fromKey(it) },
 )
 
+/** The screens the pager swipes between, in bottom-navigation order. */
+internal val topLevelScreens = listOf(Screen.Ledger, Screen.Entry, Screen.Settings)
+
 @Composable
-fun App(dependencies: AppDependencies) {
+fun App(
+    dependencies: AppDependencies,
+    // Test seam: desktop has no system back, so the real BackHandler is a no-op
+    // and tests inject a handler they can invoke.
+    systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
+        BackHandler(enabled, onBack)
+    },
+) {
     var currentScreen by rememberSaveable(stateSaver = ScreenSaver) {
         mutableStateOf<Screen>(Screen.Entry)
     }
+    // The top-level screen a sub-screen was opened from; both the back arrow and
+    // the system back gesture return there.
+    var subScreenOrigin by rememberSaveable(stateSaver = ScreenSaver) {
+        mutableStateOf<Screen>(Screen.Settings)
+    }
+    val subScreen = currentScreen.takeIf { it !in topLevelScreens }
+    val openSubScreen: (Screen) -> Unit = { screen ->
+        if (currentScreen in topLevelScreens) {
+            subScreenOrigin = currentScreen
+        }
+        currentScreen = screen
+    }
+    val navigateBack: () -> Unit = { currentScreen = subScreenOrigin }
+    systemBackHandler(subScreen != null) { navigateBack() }
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
@@ -129,8 +155,11 @@ fun App(dependencies: AppDependencies) {
                         .padding(innerPadding)
                         .fillMaxSize(),
                 ) {
+                    // Top-level screens live in a pager that owns swiping; the
+                    // outer fade only runs when entering or leaving a sub-screen,
+                    // so a swipe never cross-fades on top of its own slide.
                     AnimatedContent(
-                        targetState = currentScreen,
+                        targetState = subScreen,
                         transitionSpec = {
                             fadeIn(animationSpec = tween(220)) togetherWith
                                 fadeOut(animationSpec = tween(120))
@@ -138,52 +167,62 @@ fun App(dependencies: AppDependencies) {
                         label = "screenTransition",
                     ) { screen ->
                         when (screen) {
-                            Screen.Entry -> EntryPoint(
-                                viewModel = entryViewModel,
-                                onNavigateToRates = { currentScreen = Screen.Rates },
-                                ratesWarning = ratesWarning,
-                            )
+                            null -> TopLevelPager(
+                                screen = currentScreen,
+                                onScreenChange = { currentScreen = it },
+                                modifier = Modifier.fillMaxSize(),
+                            ) { page ->
+                                when (page) {
+                                    Screen.Ledger -> LedgerScreen(
+                                        viewModel = ledgerViewModel,
+                                        onNavigateToEntry = { currentScreen = Screen.Entry },
+                                        onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
+                                        onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                    )
 
-                            Screen.Ledger -> LedgerScreen(
-                                viewModel = ledgerViewModel,
-                                onNavigateToEntry = { currentScreen = Screen.Entry },
-                                onNavigateToAccounts = { currentScreen = Screen.AccountList },
-                                onNavigateToCategories = { currentScreen = Screen.CategoryList },
-                            )
+                                    Screen.Entry -> EntryPoint(
+                                        viewModel = entryViewModel,
+                                        onNavigateToRates = { openSubScreen(Screen.Rates) },
+                                        ratesWarning = ratesWarning,
+                                    )
 
-                            Screen.Settings -> SettingsScreen(
-                                viewModel = settingsViewModel,
-                                onNavigateToCategories = { currentScreen = Screen.CategoryList },
-                                onNavigateToAccounts = { currentScreen = Screen.AccountList },
-                                onNavigateToRates = { currentScreen = Screen.Rates },
-                                onNavigateToBudgets = { currentScreen = Screen.Budgets },
-                                onNavigateToInsights = { currentScreen = Screen.Insights },
-                            )
+                                    else -> SettingsScreen(
+                                        viewModel = settingsViewModel,
+                                        onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                        onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
+                                        onNavigateToRates = { openSubScreen(Screen.Rates) },
+                                        onNavigateToBudgets = { openSubScreen(Screen.Budgets) },
+                                        onNavigateToInsights = { openSubScreen(Screen.Insights) },
+                                    )
+                                }
+                            }
 
                             Screen.CategoryList -> CategoryListScreen(
                                 viewModel = categoryListViewModel,
-                                onNavigateBack = { currentScreen = Screen.Settings },
+                                onNavigateBack = navigateBack,
                             )
 
                             Screen.AccountList -> AccountListScreen(
                                 viewModel = accountListViewModel,
-                                onNavigateBack = { currentScreen = Screen.Settings },
+                                onNavigateBack = navigateBack,
                             )
 
                             Screen.Rates -> RatesScreen(
                                 viewModel = ratesViewModel,
-                                onNavigateBack = { currentScreen = Screen.Settings },
+                                onNavigateBack = navigateBack,
                             )
 
                             Screen.Budgets -> BudgetScreen(
                                 viewModel = budgetViewModel,
-                                onNavigateBack = { currentScreen = Screen.Settings },
+                                onNavigateBack = navigateBack,
                             )
 
                             Screen.Insights -> InsightsScreen(
                                 viewModel = insightsViewModel,
-                                onNavigateBack = { currentScreen = Screen.Settings },
+                                onNavigateBack = navigateBack,
                             )
+
+                            else -> Unit
                         }
                     }
                 }

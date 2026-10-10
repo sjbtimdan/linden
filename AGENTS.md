@@ -39,7 +39,9 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
 - `:shared` — shared UI and business logic (KMP library, Compose Multiplatform; targets `jvm()` + `android`).
   All UI lives here. `App.kt` owns screen navigation via a sealed `Screen` class with a stable `key`
   (`Entry`/`Ledger`/`Settings`/`CategoryList`/`AccountList`/`Rates`/`Budgets`/`Insights`) in a
-  `NavigationBar` scaffold (bottom nav order: Ledger | Entry | Settings; app starts on Entry).
+  `NavigationBar` scaffold (bottom nav order: Ledger | Entry | Settings; app starts on Entry). The three
+  top-level screens additionally swipe via `ui/TopLevelPager.kt` (a `HorizontalPager` synced with the nav bar);
+  sub-screens stay outside the pager and fade in.
 - `:androidApp` — Android entry (`MainActivity`, appId `org.sjbtimdan.linden`, minSdk 24, targetSdk 37, edge-to-edge).
   Firebase Crashlytics and Analytics are wired here only (`google-services.json`, BoM, plugins applied on the module —
   not `apply false`). Analytics brings the merged `AD_ID`/ads-services/install-referrer permissions, so Data safety
