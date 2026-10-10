@@ -133,6 +133,18 @@ data class EntryDraft(
     )
 
     /**
+     * Returns this draft switched to [type], keeping every field the new type
+     * can carry — including the entry being edited, so saving still updates it.
+     * The category is kept only while [type] accepts it, and the transfer
+     * destination is kept only for transfers.
+     */
+    fun withType(type: EntryType, categories: List<Category>): EntryDraft = copy(
+        type = type,
+        categoryId = categoryId?.takeIf { id -> categoriesForType(categories, type).any { it.id == id } },
+        toAccountId = toAccountId.takeIf { type == EntryType.Transfer },
+    )
+
+    /**
      * Returns a copy of this draft that creates a new entry: it drops the edited
      * entry and re-dates itself to [now] in [zone]. Every other field (type,
      * amount, category, accounts, description) carries over unchanged, so saving

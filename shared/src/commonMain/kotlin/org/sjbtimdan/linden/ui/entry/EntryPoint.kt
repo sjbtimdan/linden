@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +47,7 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_clear
+import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.resources.entry_add
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
@@ -91,6 +93,7 @@ fun EntryPoint(
     val hasEntries by viewModel.hasEntries.collectAsState()
     val showRatesWarning by viewModel.showRatesWarning.collectAsState()
     val lastAdded by viewModel.lastAdded.collectAsState()
+    val lastAddedWasEdit by viewModel.lastAddedWasEdit.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -353,12 +356,19 @@ fun EntryPoint(
 
             // Receipt of the entry just saved, clearly marked as added so the
             // prefilled form below is not mistaken for an unsaved draft. Its
-            // Undo action pulls the entry back into the form, while its leading
-            // icon dismisses the receipt; a tap on the body does nothing.
+            // Edit action pulls the entry back into the form to update in
+            // place and Undo pulls it out of the ledger as a fresh draft, while
+            // its leading icon dismisses the receipt; a tap on the body does
+            // nothing.
             lastAdded?.let { entry ->
                 LastAddedEntry(
                     entry = entry,
                     hideAmounts = hideTotal,
+                    updated = lastAddedWasEdit,
+                    onEdit = {
+                        viewModel.editLastAdded()
+                        markTouched()
+                    },
                     onUndo = {
                         viewModel.undoLastAdded()
                         markTouched()
@@ -378,12 +388,16 @@ fun EntryPoint(
                     modifier = Modifier.weight(1f).testTag("saveEntry"),
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Add,
+                        imageVector = if (draft?.editing != null) Icons.Filled.Check else Icons.Filled.Add,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.entry_add))
+                    Text(
+                        stringResource(
+                            if (draft?.editing != null) Res.string.common_save else Res.string.entry_add,
+                        ),
+                    )
                 }
 
                 OutlinedButton(

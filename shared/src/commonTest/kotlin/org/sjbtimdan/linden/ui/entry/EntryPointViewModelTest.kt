@@ -416,6 +416,102 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 
+    "editLastAdded loads the entry into the form without deleting it" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.onDescriptionChange("Coffee")
+            viewModel.saveDraft() shouldBe true
+            val saved = viewModel.lastAdded.value
+
+            viewModel.editLastAdded()
+
+            viewModel.lastAdded.value.shouldBeNull()
+            // The row stays in the ledger until the edit is saved.
+            entryDao.getAll().first().shouldHaveSize(1)
+            viewModel.draft.value.let { draft ->
+                draft.shouldNotBeNull()
+                draft.editing shouldBe saved
+                draft.type shouldBe EntryType.Expense
+                draft.amountText shouldBe "4.50"
+                draft.description shouldBe "Coffee"
+                draft.categoryId shouldBe groceries.id
+                draft.accountId shouldBe main.id
+            }
+        }
+    }
+
+    "editLastAdded does nothing without a saved receipt" {
+        withEntryPoint(clock = FakeClock()) { entryDao, _, _, viewModel ->
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+
+            viewModel.editLastAdded()
+
+            viewModel.lastAdded.value.shouldBeNull()
+            viewModel.draft.value?.editing.shouldBeNull()
+            viewModel.draft.value?.amountText shouldBe "4.50"
+            entryDao.getAll().first().shouldBeEmpty()
+        }
+    }
+
+    "saveDraft while editing updates the entry instead of duplicating it" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+            viewModel.lastAddedWasEdit.value shouldBe false
+            val saved = viewModel.lastAdded.value
+
+            viewModel.editLastAdded()
+            viewModel.onAmountChange("9.99")
+            viewModel.saveDraft() shouldBe true
+
+            val entries = entryDao.getAll().first()
+            entries shouldHaveSize 1
+            entries.single().id shouldBe saved?.id
+            entries.single().amount shouldBe 999
+            viewModel.lastAdded.value?.amount shouldBe 999
+            viewModel.lastAddedWasEdit.value shouldBe true
+            viewModel.draft.value?.amountText shouldBe ""
+        }
+    }
+
+    "selectType while editing keeps the entry as the update target" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Salary", CategoryType.Income)
+            val salary = categoryDao.getAll().first().first { it.name == "Salary" }
+            viewModel.seedDraft()
+            viewModel.onAmountChange("4.50")
+            viewModel.onCategoryChange(groceries.id)
+            viewModel.onAccountChange(main.id)
+            viewModel.saveDraft() shouldBe true
+            val saved = viewModel.lastAdded.value
+
+            viewModel.editLastAdded()
+            viewModel.selectType(EntryType.Income)
+            viewModel.draft.value?.editing shouldBe saved
+
+            viewModel.onCategoryChange(salary.id)
+            viewModel.onAmountChange("20.00")
+            viewModel.saveDraft() shouldBe true
+
+            entryDao.getAll().first().let { entries ->
+                entries shouldHaveSize 1
+                entries.single().id shouldBe saved?.id
+                entries.single().type shouldBe EntryType.Income
+                entries.single().amount shouldBe 2_000
+            }
+        }
+    }
+
     "saveDraft reports an error and keeps the draft when the write fails" {
         onTestMain {
             runComposeUiTest {

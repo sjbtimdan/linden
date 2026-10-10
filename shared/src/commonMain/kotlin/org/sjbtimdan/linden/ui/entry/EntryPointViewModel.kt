@@ -100,16 +100,26 @@ class EntryPointViewModel(
 
     /**
      * The entry most recently saved from this screen, shown as a read-only
-     * "already added" confirmation with a short-lived undo offer.
+     * "already added" confirmation with a short-lived undo offer and an edit
+     * action that loads it back into the form.
      */
     val lastAdded: StateFlow<Entry?> = _lastAdded.asStateFlow()
+
+    private val _lastAddedWasEdit = MutableStateFlow(false)
+
+    /** True when [lastAdded] came from an edit save, so the receipt reads "Updated". */
+    val lastAddedWasEdit: StateFlow<Boolean> = _lastAddedWasEdit.asStateFlow()
 
     /**
      * Dismisses the last-added receipt without touching the draft or the entry;
      * the add becomes final. Also called when the undo offer times out.
      */
-    fun dismissLastAdded() {
+    fun dismissLastAdded() = clearLastAdded()
+
+    /** Clears the receipt together with the edit flag that labels it. */
+    private fun clearLastAdded() {
         _lastAdded.value = null
+        _lastAddedWasEdit.value = false
     }
 
     /**
@@ -129,11 +139,14 @@ class EntryPointViewModel(
         _selectedType.value = type
         viewModelScope.launch {
             val previous = draftState.value
-            val fresh = newEntryState(type)
-            draftState.value = if (previous != null && previous.type != type) {
-                fresh.carryOverCommonFields(previous)
-            } else {
-                fresh
+            draftState.value = when {
+                previous == null || previous.type == type -> newEntryState(type)
+
+                // A type flip on an edited entry still edits that row, so Add
+                // updates it instead of quietly creating a duplicate.
+                previous.editing != null -> previous.withType(type, categories.value)
+
+                else -> newEntryState(type).carryOverCommonFields(previous)
             }
         }
     }
@@ -156,27 +169,34 @@ class EntryPointViewModel(
 
     /** Resets the form to an empty draft of the selected type. */
     fun clearDraft() {
-        _lastAdded.value = null
+        clearLastAdded()
         draftState.value = EntryDraft.forNew(_selectedType.value, clock = clock)
     }
 
     /**
      * Saves the current draft and resets the form prefilled from the saved entry.
+     * A draft carrying an edited entry updates that row; a new draft inserts one.
      * Drafts only resolve against visible accounts: an account hidden while a
      * draft referenced it simply cannot be saved.
      */
     suspend fun saveDraft(): Boolean {
         val state = draftState.value ?: return false
         val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
-        val id = try {
-            entryDao.create(entry)
+        val updated = state.editing != null
+        try {
+            if (updated) {
+                entryDao.update(entry)
+                _lastAdded.value = entry
+            } else {
+                _lastAdded.value = entry.withId(entryDao.create(entry))
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             reportError(e.message)
             return false
         }
-        _lastAdded.value = entry.withId(id)
+        _lastAddedWasEdit.value = updated
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }
@@ -191,7 +211,19 @@ class EntryPointViewModel(
         deleteEntry(entry.id)
         _selectedType.value = entry.type
         draftState.value = EntryDraft.forEdit(entry).copy(editing = null)
-        _lastAdded.value = null
+        clearLastAdded()
+    }
+
+    /**
+     * Loads the last added entry back into the form as an edit of that row, so
+     * a typo can be fixed on the spot: the entry stays in the ledger and Add
+     * updates it instead of creating a duplicate. Nothing is written until Add.
+     */
+    fun editLastAdded() {
+        val entry = _lastAdded.value ?: return
+        _selectedType.value = entry.type
+        draftState.value = EntryDraft.forEdit(entry)
+        clearLastAdded()
     }
 }
 

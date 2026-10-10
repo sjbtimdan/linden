@@ -343,6 +343,41 @@ class EntryDraftTest : StringSpec({
         carried.accountId shouldBe savingsChf.id
     }
 
+    "withType keeps the edited entry and drops a category the new type cannot use" {
+        val editing = ExpenseEntry(7, groceries, "Coffee", main, 450, createdAt = createdAt, createdZone = createdZone)
+
+        val flipped = EntryDraft.forEdit(editing).withType(EntryType.Income, categories)
+
+        flipped.editing shouldBe editing
+        flipped.type shouldBe EntryType.Income
+        flipped.amountText shouldBe formatAmount(450)
+        flipped.accountId shouldBe main.id
+        flipped.description shouldBe "Coffee"
+        flipped.categoryId.shouldBeNull()
+    }
+
+    "withType keeps a category both entry types can use" {
+        val both = Category(3, "General", CategoryType.Both)
+        val state = draft(categoryId = both.id, accountId = main.id)
+
+        val flipped = state.withType(EntryType.Income, listOf(groceries, salary, both))
+
+        flipped.categoryId shouldBe both.id
+    }
+
+    "withType keeps the transfer destination only for transfers" {
+        val transfer = TransferEntry(9, null, "Move", main, 10_000, toAccount = savingsEur, toAmount = 9_500)
+
+        val flipped = EntryDraft.forEdit(transfer).withType(EntryType.Expense, categories)
+        flipped.editing shouldBe transfer
+        flipped.type shouldBe EntryType.Expense
+        flipped.toAccountId.shouldBeNull()
+
+        val pending = draft(type = EntryType.Expense, toAccountId = savingsEur.id)
+            .withType(EntryType.Transfer, categories)
+        pending.toAccountId shouldBe savingsEur.id
+    }
+
     "asNewEntry drops the edited entry and re-dates the copy" {
         val editing = IncomeEntry(8, salary, "Coupon", main, 50_000, createdAt = createdAt, createdZone = createdZone)
         val duplicate = EntryDraft.forEdit(editing).asNewEntry(

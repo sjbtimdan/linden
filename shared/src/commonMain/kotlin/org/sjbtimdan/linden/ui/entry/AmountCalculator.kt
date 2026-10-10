@@ -71,6 +71,7 @@ fun AmountCalculator(
     contextLabel: String? = null,
     onAdd: (() -> Unit)? = null,
     addEnabled: (String) -> Boolean = { true },
+    addLabel: StringResource = Res.string.entry_add_to_ledger,
 ) {
     val model = remember(initialMinor, decimalDigits) { CalculatorModel(initialMinor, decimalDigits) }
     var display by remember { mutableStateOf(model.display) }
@@ -216,7 +217,7 @@ fun AmountCalculator(
                         enabled = value != null && addEnabled(value),
                         modifier = Modifier.weight(1f).height(56.dp).testTag("calculatorAdd"),
                     ) {
-                        Text(stringResource(Res.string.entry_add_to_ledger))
+                        Text(stringResource(addLabel))
                     }
                 }
             }

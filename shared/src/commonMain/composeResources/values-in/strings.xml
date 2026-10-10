@@ -46,8 +46,10 @@
     <!-- Entry point -->
     <string name="entry_add">Tambah</string>
     <string name="entry_added">Ditambahkan</string>
+    <string name="entry_updated">Diperbarui</string>
     <string name="entry_add_to_ledger">Tambah ke Catatan</string>
     <string name="entry_undo">Urungkan</string>
+    <string name="entry_edit">Edit</string>
     <string name="entry_deleted">Entri dihapus</string>
     <string name="entry_total_balance">Saldo total</string>
     <string name="entry_show_total">Tampilkan total</string>

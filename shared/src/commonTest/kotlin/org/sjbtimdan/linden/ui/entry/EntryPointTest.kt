@@ -228,6 +228,50 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "tapping edit on the added receipt loads the entry for updating" {
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            seed(accountDao, categoryDao)
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Account").performClick()
+            onNodeWithText("Main").performClick()
+            onNodeWithText("Category").performClick()
+            onNodeWithText("Groceries").performClick()
+            enterAmount("12.50")
+            onNodeWithText("Description (optional)").performTextInput("Coffee")
+            tapOutside()
+            onNodeWithText("Add").performClick()
+            waitForIdle()
+
+            onNodeWithTag("editAddedEntry").performClick()
+            waitForIdle()
+
+            // The entry stays in the ledger and its values are back in the form,
+            // now saving an update instead of a new row.
+            onNodeWithTag("lastAddedEntry").assertDoesNotExist()
+            entryDao.getAll().first().shouldHaveSize(1)
+            onNode(hasSetTextAction() and hasText("12.50")).assertIsDisplayed()
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            onNodeWithText("Save").assertIsDisplayed()
+
+            onNode(hasSetTextAction() and hasText("Coffee")).performTextClearance()
+            onNodeWithText("Description (optional)").performTextInput("Tea")
+            tapOutside()
+            onNodeWithText("Save").performClick()
+            waitForIdle()
+
+            onNodeWithText("Updated").assertIsDisplayed()
+            entryDao.getAll().first().let { entries ->
+                entries shouldHaveSize 1
+                entries.single().description shouldBe "Tea"
+                entries.single().amount shouldBe 1_250
+            }
+        }
+    }
+
     "tapping the confirmation icon dismisses the added receipt without undoing" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)

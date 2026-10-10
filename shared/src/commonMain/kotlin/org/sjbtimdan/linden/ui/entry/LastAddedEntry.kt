@@ -31,25 +31,31 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_dismiss
 import org.sjbtimdan.linden.resources.entry_added
+import org.sjbtimdan.linden.resources.entry_edit
 import org.sjbtimdan.linden.resources.entry_undo
+import org.sjbtimdan.linden.resources.entry_updated
 import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
  * Read-only receipt of the entry that was just saved, shown above the
- * Add/Clear actions. [onUndo] pulls the entry back into the form as an
- * editable draft; the leading confirmation icon dismisses the receipt via
+ * Add/Clear actions. [onEdit] loads the entry back into the form to update it
+ * in place, while [onUndo] pulls it out of the ledger and back into the form
+ * as a fresh draft; the leading confirmation icon dismisses the receipt via
  * [onDismiss], so the body itself stays inert and a stray tap can neither
- * remove the entry nor hide the offer. [hideAmounts] masks the receipt's
- * amount while "Hide Totals" is on.
+ * remove the entry nor hide the offer. [updated] labels the receipt as the
+ * result of an edit; [hideAmounts] masks the receipt's amount while "Hide
+ * Totals" is on.
  */
 @Composable
 fun LastAddedEntry(
     entry: Entry,
+    onEdit: () -> Unit,
     onUndo: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     hideAmounts: Boolean = false,
+    updated: Boolean = false,
 ) {
     val tint = entry.tintColor()
     Row(
@@ -77,7 +83,7 @@ fun LastAddedEntry(
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(Res.string.entry_added),
+                text = stringResource(if (updated) Res.string.entry_updated else Res.string.entry_added),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -96,6 +102,17 @@ fun LastAddedEntry(
             maxLines = 1,
         )
         Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(Res.string.entry_edit),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(role = Role.Button, onClick = onEdit)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .testTag("editAddedEntry"),
+        )
+        Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = stringResource(Res.string.entry_undo),
             style = MaterialTheme.typography.labelLarge,

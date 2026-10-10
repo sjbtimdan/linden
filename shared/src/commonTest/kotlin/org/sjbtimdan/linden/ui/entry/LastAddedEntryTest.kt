@@ -27,13 +27,19 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, "Coffee", main, 450), onUndo = {}, onDismiss = {})
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
+                        onUndo = {},
+                        onDismiss = {},
+                    )
                 }
 
                 onNodeWithTag("lastAddedEntry").assertIsDisplayed()
                 onNodeWithText("Added").assertIsDisplayed()
                 onNodeWithText("Coffee · Main").assertIsDisplayed()
                 onNodeWithText("− 4.50 CHF").assertIsDisplayed()
+                onNodeWithText("Edit").assertIsDisplayed()
                 onNodeWithText("Undo").assertIsDisplayed()
             }
         }
@@ -43,7 +49,12 @@ class LastAddedEntryTest : StringSpec({
         onTestMain {
             runComposeUiTest {
                 setContent {
-                    LastAddedEntry(entry = ExpenseEntry(1, groceries, null, main, 450), onUndo = {}, onDismiss = {})
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, null, main, 450),
+                        onEdit = {},
+                        onUndo = {},
+                        onDismiss = {},
+                    )
                 }
 
                 onNodeWithText("Groceries · Main").assertIsDisplayed()
@@ -57,6 +68,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = TransferEntry(1, null, "Move", main, 10_000, toAccount = savings, toAmount = 9_500),
+                        onEdit = {},
                         onUndo = {},
                         onDismiss = {},
                     )
@@ -74,6 +86,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
                         onUndo = {},
                         onDismiss = {},
                         hideAmounts = true,
@@ -94,6 +107,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
                         onUndo = { undone = true },
                         onDismiss = {},
                     )
@@ -114,6 +128,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
                         onUndo = { undone = true },
                         onDismiss = { dismissed = true },
                     )
@@ -134,6 +149,7 @@ class LastAddedEntryTest : StringSpec({
                 setContent {
                     LastAddedEntry(
                         entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
                         onUndo = { undone = true },
                         onDismiss = {},
                     )
@@ -142,6 +158,47 @@ class LastAddedEntryTest : StringSpec({
                 onNodeWithTag("undoAddedEntry").performClick()
 
                 undone shouldBe true
+            }
+        }
+    }
+
+    "shows Updated instead of Added after an edit save" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = {},
+                        onUndo = {},
+                        onDismiss = {},
+                        updated = true,
+                    )
+                }
+
+                onNodeWithText("Updated").assertIsDisplayed()
+                onNodeWithText("Added").assertDoesNotExist()
+            }
+        }
+    }
+
+    "tapping the edit action edits the add without undoing" {
+        onTestMain {
+            runComposeUiTest {
+                var edited = false
+                var undone = false
+                setContent {
+                    LastAddedEntry(
+                        entry = ExpenseEntry(1, groceries, "Coffee", main, 450),
+                        onEdit = { edited = true },
+                        onUndo = { undone = true },
+                        onDismiss = {},
+                    )
+                }
+
+                onNodeWithTag("editAddedEntry").performClick()
+
+                edited shouldBe true
+                undone shouldBe false
             }
         }
     }

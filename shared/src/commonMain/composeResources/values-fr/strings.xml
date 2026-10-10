@@ -46,8 +46,10 @@
     <!-- Entry point -->
     <string name="entry_add">Ajouter</string>
     <string name="entry_added">Ajouté</string>
+    <string name="entry_updated">Mis à jour</string>
     <string name="entry_add_to_ledger">Ajouter au journal</string>
     <string name="entry_undo">Annuler</string>
+    <string name="entry_edit">Modifier</string>
     <string name="entry_deleted">Opération supprimée</string>
     <string name="entry_total_balance">Solde total</string>
     <string name="entry_show_total">Afficher le total</string>
