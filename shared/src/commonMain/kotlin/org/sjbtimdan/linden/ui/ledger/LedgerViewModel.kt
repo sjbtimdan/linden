@@ -500,15 +500,30 @@ class LedgerViewModel(
      * [targetBalance] (in the account's own minor units), attaching [category] to
      * the resulting entry. Each adjustment creates a fresh income/expense entry
      * dated now; a positive delta becomes an income entry, a negative delta an
-     * expense entry. When the delta is zero nothing is created.
+     * expense entry. When the delta is zero nothing is created. [onSaved] runs
+     * only after the write succeeds, so the dialog can stay open on failure.
      */
-    fun adjustBalance(account: Account, targetBalance: Long, category: Category, now: Instant = clock.now()) {
+    fun adjustBalance(
+        account: Account,
+        targetBalance: Long,
+        category: Category,
+        now: Instant = clock.now(),
+        onSaved: () -> Unit = {},
+    ) {
+        if (_saving.value) return
+        _saving.value = true
         launchWrite {
-            val current = currentAccountBalances.value[account.id] ?: account.initialBalance
-            val adjustment = balanceAdjustment(current, targetBalance)
-            val entry = adjustmentEntry(adjustment, account, category, now, zone)
-                ?: return@launchWrite
-            entryDao.create(entry)
+            try {
+                val current = currentAccountBalances.value[account.id] ?: account.initialBalance
+                val adjustment = balanceAdjustment(current, targetBalance)
+                val entry = adjustmentEntry(adjustment, account, category, now, zone)
+                if (entry != null) {
+                    entryDao.create(entry)
+                }
+                onSaved()
+            } finally {
+                _saving.value = false
+            }
         }
     }
 

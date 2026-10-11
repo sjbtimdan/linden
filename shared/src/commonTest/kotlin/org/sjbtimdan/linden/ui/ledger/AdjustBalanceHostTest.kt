@@ -13,15 +13,28 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.EntryQueries
+import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.BudgetDao
+import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.data.FxRateDao
+import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
+import org.sjbtimdan.linden.ui.onTestMain
+import org.sjbtimdan.linden.ui.testAllEntries
+import org.sjbtimdan.linden.ui.testRatesProvider
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 
 @OptIn(ExperimentalTestApi::class)
@@ -63,6 +76,62 @@ class AdjustBalanceHostTest : StringSpec({
             val entries = entryDao.getAll().first()
             entries.shouldHaveSize(1)
             entries.first().amount shouldBe 2_500
+        }
+    }
+
+    "a failed write keeps the dialog open and reports the error" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingCreateEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+                categoryDao.create("Groceries", CategoryType.Expense)
+                val main = accountDao.getAll().first().first()
+
+                var dismissed = false
+                setContent {
+                    var state by remember {
+                        mutableStateOf(
+                            AdjustBalanceDialogState(
+                                account = AccountWithBalance(main, 10_000),
+                                currentBalance = 10_000,
+                                targetBalanceText = "125.00",
+                            ),
+                        )
+                    }
+                    AdjustBalanceHost(
+                        viewModel = viewModel,
+                        state = state,
+                        hideAmounts = false,
+                        onStateChange = { state = it },
+                        onDismiss = { dismissed = true },
+                    )
+                }
+
+                waitForIdle()
+                onNodeWithText("Groceries").performClick()
+                onNodeWithText("Adjust").performClick()
+                waitForIdle()
+
+                dismissed shouldBe false
+                onNodeWithText("Adjust").assertIsDisplayed()
+                viewModel.error.value shouldBe true
+            }
         }
     }
 
@@ -154,3 +223,8 @@ class AdjustBalanceHostTest : StringSpec({
         }
     }
 })
+
+/** [EntryDao] whose create always fails, to exercise the host's failure path. */
+private class FailingCreateEntryDao(queries: EntryQueries) : EntryDao(queries) {
+    override suspend fun create(entry: Entry): Long = throw IllegalStateException("write failed")
+}

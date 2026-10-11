@@ -1761,6 +1761,22 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "adjustBalance runs onSaved only after the write succeeds" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+
+            var saved = false
+            viewModel.adjustBalance(main, targetBalance = 12_500, category = groceries, onSaved = { saved = true })
+            waitForIdle()
+
+            saved shouldBe true
+            entryDao.getAll().first().shouldHaveSize(1)
+        }
+    }
+
     "saveDialog keeps the dialog open and reports an error when the write fails" {
         onTestMain {
             runComposeUiTest {
@@ -1791,8 +1807,43 @@ class LedgerViewModelTest : StringSpec({
                 viewModel.saveDialog() shouldBe true
 
                 viewModel.dialogState.value.shouldNotBeNull()
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 viewModel.saving.value shouldBe false
+            }
+        }
+    }
+
+    "adjustBalance skips onSaved and reports an error when the write fails" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = FailingEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = LedgerViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    BudgetDao(database.budgetQueries),
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                )
+                viewModel.setPeriod(LedgerPeriod.All)
+                val (main, groceries) = seed(accountDao, categoryDao)
+
+                entryDao.failWrites = true
+                var saved = false
+                viewModel.adjustBalance(main, targetBalance = 12_500, category = groceries, onSaved = { saved = true })
+                waitForIdle()
+
+                saved shouldBe false
+                viewModel.error.value shouldBe true
+                viewModel.saving.value shouldBe false
+                entryDao.getAll().first().shouldHaveSize(0)
             }
         }
     }
@@ -1827,7 +1878,7 @@ class LedgerViewModelTest : StringSpec({
 
                 viewModel.dialogState.value.shouldNotBeNull()
                 viewModel.lastDeleted.value.shouldBeNull()
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 viewModel.saving.value shouldBe false
             }
         }
@@ -1863,7 +1914,7 @@ class LedgerViewModelTest : StringSpec({
                 viewModel.undoLastDeleted()
 
                 viewModel.lastDeleted.value.shouldBeNull()
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 entryDao.getAll().first().filterIsInstance<ExpenseEntry>().shouldBeEmpty()
             }
         }

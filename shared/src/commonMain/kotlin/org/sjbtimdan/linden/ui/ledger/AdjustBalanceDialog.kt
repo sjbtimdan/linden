@@ -100,8 +100,7 @@ internal fun AdjustBalanceHost(
         onTargetBalanceChange = { onStateChange(state.copy(targetBalanceText = it)) },
         onSave = {
             if (targetBalance != null && selectedCategory != null) {
-                viewModel.adjustBalance(state.account.account, targetBalance, selectedCategory)
-                onDismiss()
+                viewModel.adjustBalance(state.account.account, targetBalance, selectedCategory, onSaved = onDismiss)
             }
         },
         onDismiss = onDismiss,
