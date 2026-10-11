@@ -381,6 +381,7 @@ fun withInsightsViewModel(
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     hideEntryTotal: Boolean = false,
+    cpiSeries: Map<Currency, CpiSeries> = emptyMap(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryDao, InsightsViewModel) -> Unit,
 ) {
     onTestMain {
@@ -394,11 +395,17 @@ fun withInsightsViewModel(
             if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
+            cpiSeries.forEach { (currency, series) ->
+                series.values.forEachIndexed { index, value ->
+                    database.cpiQueries.insertOrReplace(currency.name, series.monthAt(index), value.toLong())
+                }
+            }
             val viewModel = InsightsViewModel(
                 entryDao,
                 settingsDao,
                 testRatesProvider(settingsDao, fxRateDao),
                 BudgetDao(database.budgetQueries),
+                CpiDao(database.cpiQueries),
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 clock = clock,

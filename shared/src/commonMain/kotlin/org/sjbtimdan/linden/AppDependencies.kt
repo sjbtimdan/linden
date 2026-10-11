@@ -155,6 +155,7 @@ class AppDependencies(
         settingsDao,
         ratesProvider,
         budgetDao,
+        cpiDao,
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,

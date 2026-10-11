@@ -14,10 +14,13 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import org.sjbtimdan.linden.data.BudgetDao
+import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.inflation.CpiSeries
+import org.sjbtimdan.linden.inflation.EntryInflation
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -42,6 +45,7 @@ class InsightsViewModel(
     settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     budgetDao: BudgetDao,
+    cpiDao: CpiDao,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
@@ -65,9 +69,31 @@ class InsightsViewModel(
     private val _selectedIndex = MutableStateFlow(-1)
     val selectedIndex: StateFlow<Int> = _selectedIndex.asStateFlow()
 
+    /** Restate displayed amounts in the latest stored month's money. */
+    private val _inflationAdjusted = MutableStateFlow(false)
+    val inflationAdjusted: StateFlow<Boolean> = _inflationAdjusted.asStateFlow()
+
+    private val cpiSeries: StateFlow<Map<Currency, CpiSeries>> = cpiDao.seriesFlow().stateFlow(emptyMap())
+
+    /** Whether any CPI data is stored; drives the toggle. */
+    val inflationAvailable: StateFlow<Boolean> = cpiSeries.map { it.isNotEmpty() }.stateFlow(false)
+
+    /** Latest stored month across currencies, for the toggle's caption. */
+    val inflationThroughMonth: StateFlow<String?> =
+        cpiSeries.map { byCurrency -> byCurrency.values.maxOfOrNull(CpiSeries::latestMonth) }.stateFlow(null)
+
+    private val inflationAdjustment: StateFlow<EntryInflation> =
+        combine(_inflationAdjusted, cpiSeries) { adjusted, series -> EntryInflation(adjusted, series, zone) }
+            .stateFlow(EntryInflation(false, emptyMap(), zone))
+
+    /** [allEntries] restated in the latest stored month's money while the toggle is on. */
+    private val adjustedEntries: StateFlow<List<Entry>> =
+        combine(allEntries, inflationAdjustment) { entries, adjustment -> adjustment.adjustedEntries(entries) }
+            .stateFlow(emptyList())
+
     /** 12-month expense/income window ending with [windowEnd]. */
     val months: StateFlow<List<MonthTotal>> = combine(
-        allEntries,
+        adjustedEntries,
         ratesProvider.defaultCurrency,
         ratesProvider.rates,
         _windowEnd,
@@ -82,7 +108,7 @@ class InsightsViewModel(
 
     /** Category rows of the selected month (window-end month when unselected). */
     val breakdown: StateFlow<MonthBreakdown?> = combine(
-        allEntries,
+        adjustedEntries,
         ratesProvider.defaultCurrency,
         ratesProvider.rates,
         budgetDao.budgetsFlow(),
@@ -98,6 +124,11 @@ class InsightsViewModel(
     /** Inspects the month at [index] within the window. */
     fun selectMonth(index: Int) {
         if (index in 0 until WINDOW_MONTHS) _selectedIndex.value = index
+    }
+
+    /** Switches the trend and breakdown between nominal and the latest month's money. */
+    fun setInflationAdjusted(adjusted: Boolean) {
+        _inflationAdjusted.value = adjusted
     }
 
     /** Pages the window twelve months backwards, back to the new window's end. */
