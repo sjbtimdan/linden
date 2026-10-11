@@ -35,7 +35,7 @@ class SettingsScreenTest : StringSpec({
         withSettingsViewModel(initialTheme = ThemeMode.SYSTEM) { viewModel ->
             setContent { SettingsScreen(viewModel) }
             onNodeWithText("System").assertIsSelected()
-            onNodeWithText("Light").performClick()
+            onNodeWithText("Light").performScrollTo().performClick()
             onNodeWithText("Light").assertIsSelected()
 
             viewModel.themeMode.value shouldBe ThemeMode.LIGHT

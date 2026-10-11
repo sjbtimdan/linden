@@ -285,4 +285,13 @@
     <string name="budget_choose_category">Pilih kategori</string>
     <string name="budget_monthly_limit">Batas bulanan</string>
     <string name="budget_empty">Belum ada anggaran. Tambahkan satu anggaran untuk melacak pengeluaran bulanan kategori.</string>
+    <!-- Inflation (CPI) -->
+    <string name="settings_nav_inflation">Inflasi</string>
+    <string name="inflation_title">Data inflasi</string>
+    <string name="inflation_source">Sumber: %1$s, diambil %2$s</string>
+    <string name="inflation_through">hingga %1$s</string>
+    <string name="inflation_change_caption">Perubahan 12 bulan</string>
+    <string name="inflation_empty">Belum ada data inflasi.</string>
+    <string name="ledger_inflation_toggle">Dalam nilai uang hari ini</string>
+    <string name="ledger_inflation_note">IHK hingga %1$s</string>
 </resources>

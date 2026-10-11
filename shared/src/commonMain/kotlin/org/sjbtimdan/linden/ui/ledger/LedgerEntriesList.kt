@@ -46,6 +46,7 @@ internal fun LedgerEntriesList(
     hideAmounts: Boolean,
     zone: TimeZone,
     onEntryClick: (Entry) -> Unit,
+    amountOverrides: Map<Long, Long> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -63,6 +64,7 @@ internal fun LedgerEntriesList(
                         entry = item.entry,
                         onClick = { onEntryClick(item.entry) },
                         hideAmounts = hideAmounts,
+                        amountOverride = amountOverrides[item.entry.id],
                         zone = zone,
                         modifier = Modifier.animateItem(),
                     )

@@ -16,6 +16,7 @@ import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
+import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.SettingsDao
@@ -70,6 +71,7 @@ class LedgerViewModelTest : StringSpec({
                     CategoryDao(database.categoryQueries),
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
                     testAllEntries(entryDao),
                     clock = FakeClock(today = LocalDate(2026, 8, 15)),
@@ -94,6 +96,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     budgetDao,
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
                     testAllEntries(entryDao),
                     clock = FakeClock(today = LocalDate(2026, 8, 15)),
@@ -132,6 +135,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     budgetDao,
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
                     testAllEntries(entryDao),
                     clock = FakeClock(today = LocalDate(2026, 8, 15)),
@@ -1792,6 +1796,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
@@ -1828,6 +1833,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
@@ -1863,6 +1869,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
@@ -1899,6 +1906,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),
@@ -1935,6 +1943,7 @@ class LedgerViewModelTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
+                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),

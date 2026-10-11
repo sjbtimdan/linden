@@ -21,9 +21,9 @@ class DesktopStartupTest : StringSpec({
         val dir = Files.createTempDirectory("linden-startup-test").toFile()
         val dbFile = File(dir, "linden.db")
 
-        // A database left behind by a previous build of the current schema: every
-        // table in the v1 shape and user_version never stamped — desktop builds
-        // before startup migrations existed left it at 0.
+        // A database left behind by a previous build of the v1 schema: every
+        // table in the v1 shape (no CpiEntity yet) and user_version never
+        // stamped — desktop builds before startup migrations existed left it at 0.
         val seed = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
         seed.execute(
             null,
@@ -104,9 +104,12 @@ class DesktopStartupTest : StringSpec({
         database.entryQueries.selectAllRows().executeAsList().shouldHaveSize(1)
         database.settingsQueries.selectAll().executeAsList().map { it.key } shouldBe listOf("theme")
 
+        // The v1 -> v2 migration added the CPI table without touching existing rows.
+        database.cpiQueries.countAll().executeAsOne() shouldBe 0L
+
         // The file is stamped with the current schema version, so the next boot
         // skips the migration instead of replaying it.
-        userVersionOf(dbFile) shouldBe 1L
+        userVersionOf(dbFile) shouldBe 2L
     }
 })
 

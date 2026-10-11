@@ -287,4 +287,13 @@
     <string name="budget_choose_category">Choose category</string>
     <string name="budget_monthly_limit">Monthly limit</string>
     <string name="budget_empty">No budgets yet. Add one to track a category's monthly spending.</string>
+    <!-- Inflation (CPI) -->
+    <string name="settings_nav_inflation">Inflation</string>
+    <string name="inflation_title">Inflation data</string>
+    <string name="inflation_source">Source: %1$s, fetched %2$s</string>
+    <string name="inflation_through">through %1$s</string>
+    <string name="inflation_change_caption">12-month change</string>
+    <string name="inflation_empty">No inflation data stored.</string>
+    <string name="ledger_inflation_toggle">In today's money</string>
+    <string name="ledger_inflation_note">CPI through %1$s</string>
 </resources>

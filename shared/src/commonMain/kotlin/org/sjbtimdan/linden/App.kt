@@ -39,6 +39,7 @@ import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.entry.EntryPoint
+import org.sjbtimdan.linden.ui.inflation.InflationScreen
 import org.sjbtimdan.linden.ui.insights.InsightsScreen
 import org.sjbtimdan.linden.ui.ledger.LedgerScreen
 import org.sjbtimdan.linden.ui.rates.RatesScreen
@@ -52,6 +53,7 @@ sealed class Screen(val key: String) {
     data object CategoryList : Screen("CategoryList")
     data object AccountList : Screen("AccountList")
     data object Rates : Screen("Rates")
+    data object Inflation : Screen("Inflation")
     data object Budgets : Screen("Budgets")
     data object Insights : Screen("Insights")
 
@@ -63,6 +65,7 @@ sealed class Screen(val key: String) {
             CategoryList.key -> CategoryList
             AccountList.key -> AccountList
             Rates.key -> Rates
+            Inflation.key -> Inflation
             Budgets.key -> Budgets
             Insights.key -> Insights
             else -> Entry
@@ -106,6 +109,7 @@ fun App(
     systemBackHandler(subScreen != null) { navigateBack() }
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
+    val inflationViewModel = dependencies.inflationViewModel
     val categoryListViewModel = dependencies.categoryListViewModel
     val accountListViewModel = dependencies.accountListViewModel
     val budgetViewModel = dependencies.budgetViewModel
@@ -191,6 +195,7 @@ fun App(
                                         onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
                                         onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
                                         onNavigateToRates = { openSubScreen(Screen.Rates) },
+                                        onNavigateToInflation = { openSubScreen(Screen.Inflation) },
                                         onNavigateToBudgets = { openSubScreen(Screen.Budgets) },
                                         onNavigateToInsights = { openSubScreen(Screen.Insights) },
                                     )
@@ -209,6 +214,11 @@ fun App(
 
                             Screen.Rates -> RatesScreen(
                                 viewModel = ratesViewModel,
+                                onNavigateBack = navigateBack,
+                            )
+
+                            Screen.Inflation -> InflationScreen(
+                                viewModel = inflationViewModel,
                                 onNavigateBack = navigateBack,
                             )
 

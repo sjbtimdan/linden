@@ -54,7 +54,7 @@ internal fun Entry.subtitle(): String = when (this) {
     else -> account.name
 }
 
-internal fun Entry.amountLabel(): String = when (type) {
+internal fun Entry.amountLabel(amount: Long = this.amount): String = when (type) {
     EntryType.Expense -> "− ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
     EntryType.Income -> "+ ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
     EntryType.Transfer -> "${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
@@ -75,7 +75,8 @@ internal fun Entry.tintColor(): Color = when (type) {
  * time-of-day line: rows are grouped under day headers that already carry the
  * date, so the line only shows the time to tell same-day entries apart.
  * [hideAmounts] masks the amount while "Hide Totals" is on, leaving the title
- * and subtitle readable.
+ * and subtitle readable. [amountOverride] replaces the shown sent amount
+ * (the ledger's today's-money display); the entry itself stays untouched.
  */
 @Composable
 fun EntryRow(
@@ -83,6 +84,7 @@ fun EntryRow(
     onClick: () -> Unit,
     showTime: Boolean = true,
     hideAmounts: Boolean = false,
+    amountOverride: Long? = null,
     zone: TimeZone = TimeZone.currentSystemDefault(),
     modifier: Modifier = Modifier,
 ) {
@@ -138,7 +140,7 @@ fun EntryRow(
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(
-            text = if (hideAmounts) HIDDEN_AMOUNT else entry.amountLabel(),
+            text = if (hideAmounts) HIDDEN_AMOUNT else entry.amountLabel(amountOverride ?: entry.amount),
             style = MaterialTheme.typography.titleMedium,
             color = tint,
             maxLines = 1,

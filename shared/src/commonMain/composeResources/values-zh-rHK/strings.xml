@@ -281,4 +281,13 @@
     <string name="budget_choose_category">選擇分類</string>
     <string name="budget_monthly_limit">每月上限</string>
     <string name="budget_empty">尚未有預算。新增一個預算，即可追蹤分類的每月開支。</string>
+    <!-- Inflation (CPI) -->
+    <string name="settings_nav_inflation">通脹</string>
+    <string name="inflation_title">通脹數據</string>
+    <string name="inflation_source">來源：%1$s，於 %2$s 取得</string>
+    <string name="inflation_through">截至 %1$s</string>
+    <string name="inflation_change_caption">12 個月變化</string>
+    <string name="inflation_empty">暫無通脹數據。</string>
+    <string name="ledger_inflation_toggle">以今日幣值計算</string>
+    <string name="ledger_inflation_note">CPI 截至 %1$s</string>
 </resources>
