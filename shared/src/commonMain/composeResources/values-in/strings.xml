@@ -26,7 +26,7 @@
     <string name="common_dismiss">Tutup</string>
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">kesalahan tidak diketahui</string>
-    <string name="common_operation_failed">Operasi gagal: %1$s</string>
+    <string name="common_write_failed">Perubahan tidak dapat disimpan. Coba lagi.</string>
 
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">Akun</string>

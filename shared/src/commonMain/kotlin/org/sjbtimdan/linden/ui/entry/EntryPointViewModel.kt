@@ -192,8 +192,8 @@ class EntryPointViewModel(
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
-            reportError(e.message)
+        } catch (_: Exception) {
+            reportError()
             return false
         }
         _lastAddedWasEdit.value = updated

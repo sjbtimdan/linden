@@ -30,26 +30,24 @@ abstract class AppViewModel : ViewModel() {
                 block()
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
-                reportError(e.message)
+            } catch (_: Exception) {
+                reportError()
             }
         }
     }
 
-    private val _error = MutableStateFlow<String?>(null)
+    private val _error = MutableStateFlow(false)
 
-    /** The last failed write's exception message, or null once consumed. */
-    val error: StateFlow<String?> = _error.asStateFlow()
+    /** True while a failed write awaits surfacing; the screen shows a localized message. */
+    val error: StateFlow<Boolean> = _error.asStateFlow()
 
     /** Consumes the error so a later failure can be shown again. */
     fun clearError() {
-        _error.value = null
+        _error.value = false
     }
 
-    /** Records a failed write for the screen to surface; [message] is the exception's message, if any. */
-    protected fun reportError(message: String?) {
-        // An empty string stands for "failed without a message" so the error is
-        // still surfaced (the UI falls back to a generic copy).
-        _error.value = message ?: ""
+    /** Records a failed write; the failure carries no copy, the UI resolves it. */
+    protected fun reportError() {
+        _error.value = true
     }
 }

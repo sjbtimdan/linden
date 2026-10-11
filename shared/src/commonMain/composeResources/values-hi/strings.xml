@@ -26,7 +26,7 @@
     <string name="common_dismiss">बंद करें</string>
     <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
     <string name="common_unknown_error">अज्ञात त्रुटि</string>
-    <string name="common_operation_failed">कार्रवाई विफल रही: %1$s</string>
+    <string name="common_write_failed">आपका बदलाव सहेजा नहीं जा सका। कृपया पुनः प्रयास करें।</string>
 
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">खाते</string>

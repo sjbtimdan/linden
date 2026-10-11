@@ -10,19 +10,31 @@ private class TestViewModel : AppViewModel() {
 }
 
 class AppViewModelTest : StringSpec({
-    "launchWrite reports the failure message" {
+    "launchWrite signals a failure without carrying the exception message" {
         onTestMain {
             val viewModel = TestViewModel()
             viewModel.write { throw IllegalStateException("disk full") }
-            viewModel.error.value shouldBe "disk full"
+            viewModel.error.value shouldBe true
         }
     }
 
-    "launchWrite reports a message-less failure as an empty string" {
+    "launchWrite signals a message-less failure the same way" {
         onTestMain {
             val viewModel = TestViewModel()
             viewModel.write { throw IllegalStateException() }
-            viewModel.error.value shouldBe ""
+            viewModel.error.value shouldBe true
+        }
+    }
+
+    "clearError consumes the signal so a later failure can be shown again" {
+        onTestMain {
+            val viewModel = TestViewModel()
+            viewModel.write { throw IllegalStateException() }
+            viewModel.error.value shouldBe true
+
+            viewModel.clearError()
+
+            viewModel.error.value shouldBe false
         }
     }
 
@@ -30,7 +42,7 @@ class AppViewModelTest : StringSpec({
         onTestMain {
             val viewModel = TestViewModel()
             viewModel.write { throw CancellationException("cancelled") }
-            viewModel.error.value shouldBe null
+            viewModel.error.value shouldBe false
         }
     }
 
@@ -40,7 +52,7 @@ class AppViewModelTest : StringSpec({
             var ran = false
             viewModel.write { ran = true }
             ran shouldBe true
-            viewModel.error.value shouldBe null
+            viewModel.error.value shouldBe false
         }
     }
 })

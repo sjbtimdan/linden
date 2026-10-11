@@ -7,21 +7,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_operation_failed
-import org.sjbtimdan.linden.resources.common_unknown_error
+import org.sjbtimdan.linden.resources.common_write_failed
 
 /**
- * Shows the ViewModel's latest failed-write error on [hostState] and consumes
- * it, so a later failure can be shown again. Place once per screen that hosts
- * CRUD, next to its [androidx.compose.material3.SnackbarHost].
+ * Shows a friendly message when the ViewModel's latest write failed and consumes
+ * the failure, so a later one can be shown again. Raw exception text is
+ * deliberately never rendered. Place once per screen that hosts CRUD, next to
+ * its [androidx.compose.material3.SnackbarHost].
  */
 @Composable
 fun AppViewModel.ErrorSnackbar(hostState: SnackbarHostState) {
     val error by error.collectAsState()
-    val unknownError = stringResource(Res.string.common_unknown_error)
-    val message = error?.let { stringResource(Res.string.common_operation_failed, it.ifEmpty { unknownError }) }
+    val message = stringResource(Res.string.common_write_failed)
     LaunchedEffect(error) {
-        if (error != null && message != null) {
+        if (error) {
             hostState.showSnackbar(message)
             clearError()
         }

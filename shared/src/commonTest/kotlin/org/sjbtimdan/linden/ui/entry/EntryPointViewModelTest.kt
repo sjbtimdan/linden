@@ -544,7 +544,7 @@ class EntryPointViewModelTest : StringSpec({
 
                 viewModel.saveDraft() shouldBe false
                 viewModel.lastAdded.value.shouldBeNull()
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 viewModel.draft.value?.amountText shouldBe "4.50"
             }
         }
@@ -831,7 +831,7 @@ class EntryPointViewModelTest : StringSpec({
                 categoryDao.failWrites = true
                 viewModel.createCategory("Travel", CategoryType.Expense) shouldBe true
 
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 viewModel.draft.value?.categoryId.shouldBeNull()
             }
         }
@@ -861,7 +861,7 @@ class EntryPointViewModelTest : StringSpec({
                 accountDao.failWrites = true
                 viewModel.createAccount("Wallet", Currency.EUR) shouldBe true
 
-                viewModel.error.value.shouldNotBeNull()
+                viewModel.error.value shouldBe true
                 viewModel.draft.value?.accountId.shouldBeNull()
             }
         }
