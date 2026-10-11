@@ -1,3 +1,13 @@
+## Version 1.1.0
+
+<en-US>
+- Swipe between the Ledger, Entry and Settings tabs; leaving a sub-screen returns you where you opened it.
+- Edit an entry directly from the Added receipt after saving.
+- A failed save now shows a clear message instead of doing nothing.
+- An entry can no longer be saved to an account that was hidden or deleted while you were editing.
+- Creating a backup now reads a consistent snapshot of your data.
+</en-US>
+
 ## Version 1.0.0
 
 <en-US>
