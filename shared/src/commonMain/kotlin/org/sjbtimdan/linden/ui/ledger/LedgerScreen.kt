@@ -44,6 +44,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.capture.PendingCapture
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
@@ -65,6 +66,8 @@ import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsBanner
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmount
@@ -85,6 +88,8 @@ fun LedgerScreen(
     onNavigateToEntry: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
+    captureViewModel: CapturedPaymentsViewModel? = null,
+    onAddCapture: (PendingCapture) -> Unit = {},
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val visibleAccounts by viewModel.visibleAccounts.collectAsState()
@@ -169,6 +174,16 @@ fun LedgerScreen(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        // The captured-payment inbox lives where its entries will: pinned above
+        // the entries list, collapsed to a bar once acknowledged.
+        if (viewMode == LedgerViewMode.Entries && captureViewModel != null) {
+            CapturedPaymentsBanner(
+                viewModel = captureViewModel,
+                onAdd = onAddCapture,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
 
         FiltersHeader(
             expanded = filtersExpanded,

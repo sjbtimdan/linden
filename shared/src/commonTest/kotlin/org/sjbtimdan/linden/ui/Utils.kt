@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.AppDependencies
 import org.sjbtimdan.linden.backup.LindenBackupManager
+import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -41,6 +42,8 @@ import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
+import org.sjbtimdan.linden.ui.capture.CaptureSettingsViewModel
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.insights.InsightsViewModel
@@ -243,6 +246,7 @@ fun withEntryPoint(
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     ratesSeen: Boolean = false,
+    onCaptureConsumed: suspend (Long) -> Unit = {},
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
 ) {
     onTestMain {
@@ -267,6 +271,7 @@ fun withEntryPoint(
                 initialHideEntryTotal = hideEntryTotal,
                 clock = clock,
                 zone = TimeZone.UTC,
+                onCaptureConsumed = onCaptureConsumed,
             )
             block(entryDao, accountDao, categoryDao, viewModel)
         }
@@ -294,6 +299,37 @@ fun withEntryPoint(
     ratesSeen: Boolean = false,
     block: suspend ComposeUiTest.(EntryPointViewModel) -> Unit,
 ) = withEntryPoint(clock, defaultCurrency, hideEntryTotal, rates, ratesSeen) { _, _, _, viewModel -> block(viewModel) }
+
+@OptIn(ExperimentalTestApi::class)
+fun withCapturedPaymentsViewModel(
+    clock: AppClock = FakeClock(),
+    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CapturedPaymentsViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+            val accountDao = AccountDao(database.accountQueries)
+            val viewModel = CapturedPaymentsViewModel(repository, accountDao, clock)
+            block(repository, accountDao, viewModel)
+        }
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+fun withCaptureSettingsViewModel(
+    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CaptureSettingsViewModel) -> Unit,
+) {
+    onTestMain {
+        runComposeUiTest {
+            val database = lindenDatabase()
+            val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+            val accountDao = AccountDao(database.accountQueries)
+            val viewModel = CaptureSettingsViewModel(repository, accountDao)
+            block(repository, accountDao, viewModel)
+        }
+    }
+}
 
 @OptIn(ExperimentalTestApi::class)
 fun withLedgerViewModel(

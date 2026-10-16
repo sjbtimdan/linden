@@ -39,6 +39,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.FakeClock
@@ -1535,6 +1536,28 @@ class EntryPointTest : StringSpec({
             }
 
             onNodeWithText("No exchange rates available. You can set them manually.").assertIsDisplayed()
+        }
+    }
+
+    "a draft loaded from a capture shows the missing-category hint right away" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "24.50",
+                    description = "COOP",
+                    accountId = main.id,
+                    sourceCaptureId = 7L,
+                ),
+            )
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            waitForText("Choose a category")
+            onNodeWithText("Choose a category").assertIsDisplayed()
+            onNodeWithText("Add").assertIsNotEnabled()
         }
     }
 })

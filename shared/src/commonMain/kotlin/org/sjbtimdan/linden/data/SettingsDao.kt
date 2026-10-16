@@ -15,6 +15,9 @@ const val HIDE_ENTRY_TOTAL_KEY = "hideEntryTotal"
 const val AUTO_UPDATE_RATES_KEY = "autoUpdateRates"
 const val LANGUAGE_KEY = "language"
 const val RATES_SEEN_KEY = "ratesSeen"
+const val CAPTURE_RULES_KEY = "captureRules"
+const val PENDING_CAPTURES_KEY = "pendingCaptures"
+const val CAPTURE_SEEN_KEY = "captureSeenId"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {
@@ -30,7 +33,7 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(THEME_KEY, mode.name)
     }
 
-    fun themeFlow(): Flow<ThemeMode> = valueFlow(THEME_KEY)
+    fun themeFlow(): Flow<ThemeMode> = rawFlow(THEME_KEY)
         .map { stored ->
             stored?.let { value -> ThemeMode.entries.firstOrNull { it.name == value } } ?: ThemeMode.SYSTEM
         }
@@ -51,7 +54,7 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(CURRENCY_KEY, currency.name)
     }
 
-    fun defaultCurrencyFlow(): Flow<Currency> = valueFlow(CURRENCY_KEY)
+    fun defaultCurrencyFlow(): Flow<Currency> = rawFlow(CURRENCY_KEY)
         .map { value -> value?.let(::parseCurrency) ?: Currency.CHF }
 
     suspend fun getHideEntryTotal(): Boolean {
@@ -63,7 +66,7 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(HIDE_ENTRY_TOTAL_KEY, hidden.toString())
     }
 
-    fun hideEntryTotalFlow(): Flow<Boolean> = valueFlow(HIDE_ENTRY_TOTAL_KEY)
+    fun hideEntryTotalFlow(): Flow<Boolean> = rawFlow(HIDE_ENTRY_TOTAL_KEY)
         .map { it?.toBoolean() == true }
 
     suspend fun setAutoUpdateRates(enabled: Boolean) {
@@ -79,21 +82,28 @@ class SettingsDao(private val queries: SettingsQueries) {
         queries.insertOrReplace(LANGUAGE_KEY, language.tag ?: "system")
     }
 
-    fun languageFlow(): Flow<AppLanguage> = valueFlow(LANGUAGE_KEY)
+    fun languageFlow(): Flow<AppLanguage> = rawFlow(LANGUAGE_KEY)
         .map { stored -> AppLanguage.fromTag(stored) }
 
-    fun autoUpdateRatesFlow(): Flow<Boolean> = valueFlow(AUTO_UPDATE_RATES_KEY)
+    fun autoUpdateRatesFlow(): Flow<Boolean> = rawFlow(AUTO_UPDATE_RATES_KEY)
         .map { it?.toBoolean() ?: true }
 
     suspend fun setRatesSeen(seen: Boolean) {
         queries.insertOrReplace(RATES_SEEN_KEY, seen.toString())
     }
 
-    fun ratesSeenFlow(): Flow<Boolean> = valueFlow(RATES_SEEN_KEY)
+    fun ratesSeenFlow(): Flow<Boolean> = rawFlow(RATES_SEEN_KEY)
         .map { it?.toBoolean() == true }
 
-    /** Reactive value of a single settings key; null while the key is absent. */
-    private fun valueFlow(key: String): Flow<String?> = queries.selectByKey(key)
+    /** Stored value of a single settings key; null while the key is absent. */
+    suspend fun getRaw(key: String): String? = queries.selectByKey(key).awaitAsOneOrNull()?.value_
+
+    suspend fun setRaw(key: String, value: String) {
+        queries.insertOrReplace(key, value)
+    }
+
+    /** Reactive raw value of a single settings key; null while the key is absent. */
+    fun rawFlow(key: String): Flow<String?> = queries.selectByKey(key)
         .asOneOrNullFlow()
         .map { it?.value_ }
 

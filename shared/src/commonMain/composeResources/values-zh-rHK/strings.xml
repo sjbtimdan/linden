@@ -290,4 +290,29 @@
     <string name="inflation_empty">暫無通脹數據。</string>
     <string name="ledger_inflation_toggle">以今日幣值計算</string>
     <string name="ledger_inflation_note">CPI 截至 %1$s</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">支付擷取</string>
+    <string name="capture_intro">Linden 可以讀取你選擇的應用程式的通知，並將支付通知轉換為待查看的記錄。帳目不會被自動寫入。</string>
+    <string name="capture_enable">允許通知存取</string>
+    <string name="capture_unsupported">通知擷取僅在 Android 應用程式中提供。</string>
+    <string name="capture_disclosure_title">允許通知存取？</string>
+    <string name="capture_disclosure_body">Linden 只會讀取你允許的應用程式的通知，並且只保留與支付相似的通知。每筆擷取都會等待你確認，且絕不會傳送到任何地方。</string>
+    <string name="capture_continue">繼續</string>
+    <string name="capture_pending_title">已擷取的支付</string>
+    <plurals name="capture_pending_count">
+        <item quantity="other">%1$d 筆支付待查看</item>
+    </plurals>
+    <string name="capture_apps_header">允許的應用程式</string>
+    <string name="capture_apps_empty">尚未允許任何應用程式。</string>
+    <string name="capture_apps_note">只會讀取這些應用程式的通知。</string>
+    <string name="capture_add_app">新增應用程式</string>
+    <string name="capture_remove_app">移除</string>
+    <string name="capture_account_missing">沒有戶口</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">略過</string>
+    <string name="capture_collapse">收起</string>
+    <string name="capture_app_picker_title">選擇應用程式</string>
+    <string name="capture_app_search">搜尋應用程式</string>
+    <string name="capture_no_apps_found">沒有符合的應用程式。</string>
 </resources>

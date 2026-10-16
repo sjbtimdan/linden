@@ -135,6 +135,15 @@ fun EntryPoint(
         draftEdited = true
     }
 
+    // A draft loaded from a captured payment arrives prefilled but incomplete —
+    // the category is always the user's to pick — so treat the load as an edit
+    // and let the missing-field hint explain the disabled Add right away.
+    LaunchedEffect(draft?.sourceCaptureId) {
+        if (draft?.sourceCaptureId != null) {
+            markEdited()
+        }
+    }
+
     // Saves the draft from either the form's Add row or the calculator's Add
     // button; both only fire while the draft is valid. The persistent last-added
     // receipt is the confirmation, so no snackbar is shown.

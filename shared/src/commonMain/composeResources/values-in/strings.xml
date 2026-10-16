@@ -294,4 +294,29 @@
     <string name="inflation_empty">Belum ada data inflasi.</string>
     <string name="ledger_inflation_toggle">Dalam nilai uang hari ini</string>
     <string name="ledger_inflation_note">IHK hingga %1$s</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">Tangkap pembayaran</string>
+    <string name="capture_intro">Linden dapat membaca notifikasi dari aplikasi yang kamu pilih dan mengubah notifikasi pembayaran menjadi entri untuk ditinjau. Tidak ada yang ditambahkan ke catatan secara otomatis.</string>
+    <string name="capture_enable">Izinkan akses notifikasi</string>
+    <string name="capture_unsupported">Penangkapan notifikasi tersedia di aplikasi Android.</string>
+    <string name="capture_disclosure_title">Izinkan akses notifikasi?</string>
+    <string name="capture_disclosure_body">Linden hanya membaca notifikasi dari aplikasi yang kamu izinkan dan hanya menyimpan yang mirip pembayaran. Setiap tangkapan menunggu konfirmasimu dan tidak pernah dikirim ke mana pun.</string>
+    <string name="capture_continue">Lanjutkan</string>
+    <string name="capture_pending_title">Pembayaran tertangkap</string>
+    <plurals name="capture_pending_count">
+        <item quantity="other">%1$d pembayaran untuk ditinjau</item>
+    </plurals>
+    <string name="capture_apps_header">Aplikasi yang diizinkan</string>
+    <string name="capture_apps_empty">Belum ada aplikasi yang diizinkan.</string>
+    <string name="capture_apps_note">Hanya notifikasi dari aplikasi ini yang dibaca.</string>
+    <string name="capture_add_app">Tambah aplikasi</string>
+    <string name="capture_remove_app">Hapus</string>
+    <string name="capture_account_missing">Tanpa akun</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">Abaikan</string>
+    <string name="capture_collapse">Ciutkan</string>
+    <string name="capture_app_picker_title">Pilih aplikasi</string>
+    <string name="capture_app_search">Cari aplikasi</string>
+    <string name="capture_no_apps_found">Tidak ada aplikasi yang cocok.</string>
 </resources>

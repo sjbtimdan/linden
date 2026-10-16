@@ -333,7 +333,7 @@ class EntryDraftTest : StringSpec({
             description = "Lunch",
             categoryId = groceries.id,
             accountId = main.id,
-        )
+        ).copy(sourceCaptureId = 7L)
         val fresh = draft(
             type = EntryType.Income,
             amountText = "999.00",
@@ -343,6 +343,7 @@ class EntryDraftTest : StringSpec({
         ).copy(
             createdAt = createdAt + 60.seconds,
             createdZone = TimeZone.of("Europe/Zurich"),
+            sourceCaptureId = 3L,
         )
 
         val carried = fresh.carryOverCommonFields(previous)
@@ -354,6 +355,8 @@ class EntryDraftTest : StringSpec({
         carried.createdZone shouldBe previous.createdZone
         carried.categoryId shouldBe salary.id
         carried.accountId shouldBe savingsChf.id
+        // The capture the form came from survives a type switch.
+        carried.sourceCaptureId shouldBe 7L
     }
 
     "withType keeps the edited entry and drops a category the new type cannot use" {

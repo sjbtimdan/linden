@@ -92,4 +92,21 @@ class SettingsDaoTest : StringSpec({
         dao.setRatesSeen(true)
         dao.ratesSeenFlow().first() shouldBe true
     }
+
+    "raw values round-trip, read as null while absent, and follow overwrites" {
+        val database = lindenDatabase()
+        val dao = SettingsDao(database.settingsQueries)
+
+        dao.getRaw("someKey") shouldBe null
+        dao.rawFlow("someKey").first() shouldBe null
+
+        dao.setRaw("someKey", "value")
+
+        dao.getRaw("someKey") shouldBe "value"
+        dao.rawFlow("someKey").first() shouldBe "value"
+
+        dao.setRaw("someKey", "other")
+
+        dao.rawFlow("someKey").first() shouldBe "other"
+    }
 })

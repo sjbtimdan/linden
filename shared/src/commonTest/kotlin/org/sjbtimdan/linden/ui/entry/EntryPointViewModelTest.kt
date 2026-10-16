@@ -866,6 +866,134 @@ class EntryPointViewModelTest : StringSpec({
             }
         }
     }
+
+    "loadDraft replaces the form and switches to the draft's type" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            val draft = EntryDraft.forNew(EntryType.Income, clock = FakeClock()).copy(
+                amountText = "24.50",
+                description = "COOP",
+                accountId = main.id,
+                sourceCaptureId = 7L,
+            )
+
+            viewModel.loadDraft(draft)
+
+            viewModel.selectedType.value shouldBe EntryType.Income
+            viewModel.draft.value.let { loaded ->
+                loaded.shouldNotBeNull()
+                loaded.amountText shouldBe "24.50"
+                loaded.description shouldBe "COOP"
+                loaded.accountId shouldBe main.id
+                loaded.sourceCaptureId shouldBe 7L
+            }
+        }
+    }
+
+    "saving a draft loaded from a capture consumes it" {
+        var consumed: Long? = null
+        withEntryPoint(
+            clock = FakeClock(),
+            onCaptureConsumed = { consumed = it },
+        ) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    categoryId = groceries.id,
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.saveDraft() shouldBe true
+
+            consumed shouldBe 9L
+            viewModel.draft.value?.sourceCaptureId.shouldBeNull()
+        }
+    }
+
+    "abandoning a capture draft leaves the capture unconsumed" {
+        var consumed: Long? = null
+        withEntryPoint(
+            clock = FakeClock(),
+            onCaptureConsumed = { consumed = it },
+        ) { _, accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.clearDraft()
+
+            viewModel.draft.value?.sourceCaptureId.shouldBeNull()
+            consumed.shouldBeNull()
+        }
+    }
+
+    "a refused save leaves the capture unconsumed" {
+        var consumed: Long? = null
+        withEntryPoint(
+            clock = FakeClock(),
+            onCaptureConsumed = { consumed = it },
+        ) { _, accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.saveDraft() shouldBe false
+
+            consumed.shouldBeNull()
+            viewModel.draft.value?.sourceCaptureId shouldBe 9L
+        }
+    }
+
+    "a failing consume does not fail the save" {
+        withEntryPoint(
+            clock = FakeClock(),
+            onCaptureConsumed = { throw IllegalStateException("cleanup failed") },
+        ) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    categoryId = groceries.id,
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.saveDraft() shouldBe true
+
+            entryDao.getAll().first() shouldHaveSize 1
+        }
+    }
+
+    "a type switch keeps the capture source" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            val (main, _) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.selectType(EntryType.Income)
+
+            viewModel.draft.value?.sourceCaptureId shouldBe 9L
+        }
+    }
 })
 
 private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {

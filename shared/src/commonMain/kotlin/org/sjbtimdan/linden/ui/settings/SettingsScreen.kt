@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
@@ -58,6 +59,7 @@ import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.common_accounts
 import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.resources.common_dismiss
@@ -112,6 +114,7 @@ fun SettingsScreen(
     onNavigateToInflation: () -> Unit = {},
     onNavigateToBudgets: () -> Unit = {},
     onNavigateToInsights: () -> Unit = {},
+    onNavigateToCapture: () -> Unit = {},
     pickImportFile: (() -> Unit)? = null,
     pickBackupFile: (() -> Unit)? = null,
     pickRestoreFile: (() -> Unit)? = null,
@@ -212,6 +215,12 @@ fun SettingsScreen(
                 icon = Icons.Filled.BarChart,
                 label = stringResource(Res.string.settings_nav_insights),
                 onClick = onNavigateToInsights,
+            )
+            HorizontalDivider()
+            SettingsNavRow(
+                icon = Icons.Filled.Notifications,
+                label = stringResource(Res.string.capture_title),
+                onClick = onNavigateToCapture,
             )
         }
 

@@ -37,6 +37,9 @@ import org.sjbtimdan.linden.ui.BottomNavItem
 import org.sjbtimdan.linden.ui.TopLevelPager
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
+import org.sjbtimdan.linden.ui.capture.CaptureSettingsScreen
+import org.sjbtimdan.linden.ui.capture.rememberCapturableApps
+import org.sjbtimdan.linden.ui.capture.rememberNotificationAccess
 import org.sjbtimdan.linden.ui.categories.CategoryListScreen
 import org.sjbtimdan.linden.ui.entry.EntryPoint
 import org.sjbtimdan.linden.ui.inflation.InflationScreen
@@ -56,6 +59,7 @@ sealed class Screen(val key: String) {
     data object Inflation : Screen("Inflation")
     data object Budgets : Screen("Budgets")
     data object Insights : Screen("Insights")
+    data object CaptureSettings : Screen("CaptureSettings")
 
     companion object {
         fun fromKey(key: String): Screen = when (key) {
@@ -68,6 +72,7 @@ sealed class Screen(val key: String) {
             Inflation.key -> Inflation
             Budgets.key -> Budgets
             Insights.key -> Insights
+            CaptureSettings.key -> CaptureSettings
             else -> Entry
         }
     }
@@ -114,6 +119,8 @@ fun App(
     val accountListViewModel = dependencies.accountListViewModel
     val budgetViewModel = dependencies.budgetViewModel
     val insightsViewModel = dependencies.insightsViewModel
+    val capturedPaymentsViewModel = dependencies.capturedPaymentsViewModel
+    val captureSettingsViewModel = dependencies.captureSettingsViewModel
     val entryViewModel = dependencies.entryViewModel
     val ledgerViewModel = dependencies.ledgerViewModel
     LaunchedEffect(Unit) {
@@ -182,6 +189,11 @@ fun App(
                                         onNavigateToEntry = { currentScreen = Screen.Entry },
                                         onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
                                         onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                        captureViewModel = capturedPaymentsViewModel,
+                                        onAddCapture = { capture ->
+                                            entryViewModel.loadDraft(capturedPaymentsViewModel.buildDraft(capture))
+                                            currentScreen = Screen.Entry
+                                        },
                                     )
 
                                     Screen.Entry -> EntryPoint(
@@ -198,6 +210,7 @@ fun App(
                                         onNavigateToInflation = { openSubScreen(Screen.Inflation) },
                                         onNavigateToBudgets = { openSubScreen(Screen.Budgets) },
                                         onNavigateToInsights = { openSubScreen(Screen.Insights) },
+                                        onNavigateToCapture = { openSubScreen(Screen.CaptureSettings) },
                                     )
                                 }
                             }
@@ -229,6 +242,13 @@ fun App(
 
                             Screen.Insights -> InsightsScreen(
                                 viewModel = insightsViewModel,
+                                onNavigateBack = navigateBack,
+                            )
+
+                            Screen.CaptureSettings -> CaptureSettingsScreen(
+                                viewModel = captureSettingsViewModel,
+                                access = rememberNotificationAccess(),
+                                capturableApps = rememberCapturableApps(),
                                 onNavigateBack = navigateBack,
                             )
 

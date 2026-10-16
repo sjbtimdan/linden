@@ -296,4 +296,30 @@
     <string name="inflation_empty">कोई महँगाई डेटा संग्रहीत नहीं है।</string>
     <string name="ledger_inflation_toggle">आज के पैसे में</string>
     <string name="ledger_inflation_note">CPI %1$s तक</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">भुगतान कैप्चर</string>
+    <string name="capture_intro">Linden आपके चुने हुए ऐप्स की सूचनाएँ पढ़ सकता है और भुगतान सूचनाओं को जाँचने योग्य प्रविष्टियों में बदल सकता है। बहीखाते में कुछ भी अपने आप नहीं जुड़ता।</string>
+    <string name="capture_enable">सूचना पहुँच की अनुमति दें</string>
+    <string name="capture_unsupported">सूचना कैप्चर Android ऐप में उपलब्ध है।</string>
+    <string name="capture_disclosure_title">सूचना पहुँच की अनुमति दें?</string>
+    <string name="capture_disclosure_body">Linden केवल उन ऐप्स की सूचनाएँ पढ़ता है जिन्हें आप अनुमति देते हैं और केवल भुगतान जैसी सूचनाएँ रखता है। हर कैप्चर आपकी पुष्टि की प्रतीक्षा करता है और कहीं नहीं भेजा जाता।</string>
+    <string name="capture_continue">जारी रखें</string>
+    <string name="capture_pending_title">कैप्चर किए गए भुगतान</string>
+    <plurals name="capture_pending_count">
+        <item quantity="one">%1$d भुगतान जाँचने के लिए</item>
+        <item quantity="other">%1$d भुगतान जाँचने के लिए</item>
+    </plurals>
+    <string name="capture_apps_header">अनुमत ऐप्स</string>
+    <string name="capture_apps_empty">अभी कोई ऐप अनुमत नहीं है।</string>
+    <string name="capture_apps_note">केवल इन ऐप्स की सूचनाएँ पढ़ी जाती हैं।</string>
+    <string name="capture_add_app">ऐप जोड़ें</string>
+    <string name="capture_remove_app">हटाएँ</string>
+    <string name="capture_account_missing">कोई खाता नहीं</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">खारिज करें</string>
+    <string name="capture_collapse">संकुचित करें</string>
+    <string name="capture_app_picker_title">ऐप चुनें</string>
+    <string name="capture_app_search">ऐप खोजें</string>
+    <string name="capture_no_apps_found">कोई ऐप नहीं मिला।</string>
 </resources>

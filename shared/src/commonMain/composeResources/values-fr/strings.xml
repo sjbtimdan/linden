@@ -296,4 +296,30 @@
     <string name="inflation_empty">Aucune donnée d'inflation enregistrée.</string>
     <string name="ledger_inflation_toggle">En monnaie d'aujourd'hui</string>
     <string name="ledger_inflation_note">IPC jusqu'à %1$s</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">Capture des paiements</string>
+    <string name="capture_intro">Linden peut lire les notifications des applications que vous choisissez et transformer les notifications de paiement en opérations à vérifier. Rien n'est ajouté au journal automatiquement.</string>
+    <string name="capture_enable">Autoriser l'accès aux notifications</string>
+    <string name="capture_unsupported">La capture des notifications est disponible dans l'application Android.</string>
+    <string name="capture_disclosure_title">Autoriser l'accès aux notifications ?</string>
+    <string name="capture_disclosure_body">Linden ne lit que les notifications des applications que vous autorisez et ne conserve que celles qui ressemblent à des paiements. Chaque capture attend votre confirmation et n'est jamais envoyée nulle part.</string>
+    <string name="capture_continue">Continuer</string>
+    <string name="capture_pending_title">Paiements capturés</string>
+    <plurals name="capture_pending_count">
+        <item quantity="one">%1$d paiement à vérifier</item>
+        <item quantity="other">%1$d paiements à vérifier</item>
+    </plurals>
+    <string name="capture_apps_header">Applications autorisées</string>
+    <string name="capture_apps_empty">Aucune application autorisée pour l'instant.</string>
+    <string name="capture_apps_note">Seules les notifications de ces applications sont lues.</string>
+    <string name="capture_add_app">Ajouter une application</string>
+    <string name="capture_remove_app">Supprimer</string>
+    <string name="capture_account_missing">Aucun compte</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">Ignorer</string>
+    <string name="capture_collapse">Réduire</string>
+    <string name="capture_app_picker_title">Choisir une application</string>
+    <string name="capture_app_search">Rechercher une application</string>
+    <string name="capture_no_apps_found">Aucune application trouvée.</string>
 </resources>

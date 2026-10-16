@@ -36,6 +36,7 @@ class EntryPointViewModel(
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
+    private val onCaptureConsumed: suspend (Long) -> Unit = {},
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -160,6 +161,16 @@ class EntryPointViewModel(
         }
     }
 
+    /**
+     * Replaces the form with [draft], loaded from outside the screen: the
+     * captured-payment inbox prefills amount, description and account. An
+     * abandoned draft leaves its capture pending; a saved one consumes it.
+     */
+    fun loadDraft(draft: EntryDraft) {
+        _selectedType.value = draft.type
+        draftState.value = draft
+    }
+
     /** A new draft of [type] prefilled from the latest entry of that type. */
     internal suspend fun newEntryState(type: EntryType): EntryDraft = EntryDraft.forNew(
         type,
@@ -197,8 +208,24 @@ class EntryPointViewModel(
             return false
         }
         _lastAddedWasEdit.value = updated
+        state.sourceCaptureId?.let { consumeCapture(it) }
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
+    }
+
+    /**
+     * Drops the capture a saved draft came from. The entry is already written,
+     * so a failed cleanup only leaves the capture in the inbox for a manual
+     * dismiss — it must never fail the save that succeeded.
+     */
+    private suspend fun consumeCapture(captureId: Long) {
+        try {
+            onCaptureConsumed(captureId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Ignored: the entry is saved; the capture can be dismissed by hand.
+        }
     }
 
     /**

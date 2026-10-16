@@ -28,6 +28,8 @@ data class EntryDraft(
     val description: String,
     val createdAt: Instant,
     val createdZone: TimeZone,
+    /** The pending capture this draft was prefilled from, if any; saving consumes it. */
+    val sourceCaptureId: Long? = null,
 ) {
     val amount: Long? get() = parseAmount(amountText)
     val toAmount: Long? get() = parseAmount(toAmountText)
@@ -123,14 +125,16 @@ data class EntryDraft(
 
     /**
      * Returns this draft with the type-independent fields (amount, description,
-     * date & time) replaced by [previous]'s values. Used when switching the
-     * entry type so already-entered common fields are preserved.
+     * date & time) replaced by [previous]'s values. A captured-payment source
+     * survives the type switch, so saving still consumes it. Used when switching
+     * the entry type so already-entered common fields are preserved.
      */
     fun carryOverCommonFields(previous: EntryDraft): EntryDraft = copy(
         amountText = previous.amountText,
         description = previous.description,
         createdAt = previous.createdAt,
         createdZone = previous.createdZone,
+        sourceCaptureId = previous.sourceCaptureId,
     )
 
     /**

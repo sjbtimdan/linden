@@ -296,4 +296,30 @@
     <string name="inflation_empty">No inflation data stored.</string>
     <string name="ledger_inflation_toggle">In today's money</string>
     <string name="ledger_inflation_note">CPI through %1$s</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">Payment capture</string>
+    <string name="capture_intro">Linden can read notifications from the apps you choose and turn payment notifications into entries you review. Nothing is added to the ledger automatically.</string>
+    <string name="capture_enable">Allow notification access</string>
+    <string name="capture_unsupported">Notification capture is available in the Android app.</string>
+    <string name="capture_disclosure_title">Allow notification access?</string>
+    <string name="capture_disclosure_body">Linden reads notifications only from the apps you allow and keeps just payment-like ones. Every capture waits for your confirmation and is never sent anywhere.</string>
+    <string name="capture_continue">Continue</string>
+    <string name="capture_pending_title">Captured payments</string>
+    <plurals name="capture_pending_count">
+        <item quantity="one">%1$d payment to review</item>
+        <item quantity="other">%1$d payments to review</item>
+    </plurals>
+    <string name="capture_apps_header">Allowed apps</string>
+    <string name="capture_apps_empty">No apps allowed yet.</string>
+    <string name="capture_apps_note">Only notifications from these apps are read.</string>
+    <string name="capture_add_app">Add app</string>
+    <string name="capture_remove_app">Remove</string>
+    <string name="capture_account_missing">No account</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">Dismiss</string>
+    <string name="capture_collapse">Collapse</string>
+    <string name="capture_app_picker_title">Choose an app</string>
+    <string name="capture_app_search">Search apps</string>
+    <string name="capture_no_apps_found">No apps match.</string>
 </resources>

@@ -9,6 +9,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import org.sjbtimdan.linden.backup.LindenBackupManager
+import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -33,6 +34,8 @@ import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.accounts.AccountListViewModel
 import org.sjbtimdan.linden.ui.budget.BudgetViewModel
+import org.sjbtimdan.linden.ui.capture.CaptureSettingsViewModel
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
 import org.sjbtimdan.linden.ui.inflation.InflationViewModel
@@ -66,6 +69,7 @@ class AppDependencies(
     val budgetDao = BudgetDao(database.budgetQueries)
     val cpiDao = CpiDao(database.cpiQueries)
     val seeder = DefaultDataSeeder(database)
+    val captureRepository = CaptureRepository(settingsDao)
     private val httpClientLazy = lazy {
         HttpClient {
             install(HttpTimeout) {
@@ -138,6 +142,7 @@ class AppDependencies(
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
+        onCaptureConsumed = { captureRepository.removePending(it) },
     )
     val ledgerViewModel = LedgerViewModel(
         entryDao,
@@ -160,6 +165,8 @@ class AppDependencies(
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
     )
+    val capturedPaymentsViewModel = CapturedPaymentsViewModel(captureRepository, accountDao, clock = SystemClock)
+    val captureSettingsViewModel = CaptureSettingsViewModel(captureRepository, accountDao)
 
     /**
      * Completes the first-run setup: persists the chosen language, theme and

@@ -296,4 +296,30 @@
     <string name="inflation_empty">Keine Inflationsdaten gespeichert.</string>
     <string name="ledger_inflation_toggle">In heutigem Geld</string>
     <string name="ledger_inflation_note">VPI bis %1$s</string>
+
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">Zahlungserfassung</string>
+    <string name="capture_intro">Linden kann Benachrichtigungen der von dir gewählten Apps lesen und Zahlungsbenachrichtigungen in zu prüfende Buchungen umwandeln. In die Übersicht wird nichts automatisch übernommen.</string>
+    <string name="capture_enable">Benachrichtigungszugriff erlauben</string>
+    <string name="capture_unsupported">Die Benachrichtigungserfassung ist in der Android-App verfügbar.</string>
+    <string name="capture_disclosure_title">Benachrichtigungszugriff erlauben?</string>
+    <string name="capture_disclosure_body">Linden liest nur Benachrichtigungen von Apps, die du erlaubst, und behält nur zahlungsähnliche. Jede Erfassung wartet auf deine Bestätigung und wird nirgendwohin gesendet.</string>
+    <string name="capture_continue">Weiter</string>
+    <string name="capture_pending_title">Erfasste Zahlungen</string>
+    <plurals name="capture_pending_count">
+        <item quantity="one">%1$d Zahlung zu prüfen</item>
+        <item quantity="other">%1$d Zahlungen zu prüfen</item>
+    </plurals>
+    <string name="capture_apps_header">Erlaubte Apps</string>
+    <string name="capture_apps_empty">Noch keine Apps erlaubt.</string>
+    <string name="capture_apps_note">Nur Benachrichtigungen dieser Apps werden gelesen.</string>
+    <string name="capture_add_app">App hinzufügen</string>
+    <string name="capture_remove_app">Entfernen</string>
+    <string name="capture_account_missing">Kein Konto</string>
+    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">Verwerfen</string>
+    <string name="capture_collapse">Einklappen</string>
+    <string name="capture_app_picker_title">App auswählen</string>
+    <string name="capture_app_search">Apps suchen</string>
+    <string name="capture_no_apps_found">Keine Apps gefunden.</string>
 </resources>
