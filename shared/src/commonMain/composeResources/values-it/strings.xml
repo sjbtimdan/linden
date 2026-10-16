@@ -281,16 +281,6 @@
     <string name="budget_choose_category">Scegli la categoria</string>
     <string name="budget_monthly_limit">Limite mensile</string>
     <string name="budget_empty">Ancora nessun budget. Creane uno per monitorare la spesa mensile di una categoria.</string>
-    <!-- Inflation (CPI) -->
-    <string name="settings_nav_inflation">Inflazione</string>
-    <string name="inflation_title">Dati sull'inflazione</string>
-    <string name="inflation_source">Fonte: %1$s, scaricato il %2$s</string>
-    <string name="inflation_through">fino a %1$s</string>
-    <string name="inflation_change_caption">Variazione su 12 mesi</string>
-    <string name="inflation_empty">Nessun dato sull'inflazione disponibile.</string>
-    <string name="ledger_inflation_toggle">In denaro di oggi</string>
-    <string name="ledger_inflation_note">IPC fino a %1$s</string>
-
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Acquisizione pagamenti</string>
     <string name="capture_intro">Linden può leggere le notifiche delle app che scegli e trasformare le notifiche di pagamento in voci da verificare. Niente viene aggiunto al registro automaticamente.</string>

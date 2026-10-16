@@ -18,15 +18,11 @@ import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
-import org.sjbtimdan.linden.inflation.CpiSeries
-import org.sjbtimdan.linden.inflation.EntryInflation
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
@@ -53,7 +49,6 @@ class LedgerViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     budgetDao: BudgetDao,
-    cpiDao: CpiDao,
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
     private val clock: AppClock,
@@ -101,23 +96,6 @@ class LedgerViewModel(
 
     private val _accountFilter = MutableStateFlow<Long?>(null)
     val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
-
-    /** Restate displayed amounts in the latest stored month's money. */
-    private val _inflationAdjusted = MutableStateFlow(false)
-    val inflationAdjusted: StateFlow<Boolean> = _inflationAdjusted.asStateFlow()
-
-    private val cpiSeries: StateFlow<Map<Currency, CpiSeries>> = cpiDao.seriesFlow().stateFlow(emptyMap())
-
-    /** Whether any CPI data is stored; drives the ledger toggle. */
-    val inflationAvailable: StateFlow<Boolean> = cpiSeries.map { it.isNotEmpty() }.stateFlow(false)
-
-    /** Latest stored month across currencies, for the toggle's caption. */
-    val inflationThroughMonth: StateFlow<String?> =
-        cpiSeries.map { byCurrency -> byCurrency.values.maxOfOrNull(CpiSeries::latestMonth) }.stateFlow(null)
-
-    private val inflationAdjustment: StateFlow<EntryInflation> =
-        combine(_inflationAdjusted, cpiSeries) { adjusted, series -> EntryInflation(adjusted, series, zone) }
-            .stateFlow(EntryInflation(false, emptyMap(), zone))
 
     private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
         periodWindow,
@@ -194,24 +172,13 @@ class LedgerViewModel(
         }
     }.stateFlow(emptyList())
 
-    /** [displayedEntries] restated in the latest stored month's money while the toggle is on. */
-    private val adjustedDisplayedEntries: StateFlow<List<Entry>> =
-        combine(displayedEntries, inflationAdjustment) { entries, adjustment -> adjustment.adjustedEntries(entries) }
-            .stateFlow(emptyList())
-
-    /** Adjusted amount per entry id for the entries list; empty while the toggle is off. */
-    val inflationAmountOverrides: StateFlow<Map<Long, Long>> =
-        combine(displayedEntries, inflationAdjustment) { entries, adjustment ->
-            entries.mapNotNull { entry -> adjustment.adjustedAmount(entry)?.let { entry.id to it } }.toMap()
-        }.stateFlow(emptyMap())
-
     /**
      * Net total of the displayed entries in the default currency; null when a rate
      * is missing. Transfers cancel out unless an account filter counts them toward
      * that account's balance.
      */
     val totalMinor: StateFlow<Long?> = combine(
-        adjustedDisplayedEntries,
+        displayedEntries,
         _accountFilter,
         accounts,
         defaultCurrency,
@@ -260,43 +227,21 @@ class LedgerViewModel(
     }.stateFlow(0)
 
     /**
-     * The date the period-end balances are computed through: the window end while
-     * future entries are shown, otherwise the same hide-future bound the entries
-     * use — a past or wholly-future window counts through its own end, today
-     * while the window spans today, and [LedgerPeriod.All] counts through today.
-     */
-    private val balanceCutoff: StateFlow<LocalDate?> = combine(periodWindow, _showFuture) { window, showFuture ->
-        if (showFuture) window?.end else hideFutureBound(window?.start, window?.end, today())
-    }.stateFlow(null)
-
-    /**
-     * Balance of each visible account at period end in its own currency: initial
-     * balance plus entries through [balanceCutoff]. Hidden accounts never appear.
-     */
-    private val rawAccountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
-        entriesUpToPeriodEnd,
-        visibleAccounts,
-        balanceCutoff,
-    ) { entries, accounts, cutoff ->
-        accountBalancesAtEnd(entries, cutoff, accounts, zone)
-    }.stateFlow(emptyList())
-
-    /**
-     * [rawAccountBalancesAtPeriodEnd] restated in the latest stored month's money
-     * while the inflation toggle is on: each balance is adjusted from its as-of
-     * date — the period end (or today for [LedgerPeriod.All]) — in its own
-     * currency before any conversion.
+     * Balance of each visible account at period end in its own currency: initial balance
+     * plus entries through the period end, stopping at today unless the window spans
+     * today and future entries are not shown. Hidden accounts never appear.
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
-        rawAccountBalancesAtPeriodEnd,
-        balanceCutoff,
-        inflationAdjustment,
-    ) { balances, cutoff, adjustment ->
-        val asOf = cutoff ?: today()
-        balances.map { item ->
-            adjustment.adjustedBalance(item.balance, item.account.currency, asOf)
-                ?.let { item.copy(balance = it) } ?: item
-        }
+        entriesUpToPeriodEnd,
+        periodWindow,
+        visibleAccounts,
+        _showFuture,
+    ) { entries, window, accounts, showFuture ->
+        val now = today()
+        // Entries dated after today count only when the window spans today and the
+        // toggle is off; past and wholly-future windows count through their own end.
+        val cutoff = if (showFuture) window?.end else hideFutureBound(window?.start, window?.end, now)
+        accountBalancesAtEnd(entries, cutoff, accounts, zone)
     }.stateFlow(emptyList())
 
     /** Net total of all period-end balances in the default currency; null when a rate is missing. */
@@ -335,14 +280,9 @@ class LedgerViewModel(
         accountBalancesMinor(entryDeltas(entries.filter { it.dayIn(zone) <= now }), accounts)
     }.stateFlow(emptyMap())
 
-    /** [categoryEntries] restated in the latest stored month's money while the toggle is on. */
-    private val adjustedCategoryEntries: StateFlow<List<Entry>> =
-        combine(categoryEntries, inflationAdjustment) { entries, adjustment -> adjustment.adjustedEntries(entries) }
-            .stateFlow(emptyList())
-
     /** Net total per category in the default currency derived from the filtered entries. */
     val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
-        adjustedCategoryEntries,
+        categoryEntries,
         defaultCurrency,
         rates,
         budgetDao.budgetsFlow(),
@@ -368,7 +308,7 @@ class LedgerViewModel(
 
     /** Net total of all categories in the default currency; null when a rate is missing. */
     val categoryTotal: StateFlow<Long?> = combine(
-        adjustedCategoryEntries,
+        categoryEntries,
         defaultCurrency,
         rates,
     ) { entries, currency, rates ->
@@ -395,11 +335,6 @@ class LedgerViewModel(
 
     fun setShowFuture(show: Boolean) {
         _showFuture.value = show
-    }
-
-    /** Switches the ledger between nominal amounts and the latest month's money. */
-    fun setInflationAdjusted(adjusted: Boolean) {
-        _inflationAdjusted.value = adjusted
     }
 
     fun setPeriod(period: LedgerPeriod) {

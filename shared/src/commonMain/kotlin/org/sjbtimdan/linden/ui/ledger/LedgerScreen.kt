@@ -116,10 +116,6 @@ fun LedgerScreen(
     val dialogState by viewModel.dialogState.collectAsState()
     val saving by viewModel.saving.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
-    val inflationAdjusted by viewModel.inflationAdjusted.collectAsState()
-    val inflationAvailable by viewModel.inflationAvailable.collectAsState()
-    val inflationThroughMonth by viewModel.inflationThroughMonth.collectAsState()
-    val inflationAmountOverrides by viewModel.inflationAmountOverrides.collectAsState()
 
     val todayDate = viewModel.today()
     val periodStart = periodSelection.period.windowStart(periodSelection.anchor)
@@ -263,18 +259,6 @@ fun LedgerScreen(
                 },
                 currency = defaultCurrency,
                 hidden = hideTotal,
-            )
-        }
-
-        // The inflation toggle restates amounts in the latest stored month's money:
-        // entries and category totals through each entry's month, account balances
-        // through the period end their balances are computed at.
-        if (inflationAvailable) {
-            Spacer(modifier = Modifier.height(8.dp))
-            InflationToggle(
-                checked = inflationAdjusted,
-                throughMonth = inflationThroughMonth,
-                onToggle = { viewModel.setInflationAdjusted(!inflationAdjusted) },
             )
         }
 
@@ -479,7 +463,6 @@ fun LedgerScreen(
                 hideAmounts = hideTotal,
                 zone = viewModel.zone,
                 onEntryClick = viewModel::openEditDialog,
-                amountOverrides = inflationAmountOverrides,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

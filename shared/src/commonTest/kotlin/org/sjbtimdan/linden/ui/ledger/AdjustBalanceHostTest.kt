@@ -23,7 +23,6 @@ import org.sjbtimdan.linden.EntryQueries
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.SettingsDao
@@ -95,7 +94,6 @@ class AdjustBalanceHostTest : StringSpec({
                     categoryDao,
                     settingsDao,
                     BudgetDao(database.budgetQueries),
-                    CpiDao(database.cpiQueries),
                     testRatesProvider(settingsDao, fxRateDao),
                     testAllEntries(entryDao),
                     clock = FakeClock(),

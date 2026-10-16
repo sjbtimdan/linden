@@ -21,7 +21,6 @@ import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.FxRateDao
@@ -32,7 +31,6 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
-import org.sjbtimdan.linden.inflation.CpiSeries
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -338,9 +336,8 @@ fun withLedgerViewModel(
     clock: AppClock,
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
-    cpiSeries: Map<Currency, CpiSeries> = emptyMap(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, LedgerViewModel) -> Unit,
-) = withLedgerViewModel(clock, defaultCurrency, rates, cpiSeries) { entryDao, accountDao, categoryDao, _, viewModel ->
+) = withLedgerViewModel(clock, defaultCurrency, rates) { entryDao, accountDao, categoryDao, _, viewModel ->
     block(entryDao, accountDao, categoryDao, viewModel)
 }
 
@@ -349,7 +346,6 @@ fun withLedgerViewModel(
     clock: AppClock,
     defaultCurrency: Currency,
     rates: List<FxRate>,
-    cpiSeries: Map<Currency, CpiSeries> = emptyMap(),
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, SettingsDao, LedgerViewModel) -> Unit,
 ) {
     onTestMain {
@@ -362,18 +358,12 @@ fun withLedgerViewModel(
             if (defaultCurrency != Currency.CHF) settingsDao.setDefaultCurrency(defaultCurrency)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
-            cpiSeries.forEach { (currency, series) ->
-                series.values.forEachIndexed { index, value ->
-                    database.cpiQueries.insertOrReplace(currency.name, series.monthAt(index), value.toLong())
-                }
-            }
             val viewModel = LedgerViewModel(
                 entryDao,
                 accountDao,
                 categoryDao,
                 settingsDao,
                 BudgetDao(database.budgetQueries),
-                CpiDao(database.cpiQueries),
                 testRatesProvider(settingsDao, fxRateDao),
                 testAllEntries(entryDao),
                 clock = clock,
@@ -419,7 +409,6 @@ fun withInsightsViewModel(
     defaultCurrency: Currency = Currency.CHF,
     rates: List<FxRate> = emptyList(),
     hideEntryTotal: Boolean = false,
-    cpiSeries: Map<Currency, CpiSeries> = emptyMap(),
     block: suspend ComposeUiTest.(AccountDao, CategoryDao, EntryDao, InsightsViewModel) -> Unit,
 ) {
     onTestMain {
@@ -433,17 +422,11 @@ fun withInsightsViewModel(
             if (hideEntryTotal) settingsDao.setHideEntryTotal(true)
             val fxRateDao = FxRateDao(database.fxRateQueries)
             if (rates.isNotEmpty()) fxRateDao.replaceRates(rates, fetchedAt = 0L)
-            cpiSeries.forEach { (currency, series) ->
-                series.values.forEachIndexed { index, value ->
-                    database.cpiQueries.insertOrReplace(currency.name, series.monthAt(index), value.toLong())
-                }
-            }
             val viewModel = InsightsViewModel(
                 entryDao,
                 settingsDao,
                 testRatesProvider(settingsDao, fxRateDao),
                 BudgetDao(database.budgetQueries),
-                CpiDao(database.cpiQueries),
                 testAllEntries(entryDao),
                 initialHideEntryTotal = hideEntryTotal,
                 clock = clock,

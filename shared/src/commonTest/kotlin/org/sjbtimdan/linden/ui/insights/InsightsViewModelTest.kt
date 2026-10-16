@@ -11,7 +11,6 @@ import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.CpiDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.SettingsDao
@@ -86,7 +85,6 @@ private suspend fun insightsFixture(): InsightsFixture {
         settingsDao,
         testRatesProvider(settingsDao, FxRateDao(database.fxRateQueries)),
         budgetDao,
-        CpiDao(database.cpiQueries),
         testAllEntries(entryDao),
         clock = FakeClock(today = LocalDate(2026, 8, 15)),
     )

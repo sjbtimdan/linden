@@ -13,8 +13,6 @@ import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.CpiDao
-import org.sjbtimdan.linden.data.CpiDataSeeder
 import org.sjbtimdan.linden.data.DefaultDataSeeder
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
@@ -38,7 +36,6 @@ import org.sjbtimdan.linden.ui.capture.CaptureSettingsViewModel
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryListViewModel
 import org.sjbtimdan.linden.ui.entry.EntryPointViewModel
-import org.sjbtimdan.linden.ui.inflation.InflationViewModel
 import org.sjbtimdan.linden.ui.insights.InsightsViewModel
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
@@ -67,7 +64,6 @@ class AppDependencies(
     val entryDao = EntryDao(database.entryQueries)
     val fxRateDao = FxRateDao(database.fxRateQueries)
     val budgetDao = BudgetDao(database.budgetQueries)
-    val cpiDao = CpiDao(database.cpiQueries)
     val seeder = DefaultDataSeeder(database)
     val captureRepository = CaptureRepository(settingsDao)
     private val httpClientLazy = lazy {
@@ -118,7 +114,6 @@ class AppDependencies(
         initialLanguage,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock)
-    val inflationViewModel = InflationViewModel(cpiDao)
     val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
     val accountListViewModel = AccountListViewModel(
         accountDao,
@@ -150,7 +145,6 @@ class AppDependencies(
         categoryDao,
         settingsDao,
         budgetDao,
-        cpiDao,
         ratesProvider,
         allEntries,
         clock = SystemClock,
@@ -160,7 +154,6 @@ class AppDependencies(
         settingsDao,
         ratesProvider,
         budgetDao,
-        cpiDao,
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
@@ -198,7 +191,6 @@ class AppDependencies(
 
 suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
     val database = createLindenDatabase(driver)
-    CpiDataSeeder(database).seedIfEmpty()
     val settingsDao = SettingsDao(database.settingsQueries)
     val initialTheme = settingsDao.getTheme()
     val initialCurrency = settingsDao.getDefaultCurrency()

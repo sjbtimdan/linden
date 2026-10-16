@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Percent
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
@@ -82,7 +81,6 @@ import org.sjbtimdan.linden.resources.settings_import_split_note
 import org.sjbtimdan.linden.resources.settings_import_summary
 import org.sjbtimdan.linden.resources.settings_language
 import org.sjbtimdan.linden.resources.settings_nav_budgets
-import org.sjbtimdan.linden.resources.settings_nav_inflation
 import org.sjbtimdan.linden.resources.settings_nav_insights
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
@@ -111,7 +109,6 @@ fun SettingsScreen(
     onNavigateToCategories: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToRates: () -> Unit = {},
-    onNavigateToInflation: () -> Unit = {},
     onNavigateToBudgets: () -> Unit = {},
     onNavigateToInsights: () -> Unit = {},
     onNavigateToCapture: () -> Unit = {},
@@ -197,12 +194,6 @@ fun SettingsScreen(
                 icon = Icons.Filled.CurrencyExchange,
                 label = stringResource(Res.string.settings_nav_rates),
                 onClick = onNavigateToRates,
-            )
-            HorizontalDivider()
-            SettingsNavRow(
-                icon = Icons.Filled.Percent,
-                label = stringResource(Res.string.settings_nav_inflation),
-                onClick = onNavigateToInflation,
             )
             HorizontalDivider()
             SettingsNavRow(

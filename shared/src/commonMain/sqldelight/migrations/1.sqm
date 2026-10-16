@@ -1,6 +1,0 @@
-CREATE TABLE IF NOT EXISTS CpiEntity (
-    currency TEXT NOT NULL,
-    month TEXT NOT NULL,
-    indexValue INTEGER NOT NULL,
-    PRIMARY KEY (currency, month)
-);

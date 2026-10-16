@@ -287,16 +287,6 @@
     <string name="budget_choose_category">Kategorie wählen</string>
     <string name="budget_monthly_limit">Monatliches Limit</string>
     <string name="budget_empty">Noch keine Budgets. Füge eines hinzu, um die monatlichen Ausgaben einer Kategorie zu verfolgen.</string>
-    <!-- Inflation (CPI) -->
-    <string name="settings_nav_inflation">Inflation</string>
-    <string name="inflation_title">Inflationsdaten</string>
-    <string name="inflation_source">Quelle: %1$s, abgerufen am %2$s</string>
-    <string name="inflation_through">bis %1$s</string>
-    <string name="inflation_change_caption">Veränderung über 12 Monate</string>
-    <string name="inflation_empty">Keine Inflationsdaten gespeichert.</string>
-    <string name="ledger_inflation_toggle">In heutigem Geld</string>
-    <string name="ledger_inflation_note">VPI bis %1$s</string>
-
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Zahlungserfassung</string>
     <string name="capture_intro">Linden kann Benachrichtigungen der von dir gewählten Apps lesen und Zahlungsbenachrichtigungen in zu prüfende Buchungen umwandeln. In die Übersicht wird nichts automatisch übernommen.</string>

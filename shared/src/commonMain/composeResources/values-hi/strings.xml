@@ -287,16 +287,6 @@
     <string name="budget_choose_category">श्रेणी चुनें</string>
     <string name="budget_monthly_limit">मासिक सीमा</string>
     <string name="budget_empty">अभी कोई बजट नहीं है। किसी श्रेणी के मासिक खर्च पर नज़र रखने के लिए एक बजट जोड़ें।</string>
-    <!-- Inflation (CPI) -->
-    <string name="settings_nav_inflation">महँगाई</string>
-    <string name="inflation_title">महँगाई डेटा</string>
-    <string name="inflation_source">स्रोत: %1$s, %2$s को प्राप्त</string>
-    <string name="inflation_through">%1$s तक</string>
-    <string name="inflation_change_caption">12 महीनों में बदलाव</string>
-    <string name="inflation_empty">कोई महँगाई डेटा संग्रहीत नहीं है।</string>
-    <string name="ledger_inflation_toggle">आज के पैसे में</string>
-    <string name="ledger_inflation_note">CPI %1$s तक</string>
-
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">भुगतान कैप्चर</string>
     <string name="capture_intro">Linden आपके चुने हुए ऐप्स की सूचनाएँ पढ़ सकता है और भुगतान सूचनाओं को जाँचने योग्य प्रविष्टियों में बदल सकता है। बहीखाते में कुछ भी अपने आप नहीं जुड़ता।</string>

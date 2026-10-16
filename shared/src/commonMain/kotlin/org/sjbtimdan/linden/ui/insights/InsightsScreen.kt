@@ -51,7 +51,6 @@ import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.dateLanguage
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
-import org.sjbtimdan.linden.ui.ledger.InflationToggle
 import org.sjbtimdan.linden.ui.ledger.formatTotal
 import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.lindenColors
@@ -72,9 +71,6 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
     val hideTotal by viewModel.hideTotal.collectAsState()
     val selectedIndex by viewModel.selectedIndex.collectAsState()
     val breakdown by viewModel.breakdown.collectAsState()
-    val inflationAdjusted by viewModel.inflationAdjusted.collectAsState()
-    val inflationAvailable by viewModel.inflationAvailable.collectAsState()
-    val inflationThroughMonth by viewModel.inflationThroughMonth.collectAsState()
     val language = dateLanguage(platformLocaleTag())
     val colors = lindenColors()
 
@@ -92,17 +88,6 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
             .verticalScroll(rememberScrollState()),
     ) {
         ScreenBackButton(onClick = onNavigateBack)
-
-        // Restates the trend and the breakdown in the latest stored month's
-        // money, entries and their previous-month comparisons alike.
-        if (inflationAvailable) {
-            Spacer(modifier = Modifier.height(8.dp))
-            InflationToggle(
-                checked = inflationAdjusted,
-                throughMonth = inflationThroughMonth,
-                onToggle = { viewModel.setInflationAdjusted(!inflationAdjusted) },
-            )
-        }
 
         if (months.isNotEmpty() && !hasEntries) {
             Spacer(modifier = Modifier.height(48.dp))
