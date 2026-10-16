@@ -8,22 +8,29 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.capture.CaptureRule
+import org.sjbtimdan.linden.capture.CaptureTemplate
 import org.sjbtimdan.linden.capture.PendingCapture
+import org.sjbtimdan.linden.capture.matchCaptureTemplate
 import org.sjbtimdan.linden.data.AccountDao
+import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.entry.EntryDraft
+import org.sjbtimdan.linden.ui.entry.categoriesForType
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.util.stateFlow
 
 /**
  * Backs the captured-payments inbox: the pending captures resolved into rows
  * (amount text, mapped account), and the prefill that turns a reviewed capture
- * into a draft on the entry form.
+ * into a draft on the entry form — including the category, account and type of
+ * a learned template for the same notification wording.
  */
 class CapturedPaymentsViewModel(
     private val repository: CaptureRepository,
     accountDao: AccountDao,
+    categoryDao: CategoryDao,
     private val clock: AppClock,
 ) : ViewModel() {
     private val pendingCaptures = MutableStateFlow<List<PendingCapture>>(emptyList())
@@ -31,6 +38,11 @@ class CapturedPaymentsViewModel(
     private val rules: StateFlow<List<CaptureRule>> = repository.rulesFlow().stateFlow(viewModelScope, emptyList())
 
     private val accounts: StateFlow<List<Account>> = accountDao.getAll().stateFlow(viewModelScope, emptyList())
+
+    private val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(viewModelScope, emptyList())
+
+    private val templates: StateFlow<List<CaptureTemplate>> =
+        repository.templatesFlow().stateFlow(viewModelScope, emptyList())
 
     private val seenCaptureId: StateFlow<Long> = repository.seenCaptureIdFlow().stateFlow(viewModelScope, 0L)
 
@@ -76,16 +88,30 @@ class CapturedPaymentsViewModel(
 
     /**
      * The draft a reviewed capture loads into the entry form: amount and
-     * description prefilled, account set when the rule still maps to a visible
-     * one — the user still picks a category and confirms. Saving the draft
-     * consumes the capture; abandoning it leaves the capture pending.
+     * description prefilled, account set when the rule (or a learned template)
+     * maps to a visible one — the user still confirms. A learned template for
+     * the capture's package and notification wording also fills the type and
+     * the category the user chose last time, each only while it still exists
+     * and fits the type. Saving the draft consumes the capture; abandoning it
+     * leaves the capture pending.
      */
     fun buildDraft(capture: PendingCapture): EntryDraft {
-        val row = rowFor(capture, rules.value, accounts.value)
-        return EntryDraft.forNew(capture.type, clock = clock).copy(
-            amountText = row.amountText,
-            description = capture.description,
-            accountId = row.accountId,
+        val template = matchCaptureTemplate(capture, templates.value)
+        val type = template?.type ?: capture.type
+        val accounts = accounts.value
+        val ruleAccountId = rules.value.firstOrNull { it.packageName == capture.packageName }?.accountId
+        val accountId = listOfNotNull(template?.accountId, ruleAccountId)
+            .firstNotNullOfOrNull { id -> accounts.firstOrNull { it.id == id && !it.hidden }?.id }
+        val categoryId = template?.categoryId
+            ?.takeIf { id -> categoriesForType(categories.value, type).any { it.id == id } }
+        val decimalDigits = capture.currency?.decimalDigits
+            ?: accountId?.let { id -> accounts.firstOrNull { it.id == id }?.currency?.decimalDigits }
+            ?: 2
+        return EntryDraft.forNew(type, clock = clock).copy(
+            amountText = formatAmount(capture.amountMinor, decimalDigits),
+            description = template?.description ?: capture.description,
+            accountId = accountId,
+            categoryId = categoryId,
             sourceCaptureId = capture.id,
         )
     }

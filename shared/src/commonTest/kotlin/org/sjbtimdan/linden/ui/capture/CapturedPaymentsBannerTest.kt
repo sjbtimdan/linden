@@ -28,7 +28,7 @@ private fun pending() = PendingCapture(
 class CapturedPaymentsBannerTest : StringSpec({
 
     "an empty inbox renders nothing" {
-        withCapturedPaymentsViewModel { _, _, viewModel ->
+        withCapturedPaymentsViewModel { _, _, _, viewModel ->
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
@@ -39,7 +39,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "an unseen capture opens the card with its row" {
-        withCapturedPaymentsViewModel { repository, accountDao, viewModel ->
+        withCapturedPaymentsViewModel { repository, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             val main = accountDao.getAll().first().first()
             repository.setRule(CaptureRule("com.example.bank", main.id))
@@ -56,7 +56,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "Add reports the capture to add" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             var added: PendingCapture? = null
             setContent {
@@ -70,7 +70,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "Dismiss removes the capture from the inbox" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
@@ -83,7 +83,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "collapsing acknowledges the inbox and leaves the bar" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
             setContent {
@@ -100,7 +100,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "tapping the bar opens the card again" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
             viewModel.acknowledge()
@@ -116,7 +116,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "the collapsed bar counts the waiting captures" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
@@ -131,7 +131,7 @@ class CapturedPaymentsBannerTest : StringSpec({
     }
 
     "a capture arriving after a dismissal opens the card again" {
-        withCapturedPaymentsViewModel { repository, _, viewModel ->
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
             viewModel.acknowledge()

@@ -142,7 +142,7 @@ class AppDependencies(
         allEntries,
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
-        onCaptureConsumed = { captureRepository.removePending(it) },
+        onCaptureConsumed = { captureId, entry -> captureRepository.completeCapture(captureId, entry) },
     )
     val ledgerViewModel = LedgerViewModel(
         entryDao,
@@ -165,8 +165,13 @@ class AppDependencies(
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
     )
-    val capturedPaymentsViewModel = CapturedPaymentsViewModel(captureRepository, accountDao, clock = SystemClock)
-    val captureSettingsViewModel = CaptureSettingsViewModel(captureRepository, accountDao)
+    val capturedPaymentsViewModel = CapturedPaymentsViewModel(
+        captureRepository,
+        accountDao,
+        categoryDao,
+        clock = SystemClock,
+    )
+    val captureSettingsViewModel = CaptureSettingsViewModel(captureRepository, accountDao, categoryDao)
 
     /**
      * Completes the first-run setup: persists the chosen language, theme and

@@ -319,4 +319,6 @@
     <string name="capture_app_picker_title">Pilih aplikasi</string>
     <string name="capture_app_search">Cari aplikasi</string>
     <string name="capture_no_apps_found">Tidak ada aplikasi yang cocok.</string>
+    <string name="capture_templates_header">Aturan yang dipelajari</string>
+    <string name="capture_templates_empty">Belum ada yang dipelajari. Catat pembayaran yang ditangkap dan Linden akan mengingat klasifikasi Anda.</string>
 </resources>

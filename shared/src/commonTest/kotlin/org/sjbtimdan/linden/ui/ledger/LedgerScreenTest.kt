@@ -101,6 +101,7 @@ class LedgerScreenTest : StringSpec({
             val captureViewModel = CapturedPaymentsViewModel(
                 captureRepository,
                 AccountDao(captureDatabase.accountQueries),
+                CategoryDao(captureDatabase.categoryQueries),
                 FakeClock(),
             )
             captureRepository.addPending(

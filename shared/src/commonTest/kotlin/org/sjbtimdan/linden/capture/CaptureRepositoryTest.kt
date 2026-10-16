@@ -6,10 +6,17 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
 import org.sjbtimdan.linden.data.CAPTURE_SEEN_KEY
+import org.sjbtimdan.linden.data.CAPTURE_TEMPLATES_KEY
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.time.TEST_NOW
 
 private fun capture(index: Long) = PendingCapture(
     packageName = "com.example.bank",
@@ -18,6 +25,15 @@ private fun capture(index: Long) = PendingCapture(
     description = "Payment $index",
     type = EntryType.Expense,
     capturedAtMillis = index,
+)
+
+private fun entry(categoryId: Long = 1L, accountId: Long = 2L, description: String? = "COOP") = ExpenseEntry(
+    id = 0,
+    category = Category(categoryId, "Groceries", CategoryType.Expense),
+    description = description,
+    account = Account(accountId, "Main", Currency.CHF),
+    amount = 1250,
+    createdAt = TEST_NOW,
 )
 
 class CaptureRepositoryTest : StringSpec({
@@ -169,5 +185,107 @@ class CaptureRepositoryTest : StringSpec({
 
         next.id shouldBe 3L
         repository.pending() shouldBe listOf(next)
+    }
+
+    "completeCapture learns a template and removes the capture" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val pending = repository.addPending(capture(1).copy(description = "You paid CHF 12.50 at COOP"))
+
+        repository.completeCapture(pending.id, entry())
+
+        repository.pending().shouldBeEmpty()
+        repository.templates() shouldBe listOf(
+            CaptureTemplate("com.example.bank", "you paid chf #.# at coop", EntryType.Expense, 1L, 2L, "COOP"),
+        )
+        repository.templatesFlow().first() shouldBe repository.templates()
+    }
+
+    "completeCapture replaces the template of the same package and skeleton, newest first" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val first = repository.addPending(capture(1).copy(description = "You paid CHF 12.50 at COOP"))
+        repository.completeCapture(first.id, entry(categoryId = 1L))
+        val second = repository.addPending(capture(2).copy(description = "You paid CHF 8.00 at COOP"))
+
+        repository.completeCapture(second.id, entry(categoryId = 5L))
+
+        repository.templates() shouldBe listOf(
+            CaptureTemplate("com.example.bank", "you paid chf #.# at coop", EntryType.Expense, 5L, 2L, "COOP"),
+        )
+    }
+
+    "completeCapture leaves everything alone when the capture is gone" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repository.completeCapture(99L, entry())
+
+        repository.pending().shouldBeEmpty()
+        repository.templates().shouldBeEmpty()
+    }
+
+    "completeCapture still removes a capture that teaches nothing" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val pending = repository.addPending(capture(1))
+        val transfer = TransferEntry(
+            id = 0,
+            category = null,
+            description = "Moved",
+            account = Account(1L, "Main", Currency.CHF),
+            amount = 1250,
+            createdAt = TEST_NOW,
+            toAccount = Account(2L, "Savings", Currency.CHF),
+            toAmount = null,
+        )
+
+        repository.completeCapture(pending.id, transfer)
+
+        repository.pending().shouldBeEmpty()
+        repository.templates().shouldBeEmpty()
+    }
+
+    "templates cap and drop the oldest learned" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repeat(MAX_CAPTURE_TEMPLATES + 5) { index ->
+            val pending = repository.addPending(
+                capture(1).copy(description = "Payment ${"w".repeat(index + 1)}"),
+            )
+            repository.completeCapture(pending.id, entry())
+        }
+
+        val templates = repository.templates()
+        templates.size shouldBe MAX_CAPTURE_TEMPLATES
+        templates.first().skeleton shouldBe "payment ${"w".repeat(MAX_CAPTURE_TEMPLATES + 5)}"
+        templates.last().skeleton shouldBe "payment ${"w".repeat(6)}"
+    }
+
+    "removeTemplate deletes only the matching template" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val first = repository.addPending(capture(1).copy(description = "You paid CHF 12.50 at COOP"))
+        repository.completeCapture(first.id, entry())
+        val second = repository.addPending(
+            capture(2).copy(packageName = "other.app", description = "You paid CHF 12.50 at COOP"),
+        )
+        repository.completeCapture(second.id, entry())
+
+        repository.removeTemplate("com.example.bank", "you paid chf #.# at coop")
+
+        repository.templates() shouldBe listOf(
+            CaptureTemplate("other.app", "you paid chf #.# at coop", EntryType.Expense, 1L, 2L, "COOP"),
+        )
+    }
+
+    "a corrupt templates value reads as empty" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        database.settingsQueries.insertOrReplace(CAPTURE_TEMPLATES_KEY, "{not json")
+
+        repository.templates().shouldBeEmpty()
+        repository.templatesFlow().first().shouldBeEmpty()
     }
 })

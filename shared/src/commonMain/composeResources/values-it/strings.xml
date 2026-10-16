@@ -316,4 +316,6 @@
     <string name="capture_app_picker_title">Scegli un'app</string>
     <string name="capture_app_search">Cerca app</string>
     <string name="capture_no_apps_found">Nessuna app trovata.</string>
+    <string name="capture_templates_header">Regole apprese</string>
+    <string name="capture_templates_empty">Ancora nulla appreso. Registra un pagamento acquisito e Linden ricorderà come l\'hai classificato.</string>
 </resources>

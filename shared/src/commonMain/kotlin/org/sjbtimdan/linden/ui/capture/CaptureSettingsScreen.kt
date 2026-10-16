@@ -35,10 +35,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.capture.CaptureRule
+import org.sjbtimdan.linden.capture.CaptureTemplate
 import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.capture_account_missing
 import org.sjbtimdan.linden.resources.capture_add_app
@@ -51,6 +54,9 @@ import org.sjbtimdan.linden.resources.capture_disclosure_title
 import org.sjbtimdan.linden.resources.capture_enable
 import org.sjbtimdan.linden.resources.capture_intro
 import org.sjbtimdan.linden.resources.capture_remove_app
+import org.sjbtimdan.linden.resources.capture_row_supporting
+import org.sjbtimdan.linden.resources.capture_templates_empty
+import org.sjbtimdan.linden.resources.capture_templates_header
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.capture_unsupported
 import org.sjbtimdan.linden.ui.BackHandler
@@ -62,8 +68,9 @@ import org.sjbtimdan.linden.ui.settings.SettingsSectionHeader
 
 /**
  * Payment-capture settings: the access state (with the disclosure the user
- * must see before the system toggle is opened) and the allowlist of apps with
- * their account mappings. Reviewing captures happens in the ledger.
+ * must see before the system toggle is opened), the allowlist of apps with
+ * their account mappings, and the learned templates the user can forget.
+ * Reviewing captures happens in the ledger.
  */
 @Composable
 fun CaptureSettingsScreen(
@@ -73,7 +80,9 @@ fun CaptureSettingsScreen(
     onNavigateBack: () -> Unit,
 ) {
     val rules by viewModel.rules.collectAsState()
+    val templates by viewModel.templates.collectAsState()
     val accounts by viewModel.accounts.collectAsState()
+    val categories by viewModel.categories.collectAsState()
     var showDisclosure by remember { mutableStateOf(false) }
     var showAppPicker by remember { mutableStateOf(false) }
 
@@ -183,6 +192,36 @@ fun CaptureSettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SettingsSectionHeader(stringResource(Res.string.capture_templates_header))
+
+                SettingsCard {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (templates.isEmpty()) {
+                            Text(
+                                text = stringResource(Res.string.capture_templates_empty),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                            )
+                        } else {
+                            templates.forEachIndexed { index, template ->
+                                if (index > 0) HorizontalDivider()
+                                CaptureTemplateRow(
+                                    template = template,
+                                    label = capturableApps.firstOrNull { it.packageName == template.packageName }?.label
+                                        ?: template.packageName,
+                                    categories = categories,
+                                    onRemove = { viewModel.removeTemplate(template.packageName, template.skeleton) },
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -262,6 +301,47 @@ private fun CaptureRuleRow(
             }
         }
         Switch(checked = rule.enabled, onCheckedChange = onEnabledChange)
+        IconButton(onClick = onRemove) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = stringResource(Res.string.capture_remove_app),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CaptureTemplateRow(
+    template: CaptureTemplate,
+    label: String,
+    categories: List<Category>,
+    onRemove: () -> Unit,
+) {
+    val category = categories.firstOrNull { it.id == template.categoryId }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = template.skeleton,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = if (category == null) {
+                    label
+                } else {
+                    stringResource(Res.string.capture_row_supporting, label, category.name)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         IconButton(onClick = onRemove) {
             Icon(
                 imageVector = Icons.Filled.Delete,

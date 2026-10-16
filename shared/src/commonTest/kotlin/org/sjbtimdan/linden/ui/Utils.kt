@@ -246,7 +246,7 @@ fun withEntryPoint(
     hideEntryTotal: Boolean = false,
     rates: List<FxRate> = emptyList(),
     ratesSeen: Boolean = false,
-    onCaptureConsumed: suspend (Long) -> Unit = {},
+    onCaptureConsumed: suspend (Long, Entry) -> Unit = { _, _ -> },
     block: suspend ComposeUiTest.(EntryDao, AccountDao, CategoryDao, EntryPointViewModel) -> Unit,
 ) {
     onTestMain {
@@ -303,30 +303,32 @@ fun withEntryPoint(
 @OptIn(ExperimentalTestApi::class)
 fun withCapturedPaymentsViewModel(
     clock: AppClock = FakeClock(),
-    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CapturedPaymentsViewModel) -> Unit,
+    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CategoryDao, CapturedPaymentsViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val repository = CaptureRepository(SettingsDao(database.settingsQueries))
             val accountDao = AccountDao(database.accountQueries)
-            val viewModel = CapturedPaymentsViewModel(repository, accountDao, clock)
-            block(repository, accountDao, viewModel)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val viewModel = CapturedPaymentsViewModel(repository, accountDao, categoryDao, clock)
+            block(repository, accountDao, categoryDao, viewModel)
         }
     }
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun withCaptureSettingsViewModel(
-    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CaptureSettingsViewModel) -> Unit,
+    block: suspend ComposeUiTest.(CaptureRepository, AccountDao, CategoryDao, CaptureSettingsViewModel) -> Unit,
 ) {
     onTestMain {
         runComposeUiTest {
             val database = lindenDatabase()
             val repository = CaptureRepository(SettingsDao(database.settingsQueries))
             val accountDao = AccountDao(database.accountQueries)
-            val viewModel = CaptureSettingsViewModel(repository, accountDao)
-            block(repository, accountDao, viewModel)
+            val categoryDao = CategoryDao(database.categoryQueries)
+            val viewModel = CaptureSettingsViewModel(repository, accountDao, categoryDao)
+            block(repository, accountDao, categoryDao, viewModel)
         }
     }
 }

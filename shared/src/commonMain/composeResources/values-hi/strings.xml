@@ -322,4 +322,6 @@
     <string name="capture_app_picker_title">ऐप चुनें</string>
     <string name="capture_app_search">ऐप खोजें</string>
     <string name="capture_no_apps_found">कोई ऐप नहीं मिला।</string>
+    <string name="capture_templates_header">सीखे गए नियम</string>
+    <string name="capture_templates_empty">अभी तक कुछ नहीं सीखा। कैप्चर किया गया भुगतान दर्ज करें और Linden याद रखेगा कि आपने उसे कैसे वर्गीकृत किया।</string>
 </resources>

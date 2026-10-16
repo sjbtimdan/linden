@@ -36,7 +36,7 @@ class EntryPointViewModel(
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
-    private val onCaptureConsumed: suspend (Long) -> Unit = {},
+    private val onCaptureConsumed: suspend (Long, Entry) -> Unit = { _, _ -> },
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -208,19 +208,21 @@ class EntryPointViewModel(
             return false
         }
         _lastAddedWasEdit.value = updated
-        state.sourceCaptureId?.let { consumeCapture(it) }
+        state.sourceCaptureId?.let { consumeCapture(it, entry) }
         draftState.value = EntryDraft.forNew(entry.type, entry, clock)
         return true
     }
 
     /**
-     * Drops the capture a saved draft came from. The entry is already written,
-     * so a failed cleanup only leaves the capture in the inbox for a manual
-     * dismiss — it must never fail the save that succeeded.
+     * Hands the capture a saved draft came from, together with the entry it
+     * became, to the host — which removes it and remembers what the user's
+     * entry teaches. The entry is already written, so a failed cleanup only
+     * leaves the capture in the inbox for a manual dismiss — it must never
+     * fail the save that succeeded.
      */
-    private suspend fun consumeCapture(captureId: Long) {
+    private suspend fun consumeCapture(captureId: Long, entry: Entry) {
         try {
-            onCaptureConsumed(captureId)
+            onCaptureConsumed(captureId, entry)
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {

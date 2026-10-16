@@ -322,4 +322,6 @@
     <string name="capture_app_picker_title">App auswählen</string>
     <string name="capture_app_search">Apps suchen</string>
     <string name="capture_no_apps_found">Keine Apps gefunden.</string>
+    <string name="capture_templates_header">Gelernte Regeln</string>
+    <string name="capture_templates_empty">Noch nichts gelernt. Übernimm eine erfasste Zahlung, und Linden merkt sich deine Kategorisierung.</string>
 </resources>

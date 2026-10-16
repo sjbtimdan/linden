@@ -18,6 +18,7 @@ const val RATES_SEEN_KEY = "ratesSeen"
 const val CAPTURE_RULES_KEY = "captureRules"
 const val PENDING_CAPTURES_KEY = "pendingCaptures"
 const val CAPTURE_SEEN_KEY = "captureSeenId"
+const val CAPTURE_TEMPLATES_KEY = "captureTemplates"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {

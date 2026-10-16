@@ -894,7 +894,7 @@ class EntryPointViewModelTest : StringSpec({
         var consumed: Long? = null
         withEntryPoint(
             clock = FakeClock(),
-            onCaptureConsumed = { consumed = it },
+            onCaptureConsumed = { id, _ -> consumed = id },
         ) { _, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.loadDraft(
@@ -913,11 +913,38 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 
+    "saving a capture draft hands the saved entry to the consume callback" {
+        var consumed: Pair<Long, Entry>? = null
+        withEntryPoint(
+            clock = FakeClock(),
+            onCaptureConsumed = { id, entry -> consumed = id to entry },
+        ) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forNew(EntryType.Expense, clock = FakeClock()).copy(
+                    amountText = "4.50",
+                    categoryId = groceries.id,
+                    accountId = main.id,
+                    sourceCaptureId = 9L,
+                ),
+            )
+
+            viewModel.saveDraft() shouldBe true
+
+            consumed?.first shouldBe 9L
+            val entry = consumed?.second.shouldNotBeNull()
+            entry.type shouldBe EntryType.Expense
+            entry.category?.id shouldBe groceries.id
+            entry.account.id shouldBe main.id
+            entry.amount shouldBe 450L
+        }
+    }
+
     "abandoning a capture draft leaves the capture unconsumed" {
         var consumed: Long? = null
         withEntryPoint(
             clock = FakeClock(),
-            onCaptureConsumed = { consumed = it },
+            onCaptureConsumed = { id, _ -> consumed = id },
         ) { _, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             viewModel.loadDraft(
@@ -939,7 +966,7 @@ class EntryPointViewModelTest : StringSpec({
         var consumed: Long? = null
         withEntryPoint(
             clock = FakeClock(),
-            onCaptureConsumed = { consumed = it },
+            onCaptureConsumed = { id, _ -> consumed = id },
         ) { _, accountDao, categoryDao, viewModel ->
             val (main, _) = seed(accountDao, categoryDao)
             viewModel.loadDraft(
@@ -960,7 +987,7 @@ class EntryPointViewModelTest : StringSpec({
     "a failing consume does not fail the save" {
         withEntryPoint(
             clock = FakeClock(),
-            onCaptureConsumed = { throw IllegalStateException("cleanup failed") },
+            onCaptureConsumed = { _, _ -> throw IllegalStateException("cleanup failed") },
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.loadDraft(

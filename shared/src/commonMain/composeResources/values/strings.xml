@@ -322,4 +322,6 @@
     <string name="capture_app_picker_title">Choose an app</string>
     <string name="capture_app_search">Search apps</string>
     <string name="capture_no_apps_found">No apps match.</string>
+    <string name="capture_templates_header">Learned rules</string>
+    <string name="capture_templates_empty">Nothing learned yet. Log a captured payment and Linden remembers how you classified it.</string>
 </resources>

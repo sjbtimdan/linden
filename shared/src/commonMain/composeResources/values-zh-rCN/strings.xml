@@ -315,4 +315,6 @@
     <string name="capture_app_picker_title">选择应用</string>
     <string name="capture_app_search">搜索应用</string>
     <string name="capture_no_apps_found">没有匹配的应用。</string>
+    <string name="capture_templates_header">已学习的规则</string>
+    <string name="capture_templates_empty">暂无学习记录。记录一笔捕获的付款，Linden 会记住你的分类方式。</string>
 </resources>
