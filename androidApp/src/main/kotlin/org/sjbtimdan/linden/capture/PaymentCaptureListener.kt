@@ -4,6 +4,8 @@ import android.app.Notification
 import android.content.Context
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Reads notifications from user-allowlisted apps and turns payment-like ones
@@ -30,14 +33,20 @@ class PaymentCaptureListener : NotificationListenerService() {
     private val mutex = Mutex()
 
     /** Content hash last parsed per notification key, so updates don't re-capture. */
-    private val processed = mutableMapOf<String, Int>()
+    private val processed = ConcurrentHashMap<String, Int>()
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val notification = sbn.notification ?: return
         if (sbn.isOngoing) return
         if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
         scope.launch {
-            mutex.withLock { process(sbn.packageName, sbn.key, sbn.postTime, notification) }
+            try {
+                mutex.withLock { process(sbn.packageName, sbn.key, sbn.postTime, notification) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to process a notification from ${sbn.packageName}", e)
+            }
         }
     }
 
@@ -78,6 +87,7 @@ class PaymentCaptureListener : NotificationListenerService() {
     }
 
     private companion object {
+        const val TAG = "PaymentCaptureListener"
         const val PROCESSED_LIMIT = 200
 
         /**
