@@ -3,10 +3,12 @@ package org.sjbtimdan.linden
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,8 +17,16 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.capture.PendingCapture
 import org.sjbtimdan.linden.data.FakeFxRatesSource
+import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.ExpenseEntry
+import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.withApp
 
 @OptIn(ExperimentalTestApi::class)
@@ -25,6 +35,80 @@ class AppTest : StringSpec({
         withApp { dependencies ->
             setContent { App(dependencies) }
             onNodeWithText("Add").assertExists()
+        }
+    }
+
+    "a captured payment alert shows on the entry screen, not the ledger" {
+        withApp { dependencies ->
+            dependencies.captureRepository.addPending(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 2450,
+                    currency = Currency.CHF,
+                    description = "COOP",
+                    type = EntryType.Expense,
+                    capturedAtMillis = 1L,
+                ),
+            )
+            setContent { App(dependencies) }
+
+            onNodeWithTag("capturedPaymentsCard").assertExists()
+            onNodeWithText("COOP").assertExists()
+
+            onNodeWithText("Ledger").performClick()
+            waitForIdle()
+
+            onAllNodesWithTag("capturedPaymentsCard").assertCountEquals(0)
+
+            onNodeWithText("Entry").performClick()
+            onNodeWithTag("capturedPaymentsCard").assertExists()
+        }
+    }
+
+    "a saved captured payment disappears from the entry alert" {
+        withApp { dependencies ->
+            dependencies.accountDao.create("Main", Currency.CHF)
+            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
+            val main = dependencies.accountDao.getAll().first().first()
+            val groceries = dependencies.categoryDao.getAll().first().first()
+
+            // Teach a template for this wording so the alert's Add prefills a
+            // complete draft, as a repeat notification would.
+            val learned = dependencies.captureRepository.addPending(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 2450,
+                    currency = Currency.CHF,
+                    description = "COOP",
+                    type = EntryType.Expense,
+                    capturedAtMillis = 1L,
+                ),
+            )
+            dependencies.captureRepository.completeCapture(
+                learned.id,
+                ExpenseEntry(0, groceries, "COOP", main, 2450, createdAt = TEST_NOW),
+            )
+            dependencies.captureRepository.templatesFlow().first { it.isNotEmpty() }
+            val pending = dependencies.captureRepository.addPending(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 2450,
+                    currency = Currency.CHF,
+                    description = "COOP",
+                    type = EntryType.Expense,
+                    capturedAtMillis = 2L,
+                ),
+            )
+
+            setContent { App(dependencies) }
+
+            onNodeWithTag("capturedPaymentsCard").assertExists()
+            onNodeWithTag("capturedPaymentAdd-${pending.id}").performClick()
+            onNodeWithTag("saveEntry").performClick()
+            waitForIdle()
+
+            dependencies.captureRepository.pending().shouldBeEmpty()
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }
 

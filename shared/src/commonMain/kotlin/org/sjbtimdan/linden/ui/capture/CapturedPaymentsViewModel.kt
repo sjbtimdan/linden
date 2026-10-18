@@ -61,6 +61,11 @@ class CapturedPaymentsViewModel(
 
     init {
         viewModelScope.launch { repository.pendingFlow().collect { pendingCaptures.value = it } }
+        // The listener's own connection is invisible to pendingFlow, so its
+        // write only reaches this view model through the process-wide tick.
+        viewModelScope.launch {
+            CaptureRepository.inboxChanges.collect { pendingCaptures.value = repository.pending() }
+        }
     }
 
     /**

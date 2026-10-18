@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -52,6 +53,8 @@ import org.sjbtimdan.linden.resources.entry_add
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsBanner
+import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
@@ -71,6 +74,7 @@ fun EntryPoint(
     viewModel: EntryPointViewModel,
     onNavigateToRates: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
+    captureViewModel: CapturedPaymentsViewModel? = null,
     // Test seam: desktop has no system back, so the real BackHandler is a no-op
     // and tests inject a handler they can invoke.
     systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
@@ -137,21 +141,26 @@ fun EntryPoint(
 
     // A draft loaded from a captured payment arrives prefilled but incomplete —
     // the category is always the user's to pick — so treat the load as an edit
-    // and let the missing-field hint explain the disabled Add right away.
+    // and let the missing-field hint explain the disabled Add right away. It is
+    // also a started draft, so the header compacts to keep the form in view.
     LaunchedEffect(draft?.sourceCaptureId) {
         if (draft?.sourceCaptureId != null) {
+            markTouched()
             markEdited()
         }
     }
 
     // Saves the draft from either the form's Add row or the calculator's Add
     // button; both only fire while the draft is valid. The persistent last-added
-    // receipt is the confirmation, so no snackbar is shown.
+    // receipt is the confirmation, so no snackbar is shown. The capture inbox
+    // is refreshed explicitly afterwards: a capture written by the listener's
+    // own connection is invisible to the app's flows until re-read.
     val addDraft: () -> Unit = {
         scope.launch {
             if (viewModel.saveDraft()) {
                 markTouched()
                 draftEdited = false
+                captureViewModel?.refresh()
             }
         }
     }
@@ -186,6 +195,18 @@ fun EntryPoint(
                 }
             },
     ) {
+        // The captured-payment inbox lives where its entries will: pinned to the
+        // top of the entry screen, collapsed to a bar once acknowledged.
+        if (captureViewModel != null) {
+            CapturedPaymentsBanner(
+                viewModel = captureViewModel,
+                onAdd = { capture ->
+                    viewModel.loadDraft(captureViewModel.buildDraft(capture))
+                },
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+        }
+
         if (!fieldFocused) {
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 entryTypes.forEachIndexed { index, type ->

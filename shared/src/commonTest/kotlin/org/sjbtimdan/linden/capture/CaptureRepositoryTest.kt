@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.capture
 
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
@@ -106,6 +107,16 @@ class CaptureRepositoryTest : StringSpec({
         second.id shouldBe 2
         repository.pending() shouldBe listOf(second, first)
         repository.pendingFlow().first() shouldBe listOf(second, first)
+    }
+
+    "a pending-inbox write publishes a change for the listener's connection" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val before = CaptureRepository.inboxChanges.value
+
+        repository.addPending(capture(1))
+
+        CaptureRepository.inboxChanges.value shouldBeGreaterThan before
     }
 
     "addPending caps the inbox and drops the oldest captures" {

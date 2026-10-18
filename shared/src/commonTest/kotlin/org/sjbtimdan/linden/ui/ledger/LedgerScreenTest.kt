@@ -28,23 +28,17 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import org.sjbtimdan.linden.capture.CaptureRepository
-import org.sjbtimdan.linden.capture.PendingCapture
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.data.SettingsDao
-import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.FakeClock
-import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
 import org.sjbtimdan.linden.ui.withLedgerViewModel
 import kotlin.time.Instant
 
@@ -91,38 +85,6 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithText("No entries yet.").assertIsDisplayed()
             onNodeWithText("Add your first entry").assertIsDisplayed()
-        }
-    }
-
-    "the capture banner is pinned to the entries view" {
-        withLedgerViewModel(clock = FakeClock()) { _, _, _, viewModel ->
-            val captureDatabase = lindenDatabase()
-            val captureRepository = CaptureRepository(SettingsDao(captureDatabase.settingsQueries))
-            val captureViewModel = CapturedPaymentsViewModel(
-                captureRepository,
-                AccountDao(captureDatabase.accountQueries),
-                CategoryDao(captureDatabase.categoryQueries),
-                FakeClock(),
-            )
-            captureRepository.addPending(
-                PendingCapture(
-                    packageName = "com.example.bank",
-                    amountMinor = 2450,
-                    currency = Currency.CHF,
-                    description = "COOP",
-                    type = EntryType.Expense,
-                    capturedAtMillis = 1L,
-                ),
-            )
-            setContent {
-                LedgerScreen(viewModel = viewModel, captureViewModel = captureViewModel)
-            }
-
-            onNodeWithTag("capturedPaymentsCard").assertIsDisplayed()
-
-            onNodeWithTag("viewModeTab-Accounts").performClick()
-
-            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }
 

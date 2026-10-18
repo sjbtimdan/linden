@@ -185,17 +185,13 @@ fun App(
                                         onNavigateToEntry = { currentScreen = Screen.Entry },
                                         onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
                                         onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
-                                        captureViewModel = capturedPaymentsViewModel,
-                                        onAddCapture = { capture ->
-                                            entryViewModel.loadDraft(capturedPaymentsViewModel.buildDraft(capture))
-                                            currentScreen = Screen.Entry
-                                        },
                                     )
 
                                     Screen.Entry -> EntryPoint(
                                         viewModel = entryViewModel,
                                         onNavigateToRates = { openSubScreen(Screen.Rates) },
                                         ratesWarning = ratesWarning,
+                                        captureViewModel = capturedPaymentsViewModel,
                                     )
 
                                     else -> SettingsScreen(

@@ -58,13 +58,14 @@ import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
- * The captured-payment inbox pinned above the ledger's entries list: an
+ * The captured-payment inbox pinned to the top of the entry screen: an
  * expanded card listing every capture awaiting review, or — once dismissed —
  * a one-line bar that opens it again. A capture newer than the acknowledged
  * watermark expands the card on its own.
  *
- * The notification listener writes through its own database connection, which
- * the repository flows cannot observe, so the panel re-reads on resume.
+ * The notification listener writes through its own database connection, so
+ * the panel re-reads on resume and whenever the repository publishes an
+ * inbox change.
  */
 @Composable
 fun CapturedPaymentsBanner(
@@ -229,7 +230,10 @@ private fun CapturedPaymentRow(
                 Text(stringResource(Res.string.capture_dismiss))
             }
             Spacer(modifier = Modifier.width(4.dp))
-            Button(onClick = onAdd) {
+            Button(
+                onClick = onAdd,
+                modifier = Modifier.testTag("capturedPaymentAdd-${item.capture.id}"),
+            ) {
                 Text(stringResource(Res.string.entry_add))
             }
         }

@@ -156,7 +156,10 @@ class EntryPointViewModel(
     fun seedDraft() {
         viewModelScope.launch {
             if (draftState.value == null) {
-                draftState.value = newEntryState(_selectedType.value)
+                val seeded = newEntryState(_selectedType.value)
+                // A capture draft can be loaded while the seed query runs; never
+                // overwrite it (that would silently drop its sourceCaptureId).
+                draftState.compareAndSet(null, seeded)
             }
         }
     }

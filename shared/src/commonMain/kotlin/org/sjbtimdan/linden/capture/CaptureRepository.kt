@@ -1,7 +1,11 @@
 package org.sjbtimdan.linden.capture
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
@@ -27,6 +31,21 @@ class CaptureRepository(
     private val settingsDao: SettingsDao,
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) {
+    companion object {
+        private val _inboxChanges = MutableStateFlow(0L)
+
+        /**
+         * In-process ticks after every pending-inbox write. The notification
+         * listener opens its own database connection, which [pendingFlow]
+         * cannot observe; the review UI watches this to refresh at once.
+         */
+        val inboxChanges: StateFlow<Long> = _inboxChanges.asStateFlow()
+
+        private fun notifyInboxChanged() {
+            _inboxChanges.update { it + 1 }
+        }
+    }
+
     suspend fun rules(): List<CaptureRule> = decodeRules(settingsDao.getRaw(CAPTURE_RULES_KEY))
 
     fun rulesFlow(): Flow<List<CaptureRule>> = settingsDao.rawFlow(CAPTURE_RULES_KEY).map { decodeRules(it) }
@@ -121,6 +140,7 @@ class CaptureRepository(
 
     private suspend fun writePending(pending: List<PendingCapture>) {
         settingsDao.setRaw(PENDING_CAPTURES_KEY, json.encodeToString(pending))
+        notifyInboxChanged()
     }
 
     /** [template] first, replacing the same package-and-skeleton key and capped at [MAX_CAPTURE_TEMPLATES]. */
