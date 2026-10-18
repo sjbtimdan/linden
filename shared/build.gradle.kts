@@ -175,6 +175,16 @@ tasks.withType<Test>().configureEach {
     providers.systemProperty("descriptionQualityTest").orNull?.let {
         systemProperty("descriptionQualityTest", it)
     }
+    // Same forwarding for the manual Pace backtest harness.
+    listOf(
+        "paceBacktest",
+        "paceBacktestAsOf",
+        "paceBacktestDays",
+        "paceBacktestZone",
+        "paceBacktestOut",
+    ).forEach { name ->
+        providers.systemProperty(name).orNull?.let { systemProperty(name, it) }
+    }
 }
 
 // Integration tests live in their own source set (jvmIntegrationTest) so they
