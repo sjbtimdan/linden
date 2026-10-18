@@ -1,3 +1,13 @@
+## Version 1.2.0
+
+<en-US>
+- Payment capture (Android): notifications from your banking apps can be reviewed in a compact bar on the Entry screen. Tap Add to prefill the entry, and the alert clears immediately; multiple payments stay minimized in one line. Enable it in Settings → Payment capture.
+- Linden learns from captured payments: after you save one, its type, category, account and wording are remembered and used to prefill the next matching notification.
+- Pace: the Ledger's current month now shows a compact forecast of where spending will land, with a likely range and a remaining daily allowance. The Entry screen shows the allowance after you enter an amount.
+- Every day header in the Ledger now shows that day's net total in your default currency.
+- Editing an entry now shows only Enter in the amount keypad, so you cannot accidentally add a duplicate from it.
+</en-US>
+
 ## Version 1.1.0
 
 <en-US>
