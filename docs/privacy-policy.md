@@ -16,17 +16,17 @@ Linden is a local-first expenses tracker. Your entries, accounts, categories and
 
 ## Notification Access (Android, optional)
 
-Payment capture is off by default. Linden can read notifications only if you explicitly grant Notification access in Android settings and enable **Settings → Payment capture** in the app. Android then delivers notifications to Linden, but Linden processes and stores only notifications from the apps you add to the allowlist, in order to suggest a payment entry for you to review. Notification content is processed on your device: it is never sent to Firebase, Frankfurter or any other third party. You can revoke Notification access at any time in Android settings or disable Payment capture in Linden.
+Payment capture is off by default. Linden can read notifications only if you explicitly grant Notification access in Android settings and enable **Settings → Payment capture** in the app. Android then delivers notifications to Linden, but Linden processes and stores only notifications from the apps you add to the allowlist, in order to suggest a payment entry for you to review. Notification content is processed on your device: Linden never uploads or shares it with Firebase, Frankfurter or any other third party. Captured payment data and learned templates are stored locally; if you enable Android's auto backup, they can be included in your Google Drive backup like the rest of Linden's data. You can revoke Notification access at any time in Android settings or disable Payment capture in Linden.
 
 ## Data Storage
 
-All financial data (entries, accounts, categories, settings) is stored locally in an SQLite database on your device and is never uploaded by Linden. The optional captured-payment inbox and learned capture rules are stored locally in the app's settings and are included in your own backups like the rest of your data.
+All financial data (entries, accounts, categories, settings) is stored locally in an SQLite database on your device and is never uploaded by Linden. The optional captured-payment inbox and learned capture rules are stored locally in the app's settings and are included in your own Linden backups like the rest of your data.
 
-If Android's backup service is enabled on your device, the operating system may include Linden's local database in your Google account backup. That backup is controlled by you and your device settings, not by Linden.
+If Android's auto backup service is enabled on your device, the operating system may upload Linden's local database — including the captured-payment inbox and learned capture rules — to your Google Drive. That backup is controlled by you and your device settings, not by Linden.
 
 ## Data Sharing
 
-Usage analytics and crash reports are processed by Google Firebase on our behalf. No other third party receives data from Linden. Notification content is never shared; it is processed on your device only.
+Usage analytics and crash reports are processed by Google Firebase on our behalf. No other third party receives data from Linden. Notification content is never shared by Linden; it is processed on your device only. Android auto backup, when enabled, is a device-level backup controlled by you, not an upload by Linden.
 
 ## Children's Privacy
 
