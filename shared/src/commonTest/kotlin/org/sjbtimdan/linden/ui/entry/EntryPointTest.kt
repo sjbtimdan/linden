@@ -278,6 +278,27 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "the calculator while editing an entry has only Enter" {
+        withEntryPoint(clock = FakeClock()) { _, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.loadDraft(
+                EntryDraft.forEdit(
+                    ExpenseEntry(1, groceries, "Coffee", main, 1_250, createdAt = TEST_NOW),
+                ),
+            )
+
+            setContent {
+                EntryPoint(viewModel = viewModel)
+            }
+
+            onNodeWithText("Amount").performClick()
+            waitForIdle()
+
+            onNodeWithText("Enter").assertIsDisplayed()
+            onNodeWithTag("calculatorAdd").assertDoesNotExist()
+        }
+    }
+
     "tapping the confirmation icon dismisses the added receipt without undoing" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             seed(accountDao, categoryDao)

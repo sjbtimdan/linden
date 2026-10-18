@@ -40,7 +40,6 @@ import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_name_required
-import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.resources.entry_account
 import org.sjbtimdan.linden.resources.entry_add_to_ledger
 import org.sjbtimdan.linden.resources.entry_amount
@@ -146,9 +145,10 @@ fun EntryForm(
     val duplicateAccountNameError = stringResource(Res.string.accounts_duplicate_name)
     val invalidAmountError = stringResource(Res.string.common_invalid_amount)
     val nameRequiredError = stringResource(Res.string.common_name_required)
-    // Saving an edited entry updates it, so the keypad's commit action reads
-    // Save instead of Add To Ledger while an entry is being edited.
-    val addLabel = if (state.editing != null) Res.string.common_save else Res.string.entry_add_to_ledger
+    // A new entry can be committed from the keypad in one tap; an edit is
+    // committed by the form's Save row, so the keypad shows only Enter there.
+    val addLabel = Res.string.entry_add_to_ledger
+    val calculatorAdd = if (state.editing != null) null else onAdd
     // Recurring quick-entry chips get a subtle tint and a screen-reader label:
     // the chip itself only shows the description and the repeat icon.
     val recurringChipColors = OptionChipColors(
@@ -457,7 +457,7 @@ fun EntryForm(
                 activeField = null
             },
             onCancel = { activeField = null },
-            onAdd = onAdd,
+            onAdd = calculatorAdd,
             addEnabled = { value -> state.copy(amountText = value).isValid(accounts) },
             addLabel = addLabel,
         )
@@ -482,7 +482,7 @@ fun EntryForm(
                 activeField = null
             },
             onCancel = { activeField = null },
-            onAdd = onAdd,
+            onAdd = calculatorAdd,
             addEnabled = { value -> state.copy(toAmountText = value).isValid(accounts) },
             addLabel = addLabel,
         )
