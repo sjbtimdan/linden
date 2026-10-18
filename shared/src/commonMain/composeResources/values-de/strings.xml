@@ -126,6 +126,8 @@
     <string name="ledger_filter_by_amount">Nach Betrag filtern</string>
     <string name="ledger_apply">Anwenden</string>
 
+    <string name="ledger_day_total">Gesamt %1$s</string>
+
     <!-- Period navigator -->
     <string name="ledger_period_day">Tag</string>
     <string name="ledger_period_week">Woche</string>

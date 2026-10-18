@@ -25,6 +25,7 @@ import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.time.AppClock
@@ -64,6 +65,10 @@ class LedgerViewModel(
 ) {
     /** Today in [zone], re-read on every call. */
     fun today(): LocalDate = clock.todayIn(zone)
+
+    /** Stored FX rates, exposed for the entries list's per-day totals. */
+    val fxRates: StateFlow<List<FxRate>> get() = rates
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 

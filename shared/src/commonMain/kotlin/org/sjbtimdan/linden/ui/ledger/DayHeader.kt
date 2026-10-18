@@ -16,11 +16,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.ledger_day_total
+import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
+import org.sjbtimdan.linden.ui.theme.lindenColors
 
 @Composable
-fun DayHeader(label: String) {
+fun DayHeader(
+    label: String,
+    total: Long?,
+    currency: Currency,
+    hidden: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val colors = lindenColors()
+    val totalColor = when {
+        hidden || total == null -> MaterialTheme.colorScheme.onSurfaceVariant
+        total < 0 -> colors.expense
+        total > 0 -> colors.income
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val totalText = when {
+        hidden -> stringResource(Res.string.ledger_day_total, HIDDEN_AMOUNT)
+        total != null -> stringResource(Res.string.ledger_day_total, formatTotal(total, currency))
+        else -> stringResource(Res.string.ledger_day_total, "–")
+    }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
             .padding(bottom = 4.dp),
@@ -42,6 +66,14 @@ fun DayHeader(label: String) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.outlineVariant,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = totalText,
+            style = MaterialTheme.typography.labelLarge,
+            color = totalColor,
+            maxLines = 1,
+            modifier = Modifier.testTag("dayHeaderTotal"),
         )
     }
 }

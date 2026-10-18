@@ -31,7 +31,7 @@ private fun coffeeEntry(id: Long, amount: Long) = ExpenseEntry(
 )
 
 private val listItems = listOf(
-    DayHeaderItem("day-2026-01-20", "Jan 20, 2026"),
+    DayHeaderItem("day-2026-01-20", "Jan 20, 2026", -1_650),
     EntryListItem(coffeeEntry(1, 450)),
     EntryListItem(coffeeEntry(2, 1_200)),
 )
@@ -73,12 +73,35 @@ class LedgerEntriesListTest : StringSpec({
         }
     }
 
+    "shows the day total" {
+        onTestMain {
+            runComposeUiTest {
+                setListContent(listItems)
+
+                onNodeWithText("Total − 16.50 CHF").assertIsDisplayed()
+            }
+        }
+    }
+
+    "shows an unknown day total when a rate is missing" {
+        onTestMain {
+            runComposeUiTest {
+                setListContent(
+                    listOf(DayHeaderItem("day-2026-01-20", "Jan 20, 2026", null)),
+                )
+
+                onNodeWithText("Total –").assertIsDisplayed()
+            }
+        }
+    }
+
     "masks the amounts when asked" {
         onTestMain {
             runComposeUiTest {
                 setListContent(listItems, hideAmounts = true)
 
                 onNodeWithText("− 4.50 CHF").assertDoesNotExist()
+                onNodeWithText("Total ••••••").assertIsDisplayed()
                 onAllNodesWithText("••••••").assertCountEquals(2)
             }
         }
@@ -96,6 +119,7 @@ private fun ComposeUiTest.setListContent(
             items = items,
             hideAmounts = hideAmounts,
             zone = TimeZone.UTC,
+            defaultCurrency = Currency.CHF,
             onEntryClick = onEntryClick,
         )
     }

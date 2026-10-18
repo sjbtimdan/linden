@@ -126,6 +126,8 @@
     <string name="ledger_filter_by_amount">Filter berdasarkan jumlah</string>
     <string name="ledger_apply">Terapkan</string>
 
+    <string name="ledger_day_total">Total %1$s</string>
+
     <!-- Period navigator -->
     <string name="ledger_period_day">Hari</string>
     <string name="ledger_period_week">Minggu</string>

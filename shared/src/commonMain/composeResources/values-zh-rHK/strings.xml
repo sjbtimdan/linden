@@ -126,6 +126,8 @@
     <string name="ledger_filter_by_amount">按金額篩選</string>
     <string name="ledger_apply">套用</string>
 
+    <string name="ledger_day_total">合計 %1$s</string>
+
     <!-- Period navigator -->
     <string name="ledger_period_day">日</string>
     <string name="ledger_period_week">週</string>

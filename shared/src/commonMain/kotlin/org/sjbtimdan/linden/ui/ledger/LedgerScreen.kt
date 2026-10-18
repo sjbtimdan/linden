@@ -97,6 +97,7 @@ fun LedgerScreen(
     val upcomingCount by viewModel.upcomingCount.collectAsState()
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val fxRates by viewModel.fxRates.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
@@ -166,8 +167,13 @@ fun LedgerScreen(
         }
     }
 
-    val listItems = remember(displayedEntries) {
-        ledgerListItems(entries = displayedEntries, zone = viewModel.zone)
+    val listItems = remember(displayedEntries, defaultCurrency, fxRates) {
+        ledgerListItems(
+            entries = displayedEntries,
+            zone = viewModel.zone,
+            defaultCurrency = defaultCurrency,
+            rates = fxRates,
+        )
     }
 
     BackHandler(enabled = dialogState == null && (categoryFilter != null || accountFilter != null)) {
@@ -479,6 +485,7 @@ fun LedgerScreen(
                 items = listItems,
                 hideAmounts = hideTotal,
                 zone = viewModel.zone,
+                defaultCurrency = defaultCurrency,
                 onEntryClick = viewModel::openEditDialog,
                 header = paceHeader,
                 modifier = Modifier
