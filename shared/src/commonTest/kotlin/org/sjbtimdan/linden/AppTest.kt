@@ -52,15 +52,20 @@ class AppTest : StringSpec({
             )
             setContent { App(dependencies) }
 
+            onNodeWithTag("capturedPaymentsBar").assertExists()
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithTag("capturedPaymentsCard").assertExists()
             onNodeWithText("COOP").assertExists()
 
             onNodeWithText("Ledger").performClick()
             waitForIdle()
 
+            onAllNodesWithTag("capturedPaymentsBar").assertCountEquals(0)
             onAllNodesWithTag("capturedPaymentsCard").assertCountEquals(0)
 
             onNodeWithText("Entry").performClick()
+            onNodeWithTag("capturedPaymentsBar").assertExists()
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithTag("capturedPaymentsCard").assertExists()
         }
     }
@@ -102,12 +107,14 @@ class AppTest : StringSpec({
 
             setContent { App(dependencies) }
 
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithTag("capturedPaymentsCard").assertExists()
             onNodeWithTag("capturedPaymentAdd-${pending.id}").performClick()
             onNodeWithTag("saveEntry").performClick()
             waitForIdle()
 
             dependencies.captureRepository.pending().shouldBeEmpty()
+            onNodeWithTag("capturedPaymentsBar").assertDoesNotExist()
             onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }

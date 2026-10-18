@@ -295,4 +295,29 @@ class CapturedPaymentsViewModelTest : StringSpec({
             draft.categoryId.shouldBeNull()
         }
     }
+
+    "consume hides one capture but keeps it stored for the save" {
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
+            repository.addPending(capture(1))
+            repository.addPending(capture(2))
+            viewModel.items.first { it.size == 2 }
+
+            viewModel.consume(2)
+
+            viewModel.items.first { it.size == 1 }.single().capture.id shouldBe 1L
+            repository.pending().map { it.id } shouldBe listOf(2L, 1L)
+        }
+    }
+
+    "consuming every waiting capture clears the unseen count" {
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
+            repository.addPending(capture(1))
+            viewModel.hasUnseen.first { it }
+
+            viewModel.consume(1)
+
+            viewModel.items.first().shouldBeEmpty()
+            viewModel.hasUnseen.first { !it } shouldBe false
+        }
+    }
 })

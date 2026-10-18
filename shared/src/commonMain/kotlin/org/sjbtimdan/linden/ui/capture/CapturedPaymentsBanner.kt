@@ -58,10 +58,10 @@ import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
 
 /**
- * The captured-payment inbox pinned to the top of the entry screen: an
- * expanded card listing every capture awaiting review, or — once dismissed —
- * a one-line bar that opens it again. A capture newer than the acknowledged
- * watermark expands the card on its own.
+ * The captured-payment inbox pinned to the top of the entry screen. It always
+ * starts as a one-line bar — even when several captures are waiting — so it
+ * never pushes the form down; tapping it opens the card for review. Adding a
+ * capture hides it at once and collapses the remaining ones back to the bar.
  *
  * The notification listener writes through its own database connection, so
  * the panel re-reads on resume and whenever the repository publishes an
@@ -74,8 +74,6 @@ fun CapturedPaymentsBanner(
     modifier: Modifier = Modifier,
 ) {
     val items by viewModel.items.collectAsState()
-    val hasUnseen by viewModel.hasUnseen.collectAsState()
-    // Reopening lasts until the next dismissal; a new capture opens the card anyway.
     var reopened by rememberSaveable { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -86,14 +84,25 @@ fun CapturedPaymentsBanner(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    // Entering the screen always starts minimized, even when the card was open
+    // before navigating away; only an explicit tap expands it.
+    LaunchedEffect(Unit) {
+        reopened = false
+        viewModel.refresh()
+    }
 
     if (items.isEmpty()) return
 
-    if (hasUnseen || reopened) {
+    if (reopened) {
         CapturedPaymentsCard(
             items = items,
-            onAdd = onAdd,
+            onAdd = { capture ->
+                // Clear the reviewed capture immediately and tuck the rest back
+                // into the one-line bar; the draft keeps the source for learning.
+                viewModel.consume(capture.id)
+                reopened = false
+                onAdd(capture)
+            },
             onDismissCapture = viewModel::remove,
             onCollapse = {
                 reopened = false

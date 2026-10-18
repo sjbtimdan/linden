@@ -1611,6 +1611,8 @@ class EntryPointTest : StringSpec({
                 EntryPoint(viewModel = viewModel, captureViewModel = captureViewModel)
             }
 
+            onNodeWithTag("capturedPaymentsBar").assertIsDisplayed()
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithTag("capturedPaymentsCard").assertIsDisplayed()
             onNodeWithText("COOP").assertIsDisplayed()
 
@@ -1659,12 +1661,13 @@ class EntryPointTest : StringSpec({
             setContent {
                 EntryPoint(viewModel = viewModel, captureViewModel = captureViewModel)
             }
-            onNodeWithTag("capturedPaymentsCard").assertIsDisplayed()
+            onNodeWithTag("capturedPaymentsBar").assertIsDisplayed()
 
             onNodeWithTag("saveEntry").performClick()
             waitForIdle()
 
             captureRepository.pending().shouldBeEmpty()
+            onNodeWithTag("capturedPaymentsBar").assertDoesNotExist()
             onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }
@@ -1714,6 +1717,7 @@ class EntryPointTest : StringSpec({
             setContent {
                 EntryPoint(viewModel = viewModel, captureViewModel = captureViewModel)
             }
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithTag("capturedPaymentsCard").assertIsDisplayed()
 
             onNodeWithTag("capturedPaymentAdd-${pending.id}").performClick()
@@ -1721,6 +1725,7 @@ class EntryPointTest : StringSpec({
             waitForIdle()
 
             captureRepository.pending().shouldBeEmpty()
+            onNodeWithTag("capturedPaymentsBar").assertDoesNotExist()
             onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }

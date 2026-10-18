@@ -1,6 +1,8 @@
 package org.sjbtimdan.linden.ui.capture
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -38,15 +40,23 @@ class CapturedPaymentsBannerTest : StringSpec({
         }
     }
 
-    "an unseen capture opens the card with its row" {
+    "a waiting capture stays minimized until the bar is tapped" {
         withCapturedPaymentsViewModel { repository, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF)
             val main = accountDao.getAll().first().first()
             repository.setRule(CaptureRule("com.example.bank", main.id))
             repository.addPending(pending())
+            viewModel.hasUnseen.first { it }
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
+
+            onNodeWithTag("capturedPaymentsBar").assertExists()
+            onNodeWithText("1 payment to review").assertExists()
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
+
+            onNodeWithText("1 payment to review").performClick()
 
             onNodeWithTag("capturedPaymentsCard").assertExists()
             onNodeWithText("COOP").assertExists()
@@ -55,30 +65,63 @@ class CapturedPaymentsBannerTest : StringSpec({
         }
     }
 
-    "Add reports the capture to add" {
+    "Add reports the capture, clears it and leaves no bar behind" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             var added: PendingCapture? = null
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = { added = it })
             }
 
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithText("Add").performClick()
 
             added?.amountMinor shouldBe 2450
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
+            onNodeWithTag("capturedPaymentsBar").assertDoesNotExist()
+            // Still stored for the save that learns the template; only the UI is cleared.
+            repository.pending().size shouldBe 1
+        }
+    }
+
+    "adding one of several captures clears it and minimizes the rest" {
+        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
+            repository.addPending(pending())
+            repository.addPending(pending())
+            viewModel.items.first { it.size == 2 }
+            var added: PendingCapture? = null
+
+            setContent {
+                CapturedPaymentsBanner(viewModel = viewModel, onAdd = { added = it })
+            }
+
+            onNodeWithText("2 payments to review").performClick()
+            onNodeWithTag("capturedPaymentAdd-2").performClick()
+
+            added?.id shouldBe 2L
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
+            onNodeWithTag("capturedPaymentsBar").assertExists()
+            onNodeWithText("1 payment to review").assertExists()
+
+            onNodeWithText("1 payment to review").performClick()
+            onAllNodesWithText("COOP").assertCountEquals(1)
         }
     }
 
     "Dismiss removes the capture from the inbox" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
 
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithText("Dismiss").performClick()
 
             repository.pending().shouldBeEmpty()
+            onNodeWithTag("capturedPaymentsBar").assertDoesNotExist()
         }
     }
 
@@ -86,10 +129,12 @@ class CapturedPaymentsBannerTest : StringSpec({
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
 
+            onNodeWithText("1 payment to review").performClick()
             onNodeWithContentDescription("Collapse").performClick()
 
             viewModel.hasUnseen.first { !it } shouldBe false
@@ -99,52 +144,43 @@ class CapturedPaymentsBannerTest : StringSpec({
         }
     }
 
-    "tapping the bar opens the card again" {
-        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
-            repository.addPending(pending())
-            viewModel.hasUnseen.first { it }
-            viewModel.acknowledge()
-            viewModel.hasUnseen.first { !it }
-            setContent {
-                CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
-            }
-
-            onNodeWithText("1 payment to review").performClick()
-
-            onNodeWithTag("capturedPaymentsCard").assertExists()
-        }
-    }
-
-    "the collapsed bar counts the waiting captures" {
+    "the bar counts multiple waiting captures" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             repository.addPending(pending())
-            viewModel.hasUnseen.first { it }
-            viewModel.acknowledge()
-            viewModel.hasUnseen.first { !it }
+            viewModel.items.first { it.size == 2 }
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
 
             onNodeWithText("2 payments to review").assertExists()
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
+
+            onNodeWithText("2 payments to review").performClick()
+            onAllNodesWithText("COOP").assertCountEquals(2)
         }
     }
 
-    "a capture arriving after a dismissal opens the card again" {
+    "a capture arriving after a dismissal updates the bar without opening the card" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
             viewModel.hasUnseen.first { it }
-            viewModel.acknowledge()
-            viewModel.hasUnseen.first { !it }
+
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
             }
+
+            onNodeWithText("1 payment to review").performClick()
+            onNodeWithContentDescription("Collapse").performClick()
             onNodeWithTag("capturedPaymentsBar").assertExists()
 
             repository.addPending(pending())
-
             viewModel.hasUnseen.first { it } shouldBe true
-            onNodeWithTag("capturedPaymentsCard").assertExists()
+
+            onNodeWithTag("capturedPaymentsBar").assertExists()
+            onNodeWithText("2 payments to review").assertExists()
+            onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
         }
     }
 })

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.capture.CaptureRule
@@ -35,6 +36,9 @@ class CapturedPaymentsViewModel(
 ) : ViewModel() {
     private val pendingCaptures = MutableStateFlow<List<PendingCapture>>(emptyList())
 
+    /** Captures already added to the form: hidden from the inbox, still stored until the entry is saved. */
+    private val consumedIds = MutableStateFlow<Set<Long>>(emptySet())
+
     private val rules: StateFlow<List<CaptureRule>> = repository.rulesFlow().stateFlow(viewModelScope, emptyList())
 
     private val accounts: StateFlow<List<Account>> = accountDao.getAll().stateFlow(viewModelScope, emptyList())
@@ -50,13 +54,20 @@ class CapturedPaymentsViewModel(
         pendingCaptures,
         rules,
         accounts,
-    ) { pending, rules, accounts ->
-        pending.map { capture -> rowFor(capture, rules, accounts) }
+        consumedIds,
+    ) { pending, rules, accounts, consumed ->
+        pending
+            .filterNot { it.id in consumed }
+            .map { capture -> rowFor(capture, rules, accounts) }
     }.stateFlow(viewModelScope, emptyList())
 
-    /** True while a capture newer than the acknowledged watermark waits for review. */
-    val hasUnseen: StateFlow<Boolean> = combine(pendingCaptures, seenCaptureId) { pending, seen ->
-        pending.any { it.id > seen }
+    /** True while a capture newer than the acknowledged watermark is still waiting for review. */
+    val hasUnseen: StateFlow<Boolean> = combine(
+        pendingCaptures,
+        seenCaptureId,
+        consumedIds,
+    ) { pending, seen, consumed ->
+        pending.any { it.id > seen && it.id !in consumed }
     }.stateFlow(viewModelScope, false)
 
     init {
@@ -77,7 +88,17 @@ class CapturedPaymentsViewModel(
         viewModelScope.launch { pendingCaptures.value = repository.pending() }
     }
 
+    /**
+     * Hides [id] from the inbox as soon as it is added to the form. The capture
+     * stays stored until the entry is saved, so the save can still learn its
+     * template; an abandoned draft simply leaves it hidden for this session.
+     */
+    fun consume(id: Long) {
+        consumedIds.update { it + id }
+    }
+
     fun remove(id: Long) {
+        consumedIds.update { it - id }
         viewModelScope.launch { repository.removePending(id) }
     }
 
