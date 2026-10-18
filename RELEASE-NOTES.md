@@ -6,6 +6,7 @@
 - Pace: the Ledger's current month now shows a compact forecast of where spending will land, with a likely range and a remaining daily allowance. The Entry screen shows the allowance after you enter an amount.
 - Every day header in the Ledger now shows that day's net total in your default currency.
 - Editing an entry now shows only Enter in the amount keypad, so you cannot accidentally add a duplicate from it.
+- Android auto backup is disabled: your data stays on your device unless you create a backup yourself from Settings.
 </en-US>
 
 ## Version 1.1.0

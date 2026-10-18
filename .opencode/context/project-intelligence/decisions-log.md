@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.1 | Updated: 2026-10-01 -->
+<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.2 | Updated: 2026-10-18 -->
 
 # Decisions Log
 
@@ -366,8 +366,11 @@ never individually deleted (no `deleteById` in `Category.sq`); `EntryDao.toEntry
 ## Decision: Backup Strategy — Android Auto Backup + Manual Export
 
 **Date**: 2026-10-01
-**Status**: Decided
+**Status**: Superseded (2026-10-18)
 **Owner**: Steve
+
+> Superseded by **Android Auto Backup Disabled** below. Auto Backup was the right
+> trade-off before payment capture; notification-derived data changes the privacy calculus.
 
 ### Context
 Users need their data to survive device loss. The alternative considered was a built-in auto-backup that writes a
@@ -408,10 +411,58 @@ keeps release consistent; debug builds differ)
 built; revisit this decision then
 
 ### Related
-- `androidApp/src/main/AndroidManifest.xml` - `android:allowBackup="true"` (the entire enablement)
+- `androidApp/src/main/AndroidManifest.xml` - was `android:allowBackup="true"` (historical; now `false`)
 - `backup/LindenBackupManager.kt` - Manual zipped-JSON backup/restore
 - `ui/settings/SettingsScreen.kt` - Backup / CSV export actions
 - [Auto Backup](https://developer.android.com/identity/data/autobackup) / [Testing](https://developer.android.com/identity/data/testingbackup)
+
+---
+
+## Decision: Android Auto Backup Disabled
+
+**Date**: 2026-10-18
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+Payment capture stores notification-derived data — the pending-capture inbox and learned templates — in the
+same SQLite database as financial data. Android Auto Backup would upload that whole database to the user's Google
+Drive whenever device backup is enabled. The privacy policy now states that Linden opts out of Android Auto Backup
+and that notification content is not uploaded by Linden.
+
+### Decision
+Set `android:allowBackup="false"` in `androidApp/src/main/AndroidManifest.xml`. Linden data stays on-device;
+users create explicit backups through **Settings → Back up database** (or CSV export) and choose where to save them.
+
+### Rationale
+- Auto Backup cannot selectively exclude the capture rows: the capture inbox and templates live in `linden.db`
+  alongside the financial data, so the only file-level choices are "back up everything" or "back up nothing".
+- Keeping `allowBackup="true"` would contradict the privacy policy's promise that Linden does not upload data to
+  Google Drive.
+- Manual backup/restore already exists, covers all tables, and works on both Android and desktop.
+- This matches the privacy posture of peers: Ivy Wallet also sets `allowBackup="false"`; MoneyWallet allows
+  Auto Backup only when client-side encryption is available.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| Encryption-gated Auto Backup (`dataExtractionRules` with `disableIfNoEncryptionCapabilities="true"` and `fullBackupContent` with `requireFlags="clientSideEncryption"`) | Keeps install-time recovery; avoids unencrypted cloud copies; used by MoneyWallet | Still uploads the whole DB (including notification data) to Google Drive when encryption is available; contradicts the current privacy policy; needs XML rules + testing | **Not now.** It would technically violate the privacy policy as written; revisit only after an explicit policy change |
+| Keep Auto Backup and move capture data to an excluded store (SharedPreferences/file) | Financial data can still be auto-backed up without notification data | Refactor: capture keys move out of the settings table; backup/restore, tests and the listener all need updating | Deferred; larger change, not needed for 1.2.0 |
+| Disable Auto Backup (chosen) | Strongest privacy; simple; policy and code agree | A lost phone without a manual export loses data; no automatic install-time restore | Accepted for 1.2.0 |
+| Custom cloud sync | Visible, cross-platform, account-based | Server, accounts, conflict resolution, scope | Contradicts the local-first model |
+
+### Impact
+**Positive**: No automatic Google Drive copy; notification-derived data stays on-device; code and policy agree.
+**Negative**: Android users lose install-time Auto Backup; the manual backup action is now the only recovery path.
+**Risk**: Users who never make a backup can lose data on device loss. Keep **Settings → Back up database**
+discoverable and consider prompting for a backup after significant changes.
+
+### Related
+- `androidApp/src/main/AndroidManifest.xml` - `android:allowBackup="false"`
+- `docs/privacy-policy.md` - Notification Access / Data Storage / Data Sharing
+- `backup/LindenBackupManager.kt` - Manual zipped-JSON backup/restore
+- `ui/settings/SettingsScreen.kt` - Back up database / Restore / CSV export
+- `Decision: Backup Strategy — Android Auto Backup + Manual Export` (superseded)
 
 ---
 
@@ -419,6 +470,7 @@ built; revisit this decision then
 
 | Decision | Date | Replaced By | Why |
 |----------|------|-------------|-----|
+| Android Auto Backup + Manual Export | 2026-10-01 | Android Auto Backup disabled | The DB also holds notification-capture data; the privacy policy now promises no Auto Backup/Google Drive upload |
 | One-per-month balance adjustment (updated in place) | 2026-08-30 | Fresh entry per adjustment | Hidden update logic; a reconciliation is just an entry |
 | Special adjust-balance marker (`is_adjustment` column, "Balance adjustment" description) | 2026-08-30 | No marker — ordinary entries with `description = null` | "A balance adjustment just creates an entry, no need to mark it as special" |
 

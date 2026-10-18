@@ -12,8 +12,13 @@
         </intent>
     </queries>
 
+    <!-- Auto Backup is off on purpose: the local database also holds
+         notification-derived capture data, and the privacy policy promises
+         that Linden does not upload it to Google Drive. Re-enabling requires
+         encryption-gated backup rules and a privacy-policy change; see the
+         decisions log. -->
     <application
-            android:allowBackup="true"
+            android:allowBackup="false"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:localeConfig="@xml/locales_config"
