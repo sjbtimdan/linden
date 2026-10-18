@@ -98,6 +98,16 @@
     <string name="entry_recommended">अनुशंसित</string>
     <string name="entry_recurring">आवर्ती</string>
 
+    <!-- Pace forecast -->
+    <string name="pace_on_pace_for">अनुमानित: %1$s</string>
+    <string name="pace_vs_usual">सामान्य से %1$s</string>
+    <string name="pace_usual">सामान्य: %1$s</string>
+    <string name="pace_likely_range">संभावित: %1$s – %2$s</string>
+    <string name="pace_daily_allowance">सामान्य रहने के लिए %1$s/दिन शेष</string>
+    <string name="pace_expand">गति विवरण दिखाएँ</string>
+    <string name="pace_collapse">गति विवरण छिपाएँ</string>
+    <string name="pace_after_this">इसके बाद: इस महीने %1$s/दिन शेष</string>
+
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">प्रविष्टियाँ</string>
 

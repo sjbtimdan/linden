@@ -68,6 +68,7 @@ import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmount
+import org.sjbtimdan.linden.ui.insights.PaceConfidence
 import org.sjbtimdan.linden.ui.screenContainerWithIme
 import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.lindenColors
@@ -111,6 +112,7 @@ fun LedgerScreen(
     val dialogState by viewModel.dialogState.collectAsState()
     val saving by viewModel.saving.collectAsState()
     val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
+    val paceForecast by viewModel.paceForecast.collectAsState()
 
     val todayDate = viewModel.today()
     val periodStart = periodSelection.period.windowStart(periodSelection.anchor)
@@ -134,6 +136,29 @@ fun LedgerScreen(
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
+
+    // The one-line Pace strip belongs to the default current-month entries view:
+    // a filtered or future-inclusive list no longer describes the whole month.
+    val showPace = viewMode == LedgerViewMode.Entries &&
+        periodSelection.period == LedgerPeriod.Month &&
+        periodSelection.period.includes(todayDate, periodSelection.anchor) &&
+        !hideTotal &&
+        !showFuture &&
+        !filtersExpanded &&
+        searchQuery.isBlank() &&
+        typeFilter == null &&
+        amountFilter == null &&
+        categoryFilter == null &&
+        accountFilter == null &&
+        paceForecast?.confidence != PaceConfidence.Low &&
+        paceForecast?.missingCurrencies?.isEmpty() == true
+    val paceHeader: (@Composable () -> Unit)? = if (showPace) {
+        paceForecast?.let { forecast ->
+            { PaceStrip(forecast = forecast, currency = defaultCurrency) }
+        }
+    } else {
+        null
+    }
     LaunchedEffect(requestSearchFocus) {
         if (requestSearchFocus) {
             searchFocusRequester.requestFocus()
@@ -424,30 +449,38 @@ fun LedgerScreen(
                     .weight(1f),
             )
         } else if (displayedEntries.isEmpty()) {
-            LedgerEntriesEmpty(
-                state = ledgerEntriesEmptyState(
-                    searchQuery = searchQuery,
-                    typeFilter = typeFilter,
-                    categoryFilter = categoryFilter,
-                    accountFilter = accountFilter,
-                    amountFilter = amountFilter,
-                    periodIsAll = periodSelection.period == LedgerPeriod.All,
-                    showFuture = showFuture,
-                    upcomingCount = upcomingCount,
-                    hasAnyEntries = hasAnyEntries,
-                ),
-                onAddFirstEntry = onNavigateToEntry,
-                onRevealUpcoming = { viewModel.setShowFuture(true) },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-            )
+            ) {
+                paceHeader?.invoke()
+                LedgerEntriesEmpty(
+                    state = ledgerEntriesEmptyState(
+                        searchQuery = searchQuery,
+                        typeFilter = typeFilter,
+                        categoryFilter = categoryFilter,
+                        accountFilter = accountFilter,
+                        amountFilter = amountFilter,
+                        periodIsAll = periodSelection.period == LedgerPeriod.All,
+                        showFuture = showFuture,
+                        upcomingCount = upcomingCount,
+                        hasAnyEntries = hasAnyEntries,
+                    ),
+                    onAddFirstEntry = onNavigateToEntry,
+                    onRevealUpcoming = { viewModel.setShowFuture(true) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+            }
         } else {
             LedgerEntriesList(
                 items = listItems,
                 hideAmounts = hideTotal,
                 zone = viewModel.zone,
                 onEntryClick = viewModel::openEditDialog,
+                header = paceHeader,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),

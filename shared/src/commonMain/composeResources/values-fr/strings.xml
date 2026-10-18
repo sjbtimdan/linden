@@ -98,6 +98,16 @@
     <string name="entry_recommended">Recommandé</string>
     <string name="entry_recurring">Récurrent</string>
 
+    <!-- Pace forecast -->
+    <string name="pace_on_pace_for">En rythme pour %1$s</string>
+    <string name="pace_vs_usual">%1$s par rapport à l'habitude</string>
+    <string name="pace_usual">Habitude : %1$s</string>
+    <string name="pace_likely_range">Probable : %1$s – %2$s</string>
+    <string name="pace_daily_allowance">%1$s/jour restants pour rester dans votre habitude</string>
+    <string name="pace_expand">Afficher le détail du rythme</string>
+    <string name="pace_collapse">Masquer le détail du rythme</string>
+    <string name="pace_after_this">Après ceci : %1$s/jour restants ce mois-ci</string>
+
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">Opérations</string>
 

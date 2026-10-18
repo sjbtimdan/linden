@@ -98,6 +98,16 @@
     <string name="entry_recommended">推薦</string>
     <string name="entry_recurring">定期</string>
 
+    <!-- Pace forecast -->
+    <string name="pace_on_pace_for">預計 %1$s</string>
+    <string name="pace_vs_usual">較平時 %1$s</string>
+    <string name="pace_usual">平時：%1$s</string>
+    <string name="pace_likely_range">可能範圍：%1$s – %2$s</string>
+    <string name="pace_daily_allowance">按平時水平還剩每天 %1$s</string>
+    <string name="pace_expand">顯示節奏詳情</string>
+    <string name="pace_collapse">隱藏節奏詳情</string>
+    <string name="pace_after_this">新增後：本月每天還剩 %1$s</string>
+
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">記錄</string>
 

@@ -98,6 +98,16 @@
     <string name="entry_recommended">Direkomendasikan</string>
     <string name="entry_recurring">Berulang</string>
 
+    <!-- Pace forecast -->
+    <string name="pace_on_pace_for">Diperkirakan %1$s</string>
+    <string name="pace_vs_usual">%1$s dari biasanya</string>
+    <string name="pace_usual">Biasanya: %1$s</string>
+    <string name="pace_likely_range">Kemungkinan: %1$s – %2$s</string>
+    <string name="pace_daily_allowance">%1$s/hari tersisa agar tetap seperti biasanya</string>
+    <string name="pace_expand">Tampilkan detail laju</string>
+    <string name="pace_collapse">Sembunyikan detail laju</string>
+    <string name="pace_after_this">Setelah ini: %1$s/hari tersisa bulan ini</string>
+
     <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
     <string name="ledger_mode_entries">Entri</string>
 

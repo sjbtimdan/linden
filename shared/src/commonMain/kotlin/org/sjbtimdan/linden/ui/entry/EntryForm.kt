@@ -111,6 +111,7 @@ fun EntryForm(
     onQuickEntry: (QuickEntry) -> Unit = {},
     onAdd: (() -> Unit)? = null,
     defaultCurrency: Currency = Currency.CHF,
+    paceCaption: (@Composable () -> Unit)? = null,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
     onCreateAccount: ((String, Currency, Long, Boolean) -> Boolean)? = null,
     // Create-dialog state hoisted by a host that wants to open the same dialogs
@@ -240,6 +241,10 @@ fun EntryForm(
                 onFocus = ::openCalculator,
                 modifier = Modifier.testTag("amountField"),
             )
+            paceCaption?.let { caption ->
+                Spacer(modifier = Modifier.height(4.dp))
+                caption()
+            }
         }
 
         if (state.type == EntryType.Transfer) {

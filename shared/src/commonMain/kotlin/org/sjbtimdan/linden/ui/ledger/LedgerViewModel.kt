@@ -39,8 +39,10 @@ import org.sjbtimdan.linden.ui.budget.computeCategoryBudgets
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import org.sjbtimdan.linden.ui.entry.categoriesForType
+import org.sjbtimdan.linden.ui.insights.PaceForecast
 import kotlin.math.abs
 import kotlin.time.Instant
+import org.sjbtimdan.linden.ui.insights.paceForecast as computePaceForecast
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LedgerViewModel(
@@ -191,6 +193,15 @@ class LedgerViewModel(
             accountNetInDefaultMinor(account, entries, currency, rates)
         }
     }.stateFlow(0L)
+
+    /** Current-month expense pace in the default currency; null until enough history. */
+    val paceForecast: StateFlow<PaceForecast?> = combine(
+        allEntries,
+        defaultCurrency,
+        rates,
+    ) { entries, currency, rates ->
+        computePaceForecast(entries, today(), currency, rates, zone)
+    }.stateFlow(null)
 
     /** Whether any entry exists at all, regardless of period or filters — drives the
      * guided empty state for a new app vs the plain message for an empty match. */

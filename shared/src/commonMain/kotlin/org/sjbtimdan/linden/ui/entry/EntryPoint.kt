@@ -98,6 +98,14 @@ fun EntryPoint(
     val showRatesWarning by viewModel.showRatesWarning.collectAsState()
     val lastAdded by viewModel.lastAdded.collectAsState()
     val lastAddedWasEdit by viewModel.lastAddedWasEdit.collectAsState()
+    val paceAfterThis by viewModel.paceAfterThis.collectAsState()
+    val paceCaption: (@Composable () -> Unit)? = if (!hideTotal) {
+        paceAfterThis?.let { pace ->
+            { PaceCaption(pace = pace) }
+        }
+    } else {
+        null
+    }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -319,6 +327,7 @@ fun EntryPoint(
                     },
                     onAdd = addDraft,
                     defaultCurrency = defaultCurrency,
+                    paceCaption = paceCaption,
                     onCreateCategory = { name, type, icon ->
                         val created = viewModel.createCategory(name, type, icon)
                         if (created) markEdited()

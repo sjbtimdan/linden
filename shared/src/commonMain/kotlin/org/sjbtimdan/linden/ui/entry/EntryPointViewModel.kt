@@ -24,7 +24,9 @@ import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
+import org.sjbtimdan.linden.ui.insights.PaceForecast
 import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
+import org.sjbtimdan.linden.ui.insights.paceForecast as computePaceForecast
 
 class EntryPointViewModel(
     entryDao: EntryDao,
@@ -71,6 +73,26 @@ class EntryPointViewModel(
             currency,
             rates,
         )
+    }.stateFlow(null)
+
+    /** Current-month expense pace in the default currency; null until enough history. */
+    val paceForecast: StateFlow<PaceForecast?> = combine(
+        allEntries,
+        defaultCurrency,
+        rates,
+    ) { entries, currency, rates ->
+        computePaceForecast(entries, clock.todayIn(zone), currency, rates, zone)
+    }.stateFlow(null)
+
+    /** Pace after the draft expense is saved; null unless it is a new expense with an account. */
+    val paceAfterThis: StateFlow<PaceAfterThis?> = combine(
+        paceForecast,
+        draft,
+        visibleAccounts,
+        defaultCurrency,
+        rates,
+    ) { forecast, state, accounts, currency, rates ->
+        paceAfterThisFor(forecast, state, accounts, currency, rates)
     }.stateFlow(null)
 
     /** True once at least one entry exists; the hero card stays hidden until then. */

@@ -47,11 +47,15 @@ internal fun LedgerEntriesList(
     zone: TimeZone,
     onEntryClick: (Entry) -> Unit,
     modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
 ) {
     LazyColumn(
         modifier = modifier.testTag("entryList"),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        header?.let { content ->
+            item(key = "entryListHeader") { content() }
+        }
         items.forEach { item ->
             when (item) {
                 is DayHeaderItem -> stickyHeader(item.key) {
