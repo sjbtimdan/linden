@@ -16,6 +16,7 @@
     <string name="first_run_continue">Lanjutkan</string>
     <string name="first_run_capture_allowed">Akses notifikasi diizinkan</string>
     <string name="first_run_capture_later">Pilih aplikasi bank yang dibaca nanti, di Pengaturan → Tangkap pembayaran.</string>
+    <string name="first_run_capture_find">Cari Linden di daftar yang terbuka.</string>
 
     <!-- Common actions -->
     <string name="common_back">Kembali</string>

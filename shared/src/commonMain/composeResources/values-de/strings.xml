@@ -16,6 +16,7 @@
     <string name="first_run_continue">Weiter</string>
     <string name="first_run_capture_allowed">Benachrichtigungszugriff erlaubt</string>
     <string name="first_run_capture_later">Wähle die Bank-Apps später unter Einstellungen → Zahlungserfassung.</string>
+    <string name="first_run_capture_find">Suche Linden in der Liste, die sich öffnet.</string>
 
     <!-- Common actions -->
     <string name="common_back">Zurück</string>

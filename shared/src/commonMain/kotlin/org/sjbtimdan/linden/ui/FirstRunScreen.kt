@@ -41,6 +41,7 @@ import org.sjbtimdan.linden.resources.capture_enable
 import org.sjbtimdan.linden.resources.capture_intro
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.first_run_capture_allowed
+import org.sjbtimdan.linden.resources.first_run_capture_find
 import org.sjbtimdan.linden.resources.first_run_capture_later
 import org.sjbtimdan.linden.resources.first_run_continue
 import org.sjbtimdan.linden.resources.first_run_subtitle
@@ -178,6 +179,13 @@ fun FirstRunScreen(
                         ) {
                             Text(stringResource(Res.string.capture_enable))
                         }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(Res.string.first_run_capture_find),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.testTag("firstRunCaptureFind"),
+                        )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(

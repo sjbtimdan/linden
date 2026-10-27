@@ -16,6 +16,7 @@
     <string name="first_run_continue">继续</string>
     <string name="first_run_capture_allowed">已允许通知访问</string>
     <string name="first_run_capture_later">稍后可在“设置 → 支付捕获”中选择要读取的银行应用。</string>
+    <string name="first_run_capture_find">在打开的列表中找到 Linden。</string>
 
     <!-- Common actions -->
     <string name="common_back">返回</string>

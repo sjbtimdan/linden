@@ -16,6 +16,7 @@
     <string name="first_run_continue">जारी रखें</string>
     <string name="first_run_capture_allowed">सूचना पहुँच अनुमत है</string>
     <string name="first_run_capture_later">कौन-से बैंक ऐप्स पढ़ने हैं, यह बाद में सेटिंग्स → भुगतान कैप्चर में चुनें।</string>
+    <string name="first_run_capture_find">खुलने वाली सूची में Linden खोजें।</string>
 
     <!-- Common actions -->
     <string name="common_back">वापस</string>

@@ -16,6 +16,7 @@
     <string name="first_run_continue">Continue</string>
     <string name="first_run_capture_allowed">Notification access allowed</string>
     <string name="first_run_capture_later">Choose the banking apps to read later, in Settings → Payment capture.</string>
+    <string name="first_run_capture_find">Look for Linden in the list that opens.</string>
 
     <!-- Common actions -->
     <string name="common_back">Back</string>

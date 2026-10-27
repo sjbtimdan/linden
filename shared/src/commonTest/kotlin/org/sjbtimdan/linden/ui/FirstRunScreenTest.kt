@@ -127,6 +127,7 @@ class FirstRunScreenTest : StringSpec({
 
             onNodeWithText("Payment capture").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAccess").assertIsDisplayed()
+            onNodeWithTag("firstRunCaptureFind").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAllowed").assertDoesNotExist()
 
             onNodeWithTag("firstRunCaptureAccess").performClick()
@@ -154,6 +155,7 @@ class FirstRunScreenTest : StringSpec({
 
             onNodeWithTag("firstRunCaptureAllowed").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
+            onNodeWithTag("firstRunCaptureFind").assertDoesNotExist()
         }
     }
 })

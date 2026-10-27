@@ -16,6 +16,7 @@
     <string name="first_run_continue">Continuer</string>
     <string name="first_run_capture_allowed">Accès aux notifications autorisé</string>
     <string name="first_run_capture_later">Choisissez plus tard les applications bancaires à lire, dans Paramètres → Capture des paiements.</string>
+    <string name="first_run_capture_find">Cherchez Linden dans la liste qui s'ouvre.</string>
 
     <!-- Common actions -->
     <string name="common_back">Retour</string>
