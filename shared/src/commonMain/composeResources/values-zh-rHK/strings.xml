@@ -14,6 +14,8 @@
     <string name="first_run_title">歡迎使用 Linden</string>
     <string name="first_run_subtitle">選擇你的語言、貨幣和主題。之後可以在設定中更改。</string>
     <string name="first_run_continue">繼續</string>
+    <string name="first_run_capture_allowed">已允許通知存取</string>
+    <string name="first_run_capture_later">稍後可在「設定 → 支付擷取」中選擇要讀取的銀行應用程式。</string>
 
     <!-- Common actions -->
     <string name="common_back">返回</string>

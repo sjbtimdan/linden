@@ -14,6 +14,8 @@
     <string name="first_run_title">Selamat datang di Linden</string>
     <string name="first_run_subtitle">Pilih bahasa, mata uang, dan tema Anda. Anda dapat mengubahnya nanti di Pengaturan.</string>
     <string name="first_run_continue">Lanjutkan</string>
+    <string name="first_run_capture_allowed">Akses notifikasi diizinkan</string>
+    <string name="first_run_capture_later">Pilih aplikasi bank yang dibaca nanti, di Pengaturan → Tangkap pembayaran.</string>
 
     <!-- Common actions -->
     <string name="common_back">Kembali</string>

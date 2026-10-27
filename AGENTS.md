@@ -115,8 +115,11 @@ git describe). It is generated code — never edit it.
 - **First-run flow**: `AppRoot`/`AppRootViewModel` start in `Loading`, then `FirstRun` (no default currency set) or
   `Ready`. `FirstRunScreen` prompts for language, currency and theme (language and theme preview live via
   `ApplyLanguageOverride`/`LindenTheme`), then `completeFirstRun(language, currency, theme)` writes them and triggers
-  `DefaultDataSeeder` (default categories/accounts). Nothing is written at startup otherwise. `testTag("loading")`
-  marks the spinner; startup failure shows `StartupError`.
+  `DefaultDataSeeder` (default categories/accounts). Nothing is written at startup otherwise. Where the platform
+  supports it, the same screen introduces payment capture and offers the system notification-access grant
+  (`NotificationAccess` passed in for tests); the app allowlist stays in Settings, because a capture rule binds an app
+  to an account and no accounts exist until Continue seeds them, and Continue is never gated on capture.
+  `testTag("loading")` marks the spinner; startup failure shows `StartupError`.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Every currency
   (CHF/CNY/EUR/GBP/HKD/IDR/INR/JPY/SGD/USD) is stored at a fixed 2-decimal scale; `Currency.decimalDigits` is the
   display/input precision — 0 for zero-decimal IDR/JPY, 2 for the rest. `formatAmount(amount, decimalDigits)` in

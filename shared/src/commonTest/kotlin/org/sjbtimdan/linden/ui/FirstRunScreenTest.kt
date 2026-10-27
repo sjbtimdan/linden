@@ -13,6 +13,7 @@ import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.ui.capture.NotificationAccess
 import java.util.Locale
 
 /**
@@ -33,6 +34,9 @@ private fun runFirstRunTest(block: suspend ComposeUiTest.() -> Unit) {
         }
     }
 }
+
+private fun access(supported: Boolean, granted: Boolean = false, onOpen: () -> Unit = {}) =
+    NotificationAccess(supported = supported, granted = granted, openSettings = onOpen)
 
 @OptIn(ExperimentalTestApi::class)
 class FirstRunScreenTest : StringSpec({
@@ -108,6 +112,48 @@ class FirstRunScreenTest : StringSpec({
                 "Choisissez votre langue, votre devise et votre thème. " +
                     "Vous pourrez les modifier plus tard dans les Paramètres.",
             ).assertIsDisplayed()
+        }
+    }
+
+    "payment capture is introduced with its grant when the platform supports it" {
+        runFirstRunTest {
+            var opened = false
+            setContent {
+                FirstRunScreen(
+                    onComplete = { _, _, _ -> },
+                    access = access(supported = true, onOpen = { opened = true }),
+                )
+            }
+
+            onNodeWithText("Payment capture").assertIsDisplayed()
+            onNodeWithTag("firstRunCaptureAccess").assertIsDisplayed()
+            onNodeWithTag("firstRunCaptureAllowed").assertDoesNotExist()
+
+            onNodeWithTag("firstRunCaptureAccess").performClick()
+
+            opened shouldBe true
+        }
+    }
+
+    "payment capture is not offered where the platform cannot capture" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(onComplete = { _, _, _ -> }, access = access(supported = false))
+            }
+
+            onNodeWithText("Payment capture").assertDoesNotExist()
+            onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
+        }
+    }
+
+    "granted notification access replaces the button with its state" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(onComplete = { _, _, _ -> }, access = access(supported = true, granted = true))
+            }
+
+            onNodeWithTag("firstRunCaptureAllowed").assertIsDisplayed()
+            onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
         }
     }
 })

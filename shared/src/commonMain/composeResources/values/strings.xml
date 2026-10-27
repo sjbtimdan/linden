@@ -14,6 +14,8 @@
     <string name="first_run_title">Welcome to Linden</string>
     <string name="first_run_subtitle">Choose your language, currency and theme. You can change them later in Settings.</string>
     <string name="first_run_continue">Continue</string>
+    <string name="first_run_capture_allowed">Notification access allowed</string>
+    <string name="first_run_capture_later">Choose the banking apps to read later, in Settings → Payment capture.</string>
 
     <!-- Common actions -->
     <string name="common_back">Back</string>

@@ -3,14 +3,21 @@ package org.sjbtimdan.linden.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -30,12 +37,19 @@ import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.capture_enable
+import org.sjbtimdan.linden.resources.capture_intro
+import org.sjbtimdan.linden.resources.capture_title
+import org.sjbtimdan.linden.resources.first_run_capture_allowed
+import org.sjbtimdan.linden.resources.first_run_capture_later
 import org.sjbtimdan.linden.resources.first_run_continue
 import org.sjbtimdan.linden.resources.first_run_subtitle
 import org.sjbtimdan.linden.resources.first_run_title
 import org.sjbtimdan.linden.resources.settings_default_currency
 import org.sjbtimdan.linden.resources.settings_language
 import org.sjbtimdan.linden.resources.settings_theme
+import org.sjbtimdan.linden.ui.capture.NotificationAccess
+import org.sjbtimdan.linden.ui.capture.rememberNotificationAccess
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.settings.SettingsSectionHeader
 import org.sjbtimdan.linden.ui.theme.LindenTheme
@@ -47,9 +61,17 @@ import org.sjbtimdan.linden.ui.theme.LindenTheme
  * the theme previews the same way. Nothing is persisted until Continue, which
  * passes all three choices to [onComplete]; the resolved system language, CHF
  * and the System theme are pre-selected so Continue is always enabled.
+ *
+ * Where the platform has notification capture (Android), the same screen
+ * introduces it and offers the system grant. Which apps may be read is left to
+ * Settings: a capture rule binds an app to an account, and no accounts exist
+ * until Continue seeds them. Capture is never a gate — Continue stays enabled.
  */
 @Composable
-fun FirstRunScreen(onComplete: (AppLanguage, Currency, ThemeMode) -> Unit) {
+fun FirstRunScreen(
+    access: NotificationAccess = rememberNotificationAccess(),
+    onComplete: (AppLanguage, Currency, ThemeMode) -> Unit,
+) {
     var language by rememberSaveable {
         mutableStateOf(AppLanguage.resolve(AppLanguage.SYSTEM, platformLocaleTag()))
     }
@@ -124,6 +146,45 @@ fun FirstRunScreen(onComplete: (AppLanguage, Currency, ThemeMode) -> Unit) {
                             Text(mode.displayName())
                         }
                     }
+                }
+
+                if (access.supported) {
+                    SettingsSectionHeader(stringResource(Res.string.capture_title))
+                    Text(
+                        text = stringResource(Res.string.capture_intro),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (access.granted) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(Res.string.first_run_capture_allowed),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.testTag("firstRunCaptureAllowed"),
+                            )
+                        }
+                    } else {
+                        OutlinedButton(
+                            onClick = access.openSettings,
+                            modifier = Modifier.testTag("firstRunCaptureAccess"),
+                        ) {
+                            Text(stringResource(Res.string.capture_enable))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(Res.string.first_run_capture_later),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
