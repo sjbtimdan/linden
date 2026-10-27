@@ -18,6 +18,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.capture.PendingCapture
@@ -27,6 +29,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.time.TEST_NOW
+import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.withApp
 
 @OptIn(ExperimentalTestApi::class)
@@ -133,6 +136,48 @@ class AppTest : StringSpec({
 
             onNodeWithText("Entry").performClick()
             onNodeWithText("Add").assertExists()
+        }
+    }
+
+    "the ledger keeps its entry dialog while it is the screen in front" {
+        withApp { dependencies ->
+            dependencies.accountDao.create("Main", Currency.CHF)
+            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
+            val main = dependencies.accountDao.getAll().first().first()
+            val groceries = dependencies.categoryDao.getAll().first().first()
+            dependencies.entryDao.create(ExpenseEntry(0, groceries, "COOP", main, 2450, createdAt = TEST_NOW))
+            // The fixture is dated in the past: show every period so the row is
+            // on screen whatever today is.
+            dependencies.ledgerViewModel.setPeriod(LedgerPeriod.All)
+
+            setContent { App(dependencies) }
+
+            onNodeWithText("Ledger").performClick()
+            waitForIdle()
+            onNodeWithText("COOP").performClick()
+
+            onNodeWithTag("dialogTypePicker").assertExists()
+            dependencies.ledgerViewModel.dialogState.value.shouldNotBeNull()
+        }
+    }
+
+    "a ledger entry dialog left open does not show once the ledger is not the screen" {
+        withApp { dependencies ->
+            dependencies.accountDao.create("Main", Currency.CHF)
+            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
+            val main = dependencies.accountDao.getAll().first().first()
+            val groceries = dependencies.categoryDao.getAll().first().first()
+            // The dialog's draft lives in the app-lifetime ledger ViewModel, so it
+            // can outlive the screen that showed it; the app starts on Entry.
+            dependencies.ledgerViewModel.openEditDialog(
+                ExpenseEntry(0, groceries, "COOP", main, 2450, createdAt = TEST_NOW),
+            )
+
+            setContent { App(dependencies) }
+            waitForIdle()
+
+            dependencies.ledgerViewModel.dialogState.value.shouldBeNull()
+            onAllNodesWithTag("dialogTypePicker").assertCountEquals(0)
         }
     }
 

@@ -122,6 +122,14 @@ fun App(
     LaunchedEffect(Unit) {
         ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
+    // The ledger's entry dialog lives in its ViewModel, which outlasts the
+    // screen, so leaving the ledger finalizes it instead of it reopening on the
+    // next visit. Keyed on the screen rather than a DisposableEffect in
+    // LedgerScreen: a rotation recomposes the tree with the same screen and
+    // must keep an in-progress draft.
+    LaunchedEffect(currentScreen) {
+        if (currentScreen != Screen.Ledger) ledgerViewModel.dismissDialog()
+    }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val language by settingsViewModel.language.collectAsState()
     val ratesWarning by ratesViewModel.ratesWarning.collectAsState()

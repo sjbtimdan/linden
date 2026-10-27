@@ -407,7 +407,12 @@ class LedgerViewModel(
         _periodSelection.update { it.copy(anchor = it.period.nextAnchor(it.anchor)) }
     }
 
-    /** Draft currently being edited in the entry dialog, or null when it is closed. */
+    /**
+     * Draft currently being edited in the entry dialog, or null when it is closed.
+     * The draft outlives the screen with this ViewModel, so the host dismisses it
+     * when the ledger stops being the shown screen (`App`), which makes leaving
+     * the ledger final instead of the dialog reopening on the next visit.
+     */
     val dialogState: StateFlow<EntryDraft?> get() = draft
 
     /** True while a dialog save or delete is writing; guards against double-taps. */
