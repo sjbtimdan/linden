@@ -19,6 +19,11 @@ INSERIMENTO RAPIDO E INTELLIGENTE
 • Descrizioni e campi sono suggeriti dalle tue voci passate
 • Trasferimenti tra conti, anche in valute diverse, in pochi tocchi
 
+ACQUISIZIONE PAGAMENTI (ANDROID)
+• Lascia che Linden legga le notifiche di pagamento delle app bancarie che scegli
+• Ogni pagamento resta in una barra compatta nella schermata Inserimento finché non lo confermi: nulla viene aggiunto automaticamente
+• Linden ricorda come hai classificato un pagamento e precompila il successivo con lo stesso testo
+
 CAPISCI LE TUE SPESE
 • Viste del registro per voci, conti o categorie
 • Navigazione per periodi per rivedere qualsiasi settimana, mese o anno

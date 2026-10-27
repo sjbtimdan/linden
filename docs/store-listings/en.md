@@ -19,6 +19,11 @@ FAST, SMART ENTRY
 • Descriptions and fields are suggested from your past entries
 • Transfers between accounts, including cross-currency, in a few taps
 
+PAYMENT CAPTURE (ANDROID)
+• Let Linden read payment notifications from the banking apps you choose
+• Each payment waits in a compact bar on the Entry screen until you confirm it — nothing is added automatically
+• Linden remembers how you classified a payment and prefills the next matching one
+
 UNDERSTAND YOUR SPENDING
 • Ledger views by entries, accounts, or categories
 • Period navigation to review any week, month, or year

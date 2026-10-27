@@ -19,6 +19,11 @@ ENTRI CEPAT DAN CERDAS
 • Deskripsi dan kolom disarankan dari entri Anda sebelumnya
 • Transfer antar akun, termasuk lintas mata uang, dalam beberapa ketukan
 
+TANGKAP PEMBAYARAN (ANDROID)
+• Biarkan Linden membaca notifikasi pembayaran dari aplikasi bank yang Anda pilih
+• Setiap pembayaran menunggu di bilah ringkas pada layar Entri sampai Anda mengonfirmasinya — tidak ada yang ditambahkan otomatis
+• Linden mengingat cara Anda mengklasifikasikan pembayaran dan mengisi otomatis pembayaran berikutnya yang serupa
+
 PAHAMI PENGELUARAN ANDA
 • Tampilan buku besar berdasarkan entri, akun, atau kategori
 • Navigasi periode untuk meninjau minggu, bulan, atau tahun mana pun

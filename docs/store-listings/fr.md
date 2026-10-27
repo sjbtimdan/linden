@@ -19,6 +19,11 @@ SAISIE RAPIDE ET INTELLIGENTE
 • Les descriptions et les champs sont suggérés d'après vos opérations passées
 • Des virements entre comptes, même en devises différentes, en quelques touches
 
+CAPTURE DES PAIEMENTS (ANDROID)
+• Laissez Linden lire les notifications de paiement des applications bancaires que vous choisissez
+• Chaque paiement attend dans une barre compacte sur l'écran Saisie jusqu'à confirmation : rien n'est ajouté automatiquement
+• Linden retient la façon dont vous avez classé un paiement et préremplit le suivant au libellé identique
+
 COMPRENEZ VOS DÉPENSES
 • Vues du journal par opérations, comptes ou catégories
 • Navigation par période pour revoir n'importe quelle semaine, mois ou année

@@ -19,6 +19,11 @@ SCHNELLE, KLUGE ERFASSUNG
 • Beschreibungen und Felder werden aus deinen früheren Buchungen vorgeschlagen
 • Umbuchungen zwischen Konten, auch über Währungen hinweg, mit wenigen Tipps
 
+ZAHLUNGSERFASSUNG (ANDROID)
+• Lass Linden Zahlungsbenachrichtigungen der Bank-Apps lesen, die du auswählst
+• Jede Zahlung wartet in einer kompakten Leiste auf dem Erfassen-Bildschirm, bis du sie bestätigst – nichts wird automatisch gebucht
+• Linden merkt sich, wie du eine Zahlung eingeordnet hast, und füllt die nächste mit gleichem Text vor
+
 VERSTEHE DEINE AUSGABEN
 • Journal-Ansichten nach Buchungen, Konten oder Kategorien
 • Zeitraum-Navigation für jede Woche, jeden Monat und jedes Jahr
