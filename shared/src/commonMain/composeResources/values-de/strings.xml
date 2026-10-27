@@ -318,7 +318,8 @@
     <string name="capture_add_app">App hinzufügen</string>
     <string name="capture_remove_app">Entfernen</string>
     <string name="capture_account_missing">Kein Konto</string>
-    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_row_supporting">%1$s · %2$s · %3$s</string>
+    <string name="capture_template_supporting">%1$s · %2$s</string>
     <string name="capture_dismiss">Verwerfen</string>
     <string name="capture_collapse">Einklappen</string>
     <string name="capture_app_picker_title">App auswählen</string>

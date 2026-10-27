@@ -17,6 +17,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.withCapturedPaymentsViewModel
+import kotlin.time.Instant
 
 private fun capture(index: Long, packageName: String = "com.example.bank") = PendingCapture(
     packageName = packageName,
@@ -67,6 +68,35 @@ class CapturedPaymentsViewModelTest : StringSpec({
             draft.amountText shouldBe "245.00"
             draft.description shouldBe "COOP"
             draft.accountId shouldBe main.id
+        }
+    }
+
+    "buildDraft dates the entry from the notification, not the confirmation" {
+        withCapturedPaymentsViewModel { _, _, _, viewModel ->
+            val capturedAt = Instant.parse("2026-08-10T22:30:00Z")
+
+            val draft = viewModel.buildDraft(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 2450,
+                    description = "COOP",
+                    type = EntryType.Expense,
+                    capturedAtMillis = capturedAt.toEpochMilliseconds(),
+                    capturedAtZoneId = "Asia/Tokyo",
+                ),
+            )
+
+            draft.createdAt shouldBe capturedAt
+            draft.createdZone shouldBe TimeZone.of("Asia/Tokyo")
+        }
+    }
+
+    "buildDraft falls back to the current zone when the capture carries none" {
+        withCapturedPaymentsViewModel { _, _, _, viewModel ->
+            val draft = viewModel.buildDraft(capture(1))
+
+            draft.createdAt shouldBe Instant.fromEpochMilliseconds(1L)
+            draft.createdZone shouldBe TimeZone.currentSystemDefault()
         }
     }
 

@@ -193,10 +193,11 @@ private fun CapturedPaymentsCard(
                 val label = capturableApps.firstOrNull { it.packageName == item.capture.packageName }?.label
                     ?: item.capture.packageName
                 val accountText = item.accountName ?: stringResource(Res.string.capture_account_missing)
+                val capturedAt = formatCapturedAt(captureInstant(item.capture), captureZone(item.capture))
                 CapturedPaymentRow(
                     item = item,
                     label = label,
-                    supporting = stringResource(Res.string.capture_row_supporting, label, accountText),
+                    supporting = stringResource(Res.string.capture_row_supporting, label, accountText, capturedAt),
                     onAdd = { onAdd(item.capture) },
                     onDismiss = { onDismissCapture(item.capture.id) },
                 )

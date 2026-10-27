@@ -311,7 +311,8 @@
     <string name="capture_add_app">新增應用程式</string>
     <string name="capture_remove_app">移除</string>
     <string name="capture_account_missing">沒有戶口</string>
-    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_row_supporting">%1$s · %2$s · %3$s</string>
+    <string name="capture_template_supporting">%1$s · %2$s</string>
     <string name="capture_dismiss">略過</string>
     <string name="capture_collapse">收起</string>
     <string name="capture_app_picker_title">選擇應用程式</string>

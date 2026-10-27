@@ -16,6 +16,7 @@ import org.sjbtimdan.linden.capture.PendingCapture
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.withCapturedPaymentsViewModel
+import kotlin.time.Instant
 
 private fun pending() = PendingCapture(
     packageName = "com.example.bank",
@@ -23,7 +24,8 @@ private fun pending() = PendingCapture(
     currency = Currency.CHF,
     description = "COOP",
     type = EntryType.Expense,
-    capturedAtMillis = 1L,
+    capturedAtMillis = Instant.parse("2026-08-10T14:30:00Z").toEpochMilliseconds(),
+    capturedAtZoneId = "UTC",
 )
 
 @OptIn(ExperimentalTestApi::class)
@@ -61,7 +63,7 @@ class CapturedPaymentsBannerTest : StringSpec({
             onNodeWithTag("capturedPaymentsCard").assertExists()
             onNodeWithText("COOP").assertExists()
             onNodeWithText("24.50").assertExists()
-            onNodeWithText("com.example.bank · Main").assertExists()
+            onNodeWithText("com.example.bank · Main · Aug 10, 2026 14:30").assertExists()
         }
     }
 

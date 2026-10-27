@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withLock
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
+import java.util.TimeZone
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -82,6 +83,9 @@ class PaymentCaptureListener : NotificationListenerService() {
                 description = parsed.description,
                 type = parsed.type,
                 capturedAtMillis = postTime,
+                // The device zone when the notification arrived, so an entry
+                // confirmed after a flight still lands on the payment's day.
+                capturedAtZoneId = TimeZone.getDefault().id,
             ),
         )
     }

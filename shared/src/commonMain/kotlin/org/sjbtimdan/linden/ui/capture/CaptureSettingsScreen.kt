@@ -54,7 +54,7 @@ import org.sjbtimdan.linden.resources.capture_disclosure_title
 import org.sjbtimdan.linden.resources.capture_enable
 import org.sjbtimdan.linden.resources.capture_intro
 import org.sjbtimdan.linden.resources.capture_remove_app
-import org.sjbtimdan.linden.resources.capture_row_supporting
+import org.sjbtimdan.linden.resources.capture_template_supporting
 import org.sjbtimdan.linden.resources.capture_templates_empty
 import org.sjbtimdan.linden.resources.capture_templates_header
 import org.sjbtimdan.linden.resources.capture_title
@@ -336,7 +336,7 @@ private fun CaptureTemplateRow(
                 text = if (category == null) {
                     label
                 } else {
-                    stringResource(Res.string.capture_row_supporting, label, category.name)
+                    stringResource(Res.string.capture_template_supporting, label, category.name)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

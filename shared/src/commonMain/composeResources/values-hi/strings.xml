@@ -318,7 +318,8 @@
     <string name="capture_add_app">ऐप जोड़ें</string>
     <string name="capture_remove_app">हटाएँ</string>
     <string name="capture_account_missing">कोई खाता नहीं</string>
-    <string name="capture_row_supporting">%1$s · %2$s</string>
+    <string name="capture_row_supporting">%1$s · %2$s · %3$s</string>
+    <string name="capture_template_supporting">%1$s · %2$s</string>
     <string name="capture_dismiss">खारिज करें</string>
     <string name="capture_collapse">संकुचित करें</string>
     <string name="capture_app_picker_title">ऐप चुनें</string>

@@ -18,5 +18,8 @@ data class PendingCapture(
     val currency: Currency? = null,
     val description: String = "",
     val type: EntryType,
+    /** When the notification was posted; the entry added from this capture is dated from it. */
     val capturedAtMillis: Long,
+    /** Zone id (e.g. "Europe/Zurich") active at capture time; null for captures stored before it was recorded. */
+    val capturedAtZoneId: String? = null,
 )

@@ -109,6 +109,16 @@ class CaptureRepositoryTest : StringSpec({
         repository.pendingFlow().first() shouldBe listOf(second, first)
     }
 
+    "a capture keeps its zone through the settings table" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repository.addPending(capture(1).copy(capturedAtZoneId = "Asia/Tokyo"))
+
+        repository.pending().single().capturedAtZoneId shouldBe "Asia/Tokyo"
+        repository.pendingFlow().first().single().capturedAtZoneId shouldBe "Asia/Tokyo"
+    }
+
     "a pending-inbox write publishes a change for the listener's connection" {
         val database = lindenDatabase()
         val repository = CaptureRepository(SettingsDao(database.settingsQueries))

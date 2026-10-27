@@ -115,11 +115,12 @@ class CapturedPaymentsViewModel(
     /**
      * The draft a reviewed capture loads into the entry form: amount and
      * description prefilled, account set when the rule (or a learned template)
-     * maps to a visible one — the user still confirms. A learned template for
-     * the capture's package and notification wording also fills the type and
-     * the category the user chose last time, each only while it still exists
-     * and fits the type. Saving the draft consumes the capture; abandoning it
-     * leaves the capture pending.
+     * maps to a visible one — the user still confirms. The draft is dated and
+     * zoned from the notification, not from the confirmation. A learned
+     * template for the capture's package and notification wording also fills
+     * the type and the category the user chose last time, each only while it
+     * still exists and fits the type. Saving the draft consumes the capture;
+     * abandoning it leaves the capture pending.
      */
     fun buildDraft(capture: PendingCapture): EntryDraft {
         val template = matchCaptureTemplate(capture, templates.value)
@@ -134,6 +135,8 @@ class CapturedPaymentsViewModel(
             ?: accountId?.let { id -> accounts.firstOrNull { it.id == id }?.currency?.decimalDigits }
             ?: 2
         return EntryDraft.forNew(type, clock = clock).copy(
+            createdAt = captureInstant(capture),
+            createdZone = captureZone(capture),
             amountText = formatAmount(capture.amountMinor, decimalDigits),
             description = template?.description ?: capture.description,
             accountId = accountId,
