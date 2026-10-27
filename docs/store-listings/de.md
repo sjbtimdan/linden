@@ -12,7 +12,7 @@ ALLES AN EINEM ORT
 Erfasse Ausgaben, Einnahmen und Umbuchungen in Sekunden. Gruppiere Buchungen nach Konto und Kategorie und sieh genau, wohin dein Geld fließt.
 
 MEHRWÄHRUNG VON GRUND AUF
-Führe Konten in CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD und USD. Linden rechnet Summen mit aktuellen Wechselkursen um, damit dein Saldo immer Sinn ergibt.
+Führe Konten in CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD und USD. Linden rechnet jede Summe mit aktuellen Wechselkursen in deine Standardwährung um.
 
 SCHNELLE, KLUGE ERFASSUNG
 • Ein exakter Taschenrechner rechnet Beträge direkt beim Eingeben

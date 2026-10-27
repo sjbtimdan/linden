@@ -12,7 +12,7 @@ Linden 是一款快速、私密的记账应用，帮你掌控每一笔支出—�
 几秒内记录支出、收入和转账。按账户和分类整理记录，清楚看到钱花在了哪里。
 
 多币种设计
-支持 CHF、CNY、EUR、GBP、HKD、IDR、INR、JPY、SGD 和 USD 账户。Linden 用实时汇率换算总额，让余额始终一目了然。
+支持 CHF、CNY、EUR、GBP、HKD、IDR、INR、JPY、SGD 和 USD 账户。Linden 用实时汇率将每笔总额换算成你的默认货币。
 
 快速智能记账
 • 内置精确计算器，边输边算

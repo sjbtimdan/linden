@@ -12,7 +12,7 @@ SEMUA DALAM SATU TEMPAT
 Catat pengeluaran, pemasukan, dan transfer dalam hitungan detik. Kelompokkan entri berdasarkan akun dan kategori, dan lihat dengan jelas ke mana uang Anda pergi.
 
 MULTI-MATA UANG SEJAK AWAL
-Kelola akun dalam CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD, dan USD. Linden mengonversi total dengan kurs terkini, sehingga saldo Anda selalu masuk akal.
+Kelola akun dalam CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD, dan USD. Linden mengonversi setiap total ke mata uang default Anda dengan kurs terkini.
 
 ENTRI CEPAT DAN CERDAS
 • Kalkulator akurat bawaan menghitung jumlah dengan cepat

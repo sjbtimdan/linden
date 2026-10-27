@@ -12,7 +12,7 @@ TIENI TUTTO IN UN POSTO
 Registra spese, entrate e trasferimenti in pochi secondi. Raggruppa le voci per conto e categoria e vedi esattamente dove vanno i tuoi soldi.
 
 MULTI-VALUTA FIN DALLA PROGETTAZIONE
-Tieni conti in CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD e USD. Linden converte i totali con tassi di cambio aggiornati, così il tuo saldo ha sempre senso.
+Tieni conti in CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD e USD. Linden converte ogni totale nella valuta predefinita con tassi di cambio aggiornati.
 
 INSERIMENTO RAPIDO E INTELLIGENTE
 • Una calcolatrice esatta integrata gestisce gli importi al volo

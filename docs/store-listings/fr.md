@@ -12,7 +12,7 @@ TOUT AU MÊME ENDROIT
 Enregistrez dépenses, revenus et virements en quelques secondes. Regroupez les opérations par compte et par catégorie, et voyez exactement où passe votre argent.
 
 MULTIDEVISE PAR CONCEPTION
-Tenez des comptes en CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD et USD. Linden convertit les totaux avec des taux de change à jour, pour des soldes toujours clairs.
+Tenez des comptes en CHF, CNY, EUR, GBP, HKD, IDR, INR, JPY, SGD et USD. Linden convertit chaque total dans votre devise par défaut avec des taux de change à jour.
 
 SAISIE RAPIDE ET INTELLIGENTE
 • Une calculatrice exacte intégrée gère les montants à la volée
