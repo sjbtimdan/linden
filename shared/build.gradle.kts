@@ -1,3 +1,4 @@
+import java.io.File
 import java.time.Instant
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -148,7 +149,13 @@ detekt {
     )
 }
 
+// `./gradlew fastCheck` and `-PnoKover` skip coverage instrumentation entirely;
+// `check` keeps the Kover agent and the 50% gate.
+val fastCheckRequested = gradle.startParameter.taskNames.any { it.substringAfterLast(':') == "fastCheck" }
+val noKover = fastCheckRequested || providers.gradleProperty("noKover").isPresent
+
 kover {
+    if (noKover) disable()
     reports {
         // Coverage is only meaningful for the JVM target: the Android target
         // only runs device tests, which Kover does not support.
@@ -167,8 +174,12 @@ tasks.withType<Test>().configureEach {
     // Run test classes in parallel across forked JVMs: each fork is isolated, so
     // Compose UI tests keep running sequentially per fork while unrelated
     // test classes (DAOs, parsers, ViewModels) execute concurrently.
-    // Use all available processors for parallel execution (was capped at 4).
-    maxParallelForks = Math.max(1, Runtime.getRuntime().availableProcessors())
+    // Six forks is the sweet spot on this 8-core (6P+2E) dev machine: eight
+    // test JVMs oversubscribe the performance cores and slow the suite. The cap
+    // also avoids overforking CI runners with fewer cores.
+    // Override with -PtestForks=N when benchmarking on another machine.
+    val defaultForks = Math.min(6, Runtime.getRuntime().availableProcessors())
+    maxParallelForks = providers.gradleProperty("testForks").orNull?.toIntOrNull() ?: defaultForks
     // Pin the JVM locale so amount-formatting assertions are deterministic.
     systemProperty("user.language", "en")
     systemProperty("user.country", "US")
@@ -200,15 +211,16 @@ tasks.register<Test>("integrationTest") {
     classpath = integrationCompilation.runtimeDependencyFiles + files(integrationCompilation.output.allOutputs)
 }
 
-tasks.named("check") {
-    dependsOn(tasks.named("koverVerifyJvm"))
+if (!noKover) {
+    tasks.named("check") {
+        dependsOn(tasks.named("koverVerifyJvm"))
+    }
 }
 
-// Fast development check that runs jvmTest without kover verification.
-// Use ./gradlew fastCheck for rapid iteration, ./gradlew check for CI.
+// Fast development check: runs jvmTest with Kover instrumentation disabled.
+// Use ./gradlew fastCheck for rapid iteration, ./gradlew check for CI coverage.
 tasks.register("fastCheck") {
     dependsOn("jvmTest")
-    // Does NOT depend on koverVerifyJvm - faster for development iterations
 }
 
 // Generates a BuildInfo.kt file in commonMain with the app version and the
@@ -242,20 +254,25 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
         commandLine("git", "rev-parse", "--short", "HEAD")
         isIgnoreExitValue = true
     }.standardOutput.asText.get().trim().ifEmpty { "unknown" }
-    val gitDirty = providers.exec {
-        commandLine("git", "status", "--porcelain")
-        isIgnoreExitValue = true
-    }.standardOutput.asText.get().isNotBlank()
     val gitTagged = providers.exec {
         commandLine("git", "describe", "--tags", "--exact-match")
         isIgnoreExitValue = true
     }.standardOutput.asText.get().trim().isNotEmpty()
     inputs.property("version", version)
     inputs.property("gitCommit", gitCommit)
-    inputs.property("gitDirty", gitDirty)
     inputs.property("gitTagged", gitTagged)
     outputs.dir(outputDir)
+    val repoRoot: File = rootDir
     doLast {
+        // Read the dirty flag at execution time: its output changes on every
+        // edit, so declaring it as a configuration-cache input would discard
+        // the cached task graph on each build.
+        val gitDirty = ProcessBuilder("git", "status", "--porcelain")
+            .directory(repoRoot)
+            .redirectErrorStream(true)
+            .start()
+            .inputStream.bufferedReader()
+            .use { it.readText().isNotBlank() }
         val buildTime = Instant.now().toString()
         val file = outputDir.get().file("org/sjbtimdan/linden/BuildInfo.kt").asFile
         file.parentFile.mkdirs()
