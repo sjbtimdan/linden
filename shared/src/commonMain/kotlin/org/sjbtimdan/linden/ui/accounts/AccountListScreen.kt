@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -131,7 +130,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         } else {
             val entranceComplete = rememberEntranceComplete(accounts.size)
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -218,12 +217,14 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 }
             }
         }
+        // Last child of the full-height column so the host anchors to the
+        // bottom; as a sibling it would sit at the screen's top start and the
+        // negative offset would push it off-screen.
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
+        )
     }
-
-    SnackbarHost(
-        hostState = snackbarHostState,
-        modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
-    )
 
     AccountDialogHost(
         state = dialogState,
