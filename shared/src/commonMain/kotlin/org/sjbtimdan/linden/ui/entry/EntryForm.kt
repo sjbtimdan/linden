@@ -86,6 +86,9 @@ internal fun EntryType.toCategoryType(): CategoryType = when (this) {
     EntryType.Transfer -> CategoryType.Both
 }
 
+/** Keeps the quick-entry chips from sprawling when a description is long. */
+private val QuickEntryChipMaxWidth = 220.dp
+
 /**
  * The field section of the entry editor, shared between the inline form on the
  * entry screen and the edit dialog on the ledger screen.
@@ -431,13 +434,18 @@ fun EntryForm(
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
+                val quickChips = quickEntryChips(quickEntries)
                 OptionChipRow(
-                    options = quickEntries,
-                    optionLabel = { it.entry.description.orEmpty() },
-                    onSelect = onQuickEntry,
-                    optionIcon = ::quickEntryIcon,
-                    optionColors = { if (it.cadence != null) recurringChipColors else null },
-                    optionContentDescription = { if (it.cadence != null) recurringChipDescription else null },
+                    options = quickChips,
+                    optionLabel = { it.label },
+                    onSelect = { onQuickEntry(it.entry) },
+                    dense = true,
+                    maxChipWidth = QuickEntryChipMaxWidth,
+                    optionIcon = { quickEntryIcon(it.entry) },
+                    optionColors = { if (it.entry.cadence != null) recurringChipColors else null },
+                    optionContentDescription = {
+                        if (it.entry.cadence != null) recurringChipDescription else null
+                    },
                 )
             }
         }

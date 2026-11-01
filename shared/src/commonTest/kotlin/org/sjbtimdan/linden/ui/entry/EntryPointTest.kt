@@ -4,7 +4,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
@@ -1250,8 +1249,8 @@ class EntryPointTest : StringSpec({
             onNodeWithText("Coffee").performClick()
 
             onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
-            // The suggestion row is gone; the field and the quick-entry chip both show "Coffee".
-            onAllNodesWithText("Coffee").assertCountEquals(2)
+            // The suggestion row is gone; the field shows "Coffee" and the chip adds its amount.
+            onNodeWithText("Coffee · 4.50").assertIsDisplayed()
         }
     }
 
@@ -1278,7 +1277,7 @@ class EntryPointTest : StringSpec({
             tapOutside()
 
             onNodeWithText("Description (optional)").assertIsNotFocused()
-            // Nothing was applied — only the quick-entry chip still shows the description.
+            // Nothing was applied — only the quick-entry chip still shows the entry.
             onNode(hasSetTextAction() and hasText("Coffee")).assertDoesNotExist()
             onNodeWithText("Quick entry").assertIsDisplayed()
             onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
@@ -1391,8 +1390,9 @@ class EntryPointTest : StringSpec({
 
             waitForText("Quick entry")
             onNodeWithText("Quick entry").assertIsDisplayed()
-            // The chip duplicates the prefilled description field.
-            onAllNodesWithText("Coffee").assertCountEquals(2)
+            // The field shows the prefilled description; the chip adds its amount.
+            onNode(hasSetTextAction() and hasText("Coffee")).assertIsDisplayed()
+            onNodeWithText("Coffee · 4.50").assertIsDisplayed()
         }
     }
 
@@ -1411,7 +1411,7 @@ class EntryPointTest : StringSpec({
             }
 
             waitForText("Quick entry")
-            onNodeWithText("Coffee").performClick()
+            onNodeWithText("Coffee · 4.50").performClick()
             waitForIdle()
 
             onNode(hasSetTextAction() and hasText("4.50")).assertIsDisplayed()
@@ -1439,7 +1439,7 @@ class EntryPointTest : StringSpec({
 
             waitForText("Quick entry")
             enterAmount("9.99")
-            onNodeWithText("Coffee").performClick()
+            onNodeWithText("Coffee · 4.50").performClick()
             waitForIdle()
 
             // The amount survives; the chip still fills the rest of the form.

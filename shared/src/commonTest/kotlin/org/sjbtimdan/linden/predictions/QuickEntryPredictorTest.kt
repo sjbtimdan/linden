@@ -185,15 +185,58 @@ class QuickEntryPredictorTest : StringSpec({
                 .shouldContainExactly("Coffee", "Train", "Lunch", "Dinner", "Cinema")
         }
 
-        "deduplicates by description and hour of day, not amount or account" {
+        "keeps recurring variants of the same description separate" {
             val entries = listOf(
                 expense(1, "Coffee", now.minus(1.days), amount = 450),
-                expense(2, "Coffee", now.minus(1.days).minus(7.days), amount = 480),
-                expense(3, "Coffee", now.minus(1.days).minus(14.days), amount = 500, account = savings),
+                expense(2, "Coffee", now.minus(8.days), amount = 450),
+                expense(3, "Coffee", now.minus(2.days), amount = 480),
+                expense(4, "Coffee", now.minus(9.days), amount = 480),
+                expense(5, "Coffee", now.minus(3.days), amount = 500, account = savings),
+                expense(6, "Coffee", now.minus(10.days), amount = 500, account = savings),
+            )
+            predict(entries).map { it.entry.amount }.shouldContainExactly(450L, 480L, 500L)
+        }
+
+        "keeps recurring variants on different accounts separate" {
+            val entries = listOf(
+                expense(1, "Coffee", now.minus(1.days), account = main),
+                expense(2, "Coffee", now.minus(8.days), account = main),
+                expense(3, "Coffee", now.minus(2.days), account = savings),
+                expense(4, "Coffee", now.minus(9.days), account = savings),
+            )
+            predict(entries).map { it.entry.account.id }
+                .shouldContainExactly(main.id, savings.id)
+        }
+
+        "collapses a variable-amount description to one chip" {
+            val entries = listOf(
+                expense(1, "Groceries", now.minus(1.days), amount = 8_240),
+                expense(2, "Groceries", now.minus(8.days), amount = 4_510),
+                expense(3, "Groceries", now.minus(15.days), amount = 6_130),
             )
             val result = predict(entries)
             result.shouldHaveSize(1)
-            result.single().entry.id shouldBe 1L
+            result.single().entry.amount shouldBe 8_240L
+        }
+
+        "excludes only the exact variant entered today" {
+            val entries = listOf(
+                expense(1, "Coffee", now, amount = 450),
+                expense(2, "Coffee", now.minus(1.days), amount = 520, account = savings),
+                expense(3, "Train", now.minus(1.days)),
+                expense(4, "Train", now.minus(2.days)),
+            )
+            predict(entries).map { it.entry.description }.toSet() shouldBe setOf("Coffee", "Train")
+        }
+
+        "still excludes the same variant entered today" {
+            val entries = listOf(
+                expense(1, "Coffee", now),
+                expense(2, "Coffee", now.minus(1.days)),
+                expense(3, "Train", now.minus(1.days)),
+                expense(4, "Train", now.minus(2.days)),
+            )
+            predict(entries).map { it.entry.description }.shouldContainExactly("Train")
         }
 
         "deduplicates same-description entries across different hours" {
@@ -216,7 +259,7 @@ class QuickEntryPredictorTest : StringSpec({
             predict(entries).shouldHaveSize(QUICK_ENTRY_TOP_N)
         }
 
-        "deduplicates same-description transfers regardless of target" {
+        "keeps recurring same-description transfers to different accounts separate" {
             val transfers = listOf(
                 TransferEntry(
                     1, null, "Move money", main, 10_000,
@@ -224,11 +267,19 @@ class QuickEntryPredictorTest : StringSpec({
                 ),
                 TransferEntry(
                     2, null, "Move money", main, 10_000,
-                    createdAt = now.minus(1.days), createdZone = TimeZone.UTC, toAccount = credit, toAmount = 9_500,
+                    createdAt = now.minus(8.days), createdZone = TimeZone.UTC, toAccount = savings, toAmount = 9_500,
+                ),
+                TransferEntry(
+                    3, null, "Move money", main, 10_000,
+                    createdAt = now.minus(2.days), createdZone = TimeZone.UTC, toAccount = credit, toAmount = 9_500,
+                ),
+                TransferEntry(
+                    4, null, "Move money", main, 10_000,
+                    createdAt = now.minus(9.days), createdZone = TimeZone.UTC, toAccount = credit, toAmount = 9_500,
                 ),
             )
             predict(transfers, FieldPredictionInput(EntryType.Transfer, null, null, null, null))
-                .shouldHaveSize(1)
+                .shouldHaveSize(2)
         }
 
         "boosts a monthly bill near its day of month even when weekday and month drift" {

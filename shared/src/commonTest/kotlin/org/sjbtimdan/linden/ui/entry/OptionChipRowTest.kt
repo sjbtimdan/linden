@@ -11,6 +11,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
+import androidx.compose.ui.unit.dp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.ui.onTestMain
@@ -173,6 +174,27 @@ class OptionChipRowTest : StringSpec({
             OptionChipColors(scheme.secondaryContainer, scheme.onSecondaryContainer)
         optionChipColors(scheme, selected = false, predicted = true, custom = custom) shouldBe
             OptionChipColors(scheme.primaryContainer, scheme.onPrimaryContainer)
+    }
+
+    "dense width-limited chips remain selectable" {
+        onTestMain {
+            runComposeUiTest {
+                var picked: String? = null
+                setContent {
+                    OptionChipRow(
+                        options = listOf("A very long option label that should be ellipsized"),
+                        optionLabel = { it },
+                        onSelect = { picked = it },
+                        dense = true,
+                        maxChipWidth = 160.dp,
+                    )
+                }
+
+                onNodeWithText("A very long option label that should be ellipsized").performClick()
+
+                picked shouldBe "A very long option label that should be ellipsized"
+            }
+        }
     }
 
     "per-option content descriptions are announced" {

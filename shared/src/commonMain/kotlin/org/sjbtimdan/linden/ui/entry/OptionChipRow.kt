@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
@@ -19,6 +20,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
@@ -33,6 +36,8 @@ fun <T> OptionChipRow(
     optionLabel: (T) -> String,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
+    dense: Boolean = false,
+    maxChipWidth: Dp? = null,
     isSelected: (T) -> Boolean = { false },
     isPredicted: (T) -> Boolean = { false },
     optionIcon: ((T) -> ImageVector?)? = null,
@@ -40,6 +45,15 @@ fun <T> OptionChipRow(
     optionContentDescription: ((T) -> String?)? = null,
     trailingChip: (@Composable () -> Unit)? = null,
 ) {
+    val horizontalPadding = if (dense) 8.dp else 12.dp
+    val verticalPadding = if (dense) 4.dp else 6.dp
+    val iconStartPadding = if (dense) 8.dp else 12.dp
+    val iconSize = if (dense) 14.dp else 16.dp
+    val textStyle = if (dense) {
+        MaterialTheme.typography.labelMedium
+    } else {
+        MaterialTheme.typography.labelLarge
+    }
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -68,6 +82,7 @@ fun <T> OptionChipRow(
                 color = colors.container,
                 contentColor = colors.content,
                 modifier = Modifier
+                    .then(if (maxChipWidth != null) Modifier.widthIn(max = maxChipWidth) else Modifier)
                     .semantics(mergeDescendants = true) {
                         selected = isSelectedChip
                         if (description != null) {
@@ -87,18 +102,24 @@ fun <T> OptionChipRow(
                             imageVector = icon,
                             contentDescription = null,
                             modifier = Modifier
-                                .padding(start = 12.dp)
-                                .size(16.dp),
+                                .padding(start = iconStartPadding)
+                                .size(iconSize),
                         )
                     }
                     Text(
                         text = optionLabel(option),
-                        style = MaterialTheme.typography.labelLarge,
+                        style = textStyle,
+                        maxLines = if (maxChipWidth != null) 1 else Int.MAX_VALUE,
+                        overflow = if (maxChipWidth != null) {
+                            TextOverflow.Ellipsis
+                        } else {
+                            TextOverflow.Clip
+                        },
                         modifier = Modifier.padding(
-                            start = if (icon != null) 4.dp else 12.dp,
-                            end = 12.dp,
-                            top = 6.dp,
-                            bottom = 6.dp,
+                            start = if (icon != null) 4.dp else horizontalPadding,
+                            end = horizontalPadding,
+                            top = verticalPadding,
+                            bottom = verticalPadding,
                         ),
                     )
                 }

@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.predictions
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
+import org.sjbtimdan.linden.model.TransferEntry
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.time.Duration.Companion.days
@@ -33,27 +34,33 @@ data class QuickEntry(
  * of [target] is not suggested at all — that date is already covered — while
  * everything else stays suggestible: weekly cycles are short enough that the
  * due tier already covers them, and non-recurring descriptions remain
- * repeatable, so a second coffee on the same day is still one tap. The
- * remaining candidates are ranked by time of day — hour, weekday, month and
- * day of month — against [target], the moment the new entry is dated,
- * multiplied by recency decay against [now] and a logarithmic frequency weight
- * so that recent, frequently-entered entries dominate. Entries that appear
- * only once are filtered out. Entries matching the draft's entered
- * amount/account/category (or typed description) float above the rest as a
- * group — each group keeps its time ordering, so the strongest time match wins
- * within it — and unmatched entries stay below rather than disappear. All
- * entries of the draft's type are considered (not just the recent window of
- * the field predictors) so that periodic entries outside the prediction
+ * repeatable. The remaining candidates are ranked by time of day — hour,
+ * weekday, month and day of month — against [target], the moment the new entry
+ * is dated, multiplied by recency decay against [now] and a logarithmic
+ * frequency weight so that recent, frequently-entered entries dominate.
+ * Descriptions with fewer than two entries are filtered out.
+ *
+ * Entries are identified by description, amount and source account (and a
+ * transfer's destination), not by description alone. That keeps two coffee
+ * vendors with the same wording but different prices as separate candidates,
+ * and a description entered today only hides the exact variant it repeats —
+ * another vendor's variant stays available. When a description has several
+ * variants, only variants that recur (the same amount and account seen at
+ * least twice) stay in the list, plus the highest-ranked one: a lumped
+ * "Groceries" series whose total changes every time collapses to one chip,
+ * while two recurring coffee prices remain separate. Entries matching the
+ * draft's
+ * entered amount/account/category (or typed description) float above the rest
+ * as a group — each group keeps its time ordering, so the strongest time match
+ * wins within it — and unmatched entries stay below rather than disappear.
+ * All entries of the draft's type are considered (not just the recent window
+ * of the field predictors) so that periodic entries outside the prediction
  * horizon can still surface.
  *
  * Entries without a description are ignored: a chip shows the description, so
- * auto-generated entries without one can't be picked. A description entered
- * today — [now]'s day, regardless of [target] — is excluded entirely: the user
- * just entered it, so it isn't suggested again even when it recurs. Recurring
- * entries are deduplicated by description, so the same thing can't fill the
- * list even when it occurs at different hours, amounts, categories, or
- * accounts. Each result carries the [RecurrenceCadence] detected for its
- * description, so a chip can label a subscription.
+ * auto-generated entries without one can't be picked. Each result carries the
+ * [RecurrenceCadence] detected for its description, so a chip can label a
+ * subscription.
  */
 fun predictQuickEntries(
     entries: List<Entry>,
@@ -63,36 +70,42 @@ fun predictQuickEntries(
     topN: Int,
     target: Instant = now,
 ): List<QuickEntry> {
-    val frequency = entries
-        .filter { it.type == input.type && !it.description.isNullOrBlank() }
+    val typed = entries.filter { it.type == input.type && !it.description.isNullOrBlank() }
+    val descriptionFrequency = typed
         .groupingBy { it.description!!.lowercase() }
         .eachCount()
+    val variantFrequency = typed
+        .groupingBy(::variantKey)
+        .eachCount()
+    val byDescription = typed.groupBy { it.description!!.lowercase() }
+    val cadenceByDescription = byDescription.mapValues { (description, group) ->
+        recurringCadence(group, description)
+    }
+    val lastByDescription = byDescription.mapValues { (_, group) -> group.maxOf { it.createdAt } }
 
-    // Descriptions entered today are skipped: the user just typed them and
-    // doesn't need them re-suggested, even when they recur monthly.
-    val enteredToday = entries
-        .filter { it.type == input.type }
-        .filter { it.createdAt.toLocalDateTime(timeZone).date == now.toLocalDateTime(timeZone).date }
-        .mapNotNull { it.description?.lowercase() }
+    val today = now.toLocalDateTime(timeZone).date
+    val enteredToday = typed
+        .filter { it.createdAt.toLocalDateTime(timeZone).date == today }
+        .map(::variantKey)
         .toSet()
 
-    return entries
-        .filter { it.type == input.type }
-        .filter { !it.description.isNullOrBlank() }
-        .filter { it.description!!.lowercase() !in enteredToday }
-        .filter { (frequency[it.description!!.lowercase()] ?: 0) >= 2 }
-        .groupBy { it.description!!.lowercase() }
-        .flatMap { (description, group) ->
-            val cadence = recurringCadence(group, description)
+    val scored = typed
+        .filter { variantKey(it) !in enteredToday }
+        .filter { (descriptionFrequency[it.description!!.lowercase()] ?: 0) >= 2 }
+        .groupBy(::variantKey)
+        .flatMap { (key, group) ->
+            val description = group.first().description!!.lowercase()
+            val cadence = cadenceByDescription[description]
             val loggedNearTarget = cadence == RecurrenceCadence.Monthly &&
-                group.any { withinTargetWindow(it.createdAt, target) }
+                byDescription[description].orEmpty().any { withinTargetWindow(it.createdAt, target) }
             if (loggedNearTarget) {
                 emptyList()
             } else {
-                val due = cadence != null && isDue(group.maxOf { it.createdAt }, cadence, target)
+                val last = lastByDescription[description] ?: group.maxOf { it.createdAt }
+                val due = cadence != null && isDue(last, cadence, target)
                 group.map { entry ->
                     val weight = recencyWeight(entry.createdAt, now) *
-                        ln(1.0 + (frequency[description] ?: 0))
+                        ln(1.0 + (variantFrequency[key] ?: 0))
                     ScoredEntry(
                         entry = entry,
                         timeScore = timeAffinityScore(entry.createdAt, target, timeZone) * weight,
@@ -113,9 +126,51 @@ fun predictQuickEntries(
                 .thenByDescending { it.fieldScore }
                 .thenBy { it.entry.id },
         )
-        .distinctBy { it.entry.description.orEmpty().lowercase() }
+
+    // Keep one chip for a description with only one candidate. When a
+    // description has several candidates, only variants that recur (the same
+    // amount and account seen twice) survive: a lumped "Groceries" series with
+    // a new total every time collapses back to one chip, while two recurring
+    // coffee prices stay separate. The top-ranked variant always survives, so
+    // a brand-new variant is still available.
+    val variants = groupScoredVariants(scored)
+    val recurringVariants = variantFrequency.filterValues { it >= 2 }.keys
+    return scored
+        .filter { scoredEntry ->
+            val description = scoredEntry.entry.description.orEmpty().lowercase()
+            val variant = variantKey(scoredEntry.entry)
+            variants.multiple[description] != true ||
+                variant == variants.first[description] ||
+                variant in recurringVariants
+        }
+        .distinctBy { variantKey(it.entry) }
         .take(topN)
         .map { QuickEntry(it.entry, it.cadence) }
+}
+
+private data class ScoredVariants(
+    val first: Map<String, String>,
+    val multiple: Map<String, Boolean>,
+)
+
+private fun groupScoredVariants(entries: List<ScoredEntry>): ScoredVariants {
+    val byDescription = entries.groupBy { it.entry.description.orEmpty().lowercase() }
+    return ScoredVariants(
+        first = byDescription.mapValues { (_, group) -> variantKey(group.first().entry) },
+        multiple = byDescription.mapValues { (_, group) ->
+            group.map { variantKey(it.entry) }.distinct().size > 1
+        },
+    )
+}
+
+/**
+ * Identity of a repeatable entry: the same words, amount and source account
+ * (plus the destination for a transfer) are one candidate; changing any of
+ * them makes a separate variant, such as the same coffee bought at two shops.
+ */
+private fun variantKey(entry: Entry): String {
+    val destination = (entry as? TransferEntry)?.toAccount?.id ?: -1L
+    return "${entry.description.orEmpty().lowercase()}|${entry.amount}|${entry.account.id}|$destination"
 }
 
 /** Whether [instant] falls within [DUE_WINDOW_DAYS] of [target]. */
