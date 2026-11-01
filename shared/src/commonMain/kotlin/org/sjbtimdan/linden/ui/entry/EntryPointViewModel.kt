@@ -209,6 +209,9 @@ class EntryPointViewModel(
         draftState.value = EntryDraft.forNew(_selectedType.value, clock = clock)
     }
 
+    /** Guards [saveDraft] against a second tap while the first write is still in flight. */
+    private val saving = MutableStateFlow(false)
+
     /**
      * Saves the current draft and resets the form prefilled from the saved entry.
      * A draft carrying an edited entry updates that row; a new draft inserts one.
@@ -218,24 +221,29 @@ class EntryPointViewModel(
     suspend fun saveDraft(): Boolean {
         val state = draftState.value ?: return false
         val entry = state.toEntry(visibleAccounts.value, categories.value) ?: return false
-        val updated = state.editing != null
+        if (!saving.compareAndSet(expect = false, update = true)) return false
         try {
-            if (updated) {
-                entryDao.update(entry)
-                _lastAdded.value = entry
-            } else {
-                _lastAdded.value = entry.withId(entryDao.create(entry))
+            val updated = state.editing != null
+            try {
+                if (updated) {
+                    entryDao.update(entry)
+                    _lastAdded.value = entry
+                } else {
+                    _lastAdded.value = entry.withId(entryDao.create(entry))
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                reportError()
+                return false
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            reportError()
-            return false
+            _lastAddedWasEdit.value = updated
+            state.sourceCaptureId?.let { consumeCapture(it, entry) }
+            draftState.value = EntryDraft.forNew(entry.type, entry, clock)
+            return true
+        } finally {
+            saving.value = false
         }
-        _lastAddedWasEdit.value = updated
-        state.sourceCaptureId?.let { consumeCapture(it, entry) }
-        draftState.value = EntryDraft.forNew(entry.type, entry, clock)
-        return true
     }
 
     /**

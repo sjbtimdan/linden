@@ -8,6 +8,9 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -268,6 +271,50 @@ class EntryPointViewModelTest : StringSpec({
                 draft.description shouldBe "Coffee"
                 draft.categoryId shouldBe groceries.id
                 draft.accountId shouldBe main.id
+            }
+        }
+    }
+
+    "saveDraft ignores a second tap while the first write is still in flight" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = GatedEntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                    zone = TimeZone.UTC,
+                )
+                accountDao.create("Main", Currency.CHF)
+                categoryDao.create("Groceries", CategoryType.Expense)
+                val main = accountDao.getAll().first().first()
+                val groceries = categoryDao.getAll().first().first()
+                viewModel.clearDraft()
+                viewModel.onAmountChange("4.50")
+                viewModel.onCategoryChange(groceries.id)
+                viewModel.onAccountChange(main.id)
+
+                entryDao.gateWrites = true
+                coroutineScope {
+                    val first = async { viewModel.saveDraft() }
+                    entryDao.createStarted.await()
+
+                    viewModel.saveDraft() shouldBe false
+
+                    entryDao.gate.complete(Unit)
+                    first.await() shouldBe true
+                }
+
+                entryDao.getAll().first() shouldHaveSize 1
             }
         }
     }
@@ -1057,6 +1104,21 @@ private class FailingEntryDao(queries: EntryQueries) : EntryDao(queries) {
 
     override suspend fun create(entry: Entry): Long {
         if (failWrites) throw IllegalStateException("write failed")
+        return super.create(entry)
+    }
+}
+
+/** [EntryDao] whose write suspends on [gate] after signalling [createStarted]. */
+private class GatedEntryDao(queries: EntryQueries) : EntryDao(queries) {
+    val gate = CompletableDeferred<Unit>()
+    val createStarted = CompletableDeferred<Unit>()
+    var gateWrites = false
+
+    override suspend fun create(entry: Entry): Long {
+        if (gateWrites) {
+            createStarted.complete(Unit)
+            gate.await()
+        }
         return super.create(entry)
     }
 }
