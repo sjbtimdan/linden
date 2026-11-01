@@ -2,6 +2,7 @@ package org.sjbtimdan.linden.data
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.util.stateFlow
@@ -17,7 +18,10 @@ class HideEntryTotalSetting(
     initial: Boolean,
     private val scope: CoroutineScope,
 ) {
-    val state: StateFlow<Boolean> = settingsDao.hideEntryTotalFlow().stateFlow(scope, initial)
+    // Chrome state read synchronously while masking totals; it is a single-row
+    // setting, so it stays live even between screens instead of going stale.
+    val state: StateFlow<Boolean> =
+        settingsDao.hideEntryTotalFlow().stateFlow(scope, initial, SharingStarted.Eagerly)
 
     fun set(hidden: Boolean) {
         scope.launch {

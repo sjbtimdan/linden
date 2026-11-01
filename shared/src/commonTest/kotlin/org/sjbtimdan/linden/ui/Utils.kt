@@ -49,13 +49,19 @@ import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
+import org.sjbtimdan.linden.util.stateFlowStartedOverrideForTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun onTestMain(block: suspend () -> Unit) {
     Dispatchers.setMain(UnconfinedTestDispatcher())
+    // Tests assert on StateFlow.value without collecting, so they run the
+    // production WhileSubscribed sharing eagerly. FlowExtensionsTest covers the
+    // real sharing behavior directly.
+    stateFlowStartedOverrideForTest = SharingStarted.Eagerly
     try {
         runBlocking { block() }
     } finally {
+        stateFlowStartedOverrideForTest = null
         Dispatchers.resetMain()
     }
 }

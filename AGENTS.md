@@ -162,7 +162,10 @@ git describe). It is generated code — never edit it.
   their screen composes, so an unopened screen starts no database or aggregation subscriptions; the ledger's
   delegate stays available through `ledgerViewModelIfCreated()` so `App` can dismiss its dialog without creating it.
   Only `httpClient` is otherwise lazy (its engine is expensive to build and tests injecting a fake FX source never
-  trigger it). Theme + default currency are read from `SettingsDao` with fallbacks `ThemeMode.SYSTEM` / `Currency.CHF`.
+  trigger it). Shared ViewModel flows use `SharingStarted.WhileSubscribed(5_000)` (`util/stateFlow`): they start with
+  the screen that collects them and stop 5 s after it leaves, so a hidden screen does no database or aggregation work.
+  Values read synchronously without a collector must opt into `SharingStarted.Eagerly`. Theme + default currency are
+  read from `SettingsDao` with fallbacks `ThemeMode.SYSTEM` / `Currency.CHF`.
 - FX rates power cross-currency totals: `FxRatesFetcher` (in `.data`) calls Frankfurter
   (`api.frankfurter.dev/v1/latest`) over Ktor (OkHttp on Android, CIO on JVM), responses decode via
   `parseFxRatesResponse` (kotlinx.serialization). Rates refresh only when the cached rates are older than 24 hours

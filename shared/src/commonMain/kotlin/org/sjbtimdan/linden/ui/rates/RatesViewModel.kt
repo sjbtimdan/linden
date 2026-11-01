@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.rates
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -37,9 +38,13 @@ class RatesViewModel(
     private val fxRatesRepository: FxRatesRepository,
     private val clock: AppClock,
 ) : AppViewModel() {
-    val base: StateFlow<Currency> = settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
+    // Read synchronously by the startup refresh and the refresh actions, which
+    // may run before any screen collects them; both are single-row settings.
+    val base: StateFlow<Currency> =
+        settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF, SharingStarted.Eagerly)
 
-    val autoUpdateRates: StateFlow<Boolean> = settingsDao.autoUpdateRatesFlow().stateFlow(true)
+    val autoUpdateRates: StateFlow<Boolean> =
+        settingsDao.autoUpdateRatesFlow().stateFlow(true, SharingStarted.Eagerly)
 
     private val _rates = MutableStateFlow<List<FxRate>>(emptyList())
     val rates: StateFlow<List<FxRate>> = _rates.asStateFlow()

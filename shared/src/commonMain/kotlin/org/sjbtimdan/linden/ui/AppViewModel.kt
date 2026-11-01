@@ -6,18 +6,22 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.sjbtimdan.linden.util.DefaultStateFlowStarted
 import org.sjbtimdan.linden.util.stateFlow
 
 /**
- * Base for the app's ViewModels: collects a flow eagerly into a [StateFlow]
- * owned by the ViewModel scope, so subclasses write `flow.stateFlow(initial)`
- * instead of repeating the `stateIn` wiring.
+ * Base for the app's ViewModels: shares a flow as a [StateFlow] owned by the
+ * ViewModel scope, so subclasses write `flow.stateFlow(initial)` instead of
+ * repeating the `stateIn` wiring. The upstream runs only while a screen (or
+ * another flow) collects it, plus a short stop-timeout grace.
  */
 abstract class AppViewModel : ViewModel() {
-    protected fun <T> Flow<T>.stateFlow(initial: T): StateFlow<T> = stateFlow(viewModelScope, initial)
+    protected fun <T> Flow<T>.stateFlow(initial: T, started: SharingStarted = DefaultStateFlowStarted): StateFlow<T> =
+        stateFlow(viewModelScope, initial, started)
 
     /**
      * Runs [block] in [viewModelScope], reporting any failure through [reportError].

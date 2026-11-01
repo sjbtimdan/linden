@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.capture
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
@@ -39,14 +40,20 @@ class CapturedPaymentsViewModel(
     /** Captures already added to the form: hidden from the inbox, still stored until the entry is saved. */
     private val consumedIds = MutableStateFlow<Set<Long>>(emptySet())
 
-    private val rules: StateFlow<List<CaptureRule>> = repository.rulesFlow().stateFlow(viewModelScope, emptyList())
+    // The inbox resolves rows and builds drafts synchronously from these, so
+    // they stay current even when the banner is not collecting them; all four
+    // are small settings/account/category reads.
+    private val rules: StateFlow<List<CaptureRule>> =
+        repository.rulesFlow().stateFlow(viewModelScope, emptyList(), SharingStarted.Eagerly)
 
-    private val accounts: StateFlow<List<Account>> = accountDao.getAll().stateFlow(viewModelScope, emptyList())
+    private val accounts: StateFlow<List<Account>> =
+        accountDao.getAll().stateFlow(viewModelScope, emptyList(), SharingStarted.Eagerly)
 
-    private val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(viewModelScope, emptyList())
+    private val categories: StateFlow<List<Category>> =
+        categoryDao.getAll().stateFlow(viewModelScope, emptyList(), SharingStarted.Eagerly)
 
     private val templates: StateFlow<List<CaptureTemplate>> =
-        repository.templatesFlow().stateFlow(viewModelScope, emptyList())
+        repository.templatesFlow().stateFlow(viewModelScope, emptyList(), SharingStarted.Eagerly)
 
     private val seenCaptureId: StateFlow<Long> = repository.seenCaptureIdFlow().stateFlow(viewModelScope, 0L)
 

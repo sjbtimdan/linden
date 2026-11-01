@@ -43,7 +43,9 @@ stay in lockstep. The composition root (`AppDependencies`) creates the DAOs, rep
 start screen's/chrome's ViewModels eagerly; screen-scoped ViewModels are `by lazy` and are built the
 first time their screen composes, so an unopened screen starts no database or aggregation
 subscriptions. `httpClient` is lazy too (its engine is expensive and tests injecting a fake FX
-source never trigger it). ViewModels expose `StateFlow`s; screens collect them with
+source never trigger it). ViewModels expose `StateFlow`s shared with
+`SharingStarted.WhileSubscribed(5_000)` — a screen's flows stop 5 s after it is hidden, so unopened screens
+start no subscriptions; values read without a collector opt into `Eagerly`. Screens collect them with
 `collectAsState()`.
 
 ## Project Structure

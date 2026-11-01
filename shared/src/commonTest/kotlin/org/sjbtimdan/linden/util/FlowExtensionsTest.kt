@@ -4,25 +4,18 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.sjbtimdan.linden.data.lindenDatabase
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FlowExtensionsTest : StringSpec({
-    "stateFlow tracks the source value" {
-        runTest {
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            val state = MutableStateFlow(1).stateFlow(scope, initial = 0)
-
-            state.value shouldBe 1
-        }
-    }
-
-    "stateFlow collects the upstream eagerly, without a downstream collector" {
+    "stateFlow starts its upstream only once a collector arrives" {
         runTest {
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             var subscriptions = 0
@@ -33,8 +26,38 @@ class FlowExtensionsTest : StringSpec({
 
             val state = source.stateFlow(scope, initial = 0)
 
+            subscriptions shouldBe 0
+            state.value shouldBe 0
+
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { state.collect {} }
             subscriptions shouldBe 1
             state.value shouldBe 42
+            collector.cancel()
+        }
+    }
+
+    "stateFlow stops its upstream after the stop timeout once the last collector leaves" {
+        runTest {
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            var cancelled = false
+            val source = flow {
+                try {
+                    emit(1)
+                    awaitCancellation()
+                } finally {
+                    cancelled = true
+                }
+            }
+
+            val state = source.stateFlow(scope, initial = 0)
+            val collector = launch(UnconfinedTestDispatcher(testScheduler)) { state.collect {} }
+            state.value shouldBe 1
+
+            collector.cancel()
+            advanceTimeBy(4_999)
+            cancelled shouldBe false
+            advanceTimeBy(2)
+            cancelled shouldBe true
         }
     }
 
