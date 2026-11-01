@@ -63,18 +63,6 @@ import kotlin.time.Instant
 /** Which field is expanded right now; while one is, the rest of the form collapses. */
 private enum class ActiveField { Description, From, To, Category, Account, Amount, ToAmount }
 
-/** One-line context for the keypad takeover: the field's purpose plus the accounts involved. */
-private fun calculatorContextLabel(purpose: String, from: Account?, to: Account?): String = when {
-    from != null && to != null ->
-        "$purpose · ${from.name} · ${from.currency.symbol} → ${to.name} · ${to.currency.symbol}"
-
-    from != null -> "$purpose · ${from.name} · ${from.currency.symbol}"
-
-    to != null -> "$purpose · ${to.name} · ${to.currency.symbol}"
-
-    else -> purpose
-}
-
 /** The category type a new category should get for an entry of [type]. */
 internal fun EntryType.toCategoryType(): CategoryType = when (this) {
     EntryType.Expense -> CategoryType.Expense
@@ -103,10 +91,7 @@ fun EntryForm(
     onCreatedAtChange: (Instant) -> Unit,
     onFieldFocusChange: (Boolean) -> Unit = {},
     editEpoch: Int = 0,
-    descriptionSuggestions: List<String> = emptyList(),
-    accountSuggestions: List<Long> = emptyList(),
-    categorySuggestions: List<Long> = emptyList(),
-    quickEntries: List<QuickEntry> = emptyList(),
+    suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
     onQuickEntry: (QuickEntry) -> Unit = {},
     onAdd: (() -> Unit)? = null,
     defaultCurrency: Currency = Currency.CHF,
@@ -311,7 +296,7 @@ fun EntryForm(
                     optionLabel = { it.name },
                     onSelect = { onCategoryChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Category else null },
-                    predictedOptions = categorySuggestions
+                    predictedOptions = suggestions.categoryIds
                         .filterNot { it == state.categoryId }
                         .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
                     optionIcon = { it.icon?.imageVector() },
@@ -332,7 +317,7 @@ fun EntryForm(
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Account else null },
-                    predictedOptions = accountSuggestions
+                    predictedOptions = suggestions.accountIds
                         .filterNot { it == state.accountId }
                         .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
                     createLabel = accountCreateLabel,
@@ -352,9 +337,9 @@ fun EntryForm(
         if (activeField == null || activeField == ActiveField.Description) {
             val visibleSuggestions = state.description.trim().let { query ->
                 val matches = if (query.isEmpty()) {
-                    descriptionSuggestions
+                    suggestions.descriptions
                 } else {
-                    descriptionSuggestions.filter { it.contains(query, ignoreCase = true) }
+                    suggestions.descriptions.filter { it.contains(query, ignoreCase = true) }
                 }
                 matches.filterNot { it.equals(query, ignoreCase = true) }
             }
@@ -413,14 +398,14 @@ fun EntryForm(
             )
 
             // Quick entries fill the form from a past entry but keep the current date and time.
-            if (quickEntries.isNotEmpty()) {
+            if (suggestions.quickEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = stringResource(Res.string.entry_quick_entry),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                val quickChips = quickEntryChips(quickEntries)
+                val quickChips = quickEntryChips(suggestions.quickEntries)
                 OptionChipRow(
                     options = quickChips,
                     optionLabel = { it.label },
@@ -438,51 +423,35 @@ fun EntryForm(
     }
 
     if (activeField == ActiveField.Amount) {
-        AmountCalculator(
-            initialMinor = state.amount,
-            currencySymbol = fromAccount?.currency?.symbol,
-            decimalDigits = fromAccount?.currency?.decimalDigits ?: 2,
-            contextLabel = calculatorContextLabel(
-                purpose = amountLabel,
-                from = fromAccount,
-                to = toAccount,
-            ),
-            onEnter = { value ->
-                onAmountChange(value)
-                activeField = null
-            },
-            onInvalid = {
-                amountWarning = amountPositiveWarning
-                activeField = null
-            },
+        EntryAmountCalculator(
+            isToAmount = false,
+            state = state,
+            accounts = accounts,
+            fromAccount = fromAccount,
+            toAccount = toAccount,
+            purpose = amountLabel,
+            warning = amountPositiveWarning,
+            onCommit = onAmountChange,
+            onWarning = { amountWarning = it },
             onCancel = { activeField = null },
             onAdd = calculatorAdd,
-            addEnabled = { value -> state.copy(amountText = value).isValid(accounts) },
             addLabel = addLabel,
         )
     }
 
     if (activeField == ActiveField.ToAmount) {
-        AmountCalculator(
-            initialMinor = state.toAmount,
-            currencySymbol = toAccount?.currency?.symbol,
-            decimalDigits = toAccount?.currency?.decimalDigits ?: 2,
-            contextLabel = calculatorContextLabel(
-                purpose = receivedAmountLabel,
-                from = fromAccount,
-                to = toAccount,
-            ),
-            onEnter = { value ->
-                onToAmountChange(value)
-                activeField = null
-            },
-            onInvalid = {
-                toAmountWarning = amountPositiveWarning
-                activeField = null
-            },
+        EntryAmountCalculator(
+            isToAmount = true,
+            state = state,
+            accounts = accounts,
+            fromAccount = fromAccount,
+            toAccount = toAccount,
+            purpose = receivedAmountLabel,
+            warning = amountPositiveWarning,
+            onCommit = onToAmountChange,
+            onWarning = { toAmountWarning = it },
             onCancel = { activeField = null },
             onAdd = calculatorAdd,
-            addEnabled = { value -> state.copy(toAmountText = value).isValid(accounts) },
             addLabel = addLabel,
         )
     }

@@ -67,9 +67,7 @@ fun EntryDialog(
     onDuplicate: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     saving: Boolean = false,
-    descriptionSuggestions: List<String> = emptyList(),
-    accountSuggestions: List<Long> = emptyList(),
-    categorySuggestions: List<Long> = emptyList(),
+    suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -137,9 +135,7 @@ fun EntryDialog(
                     onToAmountChange = onToAmountChange,
                     onDescriptionChange = onDescriptionChange,
                     onCreatedAtChange = onCreatedAtChange,
-                    descriptionSuggestions = descriptionSuggestions,
-                    accountSuggestions = accountSuggestions,
-                    categorySuggestions = categorySuggestions,
+                    suggestions = suggestions,
                 )
             }
         },

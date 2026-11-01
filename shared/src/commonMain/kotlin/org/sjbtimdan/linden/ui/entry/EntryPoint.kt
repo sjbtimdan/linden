@@ -318,10 +318,12 @@ fun EntryPoint(
                     },
                     onFieldFocusChange = { fieldFocused = it },
                     editEpoch = editEpoch,
-                    descriptionSuggestions = descriptionSuggestions,
-                    accountSuggestions = accountSuggestions,
-                    categorySuggestions = categorySuggestions,
-                    quickEntries = quickEntries,
+                    suggestions = EntryFormSuggestions(
+                        descriptions = descriptionSuggestions,
+                        accountIds = accountSuggestions,
+                        categoryIds = categorySuggestions,
+                        quickEntries = quickEntries,
+                    ),
                     onQuickEntry = {
                         viewModel.applyQuickEntry(it)
                         markEdited()
