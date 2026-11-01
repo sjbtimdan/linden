@@ -5,14 +5,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.sjbtimdan.linden.db.LindenDatabase
-import java.io.BufferedInputStream
+import org.sjbtimdan.linden.io.readFirstJsonEntry
 import java.io.BufferedOutputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 const val BACKUP_FORMAT_VERSION = 1
@@ -198,14 +197,9 @@ class LindenBackupManager(private val database: LindenDatabase) {
         if (!isZipArchive(bytes)) {
             throw LindenBackupException("The backup is not a valid Linden backup: it is not a zip archive")
         }
-        val zip = ZipInputStream(BufferedInputStream(ByteArrayInputStream(bytes)))
         return try {
-            zip.use { zis ->
-                generateSequence { zis.nextEntry }
-                    .firstOrNull { it.name.endsWith(".json") }
-                    ?.let { zis.readBytes().decodeToString() }
-                    ?: throw LindenBackupException("The backup archive does not contain a Linden backup")
-            }
+            readFirstJsonEntry(ByteArrayInputStream(bytes)) { it.decodeToString() }
+                ?: throw LindenBackupException("The backup archive does not contain a Linden backup")
         } catch (e: IOException) {
             throw LindenBackupException("The backup is not a valid Linden backup: it is not a zip archive", e)
         }

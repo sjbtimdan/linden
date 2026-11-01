@@ -28,10 +28,26 @@ class IvyAmountTest : StringSpec({
         parseMinorUnits("0.005") shouldBe 1
     }
 
+    "parseMinorUnits accepts the exponent notation a JVM serializer may emit" {
+        parseMinorUnits("1.0E7") shouldBe 1_000_000_000
+        parseMinorUnits("1e3") shouldBe 100_000
+        parseMinorUnits("1.23E-2") shouldBe 1
+        parseMinorUnits("-1.5E2") shouldBe -15_000
+        parseMinorUnits("1.0E+3") shouldBe 100_000
+    }
+
+    "parseMinorUnits rounds exponent notation half-up" {
+        parseMinorUnits("1.2345E1") shouldBe 1_235
+        parseMinorUnits("1.235E0") shouldBe 124
+    }
+
     "parseMinorUnits rejects malformed or overflowing amounts" {
         shouldThrow<SerializationException> { parseMinorUnits("abc") }
         shouldThrow<SerializationException> { parseMinorUnits("1.2.3") }
         shouldThrow<SerializationException> { parseMinorUnits("") }
         shouldThrow<SerializationException> { parseMinorUnits("99999999999999999999") }
+        shouldThrow<SerializationException> { parseMinorUnits("1.0E") }
+        shouldThrow<SerializationException> { parseMinorUnits("1.0E1.5") }
+        shouldThrow<SerializationException> { parseMinorUnits("1.0E9999") }
     }
 })

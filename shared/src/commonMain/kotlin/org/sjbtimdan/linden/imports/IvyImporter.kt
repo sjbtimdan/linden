@@ -1,32 +1,18 @@
 package org.sjbtimdan.linden.imports
 
-import app.cash.sqldelight.async.coroutines.awaitAsOne
-import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import kotlinx.datetime.TimeZone
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonPrimitive
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.db.LindenDatabase
+import org.sjbtimdan.linden.io.readFirstJsonEntry
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.time.AppClock
-import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.Charset
-import java.util.zip.ZipInputStream
 import kotlin.time.Instant
 
 data class IvyImportResult(
@@ -37,10 +23,6 @@ data class IvyImportResult(
 )
 
 class IvyImportException(message: String, cause: Throwable? = null) : Exception(message, cause)
-
-private const val FALLBACK_CATEGORY_NAME = "Imported Entries"
-private const val INITIAL_BALANCE_TITLE = "initial balance"
-private const val ADJUST_BALANCE_TITLE = "adjust balance"
 
 class IvyImporter(
     private val database: LindenDatabase,
@@ -55,9 +37,9 @@ class IvyImporter(
         }
         val defaultCurrency = SettingsDao(database.settingsQueries).getDefaultCurrency()
         val transactions = backup.transactions.filter { it.dateTime != null }
-        val importState = ImportState()
         var importedTransactions = 0
         var createdCategories = 0
+        lateinit var session: IvyImportSession
         database.transaction {
             database.entryQueries.deleteAll()
             database.categoryQueries.deleteAll()
@@ -74,44 +56,52 @@ class IvyImporter(
                 category.id to insertCategory(category.name, categoryTypes.getValue(category.id), icon)
             }
             createdCategories = categories.size
+            session = IvyImportSession(
+                database = database,
+                accounts = accounts,
+                categories = categories,
+                backupCategories = backup.categories,
+                defaultCurrency = defaultCurrency,
+            )
 
             transactions.forEach { transaction ->
-                if (insertTransaction(
-                        importState,
-                        transaction,
-                        accounts,
-                        categories,
-                        backup.categories,
-                        defaultCurrency,
-                    )
-                ) {
-                    importedTransactions++
-                }
+                val createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: clock.now())
+                    .toEpochMilliseconds()
+                val resolved = session.resolveTransaction(transaction, createdAt) ?: return@forEach
+                writeTransaction(resolved)
+                importedTransactions++
             }
         }
         return IvyImportResult(
-            accounts = backup.accounts.size + importState.fallbackAccounts.size + importState.splitAccountsCreated,
-            categories = createdCategories + if (importState.fallbackCategoryCreated) 1 else 0,
+            accounts = backup.accounts.size + session.fallbackAccountsCreated + session.splitAccountsCreated,
+            categories = createdCategories + if (session.fallbackCategoryCreated) 1 else 0,
             transactions = importedTransactions,
-            splitTransactions = importState.splitTransactions,
+            splitTransactions = session.splitTransactions,
         )
     }
 
-    private fun decodeBackup(input: InputStream): IvyBackup {
-        val zip = ZipInputStream(BufferedInputStream(input))
-        return try {
-            zip.use { zis ->
-                generateSequence { zis.nextEntry }
-                    .firstOrNull { it.name.endsWith(".json") }
-                    ?: throw IvyImportException("The backup archive does not contain a JSON file")
-                val bytes = zis.readBytes()
-                json.decodeFromString(String(bytes, detectCharset(bytes)))
-            }
-        } catch (e: SerializationException) {
-            throw IvyImportException("The backup is not a valid Ivy backup: ${e.message}", e)
-        } catch (e: IOException) {
-            throw IvyImportException("Failed to read the backup file: ${e.message}", e)
-        }
+    private suspend fun writeTransaction(transaction: ResolvedTransaction) {
+        database.entryQueries.insert(
+            type = transaction.type.name,
+            categoryId = transaction.categoryId,
+            description = transaction.description,
+            accountId = transaction.account.id,
+            amount = transaction.amount,
+            toAccountId = transaction.toAccount?.id,
+            toAmount = transaction.toAmount,
+            createdAt = transaction.createdAt,
+            createdZone = TimeZone.currentSystemDefault().id,
+        )
+    }
+
+    private fun decodeBackup(input: InputStream): IvyBackup = try {
+        val text = readFirstJsonEntry(input) { bytes -> String(bytes, detectCharset(bytes)) }
+            ?: throw IvyImportException("The backup archive does not contain a JSON file")
+        json.decodeFromString(text)
+    } catch (e: SerializationException) {
+        throw IvyImportException("The backup is not a valid Ivy backup: ${e.message}", e)
+    } catch (e: IOException) {
+        throw IvyImportException("Failed to read the backup file: ${e.message}", e)
     }
 
     private fun detectCharset(bytes: ByteArray): Charset = when {
@@ -123,22 +113,14 @@ class IvyImporter(
     }
 
     private suspend fun insertAccount(account: IvyAccount): ResolvedAccount {
-        val currency = parseCurrency(account.currency) {
+        val currency = parseIvyCurrency(account.currency) {
             "Account \"${account.name}\" has unknown currency \"${account.currency}\""
         }
-        return insertAccount(account.name, currency)
+        return insertResolvedAccount(database, account.name, currency)
     }
 
-    private suspend fun insertAccount(name: String, currency: Currency): ResolvedAccount {
-        database.accountQueries.insert(name, currency.name, 0)
-        val id = database.importQueries.lastInsertId().awaitAsOne()
-        return ResolvedAccount(id, name, currency)
-    }
-
-    private suspend fun insertCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Long {
-        database.categoryQueries.insert(name, type.name, icon?.name)
-        return database.importQueries.lastInsertId().awaitAsOne()
-    }
+    private suspend fun insertCategory(name: String, type: CategoryType, icon: CategoryIcon? = null): Long =
+        insertIvyCategory(database, name, type, icon)
 
     private fun guessIcon(name: String): CategoryIcon? {
         val lower = name.lowercase()
@@ -171,209 +153,6 @@ class IvyImporter(
             }
         }
     }
-
-    private suspend fun fallbackAccount(importState: ImportState, currency: Currency): ResolvedAccount {
-        importState.fallbackAccounts[currency]?.let { return it }
-        return insertAccount("Imported Account (${currency.name})", currency)
-            .also { importState.fallbackAccounts[currency] = it }
-    }
-
-    /** Routes a transaction to a currency-specific split of its account ("IVY: <name> (<currency>)")
-     *  when the transaction's currency conflicts with the account's currency. */
-    private suspend fun splitAccount(
-        importState: ImportState,
-        account: ResolvedAccount,
-        currency: Currency,
-    ): ResolvedAccount {
-        val name = "IVY: ${account.name} (${currency.name})"
-        importState.splitAccounts[name]?.let { return it }
-        database.accountQueries.selectByName(name).awaitAsOneOrNull()?.let { existing ->
-            val existingCurrency = parseCurrency(existing.currency) {
-                "Account \"$name\" has unknown currency \"${existing.currency}\""
-            }
-            return ResolvedAccount(existing.id, name, existingCurrency).also {
-                importState.splitAccounts[name] = it
-            }
-        }
-        return insertAccount(name, currency).also {
-            importState.splitAccounts[name] = it
-            importState.splitAccountsCreated++
-        }
-    }
-
-    /** Resolves a transaction's account, falling back to a per-currency account for unknown ids and
-     *  splitting the account when the transaction's currency conflicts with the account's currency. */
-    private suspend fun resolveAccount(
-        importState: ImportState,
-        label: String,
-        what: String,
-        accountId: String,
-        currencyCode: String?,
-        defaultCurrency: Currency,
-        accounts: Map<String, ResolvedAccount>,
-    ): AccountResolution {
-        val currency = currencyCode?.let { code ->
-            parseCurrency(code) { "$what $label has unknown currency \"$code\"" }
-        }
-        val account = accounts[accountId]
-            ?: fallbackAccount(importState, currency ?: defaultCurrency)
-        if (currency == null || currency == account.currency) return AccountResolution(account, false)
-        return AccountResolution(splitAccount(importState, account, currency), true)
-    }
-
-    private suspend fun insertTransaction(
-        importState: ImportState,
-        transaction: IvyTransaction,
-        accounts: Map<String, ResolvedAccount>,
-        categories: Map<String, Long>,
-        backupCategories: List<IvyCategory>,
-        defaultCurrency: Currency,
-    ): Boolean {
-        val label = "\"${transaction.title}\""
-        val type = when (transaction.type) {
-            "EXPENSE" -> EntryType.Expense
-            "INCOME" -> EntryType.Income
-            "TRANSFER" -> EntryType.Transfer
-            else -> throw IvyImportException("Transaction $label has unknown type \"${transaction.type}\"")
-        }
-        val accountResolution = resolveAccount(
-            importState,
-            label,
-            "Transaction",
-            transaction.accountId,
-            transaction.currency,
-            defaultCurrency,
-            accounts,
-        )
-        val account = accountResolution.account
-
-        val categoryName = transaction.categoryId?.let { id ->
-            backupCategories.firstOrNull { it.id == id }?.name
-        }
-        val isBalanceEntry = type != EntryType.Transfer && (
-            transaction.title.equals(INITIAL_BALANCE_TITLE, ignoreCase = true) ||
-                transaction.title.equals(ADJUST_BALANCE_TITLE, ignoreCase = true) ||
-                categoryName.equals(INITIAL_BALANCE_TITLE, ignoreCase = true)
-            )
-        if (isBalanceEntry) {
-            if (importState.initialBalanceApplied.add(account.id)) {
-                if (accountResolution.split) importState.splitTransactions++
-                val balance = transaction.amount
-                database.accountQueries.updateInitialBalance(
-                    if (type == EntryType.Expense) -balance else balance,
-                    account.id,
-                )
-                return false
-            }
-        }
-
-        var splitRouted = accountResolution.split
-        val categoryId = when (type) {
-            EntryType.Expense, EntryType.Income -> categoryId(
-                importState,
-                transaction,
-                categories,
-                backupCategories,
-                required = true,
-            )
-
-            EntryType.Transfer -> categoryId(importState, transaction, categories, backupCategories, required = false)
-        }
-
-        val (toAccount, toAmount) = when (type) {
-            EntryType.Transfer -> {
-                val targetId = transaction.toAccountId
-                    ?: throw IvyImportException("Transfer $label has no toAccountId")
-                val targetResolution = resolveAccount(
-                    importState,
-                    label,
-                    "Transfer",
-                    targetId,
-                    transaction.toCurrency,
-                    account.currency,
-                    accounts,
-                )
-                splitRouted = splitRouted || targetResolution.split
-                val target = targetResolution.account
-                val targetAmount = if (account.currency == target.currency) {
-                    null
-                } else {
-                    transaction.toAmount
-                        ?: throw IvyImportException("Transfer $label has no toAmount")
-                }
-                target to targetAmount
-            }
-
-            EntryType.Expense, EntryType.Income -> null to null
-        }
-
-        if (splitRouted) importState.splitTransactions++
-
-        database.entryQueries.insert(
-            type = type.name,
-            categoryId = categoryId,
-            description = transaction.title,
-            accountId = account.id,
-            amount = transaction.amount,
-            toAccountId = toAccount?.id,
-            toAmount = toAmount,
-            createdAt = (transaction.dateTime?.let(Instant::fromEpochMilliseconds) ?: clock.now())
-                .toEpochMilliseconds(),
-            createdZone = TimeZone.currentSystemDefault().id,
-        )
-        return true
-    }
-
-    private suspend fun categoryId(
-        importState: ImportState,
-        transaction: IvyTransaction,
-        categories: Map<String, Long>,
-        backupCategories: List<IvyCategory>,
-        required: Boolean,
-    ): Long? {
-        val id = transaction.categoryId
-        if (id != null && id in categories) return categories.getValue(id)
-        return if (id != null || required) {
-            resolveFallbackCategory(importState, categories, backupCategories)
-        } else {
-            null
-        }
-    }
-
-    private suspend fun resolveFallbackCategory(
-        importState: ImportState,
-        categories: Map<String, Long>,
-        backupCategories: List<IvyCategory>,
-    ): Long {
-        importState.fallbackCategoryId?.let { return it }
-        val id = resolveBackupCategory(categories, backupCategories) ?: run {
-            importState.fallbackCategoryCreated = true
-            insertCategory(FALLBACK_CATEGORY_NAME, CategoryType.Both)
-        }
-        importState.fallbackCategoryId = id
-        return id
-    }
-
-    private fun resolveBackupCategory(categories: Map<String, Long>, backupCategories: List<IvyCategory>): Long? =
-        backupCategories.firstOrNull { it.name == FALLBACK_CATEGORY_NAME }?.let { categories[it.id] }
-
-    private inline fun parseCurrency(code: String, message: () -> String): Currency =
-        Currency.entries.firstOrNull { it.name == code } ?: throw IvyImportException(message())
-
-    private data class ResolvedAccount(val id: Long, val name: String, val currency: Currency)
-
-    private data class AccountResolution(val account: ResolvedAccount, val split: Boolean)
-
-    /** Per-import resolution data; created fresh for every [import] call so concurrent imports never share state. */
-    private class ImportState {
-        var fallbackCategoryId: Long? = null
-        var fallbackCategoryCreated = false
-        val fallbackAccounts = mutableMapOf<Currency, ResolvedAccount>()
-        val splitAccounts = mutableMapOf<String, ResolvedAccount>()
-        var splitAccountsCreated = 0
-        var splitTransactions = 0
-        val initialBalanceApplied = mutableSetOf<Long>()
-    }
 }
 
 /** Keyword-to-icon mapping for Ivy category name guessing. First match wins. */
@@ -403,87 +182,4 @@ private val GUESS_ICON_RULES: List<Pair<List<String>, CategoryIcon>> = listOf(
     listOf("travel", "flight", "hotel", "vacation", "trip", "holiday", "airbnb", "airline") to CategoryIcon.Flight,
     listOf("gym", "fitness", "sport", "exercise", "health club", "yoga") to CategoryIcon.Spa,
     listOf("personal", "care", "beauty", "salon", "spa", "haircut") to CategoryIcon.Spa,
-)
-
-/**
- * Parses a decimal amount such as "45.50", "3200.0" or "-5.75" into minor units
- * without floating-point arithmetic. Amounts with more than two decimal places
- * are rounded to the nearest minor unit (half-up).
- */
-internal fun parseMinorUnits(text: String): Long {
-    val trimmed = text.trim()
-    val negative = trimmed.startsWith("-")
-    val unsigned = if (negative) trimmed.drop(1) else trimmed
-    if (unsigned.isEmpty() || unsigned.any { it != '.' && !it.isDigit() }) {
-        throw SerializationException("Invalid amount \"$text\"")
-    }
-    val parts = unsigned.split('.')
-    if (parts.size > 2 || parts[0].isEmpty()) {
-        throw SerializationException("Invalid amount \"$text\"")
-    }
-    val whole = parts[0].toLongOrNull()
-        ?: throw SerializationException("Invalid amount \"$text\"")
-    val fraction = parts.getOrNull(1).orEmpty()
-    val minor = when {
-        fraction.length <= 2 -> whole * 100 + fraction.padEnd(2, '0').toLong()
-
-        else -> {
-            val base = whole * 100 + fraction.take(2).toLong()
-            if (fraction[2] >= '5') base + 1 else base
-        }
-    }
-    return if (negative) -minor else minor
-}
-
-private object MinorUnitsSerializer : KSerializer<Long> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("IvyMinorUnits", PrimitiveKind.DOUBLE)
-
-    override fun deserialize(decoder: Decoder): Long {
-        val jsonDecoder = decoder as? JsonDecoder
-            ?: throw SerializationException("Ivy amounts require a JSON decoder")
-        val content = jsonDecoder.decodeJsonElement().jsonPrimitive.contentOrNull
-            ?: throw SerializationException("Amount is missing")
-        return parseMinorUnits(content)
-    }
-
-    override fun serialize(encoder: Encoder, value: Long) {
-        error("Ivy backups are only decoded, never serialized")
-    }
-}
-
-@Serializable
-private data class IvyBackup(
-    val accounts: List<IvyAccount> = emptyList(),
-    val categories: List<IvyCategory> = emptyList(),
-    val transactions: List<IvyTransaction> = emptyList(),
-)
-
-@Serializable
-private data class IvyAccount(
-    val id: String,
-    val name: String,
-    val currency: String,
-)
-
-@Serializable
-private data class IvyCategory(
-    val id: String,
-    val name: String,
-)
-
-@Serializable
-private data class IvyTransaction(
-    val type: String,
-    @Serializable(with = MinorUnitsSerializer::class)
-    val amount: Long,
-    val accountId: String,
-    val categoryId: String? = null,
-    val title: String? = null,
-    val toAccountId: String? = null,
-    @Serializable(with = MinorUnitsSerializer::class)
-    val toAmount: Long? = null,
-    val currency: String? = null,
-    val toCurrency: String? = null,
-    val dateTime: Long? = null,
 )
