@@ -52,6 +52,7 @@ import org.sjbtimdan.linden.resources.common_save
 import org.sjbtimdan.linden.resources.entry_add
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsBanner
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
@@ -194,6 +195,7 @@ fun EntryPoint(
     Column(
         modifier = Modifier
             .screenContainerWithIme()
+            .padding(bottom = LocalBottomBarContentPadding.current)
             // Tapping outside a field hides the keyboard too — focus loss alone
             // doesn't always close the IME on Android.
             .pointerInput(Unit) {

@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -140,9 +139,7 @@ fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = LindenTypography,
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-            ) {
+            LindenBackground {
                 content()
             }
         }

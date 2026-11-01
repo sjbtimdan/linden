@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.ledger_budget_progress
 import org.sjbtimdan.linden.resources.ledger_entry_count
 import org.sjbtimdan.linden.resources.ledger_uncategorized
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.theme.CardElevation
@@ -69,6 +71,7 @@ fun CategoryTotalsList(
     } else {
         LazyColumn(
             modifier = modifier,
+            contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(categories, key = { it.category?.id ?: 0L }) { item ->

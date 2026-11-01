@@ -49,6 +49,7 @@ import org.sjbtimdan.linden.resources.rates_from_date
 import org.sjbtimdan.linden.resources.rates_refresh
 import org.sjbtimdan.linden.resources.rates_refresh_failed
 import org.sjbtimdan.linden.resources.rates_update_automatically
+import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.screenContainer
 
@@ -164,6 +165,8 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
                 onEdit = { editingQuote = quote },
             )
         }
+
+        BottomBarContentSpacer()
     }
 
     editingQuote?.let { quote ->

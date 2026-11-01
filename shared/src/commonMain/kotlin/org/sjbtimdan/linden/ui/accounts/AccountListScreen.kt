@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +55,7 @@ import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ErrorSnackbar
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
@@ -137,6 +140,7 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(accounts, key = { it.id }) { account ->
@@ -226,7 +230,10 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         }
     }
 
-    SnackbarHost(hostState = snackbarHostState)
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
+    )
 
     dialogState?.let { state ->
         val isEditing = state.account != null

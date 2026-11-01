@@ -96,6 +96,7 @@ import org.sjbtimdan.linden.resources.settings_working_import
 import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.resources.settings_your_data
 import org.sjbtimdan.linden.time.SystemClock
+import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.displayName
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -418,6 +419,8 @@ fun SettingsScreen(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
+
+        BottomBarContentSpacer()
 
         if (showImportConfirmation) {
             ConfirmDialog(

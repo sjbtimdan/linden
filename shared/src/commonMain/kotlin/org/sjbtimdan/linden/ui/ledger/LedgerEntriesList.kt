@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,6 +12,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.dayIn
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.formatDate
 
@@ -68,6 +70,7 @@ internal fun LedgerEntriesList(
 ) {
     LazyColumn(
         modifier = modifier.testTag("entryList"),
+        contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         header?.let { content ->

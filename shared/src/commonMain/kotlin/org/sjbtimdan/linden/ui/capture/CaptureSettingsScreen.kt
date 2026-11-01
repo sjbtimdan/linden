@@ -60,6 +60,7 @@ import org.sjbtimdan.linden.resources.capture_templates_header
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.capture_unsupported
 import org.sjbtimdan.linden.ui.BackHandler
+import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.screenContainer
@@ -224,6 +225,8 @@ fun CaptureSettingsScreen(
                 }
             }
         }
+
+        BottomBarContentSpacer()
     }
 
     if (showDisclosure) {

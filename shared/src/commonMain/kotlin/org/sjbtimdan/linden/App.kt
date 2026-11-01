@@ -7,16 +7,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,15 +20,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
-import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.nav_entry
-import org.sjbtimdan.linden.resources.nav_ledger
-import org.sjbtimdan.linden.resources.nav_settings
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import org.sjbtimdan.linden.ui.ApplyLanguageOverride
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.BottomNavItem
+import org.sjbtimdan.linden.ui.FloatingNavigationBar
+import org.sjbtimdan.linden.ui.FloatingNavigationBarContentGap
+import org.sjbtimdan.linden.ui.FloatingNavigationBarHeight
+import org.sjbtimdan.linden.ui.FloatingNavigationBarMargin
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.TopLevelPager
 import org.sjbtimdan.linden.ui.accounts.AccountListScreen
 import org.sjbtimdan.linden.ui.budget.BudgetScreen
@@ -135,117 +132,107 @@ fun App(
     // forces a full recomposition on change so dates, money and (on desktop)
     // strings re-resolve under the new locale.
     ApplyLanguageOverride(language)
+    val hazeState = rememberHazeState()
+    val navigationBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bottomContentPadding = FloatingNavigationBarHeight +
+        FloatingNavigationBarMargin +
+        FloatingNavigationBarContentGap +
+        navigationBarInset
     key(language) {
         LindenTheme(themeMode = themeMode) {
-            Scaffold(
-                contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                bottomBar = {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-                        BottomNavItem(
-                            label = stringResource(Res.string.nav_ledger),
-                            icon = Icons.AutoMirrored.Filled.List,
-                            selected = currentScreen == Screen.Ledger,
-                            onSelect = { currentScreen = Screen.Ledger },
-                        )
-                        BottomNavItem(
-                            label = stringResource(Res.string.nav_entry),
-                            icon = Icons.Filled.AddCircle,
-                            selected = currentScreen == Screen.Entry,
-                            onSelect = { currentScreen = Screen.Entry },
-                        )
-                        BottomNavItem(
-                            label = stringResource(Res.string.nav_settings),
-                            icon = Icons.Default.Settings,
-                            selected = currentScreen == Screen.Settings,
-                            onSelect = { currentScreen = Screen.Settings },
-                        )
-                    }
-                },
-            ) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize(),
-                ) {
+            CompositionLocalProvider(LocalBottomBarContentPadding provides bottomContentPadding) {
+                Box(modifier = Modifier.fillMaxSize()) {
                     // Top-level screens live in a pager that owns swiping; the
                     // outer fade only runs when entering or leaving a sub-screen,
                     // so a swipe never cross-fades on top of its own slide.
-                    AnimatedContent(
-                        targetState = subScreen,
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(220)) togetherWith
-                                fadeOut(animationSpec = tween(120))
-                        },
-                        label = "screenTransition",
-                    ) { screen ->
-                        when (screen) {
-                            null -> TopLevelPager(
-                                screen = currentScreen,
-                                onScreenChange = { currentScreen = it },
-                                modifier = Modifier.fillMaxSize(),
-                            ) { page ->
-                                when (page) {
-                                    Screen.Ledger -> LedgerScreen(
-                                        viewModel = dependencies.ledgerViewModel,
-                                        onNavigateToEntry = { currentScreen = Screen.Entry },
-                                        onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
-                                        onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
-                                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .hazeSource(hazeState),
+                    ) {
+                        AnimatedContent(
+                            targetState = subScreen,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(220)) togetherWith
+                                    fadeOut(animationSpec = tween(120))
+                            },
+                            label = "screenTransition",
+                        ) { screen ->
+                            when (screen) {
+                                null -> TopLevelPager(
+                                    screen = currentScreen,
+                                    onScreenChange = { currentScreen = it },
+                                    modifier = Modifier.fillMaxSize(),
+                                ) { page ->
+                                    when (page) {
+                                        Screen.Ledger -> LedgerScreen(
+                                            viewModel = dependencies.ledgerViewModel,
+                                            onNavigateToEntry = { currentScreen = Screen.Entry },
+                                            onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
+                                            onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                        )
 
-                                    Screen.Entry -> EntryPoint(
-                                        viewModel = entryViewModel,
-                                        onNavigateToRates = { openSubScreen(Screen.Rates) },
-                                        ratesWarning = ratesWarning,
-                                        captureViewModel = capturedPaymentsViewModel,
-                                    )
+                                        Screen.Entry -> EntryPoint(
+                                            viewModel = entryViewModel,
+                                            onNavigateToRates = { openSubScreen(Screen.Rates) },
+                                            ratesWarning = ratesWarning,
+                                            captureViewModel = capturedPaymentsViewModel,
+                                        )
 
-                                    else -> SettingsScreen(
-                                        viewModel = settingsViewModel,
-                                        onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
-                                        onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
-                                        onNavigateToRates = { openSubScreen(Screen.Rates) },
-                                        onNavigateToBudgets = { openSubScreen(Screen.Budgets) },
-                                        onNavigateToInsights = { openSubScreen(Screen.Insights) },
-                                        onNavigateToCapture = { openSubScreen(Screen.CaptureSettings) },
-                                    )
+                                        else -> SettingsScreen(
+                                            viewModel = settingsViewModel,
+                                            onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                            onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
+                                            onNavigateToRates = { openSubScreen(Screen.Rates) },
+                                            onNavigateToBudgets = { openSubScreen(Screen.Budgets) },
+                                            onNavigateToInsights = { openSubScreen(Screen.Insights) },
+                                            onNavigateToCapture = { openSubScreen(Screen.CaptureSettings) },
+                                        )
+                                    }
                                 }
+
+                                Screen.CategoryList -> CategoryListScreen(
+                                    viewModel = dependencies.categoryListViewModel,
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                Screen.AccountList -> AccountListScreen(
+                                    viewModel = dependencies.accountListViewModel,
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                Screen.Rates -> RatesScreen(
+                                    viewModel = ratesViewModel,
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                Screen.Budgets -> BudgetScreen(
+                                    viewModel = dependencies.budgetViewModel,
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                Screen.Insights -> InsightsScreen(
+                                    viewModel = dependencies.insightsViewModel,
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                Screen.CaptureSettings -> CaptureSettingsScreen(
+                                    viewModel = dependencies.captureSettingsViewModel,
+                                    access = rememberNotificationAccess(),
+                                    capturableApps = rememberCapturableApps(),
+                                    onNavigateBack = navigateBack,
+                                )
+
+                                else -> Unit
                             }
-
-                            Screen.CategoryList -> CategoryListScreen(
-                                viewModel = dependencies.categoryListViewModel,
-                                onNavigateBack = navigateBack,
-                            )
-
-                            Screen.AccountList -> AccountListScreen(
-                                viewModel = dependencies.accountListViewModel,
-                                onNavigateBack = navigateBack,
-                            )
-
-                            Screen.Rates -> RatesScreen(
-                                viewModel = ratesViewModel,
-                                onNavigateBack = navigateBack,
-                            )
-
-                            Screen.Budgets -> BudgetScreen(
-                                viewModel = dependencies.budgetViewModel,
-                                onNavigateBack = navigateBack,
-                            )
-
-                            Screen.Insights -> InsightsScreen(
-                                viewModel = dependencies.insightsViewModel,
-                                onNavigateBack = navigateBack,
-                            )
-
-                            Screen.CaptureSettings -> CaptureSettingsScreen(
-                                viewModel = dependencies.captureSettingsViewModel,
-                                access = rememberNotificationAccess(),
-                                capturableApps = rememberCapturableApps(),
-                                onNavigateBack = navigateBack,
-                            )
-
-                            else -> Unit
                         }
                     }
+                    FloatingNavigationBar(
+                        selected = currentScreen,
+                        onSelect = { currentScreen = it },
+                        hazeState = hazeState,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                    )
                 }
             }
         }

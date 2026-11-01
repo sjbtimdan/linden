@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,6 +63,7 @@ import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.DialogCancelButton
 import org.sjbtimdan.linden.ui.DialogDeleteButton
 import org.sjbtimdan.linden.ui.ErrorSnackbar
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.entry.AmountField
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
@@ -135,6 +138,7 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(budgets, key = { it.categoryName }) { budget ->
@@ -195,7 +199,10 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
         }
     }
 
-    SnackbarHost(hostState = snackbarHostState)
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
+    )
 
     dialogState?.let { state ->
         val isEditing = state.budget != null

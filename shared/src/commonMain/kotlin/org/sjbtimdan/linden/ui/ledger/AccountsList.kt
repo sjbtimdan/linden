@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,6 +38,7 @@ import org.sjbtimdan.linden.resources.ledger_adjust_balance
 import org.sjbtimdan.linden.resources.ledger_adjust_latest_period_only
 import org.sjbtimdan.linden.resources.ledger_more_options
 import org.sjbtimdan.linden.resources.ledger_view_entries
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
@@ -78,6 +80,7 @@ fun AccountsList(
     } else {
         LazyColumn(
             modifier = modifier,
+            contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(balances, key = { it.account.id }) { item ->

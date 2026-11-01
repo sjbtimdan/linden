@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -65,6 +66,7 @@ import org.sjbtimdan.linden.resources.ledger_uncategorized
 import org.sjbtimdan.linden.resources.ledger_unknown_account
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
+import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.entry.EntryDialog
 import org.sjbtimdan.linden.ui.entry.displayName
 import org.sjbtimdan.linden.ui.entry.formatAmount
@@ -494,8 +496,13 @@ fun LedgerScreen(
             )
         }
 
-        SnackbarHost(hostState = snackbarHostState)
-        viewModel.UndoDeleteBar()
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
+        )
+        viewModel.UndoDeleteBar(
+            modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
+        )
     }
 
     dialogState?.let { state ->
