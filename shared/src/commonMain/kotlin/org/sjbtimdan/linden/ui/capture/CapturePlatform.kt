@@ -2,9 +2,6 @@ package org.sjbtimdan.linden.ui.capture
 
 import androidx.compose.runtime.Composable
 
-/** One launcher app the user can allow payment capture for. */
-data class CapturableApp(val packageName: String, val label: String)
-
 /**
  * State of Linden's notification listener in system settings. [supported] is
  * false on platforms without notification access (desktop). [granted] is

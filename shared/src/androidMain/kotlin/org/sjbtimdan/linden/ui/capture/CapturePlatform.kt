@@ -5,6 +5,8 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.runtime.Composable
@@ -87,11 +89,13 @@ actual fun rememberCapturableApps(): List<CapturableApp> {
 /** Launcher apps (queried via the manifest's MAIN/LAUNCHER <queries>), minus Linden itself. */
 private fun loadCapturableApps(context: Context): List<CapturableApp> {
     val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return context.packageManager.queryIntentActivities(intent, 0)
-        .asSequence()
-        .filter { it.activityInfo.packageName != context.packageName }
-        .map { CapturableApp(it.activityInfo.packageName, it.loadLabel(context.packageManager).toString()) }
+    val packageManager = context.packageManager
+    return packageManager.queryIntentActivities(intent, 0)
+        .orEmpty()
+        .mapNotNull { it.toCapturableApp(packageManager, context.packageName) }
         .distinctBy { it.packageName }
         .sortedBy { it.label.lowercase() }
-        .toList()
 }
+
+private fun ResolveInfo.toCapturableApp(packageManager: PackageManager, ownPackage: String): CapturableApp? =
+    capturableApp(activityInfo?.packageName, loadLabel(packageManager), ownPackage)
