@@ -49,9 +49,9 @@ private val CenterCircleLift = 4.dp
 
 /**
  * One tab of the floating navigation pill. Side tabs wear a gradient capsule
- * that springs in when selected; the center tab is always a raised Add circle,
- * with a gold ring and a small scale-up while selected. The label stays visible
- * so the tab keeps its [Role.Tab] text semantics.
+ * that springs in when selected; the center tab is a raised Add circle that
+ * stays neutral until selected, then fills with the gradient and a gold ring.
+ * The label stays visible so the tab keeps its [Role.Tab] text semantics.
  */
 @Composable
 internal fun RowScope.BottomNavItem(
@@ -116,7 +116,7 @@ internal fun RowScope.BottomNavItem(
                 CenterAddCircle(
                     icon = icon,
                     selected = selected,
-                    iconTint = selectedContent,
+                    iconTint = iconTint,
                     iconScale = iconScale,
                     brush = selectedBrush,
                     colors = colors,
@@ -187,10 +187,10 @@ private fun CenterAddCircle(
     brush: Brush,
     colors: LindenColors,
 ) {
-    val ringAlpha by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.55f,
+    val highlightAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "navCenterRing",
+        label = "navCenterHighlight",
     )
     val circleScale by animateFloatAsState(
         targetValue = if (selected) 1.06f else 1f,
@@ -210,10 +210,18 @@ private fun CenterAddCircle(
             }
             .shadow(6.dp, CircleShape, clip = false)
             .clip(CircleShape)
-            .background(brush)
-            .border(1.5.dp, colors.heroAccent.copy(alpha = ringAlpha), CircleShape),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { alpha = highlightAlpha }
+                .clip(CircleShape)
+                .background(brush)
+                .border(1.5.dp, colors.heroAccent, CircleShape),
+        )
         Icon(
             imageVector = icon,
             contentDescription = null,
