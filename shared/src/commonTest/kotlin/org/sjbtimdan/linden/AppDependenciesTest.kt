@@ -28,4 +28,12 @@ class AppDependenciesTest : StringSpec({
         val accounts = AccountDao(dependencies.database.accountQueries).getAll().first()
         accounts.map { it.currency } shouldBe listOf(Currency.EUR, Currency.EUR)
     }
+
+    "screen ViewModels are created on first access" {
+        val dependencies = createAppDependencies(createTestSqlDriver())
+
+        dependencies.ledgerViewModelIfCreated() shouldBe null
+        val ledger = dependencies.ledgerViewModel
+        dependencies.ledgerViewModelIfCreated() shouldBe ledger
+    }
 })

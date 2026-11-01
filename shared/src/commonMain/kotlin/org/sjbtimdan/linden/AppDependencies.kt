@@ -44,8 +44,9 @@ import org.sjbtimdan.linden.util.stateFlow
 
 /**
  * Composition root owning every long-lived dependency of the app.
- * DAOs, the repository and the ViewModels are created eagerly: construction
- * is cheap, and [App] touches all of them at first composition anyway. Only
+ * DAOs, the repository and the start screen's ViewModels are created eagerly;
+ * screen-scoped ViewModels are created on first use, so their database and
+ * aggregation subscriptions never run for a screen that was not opened. Only
  * [httpClient] stays lazy — building its engine is the one genuinely expensive
  * step, and tests injecting a fake FX source never trigger it.
  */
@@ -103,6 +104,10 @@ class AppDependencies(
 
     val backupManager = LindenBackupManager(database)
     val csvExportManager = CsvExportManager(entryDao)
+
+    // The start screen's ViewModels and the always-visible chrome's are created
+    // eagerly; every other screen's are created the first time that screen is
+    // shown (see below).
     val settingsViewModel = SettingsViewModel(
         settingsDao,
         IvyImporter(database, clock = SystemClock),
@@ -114,20 +119,6 @@ class AppDependencies(
         initialLanguage,
     )
     val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock)
-    val categoryListViewModel = CategoryListViewModel(categoryDao, entryDao)
-    val accountListViewModel = AccountListViewModel(
-        accountDao,
-        entryDao,
-        settingsDao,
-        allEntries,
-        initialHideEntryTotal = initialHideEntryTotal,
-    )
-    val budgetViewModel = BudgetViewModel(
-        budgetDao,
-        categoryDao,
-        settingsDao,
-        initialHideEntryTotal = initialHideEntryTotal,
-    )
     val entryViewModel = EntryPointViewModel(
         entryDao,
         accountDao,
@@ -139,32 +130,68 @@ class AppDependencies(
         clock = SystemClock,
         onCaptureConsumed = { captureId, entry -> captureRepository.completeCapture(captureId, entry) },
     )
-    val ledgerViewModel = LedgerViewModel(
-        entryDao,
-        accountDao,
-        categoryDao,
-        settingsDao,
-        budgetDao,
-        ratesProvider,
-        allEntries,
-        clock = SystemClock,
-    )
-    val insightsViewModel = InsightsViewModel(
-        entryDao,
-        settingsDao,
-        ratesProvider,
-        budgetDao,
-        allEntries,
-        initialHideEntryTotal = initialHideEntryTotal,
-        clock = SystemClock,
-    )
     val capturedPaymentsViewModel = CapturedPaymentsViewModel(
         captureRepository,
         accountDao,
         categoryDao,
         clock = SystemClock,
     )
-    val captureSettingsViewModel = CaptureSettingsViewModel(captureRepository, accountDao, categoryDao)
+
+    // Screen-scoped ViewModels are created on first use: each owns several
+    // database and aggregation subscriptions, so building them at startup made
+    // every screen's flows run from launch even when that screen was never
+    // opened. The ledger delegate is separate so the host can dismiss its dialog
+    // without forcing the ledger to exist.
+    private val ledgerViewModelLazy = lazy {
+        LedgerViewModel(
+            entryDao,
+            accountDao,
+            categoryDao,
+            settingsDao,
+            budgetDao,
+            ratesProvider,
+            allEntries,
+            clock = SystemClock,
+        )
+    }
+    val ledgerViewModel: LedgerViewModel by ledgerViewModelLazy
+
+    /** The ledger ViewModel if a screen has created it, without creating it. */
+    fun ledgerViewModelIfCreated(): LedgerViewModel? =
+        if (ledgerViewModelLazy.isInitialized()) ledgerViewModelLazy.value else null
+
+    val categoryListViewModel: CategoryListViewModel by lazy { CategoryListViewModel(categoryDao, entryDao) }
+    val accountListViewModel: AccountListViewModel by lazy {
+        AccountListViewModel(
+            accountDao,
+            entryDao,
+            settingsDao,
+            allEntries,
+            initialHideEntryTotal = initialHideEntryTotal,
+        )
+    }
+    val budgetViewModel: BudgetViewModel by lazy {
+        BudgetViewModel(
+            budgetDao,
+            categoryDao,
+            settingsDao,
+            initialHideEntryTotal = initialHideEntryTotal,
+        )
+    }
+    val insightsViewModel: InsightsViewModel by lazy {
+        InsightsViewModel(
+            entryDao,
+            settingsDao,
+            ratesProvider,
+            budgetDao,
+            allEntries,
+            initialHideEntryTotal = initialHideEntryTotal,
+            clock = SystemClock,
+        )
+    }
+    val captureSettingsViewModel: CaptureSettingsViewModel by lazy {
+        CaptureSettingsViewModel(captureRepository, accountDao, categoryDao)
+    }
 
     /**
      * Completes the first-run setup: persists the chosen language, theme and

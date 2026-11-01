@@ -109,16 +109,13 @@ fun App(
     }
     val navigateBack: () -> Unit = { currentScreen = subScreenOrigin }
     systemBackHandler(subScreen != null) { navigateBack() }
+    // Only the chrome and the start screen's ViewModels are touched here; the
+    // other screens create theirs when their branch first composes, so a screen
+    // that was never opened starts no database or aggregation subscriptions.
     val settingsViewModel = dependencies.settingsViewModel
     val ratesViewModel = dependencies.ratesViewModel
-    val categoryListViewModel = dependencies.categoryListViewModel
-    val accountListViewModel = dependencies.accountListViewModel
-    val budgetViewModel = dependencies.budgetViewModel
-    val insightsViewModel = dependencies.insightsViewModel
     val capturedPaymentsViewModel = dependencies.capturedPaymentsViewModel
-    val captureSettingsViewModel = dependencies.captureSettingsViewModel
     val entryViewModel = dependencies.entryViewModel
-    val ledgerViewModel = dependencies.ledgerViewModel
     LaunchedEffect(Unit) {
         ratesViewModel.refreshRatesIfStale(dependencies.initialCurrency)
     }
@@ -128,7 +125,7 @@ fun App(
     // LedgerScreen: a rotation recomposes the tree with the same screen and
     // must keep an in-progress draft.
     LaunchedEffect(currentScreen) {
-        if (currentScreen != Screen.Ledger) ledgerViewModel.dismissDialog()
+        if (currentScreen != Screen.Ledger) dependencies.ledgerViewModelIfCreated()?.dismissDialog()
     }
     val themeMode by settingsViewModel.themeMode.collectAsState()
     val language by settingsViewModel.language.collectAsState()
@@ -189,7 +186,7 @@ fun App(
                             ) { page ->
                                 when (page) {
                                     Screen.Ledger -> LedgerScreen(
-                                        viewModel = ledgerViewModel,
+                                        viewModel = dependencies.ledgerViewModel,
                                         onNavigateToEntry = { currentScreen = Screen.Entry },
                                         onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
                                         onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
@@ -215,12 +212,12 @@ fun App(
                             }
 
                             Screen.CategoryList -> CategoryListScreen(
-                                viewModel = categoryListViewModel,
+                                viewModel = dependencies.categoryListViewModel,
                                 onNavigateBack = navigateBack,
                             )
 
                             Screen.AccountList -> AccountListScreen(
-                                viewModel = accountListViewModel,
+                                viewModel = dependencies.accountListViewModel,
                                 onNavigateBack = navigateBack,
                             )
 
@@ -230,17 +227,17 @@ fun App(
                             )
 
                             Screen.Budgets -> BudgetScreen(
-                                viewModel = budgetViewModel,
+                                viewModel = dependencies.budgetViewModel,
                                 onNavigateBack = navigateBack,
                             )
 
                             Screen.Insights -> InsightsScreen(
-                                viewModel = insightsViewModel,
+                                viewModel = dependencies.insightsViewModel,
                                 onNavigateBack = navigateBack,
                             )
 
                             Screen.CaptureSettings -> CaptureSettingsScreen(
-                                viewModel = captureSettingsViewModel,
+                                viewModel = dependencies.captureSettingsViewModel,
                                 access = rememberNotificationAccess(),
                                 capturableApps = rememberCapturableApps(),
                                 onNavigateBack = navigateBack,

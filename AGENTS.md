@@ -156,8 +156,12 @@ git describe). It is generated code — never edit it.
   table requires deleting the local DB (`~/.linden/linden.db` on desktop); there are no `.sqm` migrations to bump.
   SQLite FKs are deliberately **not** declared/enforced — relationships are guarded in app code (`accountsWithEntries`,
   `requireNotNull` in `toEntry`). If FKs are ever added, `PRAGMA foreign_keys = ON` must be set in both driver actuals.
-- `AppDependencies` (from `AppDependencies.kt`) is the composition root: DAOs, repository and ViewModels are created
-  eagerly, only `httpClient` is `by lazy` (its engine is expensive to build and tests injecting a fake FX source never
+- `AppDependencies` (from `AppDependencies.kt`) is the composition root: DAOs, repository, the start screen's
+  ViewModels (entry, capture) and the chrome's (settings, rates) are created eagerly. Screen-scoped ViewModels
+  (ledger, insights, accounts, categories, budgets, capture settings) are `by lazy` and are created the first time
+  their screen composes, so an unopened screen starts no database or aggregation subscriptions; the ledger's
+  delegate stays available through `ledgerViewModelIfCreated()` so `App` can dismiss its dialog without creating it.
+  Only `httpClient` is otherwise lazy (its engine is expensive to build and tests injecting a fake FX source never
   trigger it). Theme + default currency are read from `SettingsDao` with fallbacks `ThemeMode.SYSTEM` / `Currency.CHF`.
 - FX rates power cross-currency totals: `FxRatesFetcher` (in `.data`) calls Frankfurter
   (`api.frankfurter.dev/v1/latest`) over Ktor (OkHttp on Android, CIO on JVM), responses decode via

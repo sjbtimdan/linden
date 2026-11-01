@@ -39,9 +39,11 @@ Pattern: MVVM with unidirectional data flow
 ### Why This Architecture?
 
 KMP lets the entire app (UI + business logic) live in one shared module, so Android and Desktop
-stay in lockstep. The composition root (`AppDependencies`) creates all DAOs, repository and
-ViewModels eagerly; only `httpClient` is `by lazy` (its engine is expensive and tests injecting a
-fake FX source never trigger it). ViewModels expose `StateFlow`s; screens collect them with
+stay in lockstep. The composition root (`AppDependencies`) creates the DAOs, repository and the
+start screen's/chrome's ViewModels eagerly; screen-scoped ViewModels are `by lazy` and are built the
+first time their screen composes, so an unopened screen starts no database or aggregation
+subscriptions. `httpClient` is lazy too (its engine is expensive and tests injecting a fake FX
+source never trigger it). ViewModels expose `StateFlow`s; screens collect them with
 `collectAsState()`.
 
 ## Project Structure
@@ -97,7 +99,7 @@ linden/
 | `expect`/`actual` for platform code | `DatabaseDriverFactory`, `BackHandler`, `formatAmount`, file pickers | Per-source-set actuals in `androidMain`/`jvmMain` |
 | Exact calculator for amount entry | `CalculatorModel`/`AmountCalculator` on reduced fractions (Long num/den), left-to-right, no precedence | `100 / 3 * 3` = 100.00 exactly; rounded only for display/commit |
 | Balance/total aggregation in SQL | `Entry.sq` `accountDeltas`/`categoryTotals` queries | Converted to default currency once per currency group |
-| Composition root `AppDependencies` | DAOs/repository/ViewModels created eagerly; `httpClient` lazy | Tests inject `FakeFxRatesSource`, never hit real API |
+| Composition root `AppDependencies` | DAOs/repository/start-screen ViewModels eager; screen ViewModels `by lazy`, `httpClient` lazy | Tests inject `FakeFxRatesSource`, never hit real API; unopened screens start no subscriptions |
 | Startup async via `AppRoot` | `createAppDependencies(driver)` hops to `Dispatchers.IO` | Shows `CircularProgressIndicator` (`testTag("loading")`) until ready |
 | Bottom nav order: Ledger \| Entry \| Settings | Entry is the most-used view; the center slot is easiest to reach with a thumb one-handed | `App.kt` `NavigationBar` item order (app still starts on Entry) |
 

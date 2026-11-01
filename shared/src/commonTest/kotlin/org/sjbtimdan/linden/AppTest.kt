@@ -161,6 +161,22 @@ class AppTest : StringSpec({
         }
     }
 
+    "the ledger view model is created only when the ledger is shown" {
+        withApp { dependencies ->
+            dependencies.ledgerViewModelIfCreated().shouldBeNull()
+
+            setContent { App(dependencies) }
+            waitForIdle()
+
+            dependencies.ledgerViewModelIfCreated().shouldBeNull()
+
+            onNodeWithText("Ledger").performClick()
+            waitForIdle()
+
+            dependencies.ledgerViewModelIfCreated().shouldNotBeNull()
+        }
+    }
+
     "a ledger entry dialog left open does not show once the ledger is not the screen" {
         withApp { dependencies ->
             dependencies.accountDao.create("Main", Currency.CHF)
