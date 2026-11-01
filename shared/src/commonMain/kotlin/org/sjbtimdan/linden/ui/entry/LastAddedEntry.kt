@@ -1,7 +1,5 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,8 +31,7 @@ import org.sjbtimdan.linden.resources.entry_added
 import org.sjbtimdan.linden.resources.entry_edit
 import org.sjbtimdan.linden.resources.entry_undo
 import org.sjbtimdan.linden.resources.entry_updated
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.theme.lindenCard
 
 /**
  * Read-only receipt of the entry that was just saved, shown above the
@@ -61,10 +57,7 @@ fun LastAddedEntry(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(CardElevation, CardShape, clip = false)
-            .clip(CardShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
+            .lindenCard()
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .testTag("lastAddedEntry"),
         verticalAlignment = Alignment.CenterVertically,

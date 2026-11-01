@@ -1,7 +1,6 @@
 package org.sjbtimdan.linden.ui.categories
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -37,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -52,10 +50,11 @@ import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.ScreenBackButton
 import org.sjbtimdan.linden.ui.SearchField
+import org.sjbtimdan.linden.ui.rememberEntranceComplete
 import org.sjbtimdan.linden.ui.screenContainer
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.staggeredEntrance
 import org.sjbtimdan.linden.ui.theme.accentColor
+import org.sjbtimdan.linden.ui.theme.lindenCard
 
 @Composable
 fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> Unit) {
@@ -117,20 +116,19 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 )
             }
         } else {
+            val entranceComplete = rememberEntranceComplete(categories.size)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(categories, key = { it.id }) { category ->
+                itemsIndexed(categories, key = { _, category -> category.id }) { index, category ->
                     val accent = accentColor(category.name)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(CardElevation, CardShape, clip = false)
-                            .clip(CardShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
+                            .staggeredEntrance(index, !entranceComplete)
+                            .lindenCard()
                             .clickable(role = Role.Button) {
                                 dialogState = CategoryDialogState(
                                     category = category,

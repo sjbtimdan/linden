@@ -17,6 +17,7 @@ data class LindenColors(
     val heroGradient: List<Color>,
     val heroContent: Color,
     val heroAccent: Color,
+    val cardSurface: Color,
 )
 
 val LightLindenColors = LindenColors(
@@ -32,6 +33,7 @@ val LightLindenColors = LindenColors(
     ),
     heroContent = Color(0xFFFFFFFF),
     heroAccent = Color(0xFFF2C879),
+    cardSurface = Color(0xFFFFFFFF),
 )
 
 val DarkLindenColors = LindenColors(
@@ -47,7 +49,10 @@ val DarkLindenColors = LindenColors(
     ),
     heroContent = Color(0xFFF0F7F1),
     heroAccent = Color(0xFFF0C87E),
+    cardSurface = Color(0xFF222722),
 )
+
+val AmoledLindenColors = DarkLindenColors.copy(cardSurface = Color(0xFF0A0A0A))
 
 val LocalLindenColors = compositionLocalOf { LightLindenColors }
 

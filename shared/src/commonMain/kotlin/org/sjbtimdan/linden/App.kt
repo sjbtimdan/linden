@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -22,6 +24,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import org.sjbtimdan.linden.ui.ApplyLanguageOverride
@@ -138,13 +142,14 @@ fun App(
         FloatingNavigationBarMargin +
         FloatingNavigationBarContentGap +
         navigationBarInset
+    val subScreenSlide = with(LocalDensity.current) { 24.dp.roundToPx() }
     key(language) {
         LindenTheme(themeMode = themeMode) {
             CompositionLocalProvider(LocalBottomBarContentPadding provides bottomContentPadding) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     // Top-level screens live in a pager that owns swiping; the
-                    // outer fade only runs when entering or leaving a sub-screen,
-                    // so a swipe never cross-fades on top of its own slide.
+                    // outer slide/fade only runs when entering or leaving a
+                    // sub-screen, so a swipe never cross-fades on its own slide.
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -153,8 +158,14 @@ fun App(
                         AnimatedContent(
                             targetState = subScreen,
                             transitionSpec = {
-                                fadeIn(animationSpec = tween(220)) togetherWith
-                                    fadeOut(animationSpec = tween(120))
+                                val direction = if (targetState != null) 1 else -1
+                                val enter = slideInHorizontally(animationSpec = tween(220)) {
+                                    direction * subScreenSlide
+                                } + fadeIn(animationSpec = tween(220))
+                                val exit = slideOutHorizontally(animationSpec = tween(180)) {
+                                    -direction * subScreenSlide
+                                } + fadeOut(animationSpec = tween(120))
+                                enter togetherWith exit
                             },
                             label = "screenTransition",
                         ) { screen ->

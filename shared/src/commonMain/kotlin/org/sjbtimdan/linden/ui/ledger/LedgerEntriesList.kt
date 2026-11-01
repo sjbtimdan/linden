@@ -15,6 +15,8 @@ import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.entry.EntryRow
 import org.sjbtimdan.linden.ui.entry.formatDate
+import org.sjbtimdan.linden.ui.rememberEntranceComplete
+import org.sjbtimdan.linden.ui.staggeredEntrance
 
 internal sealed interface LedgerListItem {
     val key: Any
@@ -68,6 +70,7 @@ internal fun LedgerEntriesList(
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,
 ) {
+    val entranceComplete = rememberEntranceComplete(items.count { it is EntryListItem })
     LazyColumn(
         modifier = modifier.testTag("entryList"),
         contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
@@ -76,6 +79,7 @@ internal fun LedgerEntriesList(
         header?.let { content ->
             item(key = "entryListHeader") { content() }
         }
+        var entryIndex = 0
         items.forEach { item ->
             when (item) {
                 is DayHeaderItem -> stickyHeader(item.key) {
@@ -87,14 +91,19 @@ internal fun LedgerEntriesList(
                     )
                 }
 
-                is EntryListItem -> item(item.key) {
-                    EntryRow(
-                        entry = item.entry,
-                        onClick = { onEntryClick(item.entry) },
-                        hideAmounts = hideAmounts,
-                        zone = zone,
-                        modifier = Modifier.animateItem(),
-                    )
+                is EntryListItem -> {
+                    val index = entryIndex++
+                    item(item.key) {
+                        EntryRow(
+                            entry = item.entry,
+                            onClick = { onEntryClick(item.entry) },
+                            hideAmounts = hideAmounts,
+                            zone = zone,
+                            modifier = Modifier
+                                .animateItem()
+                                .staggeredEntrance(index, !entranceComplete),
+                        )
+                    }
                 }
             }
         }

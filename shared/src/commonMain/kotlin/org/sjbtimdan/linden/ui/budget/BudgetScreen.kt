@@ -1,8 +1,9 @@
 package org.sjbtimdan.linden.ui.budget
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -42,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -70,11 +70,13 @@ import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.parseAmount
+import org.sjbtimdan.linden.ui.pressFeedback
+import org.sjbtimdan.linden.ui.rememberEntranceComplete
 import org.sjbtimdan.linden.ui.screenContainer
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.staggeredEntrance
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import org.sjbtimdan.linden.ui.theme.accentColor
+import org.sjbtimdan.linden.ui.theme.lindenCard
 
 private data class BudgetDialogState(
     val budget: Budget?,
@@ -136,21 +138,26 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 )
             }
         } else {
+            val entranceComplete = rememberEntranceComplete(budgets.size)
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(budgets, key = { it.categoryName }) { budget ->
+                itemsIndexed(budgets, key = { _, budget -> budget.categoryName }) { index, budget ->
                     val accent = accentColor(budget.categoryName)
+                    val interactionSource = remember { MutableInteractionSource() }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .shadow(CardElevation, CardShape, clip = false)
-                            .clip(CardShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
-                            .clickable(role = Role.Button) {
+                            .staggeredEntrance(index, !entranceComplete)
+                            .pressFeedback(interactionSource)
+                            .lindenCard()
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = LocalIndication.current,
+                                role = Role.Button,
+                            ) {
                                 dialogState = BudgetDialogState(
                                     budget = budget,
                                     categoryName = budget.categoryName,

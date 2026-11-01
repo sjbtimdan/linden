@@ -1,7 +1,5 @@
 package org.sjbtimdan.linden.ui.capture
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -54,8 +51,7 @@ import org.sjbtimdan.linden.resources.capture_pending_count
 import org.sjbtimdan.linden.resources.capture_pending_title
 import org.sjbtimdan.linden.resources.capture_row_supporting
 import org.sjbtimdan.linden.resources.entry_add
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.theme.lindenCard
 
 /**
  * The captured-payment inbox pinned to the top of the entry screen. It always
@@ -163,10 +159,7 @@ private fun CapturedPaymentsCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(CardElevation, CardShape, clip = false)
-            .clip(CardShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
+            .lindenCard()
             .padding(12.dp)
             .testTag("capturedPaymentsCard"),
     ) {

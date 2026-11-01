@@ -1,8 +1,9 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,11 +17,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
@@ -32,10 +33,10 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_type_transfer
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.pressFeedback
 import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.accentContentColor
+import org.sjbtimdan.linden.ui.theme.lindenCard
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 private val AccentRailWidth = 4.dp
@@ -89,17 +90,21 @@ fun EntryRow(
     val tint = entry.tintColor()
     val accent = entry.category?.let { accentColor(it.name) } ?: tint
     val accentContent = accentContentColor(accent)
+    val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .shadow(CardElevation, CardShape, clip = false)
-            .clip(CardShape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
+            .pressFeedback(interactionSource)
+            .lindenCard()
             .drawBehind {
                 drawRect(color = accent, size = Size(AccentRailWidth.toPx(), size.height))
             }
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                role = Role.Button,
+                onClick = onClick,
+            )
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

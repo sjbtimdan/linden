@@ -164,7 +164,10 @@ fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
         else -> if (darkTheme) DarkColors else LightColors
     }
 
-    val lindenColors = if (darkTheme) DarkLindenColors else LightLindenColors
+    val lindenColors = when (themeMode) {
+        ThemeMode.AMOLED -> AmoledLindenColors
+        else -> if (darkTheme) DarkLindenColors else LightLindenColors
+    }
     val categoryPalette = if (darkTheme) DarkCategoryPalette else CategoryPalette
 
     SystemBarsAppearance(darkTheme = darkTheme)

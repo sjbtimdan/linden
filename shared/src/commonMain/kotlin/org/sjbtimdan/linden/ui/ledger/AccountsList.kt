@@ -1,8 +1,8 @@
 package org.sjbtimdan.linden.ui.ledger
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -27,8 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -42,8 +40,10 @@ import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
 import org.sjbtimdan.linden.ui.accounts.AccountWithBalance
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
-import org.sjbtimdan.linden.ui.theme.CardElevation
-import org.sjbtimdan.linden.ui.theme.CardShape
+import org.sjbtimdan.linden.ui.pressFeedback
+import org.sjbtimdan.linden.ui.rememberEntranceComplete
+import org.sjbtimdan.linden.ui.staggeredEntrance
+import org.sjbtimdan.linden.ui.theme.lindenCard
 
 /**
  * The account balances at the end of the selected period, or the empty state.
@@ -78,21 +78,26 @@ fun AccountsList(
             onAction = onEmptyAction,
         )
     } else {
+        val entranceComplete = rememberEntranceComplete(balances.size)
         LazyColumn(
             modifier = modifier,
             contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            items(balances, key = { it.account.id }) { item ->
+            itemsIndexed(balances, key = { _, item -> item.account.id }) { index, item ->
                 val account = item.account
+                val interactionSource = remember { MutableInteractionSource() }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .shadow(CardElevation, CardShape, clip = false)
-                        .clip(CardShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
-                        .clickable(role = Role.Button) { onAccountClick(item) }
+                        .staggeredEntrance(index, !entranceComplete)
+                        .pressFeedback(interactionSource)
+                        .lindenCard()
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = LocalIndication.current,
+                            role = Role.Button,
+                        ) { onAccountClick(item) }
                         .padding(start = 10.dp, top = 10.dp, bottom = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
