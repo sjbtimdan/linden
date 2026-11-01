@@ -167,13 +167,13 @@ class PaymentCaptureListener : NotificationListenerService() {
         val content: CaptureNotification,
     )
 
-    private fun StatusBarNotification.toCandidate(): Candidate? {
+    private fun StatusBarNotification.toCandidate(): Candidate? = try {
         val notification = notification ?: return null
         if (isOngoing) return null
         if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
         // Extras is a public Java field that can come back null after parcelling.
         val extras = notification.extras ?: return null
-        return Candidate(
+        Candidate(
             packageName = packageName,
             key = key,
             postTime = postTime,
@@ -184,6 +184,10 @@ class PaymentCaptureListener : NotificationListenerService() {
                 subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
             ),
         )
+    } catch (e: Exception) {
+        // A third-party notification with malformed extras must not crash the listener.
+        Log.w(TAG, "Cannot read a notification", e)
+        null
     }
 
     private companion object {
