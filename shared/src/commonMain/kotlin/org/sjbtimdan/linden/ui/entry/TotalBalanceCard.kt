@@ -165,7 +165,9 @@ private fun ExpandedTotalContent(
             Row {
                 HeroAmountText(
                     parts = parts,
-                    wholeStyle = MaterialTheme.typography.displayMedium,
+                    wholeStyle = MaterialTheme.typography.displayMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
                     fractionStyle = MaterialTheme.typography.headlineSmall.copy(
                         color = accentColor,
                         fontWeight = FontWeight.Medium,

@@ -11,17 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.Font
 import org.sjbtimdan.linden.model.ThemeMode
-import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.space_grotesk_bold
-import org.sjbtimdan.linden.resources.space_grotesk_medium
-import org.sjbtimdan.linden.resources.space_grotesk_regular
-import org.sjbtimdan.linden.resources.space_grotesk_semibold
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF1B6E46),
@@ -95,73 +88,38 @@ val CardElevation = 2.dp
 /** Fixed-width digits app-wide so amounts, dates and times line up and stop shifting as values change. */
 private fun TextStyle.tabularDigits(): TextStyle = copy(fontFeatureSettings = "\"tnum\" 1")
 
-/**
- * Space Grotesk carries display, headline and title styles only; body copy,
- * labels and titleSmall keep the platform font so long text retains native
- * metrics. The family ships as static instances (composeResources/font) so it
- * renders identically on every target and on API 24-25, where variable axes
- * are ignored.
- */
-@Composable
-private fun lindenTypography(): Typography {
-    val display = FontFamily(
-        Font(Res.font.space_grotesk_regular, FontWeight.Normal),
-        Font(Res.font.space_grotesk_medium, FontWeight.Medium),
-        Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
-        Font(Res.font.space_grotesk_bold, FontWeight.Bold),
-    )
-    val base = Typography()
-    return base.copy(
-        displayLarge = base.displayLarge.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.SemiBold,
-        ).tabularDigits(),
-        displayMedium = base.displayMedium.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.SemiBold,
-        ).tabularDigits(),
-        displaySmall = base.displaySmall.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.SemiBold,
-        ).tabularDigits(),
-        headlineLarge = base.headlineLarge.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.Medium,
-        ).tabularDigits(),
-        headlineMedium = base.headlineMedium.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.Medium,
-        ).tabularDigits(),
-        headlineSmall = base.headlineSmall.copy(
-            fontFamily = display,
-            fontWeight = FontWeight.Medium,
-        ).tabularDigits(),
-        titleLarge = TextStyle(
-            fontFamily = display,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 22.sp,
-            lineHeight = 28.sp,
-        ).tabularDigits(),
-        titleMedium = TextStyle(
-            fontFamily = display,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-            lineHeight = 24.sp,
-            letterSpacing = 0.1.sp,
-        ).tabularDigits(),
-        titleSmall = base.titleSmall.tabularDigits(),
-        bodyLarge = base.bodyLarge.tabularDigits(),
-        bodyMedium = base.bodyMedium.tabularDigits(),
-        bodySmall = base.bodySmall.tabularDigits(),
-        labelLarge = TextStyle(
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
-            lineHeight = 20.sp,
-        ).tabularDigits(),
-        labelMedium = base.labelMedium.tabularDigits(),
-        labelSmall = base.labelSmall.tabularDigits(),
-    )
-}
+private val BaseTypography = Typography()
+
+private val LindenTypography = Typography(
+    displayLarge = BaseTypography.displayLarge.tabularDigits(),
+    displayMedium = BaseTypography.displayMedium.tabularDigits(),
+    displaySmall = BaseTypography.displaySmall.tabularDigits(),
+    headlineLarge = BaseTypography.headlineLarge.tabularDigits(),
+    headlineMedium = BaseTypography.headlineMedium.tabularDigits(),
+    headlineSmall = BaseTypography.headlineSmall.tabularDigits(),
+    titleLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+    ).tabularDigits(),
+    titleMedium = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.1.sp,
+    ).tabularDigits(),
+    titleSmall = BaseTypography.titleSmall.tabularDigits(),
+    bodyLarge = BaseTypography.bodyLarge.tabularDigits(),
+    bodyMedium = BaseTypography.bodyMedium.tabularDigits(),
+    bodySmall = BaseTypography.bodySmall.tabularDigits(),
+    labelLarge = TextStyle(
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+    ).tabularDigits(),
+    labelMedium = BaseTypography.labelMedium.tabularDigits(),
+    labelSmall = BaseTypography.labelSmall.tabularDigits(),
+)
 
 @Composable
 fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
@@ -180,7 +138,7 @@ fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
     ) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
-            typography = lindenTypography(),
+            typography = LindenTypography,
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.background,
