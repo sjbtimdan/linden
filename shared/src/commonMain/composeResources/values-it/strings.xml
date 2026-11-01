@@ -239,6 +239,7 @@
     <string name="settings_theme_system">Sistema</string>
     <string name="settings_theme_light">Chiaro</string>
     <string name="settings_theme_dark">Scuro</string>
+    <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_default_currency">Valuta predefinita</string>
     <string name="settings_privacy">Privacy</string>
     <string name="settings_hide_totals">Nascondi totali</string>

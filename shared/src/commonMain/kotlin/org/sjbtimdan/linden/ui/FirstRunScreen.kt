@@ -18,9 +18,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +46,7 @@ import org.sjbtimdan.linden.resources.first_run_title
 import org.sjbtimdan.linden.resources.settings_default_currency
 import org.sjbtimdan.linden.resources.settings_language
 import org.sjbtimdan.linden.resources.settings_theme
+import org.sjbtimdan.linden.ui.ThemeModePicker
 import org.sjbtimdan.linden.ui.capture.NotificationAccess
 import org.sjbtimdan.linden.ui.capture.rememberNotificationAccess
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
@@ -133,21 +131,12 @@ fun FirstRunScreen(
                 }
 
                 SettingsSectionHeader(stringResource(Res.string.settings_theme))
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    ThemeMode.entries.forEachIndexed { index, mode ->
-                        SegmentedButton(
-                            selected = theme == mode,
-                            onClick = { theme = mode },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = ThemeMode.entries.size,
-                            ),
-                            modifier = Modifier.testTag("firstRunTheme-${mode.name}"),
-                        ) {
-                            Text(mode.displayName())
-                        }
-                    }
-                }
+                ThemeModePicker(
+                    selected = theme,
+                    onSelect = { theme = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    tagPrefix = "firstRunTheme-",
+                )
 
                 if (access.supported) {
                     SettingsSectionHeader(stringResource(Res.string.capture_title))

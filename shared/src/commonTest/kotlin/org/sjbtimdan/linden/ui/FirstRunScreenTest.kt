@@ -100,6 +100,20 @@ class FirstRunScreenTest : StringSpec({
         }
     }
 
+    "completes with the AMOLED theme" {
+        runFirstRunTest {
+            var completed: ThemeMode? = null
+            setContent {
+                FirstRunScreen { _, _, theme -> completed = theme }
+            }
+
+            onNodeWithTag("firstRunTheme-AMOLED").performClick()
+            onNodeWithTag("firstRunContinue").performClick()
+
+            completed shouldBe ThemeMode.AMOLED
+        }
+    }
+
     "picking a language previews it immediately" {
         runFirstRunTest {
             setContent {

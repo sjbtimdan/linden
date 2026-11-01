@@ -18,11 +18,12 @@ private const val GLOW_DARK_ALPHA = 0.10f
 /**
  * Ambient app backdrop: a vertical tint from [MaterialTheme.colorScheme.background]
  * to `surfaceContainer` with one faint warm glow bleeding in from the top-right,
- * reusing the hero card's accent. Content is wrapped in a transparent surface so
- * text keeps the usual content color.
+ * reusing the hero card's accent. AMOLED mode paints pure black and skips both
+ * the gradient and the glow so the panel actually saves pixels. Content is
+ * wrapped in a transparent surface so text keeps the usual content color.
  */
 @Composable
-fun LindenBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+fun LindenBackground(modifier: Modifier = Modifier, amoled: Boolean = false, content: @Composable () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val glow = lindenColors().heroAccent.copy(
         alpha = if (colors.background.luminance() > 0.5f) GLOW_LIGHT_ALPHA else GLOW_DARK_ALPHA,
@@ -31,6 +32,10 @@ fun LindenBackground(modifier: Modifier = Modifier, content: @Composable () -> U
         modifier = modifier
             .fillMaxSize()
             .drawBehind {
+                if (amoled) {
+                    drawRect(colors.background)
+                    return@drawBehind
+                }
                 drawRect(Brush.verticalGradient(listOf(colors.background, colors.surfaceContainer)))
                 val glowCenter = Offset(size.width * 0.9f, size.height * 0.08f)
                 val glowRadius = size.minDimension * 0.9f

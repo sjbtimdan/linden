@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.ui.SystemBarsAppearance
 
 private val LightColors = lightColorScheme(
     primary = Color(0xFF1B6E46),
@@ -75,6 +76,37 @@ private val DarkColors = darkColorScheme(
     onErrorContainer = Color(0xFFFFDAD6),
 )
 
+/** True-black dark variant for AMOLED screens; cards stay black and rely on their hairline borders. */
+private val AmoledColors = darkColorScheme(
+    primary = Color(0xFF7FD9A6),
+    onPrimary = Color(0xFF00391C),
+    primaryContainer = Color(0xFF2E5C40),
+    onPrimaryContainer = Color(0xFFC4F1D3),
+    secondary = Color(0xFFF0C87E),
+    onSecondary = Color(0xFF3B2B00),
+    secondaryContainer = Color(0xFF5F4A1F),
+    onSecondaryContainer = Color(0xFFFFE3A8),
+    tertiary = Color(0xFFB8CFF0),
+    onTertiary = Color(0xFF1B3450),
+    tertiaryContainer = Color(0xFF40587A),
+    onTertiaryContainer = Color(0xFFD6E5FF),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFF0F2EB),
+    surface = Color(0xFF000000),
+    onSurface = Color(0xFFF0F2EB),
+    surfaceVariant = Color(0xFF141414),
+    onSurfaceVariant = Color(0xFFCDD5C8),
+    surfaceContainer = Color(0xFF050505),
+    surfaceContainerHigh = Color(0xFF0A0A0A),
+    surfaceContainerHighest = Color(0xFF121212),
+    outline = Color(0xFF9AA49A),
+    outlineVariant = Color(0xFF2A2A2A),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+)
+
 /** Corner radius of dialogs across the app. */
 val DialogShape = RoundedCornerShape(28.dp)
 
@@ -125,21 +157,26 @@ fun LindenTheme(themeMode: ThemeMode, content: @Composable () -> Unit) {
     val darkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
+        ThemeMode.DARK, ThemeMode.AMOLED -> true
+    }
+    val colorScheme = when (themeMode) {
+        ThemeMode.AMOLED -> AmoledColors
+        else -> if (darkTheme) DarkColors else LightColors
     }
 
     val lindenColors = if (darkTheme) DarkLindenColors else LightLindenColors
     val categoryPalette = if (darkTheme) DarkCategoryPalette else CategoryPalette
 
+    SystemBarsAppearance(darkTheme = darkTheme)
     CompositionLocalProvider(
         LocalLindenColors provides lindenColors,
         LocalCategoryPalette provides categoryPalette,
     ) {
         MaterialTheme(
-            colorScheme = if (darkTheme) DarkColors else LightColors,
+            colorScheme = colorScheme,
             typography = LindenTypography,
         ) {
-            LindenBackground {
+            LindenBackground(amoled = themeMode == ThemeMode.AMOLED) {
                 content()
             }
         }

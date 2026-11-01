@@ -19,6 +19,8 @@ class SettingsDaoTest : StringSpec({
         val dao = SettingsDao(database.settingsQueries)
         dao.setTheme(ThemeMode.DARK)
         dao.getTheme() shouldBe ThemeMode.DARK
+        dao.setTheme(ThemeMode.AMOLED)
+        dao.getTheme() shouldBe ThemeMode.AMOLED
     }
 
     "themeFlow emits SYSTEM by default, follows updates and falls back on unknown values" {

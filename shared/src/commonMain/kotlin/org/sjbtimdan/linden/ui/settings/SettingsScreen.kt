@@ -31,9 +31,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +53,6 @@ import org.sjbtimdan.linden.export.rememberCsvExportPicker
 import org.sjbtimdan.linden.imports.rememberZipFilePicker
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.common_accounts
@@ -98,7 +94,7 @@ import org.sjbtimdan.linden.resources.settings_your_data
 import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ConfirmDialog
-import org.sjbtimdan.linden.ui.displayName
+import org.sjbtimdan.linden.ui.ThemeModePicker
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.label
 import org.sjbtimdan.linden.ui.languageOptions
@@ -219,26 +215,13 @@ fun SettingsScreen(
         SettingsSectionHeader(stringResource(Res.string.settings_theme))
 
         SettingsCard {
-            SingleChoiceSegmentedButtonRow(
+            ThemeModePicker(
+                selected = themeMode,
+                onSelect = viewModel::setThemeMode,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp),
-            ) {
-                ThemeMode.entries.forEachIndexed { index, mode ->
-                    SegmentedButton(
-                        selected = themeMode == mode,
-                        onClick = { viewModel.setThemeMode(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = ThemeMode.entries.size,
-                        ),
-                    ) {
-                        Text(
-                            text = mode.displayName(),
-                        )
-                    }
-                }
-            }
+            )
         }
 
         SettingsSectionHeader(stringResource(Res.string.settings_default_currency))

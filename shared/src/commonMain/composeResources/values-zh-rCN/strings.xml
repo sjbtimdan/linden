@@ -239,6 +239,7 @@
     <string name="settings_theme_system">跟随系统</string>
     <string name="settings_theme_light">浅色</string>
     <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_default_currency">默认货币</string>
     <string name="settings_privacy">隐私</string>
     <string name="settings_hide_totals">隐藏总额</string>

@@ -31,7 +31,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalTestApi::class)
 class SettingsScreenTest : StringSpec({
-    "clicking Light segment sets theme" {
+    "clicking Light chip sets theme" {
         withSettingsViewModel(initialTheme = ThemeMode.SYSTEM) { viewModel ->
             setContent { SettingsScreen(viewModel) }
             onNodeWithText("System").assertIsSelected()
@@ -39,6 +39,17 @@ class SettingsScreenTest : StringSpec({
             onNodeWithText("Light").assertIsSelected()
 
             viewModel.themeMode.value shouldBe ThemeMode.LIGHT
+        }
+    }
+
+    "clicking AMOLED chip sets the theme" {
+        withSettingsViewModel(initialTheme = ThemeMode.SYSTEM) { viewModel ->
+            setContent { SettingsScreen(viewModel) }
+            onNodeWithText("System").assertIsSelected()
+            onNodeWithText("AMOLED").performScrollTo().performClick()
+            onNodeWithText("AMOLED").assertIsSelected()
+
+            viewModel.themeMode.value shouldBe ThemeMode.AMOLED
         }
     }
 

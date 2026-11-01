@@ -243,6 +243,7 @@
     <string name="settings_theme_system">Sistem</string>
     <string name="settings_theme_light">Terang</string>
     <string name="settings_theme_dark">Gelap</string>
+    <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_default_currency">Mata uang default</string>
     <string name="settings_privacy">Privasi</string>
     <string name="settings_hide_totals">Sembunyikan total</string>

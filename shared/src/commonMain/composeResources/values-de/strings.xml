@@ -245,6 +245,7 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_theme_amoled">AMOLED</string>
     <string name="settings_default_currency">Standardwährung</string>
     <string name="settings_privacy">Datenschutz</string>
     <string name="settings_hide_totals">Gesamtsaldo ausblenden</string>

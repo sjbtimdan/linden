@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.ThemeMode
 import org.sjbtimdan.linden.resources.Res
+import org.sjbtimdan.linden.resources.settings_theme_amoled
 import org.sjbtimdan.linden.resources.settings_theme_dark
 import org.sjbtimdan.linden.resources.settings_theme_light
 import org.sjbtimdan.linden.resources.settings_theme_system
@@ -15,5 +16,6 @@ internal fun ThemeMode.displayName(): String = stringResource(
         ThemeMode.SYSTEM -> Res.string.settings_theme_system
         ThemeMode.LIGHT -> Res.string.settings_theme_light
         ThemeMode.DARK -> Res.string.settings_theme_dark
+        ThemeMode.AMOLED -> Res.string.settings_theme_amoled
     },
 )
