@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,7 +38,7 @@ import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.resources.ledger_mode_entries
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
-private val TabsHeight = 44.dp
+private val TabsHeight = 48.dp
 private val TabsPadding = 4.dp
 private val TabsShape = RoundedCornerShape(22.dp)
 private val TabShape = RoundedCornerShape(18.dp)
@@ -83,7 +85,12 @@ fun LedgerViewModeTabs(viewMode: LedgerViewMode, onSelect: (LedgerViewMode) -> U
                     .clip(TabShape)
                     .background(Brush.linearGradient(colors.heroGradient)),
             )
-            Row(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .selectableGroup(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 modes.forEach { mode ->
                     val selected = mode == viewMode
                     val labelColor by animateColorAsState(
@@ -97,7 +104,7 @@ fun LedgerViewModeTabs(viewMode: LedgerViewMode, onSelect: (LedgerViewMode) -> U
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight()
+                            .requiredHeight(TabsHeight)
                             .selectable(
                                 selected = selected,
                                 role = Role.Tab,
