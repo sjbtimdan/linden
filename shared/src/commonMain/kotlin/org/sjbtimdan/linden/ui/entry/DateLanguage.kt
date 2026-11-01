@@ -66,6 +66,57 @@ internal enum class DateLanguage {
         English, Italian, French, German, Hindi, Indonesian -> "${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}"
     }
+
+    /**
+     * Localized week range, e.g. "Aug 10–16, 2026", "10–16 ago 2026" or
+     * "2026年8月10日–16日". The layout depends on whether the week crosses a
+     * month or a year.
+     */
+    internal fun weekLabel(
+        startDay: Int,
+        startMonth: Int,
+        startYear: Int,
+        endDay: Int,
+        endMonth: Int,
+        endYear: Int,
+    ): String {
+        val startMonthName = monthShort(startMonth)
+        val endMonthName = monthShort(endMonth)
+        return when {
+            startYear != endYear -> when (this) {
+                English -> "$startMonthName $startDay, $startYear – $endMonthName $endDay, $endYear"
+
+                German -> "$startDay. $startMonthName $startYear – $endDay. $endMonthName $endYear"
+
+                Italian, French, Hindi, Indonesian ->
+                    "$startDay $startMonthName $startYear – $endDay $endMonthName $endYear"
+
+                Chinese -> "${startYear}年$startMonthName${startDay}日 – ${endYear}年$endMonthName${endDay}日"
+            }
+
+            startMonth != endMonth -> when (this) {
+                English -> "$startMonthName $startDay – $endMonthName $endDay, $startYear"
+
+                German -> "$startDay. $startMonthName – $endDay. $endMonthName $startYear"
+
+                Italian, French, Hindi, Indonesian ->
+                    "$startDay $startMonthName – $endDay $endMonthName $startYear"
+
+                Chinese -> "${startYear}年$startMonthName${startDay}日 – $endMonthName${endDay}日"
+            }
+
+            else -> when (this) {
+                English -> "$startMonthName $startDay–$endDay, $startYear"
+
+                German -> "$startDay.–$endDay. $startMonthName $startYear"
+
+                Italian, French, Hindi, Indonesian ->
+                    "$startDay–$endDay $startMonthName $startYear"
+
+                Chinese -> "${startYear}年$startMonthName${startDay}日–${endDay}日"
+            }
+        }
+    }
 }
 
 /** Maps a BCP-47-style language code (e.g. "fr", "de", "id", "zh-Hant-TW") onto a [DateLanguage]. */

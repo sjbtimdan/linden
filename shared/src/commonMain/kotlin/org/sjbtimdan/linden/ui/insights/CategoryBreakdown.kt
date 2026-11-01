@@ -11,6 +11,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.dayIn
+import org.sjbtimdan.linden.ui.budget.budgetsByCategoryName
 import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
 
 /** One category of the selected month: totals, budget and previous-month total. */
@@ -96,44 +97,36 @@ fun categoryBreakdown(
         }
     }
 
-    val budgetByName = budgets.associateBy { it.categoryName.lowercase() }
+    val budgetByName = budgetsByCategoryName(budgets)
     return MonthBreakdown(
-        expenses = buckets.expense.values
-            .filter { it.curSums.isNotEmpty() }
-            .map { accumulator ->
-                CategoryBreakdownRow(
-                    category = accumulator.category,
-                    amountMinor = sumInDefaultMinor(accumulator.curSums, defaultCurrency, rates),
-                    previousMinor = accumulator.prevSums
-                        .takeUnless { it.isEmpty() }
-                        ?.let { sumInDefaultMinor(it, defaultCurrency, rates) },
-                    budgetMinor = budgetByName[accumulator.category.name.lowercase()]?.limitMinor,
-                    count = accumulator.count,
-                )
-            }
-            .sortedWith(
-                compareByDescending<CategoryBreakdownRow> { it.amountMinor ?: Long.MIN_VALUE }
-                    .thenBy { it.category.name.lowercase() },
-            ),
-        incomes = buckets.income.values
-            .filter { it.curSums.isNotEmpty() }
-            .map { accumulator ->
-                CategoryBreakdownRow(
-                    category = accumulator.category,
-                    amountMinor = sumInDefaultMinor(accumulator.curSums, defaultCurrency, rates),
-                    previousMinor = accumulator.prevSums
-                        .takeUnless { it.isEmpty() }
-                        ?.let { sumInDefaultMinor(it, defaultCurrency, rates) },
-                    budgetMinor = null,
-                    count = accumulator.count,
-                )
-            }
-            .sortedWith(
-                compareByDescending<CategoryBreakdownRow> { it.amountMinor ?: Long.MIN_VALUE }
-                    .thenBy { it.category.name.lowercase() },
-            ),
+        expenses = breakdownRows(buckets.expense.values, budgetByName, defaultCurrency, rates, includeBudget = true),
+        incomes = breakdownRows(buckets.income.values, budgetByName, defaultCurrency, rates, includeBudget = false),
     )
 }
+
+private fun breakdownRows(
+    accumulators: Collection<CategoryAccumulator>,
+    budgetByName: Map<String, Long>,
+    defaultCurrency: Currency,
+    rates: List<FxRate>,
+    includeBudget: Boolean,
+): List<CategoryBreakdownRow> = accumulators
+    .filter { it.curSums.isNotEmpty() }
+    .map { accumulator ->
+        CategoryBreakdownRow(
+            category = accumulator.category,
+            amountMinor = sumInDefaultMinor(accumulator.curSums, defaultCurrency, rates),
+            previousMinor = accumulator.prevSums
+                .takeUnless { it.isEmpty() }
+                ?.let { sumInDefaultMinor(it, defaultCurrency, rates) },
+            budgetMinor = if (includeBudget) budgetByName[accumulator.category.name.lowercase()] else null,
+            count = accumulator.count,
+        )
+    }
+    .sortedWith(
+        compareByDescending<CategoryBreakdownRow> { it.amountMinor ?: Long.MIN_VALUE }
+            .thenBy { it.category.name.lowercase() },
+    )
 
 private class BreakdownBuckets {
     val expense = mutableMapOf<Long, CategoryAccumulator>()

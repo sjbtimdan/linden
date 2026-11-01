@@ -24,6 +24,10 @@ data class CategoryBudget(
     val overBudget: Boolean get() = limit > 0 && spent > limit
 }
 
+/** Budget limits keyed by lowercased category name; a later duplicate wins. */
+internal fun budgetsByCategoryName(budgets: List<Budget>): Map<String, Long> =
+    budgets.associate { it.categoryName.lowercase() to it.limitMinor }
+
 /**
  * Joins the per-category totals with the configured budgets, producing one
  * [CategoryBudget] per category that has a budget. Categories without a budget
@@ -32,14 +36,14 @@ data class CategoryBudget(
  */
 fun computeCategoryBudgets(categoryTotals: List<CategoryWithTotal>, budgets: List<Budget>): List<CategoryBudget> {
     if (budgets.isEmpty()) return emptyList()
-    val byName = budgets.associateBy { it.categoryName.lowercase() }
+    val byName = budgetsByCategoryName(budgets)
     return categoryTotals.mapNotNull { total ->
-        val categoryName = total.category?.name ?: return@mapNotNull null
-        val budget = byName[categoryName.lowercase()] ?: return@mapNotNull null
+        val category = total.category ?: return@mapNotNull null
+        val limit = byName[category.name.lowercase()] ?: return@mapNotNull null
         CategoryBudget(
-            category = total.category,
+            category = category,
             spent = abs(total.total),
-            limit = budget.limitMinor,
+            limit = limit,
             count = total.count,
         )
     }

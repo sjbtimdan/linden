@@ -69,9 +69,20 @@ internal fun LedgerPeriod.windowLabel(anchor: LocalDate, language: DateLanguage)
     val end = windowEnd(anchor) ?: return null
     return when (this) {
         LedgerPeriod.Day -> language.dateText(start.day, start.month.number, start.year)
-        LedgerPeriod.Week -> weekLabel(start, end, language)
+
+        LedgerPeriod.Week -> language.weekLabel(
+            startDay = start.day,
+            startMonth = start.month.number,
+            startYear = start.year,
+            endDay = end.day,
+            endMonth = end.month.number,
+            endYear = end.year,
+        )
+
         LedgerPeriod.Month -> language.monthYearText(start.month.number, start.year)
+
         LedgerPeriod.Year -> "${start.year}"
+
         LedgerPeriod.All -> null
     }
 }
@@ -82,52 +93,4 @@ private fun LedgerPeriod.step(): Pair<Int, DateTimeUnit.DateBased>? = when (this
     LedgerPeriod.Month -> 1 to DateTimeUnit.MONTH
     LedgerPeriod.Year -> 1 to DateTimeUnit.YEAR
     LedgerPeriod.All -> null
-}
-
-private fun weekLabel(start: LocalDate, end: LocalDate, language: DateLanguage): String {
-    val startMonth = language.monthShort(start.month.number)
-    val endMonth = language.monthShort(end.month.number)
-    return when {
-        start.year != end.year -> when (language) {
-            DateLanguage.English ->
-                "$startMonth ${start.day}, ${start.year} – $endMonth ${end.day}, ${end.year}"
-
-            DateLanguage.German ->
-                "${start.day}. $startMonth ${start.year} – ${end.day}. $endMonth ${end.year}"
-
-            DateLanguage.Italian, DateLanguage.French, DateLanguage.Hindi, DateLanguage.Indonesian ->
-                "${start.day} $startMonth ${start.year} – ${end.day} $endMonth ${end.year}"
-
-            DateLanguage.Chinese ->
-                "${start.year}年$startMonth${start.day}日 – ${end.year}年$endMonth${end.day}日"
-        }
-
-        start.month != end.month -> when (language) {
-            DateLanguage.English ->
-                "$startMonth ${start.day} – $endMonth ${end.day}, ${start.year}"
-
-            DateLanguage.German ->
-                "${start.day}. $startMonth – ${end.day}. $endMonth ${start.year}"
-
-            DateLanguage.Italian, DateLanguage.French, DateLanguage.Hindi, DateLanguage.Indonesian ->
-                "${start.day} $startMonth – ${end.day} $endMonth ${start.year}"
-
-            DateLanguage.Chinese ->
-                "${start.year}年$startMonth${start.day}日 – $endMonth${end.day}日"
-        }
-
-        else -> when (language) {
-            DateLanguage.English ->
-                "$startMonth ${start.day}–${end.day}, ${start.year}"
-
-            DateLanguage.German ->
-                "${start.day}.–${end.day}. $startMonth ${start.year}"
-
-            DateLanguage.Italian, DateLanguage.French, DateLanguage.Hindi, DateLanguage.Indonesian ->
-                "${start.day}–${end.day} $startMonth ${start.year}"
-
-            DateLanguage.Chinese ->
-                "${start.year}年$startMonth${start.day}日–${end.day}日"
-        }
-    }
 }

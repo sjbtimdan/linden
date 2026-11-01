@@ -32,7 +32,7 @@ import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.accounts.adjustmentEntry
 import org.sjbtimdan.linden.ui.accounts.balanceAdjustment
 import org.sjbtimdan.linden.ui.accounts.entryDeltas
-import org.sjbtimdan.linden.ui.budget.computeCategoryBudgets
+import org.sjbtimdan.linden.ui.budget.budgetsByCategoryName
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
 import org.sjbtimdan.linden.ui.insights.PaceForecast
@@ -289,9 +289,7 @@ class LedgerViewModel(
             .sortedByDescending { abs(it.total) }
         // Budgets are monthly limits, so they only make sense against a month of spending.
         if (selection.period != LedgerPeriod.Month) return@combine totals
-        val budgetByName = computeCategoryBudgets(totals, budgets)
-            .mapNotNull { it.category?.let { category -> category.name.lowercase() to it.limit } }
-            .toMap()
+        val budgetByName = budgetsByCategoryName(budgets)
         totals.map { total ->
             total.copy(budget = total.category?.let { budgetByName[it.name.lowercase()] })
         }

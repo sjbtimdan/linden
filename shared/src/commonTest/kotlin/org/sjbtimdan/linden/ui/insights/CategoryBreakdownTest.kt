@@ -24,6 +24,7 @@ private val main = Account(1, "Main", Currency.CHF)
 private val groceries = Category(1, "Groceries", CategoryType.Expense, CategoryIcon.ShoppingCart)
 private val dining = Category(2, "Dining", CategoryType.Expense, CategoryIcon.Restaurant)
 private val salary = Category(3, "Salary", CategoryType.Income, CategoryIcon.Savings)
+private val bonus = Category(4, "Bonus", CategoryType.Income, CategoryIcon.Savings)
 
 private fun expense(category: Category, amount: Long, at: String, account: Account = main) = ExpenseEntry(
     id = 0,
@@ -179,6 +180,60 @@ class CategoryBreakdownTest : StringSpec({
         )
 
         breakdown.expenses.single().amountMinor shouldBe 1_000
+    }
+
+    "ranks expenses with a missing rate after those with a known amount" {
+        val usdAccount = Account(4, "US card", Currency.USD)
+        val breakdown = categoryBreakdown(
+            listOf(
+                expense(dining, 1_130, "2026-08-02T12:00:00Z", account = usdAccount),
+                expense(groceries, 500, "2026-08-10T12:00:00Z"),
+            ),
+            month,
+            Currency.CHF,
+            emptyList(),
+            emptyList(),
+            TimeZone.UTC,
+        )
+
+        breakdown.expenses.map { it.category } shouldBe listOf(groceries, dining)
+        breakdown.expenses.last().amountMinor.shouldBeNull()
+    }
+
+    "builds and ranks income rows with previous-month totals and no budgets" {
+        val breakdown = categoryBreakdown(
+            listOf(
+                income(salary, 5_000, "2026-08-01T09:00:00Z"),
+                income(salary, 1_000, "2026-07-01T09:00:00Z"),
+                income(bonus, 9_000, "2026-08-15T09:00:00Z"),
+            ),
+            month,
+            Currency.CHF,
+            emptyList(),
+            listOf(Budget("Salary", 999_999)),
+            TimeZone.UTC,
+        )
+
+        breakdown.incomes.map { it.category } shouldBe listOf(bonus, salary)
+        val salaryRow = breakdown.incomes.first { it.category == salary }
+        salaryRow.amountMinor shouldBe 5_000
+        salaryRow.previousMinor shouldBe 1_000
+        salaryRow.count shouldBe 1
+        salaryRow.budgetMinor.shouldBeNull()
+        breakdown.incomes.first().budgetMinor.shouldBeNull()
+    }
+
+    "uses the last budget when names collide case-insensitively" {
+        val breakdown = categoryBreakdown(
+            listOf(expense(groceries, 450, "2026-08-10T12:00:00Z")),
+            month,
+            Currency.CHF,
+            emptyList(),
+            listOf(Budget("Groceries", 800), Budget("groceries", 900)),
+            TimeZone.UTC,
+        )
+
+        breakdown.expenses.single().budgetMinor shouldBe 900
     }
 
     "monthBefore steps whole months across year boundaries" {

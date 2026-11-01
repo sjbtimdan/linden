@@ -96,4 +96,10 @@ class DateLanguageTest : StringSpec({
         DateLanguage.Indonesian.monthYearText(8, 2026) shouldBe "Agu 2026"
         DateLanguage.Chinese.monthYearText(8, 2026) shouldBe "2026年8月"
     }
+
+    "week text follows the language layout across months and years" {
+        DateLanguage.English.weekLabel(10, 8, 2026, 16, 8, 2026) shouldBe "Aug 10–16, 2026"
+        DateLanguage.Italian.weekLabel(31, 8, 2026, 6, 9, 2026) shouldBe "31 ago – 6 set 2026"
+        DateLanguage.Chinese.weekLabel(28, 12, 2026, 3, 1, 2027) shouldBe "2026年12月28日 – 2027年1月3日"
+    }
 })

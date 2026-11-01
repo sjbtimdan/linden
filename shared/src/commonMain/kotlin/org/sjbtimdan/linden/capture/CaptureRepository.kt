@@ -6,7 +6,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.sjbtimdan.linden.data.CAPTURE_PROCESSED_KEY
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
@@ -45,36 +48,48 @@ class CaptureRepository(
          */
         val inboxChanges: StateFlow<Long> = _inboxChanges.asStateFlow()
 
+        private val rulesSerializer = ListSerializer(CaptureRule.serializer())
+        private val pendingSerializer = ListSerializer(PendingCapture.serializer())
+        private val templatesSerializer = ListSerializer(CaptureTemplate.serializer())
+        private val processedSerializer = ListSerializer(String.serializer())
+
         private fun notifyInboxChanged() {
             _inboxChanges.update { it + 1 }
         }
     }
 
-    suspend fun rules(): List<CaptureRule> = decodeRules(settingsDao.getRaw(CAPTURE_RULES_KEY))
+    suspend fun rules(): List<CaptureRule> = readList(CAPTURE_RULES_KEY, rulesSerializer)
 
-    fun rulesFlow(): Flow<List<CaptureRule>> = settingsDao.rawFlow(CAPTURE_RULES_KEY).map { decodeRules(it) }
+    fun rulesFlow(): Flow<List<CaptureRule>> = listFlow(CAPTURE_RULES_KEY, rulesSerializer)
 
     /** Adds [rule] or replaces the existing rule for its package. */
     suspend fun setRule(rule: CaptureRule) {
-        writeRules(rules().filterNot { it.packageName == rule.packageName } + rule)
+        writeList(
+            CAPTURE_RULES_KEY,
+            rulesSerializer,
+            rules().filterNot { it.packageName == rule.packageName } + rule,
+        )
     }
 
     suspend fun removeRule(packageName: String) {
-        writeRules(rules().filterNot { it.packageName == packageName })
+        writeList(CAPTURE_RULES_KEY, rulesSerializer, rules().filterNot { it.packageName == packageName })
     }
 
     suspend fun setRuleEnabled(packageName: String, enabled: Boolean) {
-        writeRules(rules().map { if (it.packageName == packageName) it.copy(enabled = enabled) else it })
+        writeList(
+            CAPTURE_RULES_KEY,
+            rulesSerializer,
+            rules().map { if (it.packageName == packageName) it.copy(enabled = enabled) else it },
+        )
     }
 
-    suspend fun pending(): List<PendingCapture> = decodePending(settingsDao.getRaw(PENDING_CAPTURES_KEY))
+    suspend fun pending(): List<PendingCapture> = readList(PENDING_CAPTURES_KEY, pendingSerializer)
 
-    fun pendingFlow(): Flow<List<PendingCapture>> = settingsDao.rawFlow(PENDING_CAPTURES_KEY).map { decodePending(it) }
+    fun pendingFlow(): Flow<List<PendingCapture>> = listFlow(PENDING_CAPTURES_KEY, pendingSerializer)
 
-    suspend fun templates(): List<CaptureTemplate> = decodeOrDefault(settingsDao.getRaw(CAPTURE_TEMPLATES_KEY))
+    suspend fun templates(): List<CaptureTemplate> = readList(CAPTURE_TEMPLATES_KEY, templatesSerializer)
 
-    fun templatesFlow(): Flow<List<CaptureTemplate>> =
-        settingsDao.rawFlow(CAPTURE_TEMPLATES_KEY).map { decodeOrDefault(it) }
+    fun templatesFlow(): Flow<List<CaptureTemplate>> = listFlow(CAPTURE_TEMPLATES_KEY, templatesSerializer)
 
     /**
      * Fingerprints of notification versions already handled, newest first, or
@@ -83,12 +98,17 @@ class CaptureRepository(
      * catching up cannot duplicate a capture or re-add one already confirmed.
      */
     suspend fun processedNotifications(): List<String>? =
-        settingsDao.getRaw(CAPTURE_PROCESSED_KEY)?.let { decodeOrDefault<String>(it) }
+        settingsDao.getRaw(CAPTURE_PROCESSED_KEY)?.let { decodeList(it, processedSerializer) }
 
     /** Remembers [fingerprints] as handled, newest first and capped; an empty batch still seeds the store. */
     suspend fun rememberProcessed(fingerprints: Collection<String>) {
         val current = processedNotifications().orEmpty()
-        writeProcessed((fingerprints + current).distinct().take(MAX_PROCESSED_NOTIFICATIONS))
+        writeList(
+            CAPTURE_PROCESSED_KEY,
+            processedSerializer,
+            (fingerprints + current).distinct(),
+            MAX_PROCESSED_NOTIFICATIONS,
+        )
     }
 
     /**
@@ -98,13 +118,24 @@ class CaptureRepository(
      */
     suspend fun completeCapture(captureId: Long, entry: Entry) {
         pending().firstOrNull { it.id == captureId }?.let { capture ->
-            captureTemplateFor(capture, entry)?.let { writeTemplates(upsertTemplate(it)) }
+            captureTemplateFor(capture, entry)?.let { template ->
+                writeList(
+                    CAPTURE_TEMPLATES_KEY,
+                    templatesSerializer,
+                    upsertTemplate(template),
+                    MAX_CAPTURE_TEMPLATES,
+                )
+            }
         }
         removePending(captureId)
     }
 
     suspend fun removeTemplate(packageName: String, skeleton: String) {
-        writeTemplates(templates().filterNot { it.packageName == packageName && it.skeleton == skeleton })
+        writeList(
+            CAPTURE_TEMPLATES_KEY,
+            templatesSerializer,
+            templates().filterNot { it.packageName == packageName && it.skeleton == skeleton },
+        )
     }
 
     /** The newest capture id the user has acknowledged; 0 before any dismissal. */
@@ -126,7 +157,13 @@ class CaptureRepository(
         val current = pending()
         val id = maxOf(current.maxOfOrNull { it.id } ?: 0L, seenCaptureId()) + 1
         val withId = capture.copy(id = id)
-        writePending((listOf(withId) + current).take(MAX_PENDING_CAPTURES))
+        writeList(
+            PENDING_CAPTURES_KEY,
+            pendingSerializer,
+            listOf(withId) + current,
+            MAX_PENDING_CAPTURES,
+            onWrite = ::notifyInboxChanged,
+        )
         return withId
     }
 
@@ -143,50 +180,56 @@ class CaptureRepository(
     }
 
     suspend fun removePending(id: Long) {
-        writePending(pending().filterNot { it.id == id })
+        writeList(
+            PENDING_CAPTURES_KEY,
+            pendingSerializer,
+            pending().filterNot { it.id == id },
+            onWrite = ::notifyInboxChanged,
+        )
     }
 
     suspend fun clearPending() {
-        writePending(emptyList())
+        writeList(
+            PENDING_CAPTURES_KEY,
+            pendingSerializer,
+            emptyList(),
+            onWrite = ::notifyInboxChanged,
+        )
     }
 
-    private fun decodeRules(raw: String?): List<CaptureRule> = decodeOrDefault(raw)
+    /** [template] first, replacing the same package-and-skeleton key. */
+    private suspend fun upsertTemplate(template: CaptureTemplate): List<CaptureTemplate> {
+        val replaced = templates().filterNot {
+            it.packageName == template.packageName && it.skeleton == template.skeleton
+        }
+        return listOf(template) + replaced
+    }
 
-    private fun decodePending(raw: String?): List<PendingCapture> = decodeOrDefault(raw)
+    private suspend fun <T> readList(key: String, serializer: KSerializer<List<T>>): List<T> =
+        decodeList(settingsDao.getRaw(key), serializer)
 
-    private inline fun <reified T> decodeOrDefault(raw: String?): List<T> {
+    private fun <T> listFlow(key: String, serializer: KSerializer<List<T>>): Flow<List<T>> =
+        settingsDao.rawFlow(key).map { decodeList(it, serializer) }
+
+    private suspend fun <T> writeList(
+        key: String,
+        serializer: KSerializer<List<T>>,
+        values: List<T>,
+        max: Int? = null,
+        onWrite: () -> Unit = {},
+    ) {
+        settingsDao.setRaw(key, json.encodeToString(serializer, max?.let { values.take(it) } ?: values))
+        onWrite()
+    }
+
+    private fun <T> decodeList(raw: String?, serializer: KSerializer<List<T>>): List<T> {
         if (raw.isNullOrEmpty()) return emptyList()
         return try {
-            json.decodeFromString<List<T>>(raw)
+            json.decodeFromString(serializer, raw)
         } catch (_: SerializationException) {
             emptyList()
         } catch (_: IllegalArgumentException) {
             emptyList()
         }
-    }
-
-    private suspend fun writeRules(rules: List<CaptureRule>) {
-        settingsDao.setRaw(CAPTURE_RULES_KEY, json.encodeToString(rules))
-    }
-
-    private suspend fun writePending(pending: List<PendingCapture>) {
-        settingsDao.setRaw(PENDING_CAPTURES_KEY, json.encodeToString(pending))
-        notifyInboxChanged()
-    }
-
-    /** [template] first, replacing the same package-and-skeleton key and capped at [MAX_CAPTURE_TEMPLATES]. */
-    private suspend fun upsertTemplate(template: CaptureTemplate): List<CaptureTemplate> {
-        val replaced = templates().filterNot {
-            it.packageName == template.packageName && it.skeleton == template.skeleton
-        }
-        return (listOf(template) + replaced).take(MAX_CAPTURE_TEMPLATES)
-    }
-
-    private suspend fun writeTemplates(templates: List<CaptureTemplate>) {
-        settingsDao.setRaw(CAPTURE_TEMPLATES_KEY, json.encodeToString(templates))
-    }
-
-    private suspend fun writeProcessed(fingerprints: List<String>) {
-        settingsDao.setRaw(CAPTURE_PROCESSED_KEY, json.encodeToString(fingerprints))
     }
 }
