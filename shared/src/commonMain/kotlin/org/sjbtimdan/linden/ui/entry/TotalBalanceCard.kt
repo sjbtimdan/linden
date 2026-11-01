@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +32,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Currency
@@ -44,14 +42,12 @@ import org.sjbtimdan.linden.resources.entry_total_balance
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 private val HeroShape = RoundedCornerShape(24.dp)
-private val HeroBadgeShape = RoundedCornerShape(8.dp)
 private val HeroElevation = 6.dp
 private val HeroPadding = 20.dp
 private const val HERO_GLOW_ALPHA = 0.35f
 private const val HERO_SHEEN_ALPHA = 0.12f
 private const val HERO_LABEL_ALPHA = 0.85f
 private const val HERO_BUTTON_ALPHA = 0.16f
-private const val HERO_BADGE_ALPHA = 0.18f
 
 /**
  * Total across all accounts in the default currency; null while a rate is
@@ -69,10 +65,10 @@ internal fun TotalBalanceCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = lindenColors()
-    val amountLabel = if (hidden) {
-        HIDDEN_AMOUNT
-    } else {
-        total?.let { formatAmountCompact(it, currency.decimalDigits) } ?: "–"
+    val amountParts = when {
+        hidden -> HeroAmountParts(whole = HIDDEN_AMOUNT)
+        total == null -> HeroAmountParts(whole = "–")
+        else -> heroAmountParts(total, currency.decimalDigits)
     }
     Box(
         modifier = modifier
@@ -116,18 +112,20 @@ internal fun TotalBalanceCard(
     ) {
         if (compact) {
             CompactTotalRow(
-                amountLabel = amountLabel,
+                amountParts = amountParts,
                 currencySymbol = currency.symbol,
                 hidden = hidden,
                 contentColor = colors.heroContent,
+                accentColor = colors.heroAccent,
                 onToggleHidden = onToggleHidden,
             )
         } else {
             ExpandedTotalContent(
-                amountLabel = amountLabel,
+                amountParts = amountParts,
                 currencySymbol = currency.symbol,
                 hidden = hidden,
                 contentColor = colors.heroContent,
+                accentColor = colors.heroAccent,
                 onToggleHidden = onToggleHidden,
             )
         }
@@ -136,10 +134,11 @@ internal fun TotalBalanceCard(
 
 @Composable
 private fun ExpandedTotalContent(
-    amountLabel: String,
+    amountParts: HeroAmountParts,
     currencySymbol: String,
     hidden: Boolean,
     contentColor: Color,
+    accentColor: Color,
     onToggleHidden: () -> Unit,
 ) {
     Column(
@@ -155,41 +154,46 @@ private fun ExpandedTotalContent(
             HeroEyeButton(hidden = hidden, contentColor = contentColor, onToggleHidden = onToggleHidden)
         }
         Spacer(modifier = Modifier.height(2.dp))
-        Row(verticalAlignment = Alignment.Bottom) {
-            AnimatedContent(
-                targetState = amountLabel,
-                transitionSpec = {
-                    (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
-                        (slideOutVertically { height -> -height / 2 } + fadeOut())
-                },
-                label = "heroAmount",
-                modifier = Modifier.weight(1f, fill = false),
-            ) { text ->
+        AnimatedContent(
+            targetState = amountParts,
+            transitionSpec = {
+                (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
+                    (slideOutVertically { height -> -height / 2 } + fadeOut())
+            },
+            label = "heroAmount",
+        ) { parts ->
+            Row {
+                HeroAmountText(
+                    parts = parts,
+                    wholeStyle = MaterialTheme.typography.displayMedium,
+                    fractionStyle = MaterialTheme.typography.headlineSmall.copy(
+                        color = accentColor,
+                        fontWeight = FontWeight.Medium,
+                    ),
+                    contentColor = contentColor,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .alignByBaseline(),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = text,
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    text = currencySymbol,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = accentColor,
+                    modifier = Modifier.alignByBaseline(),
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
-            CurrencyBadge(
-                symbol = currencySymbol,
-                contentColor = contentColor,
-                modifier = Modifier.padding(bottom = 10.dp),
-            )
         }
     }
 }
 
 @Composable
 private fun CompactTotalRow(
-    amountLabel: String,
+    amountParts: HeroAmountParts,
     currencySymbol: String,
     hidden: Boolean,
     contentColor: Color,
+    accentColor: Color,
     onToggleHidden: () -> Unit,
 ) {
     Row(
@@ -203,27 +207,33 @@ private fun CompactTotalRow(
             modifier = Modifier.weight(1f),
         )
         AnimatedContent(
-            targetState = amountLabel,
+            targetState = amountParts,
             transitionSpec = {
                 (slideInVertically { height -> height / 2 } + fadeIn()) togetherWith
                     (slideOutVertically { height -> -height / 2 } + fadeOut())
             },
             label = "heroAmountCompact",
-        ) { text ->
-            Text(
-                text = text,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = contentColor,
-                maxLines = 1,
-            )
+        ) { parts ->
+            Row {
+                HeroAmountText(
+                    parts = parts,
+                    wholeStyle = MaterialTheme.typography.titleMedium,
+                    fractionStyle = MaterialTheme.typography.labelLarge.copy(
+                        color = accentColor,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    contentColor = contentColor,
+                    modifier = Modifier.alignByBaseline(),
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = currencySymbol,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = accentColor,
+                    modifier = Modifier.alignByBaseline(),
+                )
+            }
         }
-        Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = currencySymbol,
-            style = MaterialTheme.typography.titleSmall,
-            color = contentColor.copy(alpha = HERO_LABEL_ALPHA),
-        )
         HeroEyeButton(hidden = hidden, contentColor = contentColor, onToggleHidden = onToggleHidden)
     }
 }
@@ -242,22 +252,6 @@ private fun HeroEyeButton(hidden: Boolean, contentColor: Color, onToggleHidden: 
                 if (hidden) Res.string.entry_show_total else Res.string.entry_hide_total,
             ),
             tint = contentColor,
-        )
-    }
-}
-
-@Composable
-private fun CurrencyBadge(symbol: String, contentColor: Color, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        shape = HeroBadgeShape,
-        color = contentColor.copy(alpha = HERO_BADGE_ALPHA),
-    ) {
-        Text(
-            text = symbol,
-            style = MaterialTheme.typography.labelLarge,
-            color = contentColor,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }
 }
