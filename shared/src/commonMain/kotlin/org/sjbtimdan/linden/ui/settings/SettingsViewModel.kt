@@ -1,13 +1,11 @@
 package org.sjbtimdan.linden.ui.settings
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.backup.LindenBackupManager
@@ -20,6 +18,7 @@ import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
+import org.sjbtimdan.linden.ui.AppViewModel
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -40,7 +39,7 @@ class SettingsViewModel(
     initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
     initialLanguage: AppLanguage = AppLanguage.SYSTEM,
-) : ViewModel() {
+) : AppViewModel() {
     private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
@@ -82,96 +81,31 @@ class SettingsViewModel(
     private val _exportState = MutableStateFlow<BackupState<Unit>>(BackupState.Idle)
     val exportState: StateFlow<BackupState<Unit>> = _exportState.asStateFlow()
 
-    fun setThemeMode(mode: ThemeMode) {
-        _themeMode.value = mode
-        viewModelScope.launch {
-            try {
-                settingsDao.setTheme(mode)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Optimistic state is already propagated.
-            }
-        }
-    }
+    fun setThemeMode(mode: ThemeMode) = setOptimistic(_themeMode, mode, settingsDao::setTheme)
 
-    fun setDefaultCurrency(currency: Currency) {
-        _defaultCurrency.value = currency
-        viewModelScope.launch {
-            try {
-                settingsDao.setDefaultCurrency(currency)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Optimistic state is already propagated.
-            }
-        }
-    }
+    fun setDefaultCurrency(currency: Currency) =
+        setOptimistic(_defaultCurrency, currency, settingsDao::setDefaultCurrency)
 
-    fun setLanguage(language: AppLanguage) {
-        _language.value = language
-        viewModelScope.launch {
-            try {
-                settingsDao.setLanguage(language)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Optimistic state is already propagated.
-            }
-        }
-    }
+    fun setLanguage(language: AppLanguage) = setOptimistic(_language, language, settingsDao::setLanguage)
 
     fun setHideEntryTotal(hidden: Boolean) = hideEntryTotalSetting.set(hidden)
 
-    fun importIvy(input: InputStream) {
-        viewModelScope.launch {
-            _importState.update { BackupState.Working }
-            _importState.update {
-                try {
-                    BackupState.Success(withContext(Dispatchers.IO) { importer.import(input) })
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    BackupState.Error(e.message)
-                }
-            }
-        }
+    fun importIvy(input: InputStream) = runOperation(_importState) {
+        withContext(Dispatchers.IO) { importer.import(input) }
     }
 
     fun clearImportState() {
-        _importState.update { BackupState.Idle }
+        _importState.value = BackupState.Idle
     }
 
-    fun backupTo(output: OutputStream) {
-        viewModelScope.launch {
-            _backupState.update { BackupState.Working }
-            _backupState.update {
-                try {
-                    withContext(Dispatchers.IO) { backupManager.backupTo(output) }
-                    BackupState.Success(Unit)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    BackupState.Error(e.message)
-                }
-            }
-        }
+    fun backupTo(output: OutputStream) = runOperation(_backupState) {
+        withContext(Dispatchers.IO) { backupManager.backupTo(output) }
     }
 
-    fun restoreFrom(input: InputStream) {
-        viewModelScope.launch {
-            _restoreState.update { BackupState.Working }
-            val state = try {
-                val result = withContext(Dispatchers.IO) { backupManager.restoreFrom(input) }
-                reloadSettings()
-                BackupState.Success(result)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                BackupState.Error(e.message)
-            }
-            _restoreState.update { state }
-        }
+    fun restoreFrom(input: InputStream) = runOperation(_restoreState) {
+        val result = withContext(Dispatchers.IO) { backupManager.restoreFrom(input) }
+        reloadSettings()
+        result
     }
 
     /** Re-reads theme, currency and language so the UI reflects a restored backup. */
@@ -181,31 +115,45 @@ class SettingsViewModel(
         _language.value = settingsDao.getLanguage()
     }
 
-    fun exportCsv(output: OutputStream) {
+    fun exportCsv(output: OutputStream) = runOperation(_exportState) {
+        withContext(Dispatchers.IO) { csvExporter.exportTo(output) }
+    }
+
+    fun clearExportState() {
+        _exportState.value = BackupState.Idle
+    }
+
+    fun clearBackupState() {
+        _backupState.value = BackupState.Idle
+    }
+
+    fun clearRestoreState() {
+        _restoreState.value = BackupState.Idle
+    }
+
+    private fun <T> runOperation(state: MutableStateFlow<BackupState<T>>, block: suspend () -> T) {
         viewModelScope.launch {
-            _exportState.update { BackupState.Working }
-            _exportState.update {
-                try {
-                    withContext(Dispatchers.IO) { csvExporter.exportTo(output) }
-                    BackupState.Success(Unit)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    BackupState.Error(e.message)
-                }
+            state.value = BackupState.Working
+            state.value = try {
+                BackupState.Success(block())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                BackupState.Error(e.message)
             }
         }
     }
 
-    fun clearExportState() {
-        _exportState.update { BackupState.Idle }
-    }
-
-    fun clearBackupState() {
-        _backupState.update { BackupState.Idle }
-    }
-
-    fun clearRestoreState() {
-        _restoreState.update { BackupState.Idle }
+    private fun <T> setOptimistic(state: MutableStateFlow<T>, value: T, persist: suspend (T) -> Unit) {
+        state.value = value
+        viewModelScope.launch {
+            try {
+                persist(value)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // The optimistic state is already propagated.
+            }
+        }
     }
 }

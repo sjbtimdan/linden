@@ -22,80 +22,89 @@ const val CAPTURE_TEMPLATES_KEY = "captureTemplates"
 const val CAPTURE_PROCESSED_KEY = "captureProcessed"
 
 class SettingsDao(private val queries: SettingsQueries) {
-    suspend fun getTheme(): ThemeMode {
-        val entity = queries.selectByKey(THEME_KEY).awaitAsOneOrNull() ?: return ThemeMode.SYSTEM
-        return try {
-            ThemeMode.valueOf(entity.value_)
-        } catch (_: IllegalArgumentException) {
-            ThemeMode.SYSTEM
-        }
-    }
+    private class Setting<T>(
+        val key: String,
+        val defaultValue: T,
+        val encode: (T) -> String,
+        val decode: (String) -> T,
+    )
 
-    suspend fun setTheme(mode: ThemeMode) {
-        queries.insertOrReplace(THEME_KEY, mode.name)
-    }
+    private val themeSetting = Setting(
+        key = THEME_KEY,
+        defaultValue = ThemeMode.SYSTEM,
+        encode = { it.name },
+        decode = { value -> ThemeMode.entries.firstOrNull { it.name == value } ?: ThemeMode.SYSTEM },
+    )
 
-    fun themeFlow(): Flow<ThemeMode> = rawFlow(THEME_KEY)
-        .map { stored ->
-            stored?.let { value -> ThemeMode.entries.firstOrNull { it.name == value } } ?: ThemeMode.SYSTEM
-        }
+    private val currencySetting = Setting(
+        key = CURRENCY_KEY,
+        defaultValue = Currency.CHF,
+        encode = { it.name },
+        decode = { value -> parseCurrency(value) ?: Currency.CHF },
+    )
 
-    suspend fun getDefaultCurrency(): Currency {
-        val entity = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull()
-        return if (entity == null) {
-            Currency.CHF
-        } else {
-            parseCurrency(entity.value_) ?: Currency.CHF
-        }
-    }
+    private val hideEntryTotalSetting = Setting(
+        key = HIDE_ENTRY_TOTAL_KEY,
+        defaultValue = false,
+        encode = { it.toString() },
+        decode = { it.toBoolean() },
+    )
+
+    private val autoUpdateRatesSetting = Setting(
+        key = AUTO_UPDATE_RATES_KEY,
+        defaultValue = true,
+        encode = { it.toString() },
+        decode = { it.toBoolean() },
+    )
+
+    private val languageSetting = Setting(
+        key = LANGUAGE_KEY,
+        defaultValue = AppLanguage.SYSTEM,
+        encode = { it.tag ?: "system" },
+        decode = { value -> AppLanguage.fromTag(value) },
+    )
+
+    private val ratesSeenSetting = Setting(
+        key = RATES_SEEN_KEY,
+        defaultValue = false,
+        encode = { it.toString() },
+        decode = { it.toBoolean() },
+    )
+
+    suspend fun getTheme(): ThemeMode = read(themeSetting)
+
+    suspend fun setTheme(mode: ThemeMode) = write(themeSetting, mode)
+
+    fun themeFlow(): Flow<ThemeMode> = observe(themeSetting)
+
+    suspend fun getDefaultCurrency(): Currency = read(currencySetting)
 
     /** True once the user has chosen a default currency (false on a fresh install). */
     suspend fun hasDefaultCurrency(): Boolean = queries.selectByKey(CURRENCY_KEY).awaitAsOneOrNull() != null
 
-    suspend fun setDefaultCurrency(currency: Currency) {
-        queries.insertOrReplace(CURRENCY_KEY, currency.name)
-    }
+    suspend fun setDefaultCurrency(currency: Currency) = write(currencySetting, currency)
 
-    fun defaultCurrencyFlow(): Flow<Currency> = rawFlow(CURRENCY_KEY)
-        .map { value -> value?.let(::parseCurrency) ?: Currency.CHF }
+    fun defaultCurrencyFlow(): Flow<Currency> = observe(currencySetting)
 
-    suspend fun getHideEntryTotal(): Boolean {
-        val entity = queries.selectByKey(HIDE_ENTRY_TOTAL_KEY).awaitAsOneOrNull()
-        return entity?.value_?.toBoolean() == true
-    }
+    suspend fun getHideEntryTotal(): Boolean = read(hideEntryTotalSetting)
 
-    suspend fun setHideEntryTotal(hidden: Boolean) {
-        queries.insertOrReplace(HIDE_ENTRY_TOTAL_KEY, hidden.toString())
-    }
+    suspend fun setHideEntryTotal(hidden: Boolean) = write(hideEntryTotalSetting, hidden)
 
-    fun hideEntryTotalFlow(): Flow<Boolean> = rawFlow(HIDE_ENTRY_TOTAL_KEY)
-        .map { it?.toBoolean() == true }
+    fun hideEntryTotalFlow(): Flow<Boolean> = observe(hideEntryTotalSetting)
 
-    suspend fun setAutoUpdateRates(enabled: Boolean) {
-        queries.insertOrReplace(AUTO_UPDATE_RATES_KEY, enabled.toString())
-    }
+    suspend fun setAutoUpdateRates(enabled: Boolean) = write(autoUpdateRatesSetting, enabled)
 
-    suspend fun getLanguage(): AppLanguage {
-        val entity = queries.selectByKey(LANGUAGE_KEY).awaitAsOneOrNull() ?: return AppLanguage.SYSTEM
-        return AppLanguage.fromTag(entity.value_)
-    }
+    suspend fun getLanguage(): AppLanguage = read(languageSetting)
 
-    suspend fun setLanguage(language: AppLanguage) {
-        queries.insertOrReplace(LANGUAGE_KEY, language.tag ?: "system")
-    }
+    suspend fun setLanguage(language: AppLanguage) = write(languageSetting, language)
 
-    fun languageFlow(): Flow<AppLanguage> = rawFlow(LANGUAGE_KEY)
-        .map { stored -> AppLanguage.fromTag(stored) }
+    fun languageFlow(): Flow<AppLanguage> = observe(languageSetting)
 
-    fun autoUpdateRatesFlow(): Flow<Boolean> = rawFlow(AUTO_UPDATE_RATES_KEY)
-        .map { it?.toBoolean() ?: true }
+    fun autoUpdateRatesFlow(): Flow<Boolean> = observe(autoUpdateRatesSetting)
 
-    suspend fun setRatesSeen(seen: Boolean) {
-        queries.insertOrReplace(RATES_SEEN_KEY, seen.toString())
-    }
+    suspend fun setRatesSeen(seen: Boolean) = write(ratesSeenSetting, seen)
 
-    fun ratesSeenFlow(): Flow<Boolean> = rawFlow(RATES_SEEN_KEY)
-        .map { it?.toBoolean() == true }
+    fun ratesSeenFlow(): Flow<Boolean> = observe(ratesSeenSetting)
 
     /** Stored value of a single settings key; null while the key is absent. */
     suspend fun getRaw(key: String): String? = queries.selectByKey(key).awaitAsOneOrNull()?.value_
@@ -109,9 +118,19 @@ class SettingsDao(private val queries: SettingsQueries) {
         .asOneOrNullFlow()
         .map { it?.value_ }
 
-    private fun parseCurrency(code: String): Currency? = try {
-        Currency.fromCode(code)
-    } catch (_: IllegalStateException) {
-        null
+    private suspend fun <T> read(setting: Setting<T>): T =
+        queries.selectByKey(setting.key).awaitAsOneOrNull()?.value_?.let(setting.decode) ?: setting.defaultValue
+
+    private suspend fun <T> write(setting: Setting<T>, value: T) {
+        queries.insertOrReplace(setting.key, setting.encode(value))
     }
+
+    private fun <T> observe(setting: Setting<T>): Flow<T> =
+        rawFlow(setting.key).map { stored -> stored?.let(setting.decode) ?: setting.defaultValue }
+}
+
+private fun parseCurrency(code: String): Currency? = try {
+    Currency.fromCode(code)
+} catch (_: IllegalStateException) {
+    null
 }
