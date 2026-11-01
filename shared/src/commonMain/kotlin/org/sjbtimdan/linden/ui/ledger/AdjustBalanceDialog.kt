@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -129,6 +130,9 @@ private fun AdjustBalanceDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
+        // Only Cancel or the system back closes the dialog; scrim taps must not
+        // discard an in-progress balance adjustment.
+        properties = DialogProperties(dismissOnClickOutside = false),
         title = { Text(stringResource(Res.string.ledger_adjust_balance)) },
         text = {
             Column {
