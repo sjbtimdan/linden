@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -7,13 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
@@ -39,7 +35,6 @@ import org.sjbtimdan.linden.ui.accounts.entryDeltas
 import org.sjbtimdan.linden.ui.budget.computeCategoryBudgets
 import org.sjbtimdan.linden.ui.entry.EntryDraft
 import org.sjbtimdan.linden.ui.entry.EntryEditorViewModel
-import org.sjbtimdan.linden.ui.entry.categoriesForType
 import org.sjbtimdan.linden.ui.insights.PaceForecast
 import kotlin.math.abs
 import kotlin.time.Instant
@@ -69,44 +64,29 @@ class LedgerViewModel(
     /** Stored FX rates, exposed for the entries list's per-day totals. */
     val fxRates: StateFlow<List<FxRate>> get() = rates
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private val filters = LedgerFilterState(viewModelScope, today())
 
-    private val _typeFilter = MutableStateFlow<EntryType?>(null)
-    val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()
+    val searchQuery: StateFlow<String> get() = filters.searchQuery
 
-    private val _amountFilter = MutableStateFlow<AmountFilter?>(null)
-    val amountFilter: StateFlow<AmountFilter?> = _amountFilter.asStateFlow()
+    val typeFilter: StateFlow<EntryType?> get() = filters.typeFilter
+
+    val amountFilter: StateFlow<AmountFilter?> get() = filters.amountFilter
 
     /** Show future-dated entries in every view mode. */
-    private val _showFuture = MutableStateFlow(false)
-    val showFuture: StateFlow<Boolean> = _showFuture.asStateFlow()
+    val showFuture: StateFlow<Boolean> get() = filters.showFuture
 
-    private val _periodSelection = MutableStateFlow(PeriodSelection(LedgerPeriod.Month, today()))
-    val periodSelection: StateFlow<PeriodSelection> = _periodSelection.asStateFlow()
+    val periodSelection: StateFlow<PeriodSelection> get() = filters.periodSelection
 
-    /** Selected period's start/end, derived once and shared by every period flow. */
-    private val periodWindow: StateFlow<PeriodWindow?> = _periodSelection
-        .map { selection ->
-            val start = selection.period.windowStart(selection.anchor) ?: return@map null
-            val end = selection.period.windowEnd(selection.anchor) ?: return@map null
-            PeriodWindow(start, end)
-        }
-        .stateFlow(null)
-
-    private val _viewMode = MutableStateFlow(LedgerViewMode.Entries)
-    val viewMode: StateFlow<LedgerViewMode> = _viewMode.asStateFlow()
+    val viewMode: StateFlow<LedgerViewMode> get() = filters.viewMode
 
     /** Category filter id; 0 means "Uncategorized". */
-    private val _categoryFilter = MutableStateFlow<Long?>(null)
-    val categoryFilter: StateFlow<Long?> = _categoryFilter.asStateFlow()
+    val categoryFilter: StateFlow<Long?> get() = filters.categoryFilter
 
-    private val _accountFilter = MutableStateFlow<Long?>(null)
-    val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
+    val accountFilter: StateFlow<Long?> get() = filters.accountFilter
 
     private val periodEntries: StateFlow<List<SearchableEntry>> = combine(
-        periodWindow,
-        _showFuture,
+        filters.periodWindow,
+        filters.showFuture,
     ) { window, showFuture -> window to showFuture }
         .flatMapLatest { (window, showFuture) ->
             // Only a safe lower bound is queried; the window rules are enforced here with a fresh "today".
@@ -121,21 +101,16 @@ class LedgerViewModel(
         }
         .stateFlow(emptyList())
 
-    /** The type filter as the categories view applies it: Transfer counts as All. */
-    private val typeFilterForCategories: StateFlow<EntryType?> = _typeFilter
-        .map { type -> type?.takeUnless { it == EntryType.Transfer } }
-        .stateFlow(null)
-
     /**
      * Entries matching the search text and the amount filter, narrowed by the
-     * given type filter. The categories view feeds [typeFilterForCategories]
+     * given type filter. The categories view feeds [LedgerFilterState.typeFilterForCategories]
      * here because transfers carry no category and would only empty its totals.
      */
     private fun filteredEntries(typeFilter: StateFlow<EntryType?>): StateFlow<List<Entry>> = combine(
         periodEntries,
-        _searchQuery,
+        filters.searchQuery,
         typeFilter,
-        _amountFilter,
+        filters.amountFilter,
     ) { periodEntries, query, type, amountFilter ->
         val normalized = query.trim().lowercase()
         periodEntries.asSequence()
@@ -146,13 +121,13 @@ class LedgerViewModel(
             .toList()
     }.stateFlow(emptyList())
 
-    val entries: StateFlow<List<Entry>> = filteredEntries(_typeFilter)
+    val entries: StateFlow<List<Entry>> = filteredEntries(filters.typeFilter)
 
     /**
      * Same narrowing as [entries] but a Transfer type filter counts as no filter
      * at all, so switching to the categories view with one set never empties it.
      */
-    val categoryEntries: StateFlow<List<Entry>> = filteredEntries(typeFilterForCategories)
+    val categoryEntries: StateFlow<List<Entry>> = filteredEntries(filters.typeFilterForCategories)
 
     /**
      * Entries shown by the entries view, narrowed to a category and/or account
@@ -162,8 +137,8 @@ class LedgerViewModel(
      */
     val displayedEntries: StateFlow<List<Entry>> = combine(
         entries,
-        _categoryFilter,
-        _accountFilter,
+        filters.categoryFilter,
+        filters.accountFilter,
     ) { entries, categoryId, accountId ->
         if (categoryId == null && accountId == null) {
             entries
@@ -186,7 +161,7 @@ class LedgerViewModel(
      */
     val totalMinor: StateFlow<Long?> = combine(
         displayedEntries,
-        _accountFilter,
+        filters.accountFilter,
         accounts,
         defaultCurrency,
         rates,
@@ -213,7 +188,7 @@ class LedgerViewModel(
     val hasAnyEntries: StateFlow<Boolean> = entryDao.entryExists().stateFlow(false)
 
     /** Last day of the selected period (inclusive); null for [LedgerPeriod.All]. */
-    private val periodEnd: StateFlow<LocalDate?> = periodWindow
+    private val periodEnd: StateFlow<LocalDate?> = filters.periodWindow
         .map { it?.end }
         .stateFlow(null)
 
@@ -249,9 +224,9 @@ class LedgerViewModel(
      */
     val accountBalancesAtPeriodEnd: StateFlow<List<AccountWithBalance>> = combine(
         entriesUpToPeriodEnd,
-        periodWindow,
+        filters.periodWindow,
         visibleAccounts,
-        _showFuture,
+        filters.showFuture,
     ) { entries, window, accounts, showFuture ->
         val now = today()
         // Entries dated after today count only when the window spans today and the
@@ -302,7 +277,7 @@ class LedgerViewModel(
         defaultCurrency,
         rates,
         budgetDao.budgetsFlow(),
-        _periodSelection,
+        filters.periodSelection,
     ) { entries, currency, rates, budgets, selection ->
         val totals = entries
             .filter { it.type != EntryType.Transfer }
@@ -331,81 +306,43 @@ class LedgerViewModel(
         periodTotalMinor(entries, currency, rates)
     }.stateFlow(null)
 
-    fun setSearchQuery(query: String) {
-        _searchQuery.value = query
-    }
+    fun setSearchQuery(query: String) = filters.setSearchQuery(query)
 
-    fun setTypeFilter(type: EntryType?) {
-        _typeFilter.value = type
-    }
+    fun setTypeFilter(type: EntryType?) = filters.setTypeFilter(type)
 
     /** Sets the amount filter on the entries view; null clears it. */
-    fun setAmountFilter(filter: AmountFilter?) {
-        _amountFilter.value = filter
-    }
+    fun setAmountFilter(filter: AmountFilter?) = filters.setAmountFilter(filter)
 
     /** Removes the amount filter, restoring all amounts. */
-    fun clearAmountFilter() {
-        _amountFilter.value = null
-    }
+    fun clearAmountFilter() = filters.clearAmountFilter()
 
-    fun setShowFuture(show: Boolean) {
-        _showFuture.value = show
-    }
+    fun setShowFuture(show: Boolean) = filters.setShowFuture(show)
 
-    fun setPeriod(period: LedgerPeriod) {
-        _periodSelection.update { it.copy(period = period) }
-    }
+    fun setPeriod(period: LedgerPeriod) = filters.setPeriod(period)
 
-    fun setViewMode(mode: LedgerViewMode) {
-        // The entry filters only apply to the entries view; leaving it clears
-        // them so no stale chip can sit over the categories or accounts list.
-        if (mode != LedgerViewMode.Entries) {
-            _categoryFilter.value = null
-            _accountFilter.value = null
-        }
-        _viewMode.value = mode
-    }
+    fun setViewMode(mode: LedgerViewMode) = filters.setViewMode(mode)
 
     /** Drills into a category from the categories view: narrows the entries to it and switches to the entries view. */
-    fun openCategory(categoryId: Long) {
-        setCategoryFilter(categoryId)
-        _viewMode.value = LedgerViewMode.Entries
-    }
+    fun openCategory(categoryId: Long) = filters.openCategory(categoryId)
 
     /** Drills into an account from the accounts view: narrows the entries to it and switches to the entries view. */
-    fun openAccount(accountId: Long) {
-        setAccountFilter(accountId)
-        _viewMode.value = LedgerViewMode.Entries
-    }
+    fun openAccount(accountId: Long) = filters.openAccount(accountId)
 
     /** Narrows the entries view to a single category; null restores all entries. */
-    fun setCategoryFilter(categoryId: Long?) {
-        _categoryFilter.value = categoryId
-    }
+    fun setCategoryFilter(categoryId: Long?) = filters.setCategoryFilter(categoryId)
 
     /** Removes the category filter, restoring the full entries list. */
-    fun clearCategoryFilter() {
-        _categoryFilter.value = null
-    }
+    fun clearCategoryFilter() = filters.clearCategoryFilter()
 
     /** Narrows the entries view to a single account; null restores all entries. */
-    fun setAccountFilter(accountId: Long?) {
-        _accountFilter.value = accountId
-    }
+    fun setAccountFilter(accountId: Long?) = filters.setAccountFilter(accountId)
 
     /** Removes the account filter, restoring the full entries list. */
-    fun clearAccountFilter() {
-        _accountFilter.value = null
-    }
+    fun clearAccountFilter() = filters.clearAccountFilter()
 
-    fun goToPreviousPeriod() {
-        _periodSelection.update { it.copy(anchor = it.period.previousAnchor(it.anchor)) }
-    }
+    fun goToPreviousPeriod() = filters.goToPreviousPeriod()
 
-    fun goToNextPeriod() {
-        _periodSelection.update { it.copy(anchor = it.period.nextAnchor(it.anchor)) }
-    }
+    fun goToNextPeriod() = filters.goToNextPeriod()
 
     /**
      * Draft currently being edited in the entry dialog, or null when it is closed.
@@ -415,106 +352,39 @@ class LedgerViewModel(
      */
     val dialogState: StateFlow<EntryDraft?> get() = draft
 
-    /** True while a dialog save or delete is writing; guards against double-taps. */
+    /** True while a dialog save, delete or balance adjustment is writing; guards against double-taps. */
     private val _saving = MutableStateFlow(false)
     val saving: StateFlow<Boolean> = _saving.asStateFlow()
 
+    private val dialog = LedgerEntryDialogController(
+        entryDao = entryDao,
+        draftState = draftState,
+        accounts = accounts,
+        categories = categories,
+        savingState = _saving,
+        clock = clock,
+        zone = zone,
+        write = { block -> launchWrite { block() } },
+    )
+
     /** The entry most recently deleted from the edit dialog, held so the delete can be undone. */
-    private val _lastDeleted = MutableStateFlow<Entry?>(null)
-    val lastDeleted: StateFlow<Entry?> = _lastDeleted.asStateFlow()
+    val lastDeleted: StateFlow<Entry?> get() = dialog.lastDeleted
 
-    fun openEditDialog(entry: Entry) {
-        draftState.value = EntryDraft.forEdit(entry)
-    }
+    fun openEditDialog(entry: Entry) = dialog.open(entry)
 
-    /**
-     * Flips the entry being edited between Expense and Income, carrying over the
-     * amount, description and date. The category is kept only when it can back
-     * the target type; an incompatible one is cleared so the form asks for a
-     * valid pick. Transfers are never switched — the dialog offers no such toggle.
-     */
-    fun changeDialogType(type: EntryType) {
-        if (type == EntryType.Transfer) return
-        draftState.update { state ->
-            if (state == null || state.type == type || state.type == EntryType.Transfer) return@update state
-            val keepCategory = categoriesForType(categories.value, type).any { it.id == state.categoryId }
-            state.copy(
-                type = type,
-                categoryId = state.categoryId?.takeIf { keepCategory },
-            )
-        }
-    }
+    fun changeDialogType(type: EntryType) = dialog.changeType(type)
 
-    /**
-     * Turns the dialog into a New entry draft that copies the fields of the entry
-     * being edited but is dated [now] in [zone]: Save then creates a duplicate,
-     * leaving the original untouched. The edit is replaced, not stacked.
-     */
-    fun duplicateDialogEntry(now: Instant = clock.now(), zone: TimeZone = this.zone) {
-        draftState.update { it?.asNewEntry(now, zone) }
-    }
+    fun duplicateDialogEntry(now: Instant = clock.now(), zone: TimeZone = this.zone) = dialog.duplicate(now, zone)
 
-    /**
-     * Saves the dialog draft and closes the dialog once the write succeeds; the
-     * dialog stays open on failure so the draft is not lost. Returns false when
-     * there is nothing to save or the draft is invalid.
-     */
-    fun saveDialog(): Boolean {
-        val state = draftState.value ?: return false
-        val entry = state.toEntry(accounts.value, categories.value) ?: return false
-        if (_saving.value) return false
-        _saving.value = true
-        launchWrite {
-            try {
-                // Duplicate turns the dialog into a New draft (no edited entry), which creates.
-                if (state.editing == null) {
-                    entryDao.create(entry)
-                } else {
-                    entryDao.update(entry)
-                }
-                draftState.value = null
-            } finally {
-                _saving.value = false
-            }
-        }
-        return true
-    }
+    fun saveDialog(): Boolean = dialog.save()
 
-    /** Deletes the entry being edited and closes the dialog once the write succeeds. */
-    fun deleteDialogEntry() {
-        val entry = draftState.value?.editing ?: return
-        if (_saving.value) return
-        _saving.value = true
-        launchWrite {
-            try {
-                entryDao.delete(entry.id)
-                _lastDeleted.value = entry
-                draftState.value = null
-            } finally {
-                _saving.value = false
-            }
-        }
-    }
+    fun deleteDialogEntry() = dialog.delete()
 
-    /**
-     * Re-inserts the entry removed by [deleteDialogEntry], so an accidental
-     * delete can be taken back. Every field is restored, including the
-     * timestamps; the row gets a fresh id, as nothing references entry ids.
-     */
-    fun undoLastDeleted() {
-        val entry = _lastDeleted.value ?: return
-        _lastDeleted.value = null
-        launchWrite { entryDao.create(entry) }
-    }
+    fun undoLastDeleted() = dialog.undoLastDeleted()
 
-    /** Dismisses the undo offer, making the last delete final. */
-    fun clearLastDeleted() {
-        _lastDeleted.value = null
-    }
+    fun clearLastDeleted() = dialog.clearLastDeleted()
 
-    fun dismissDialog() {
-        draftState.value = null
-    }
+    fun dismissDialog() = dialog.dismiss()
 
     /**
      * Records a balance adjustment for [account] so its current balance reaches
@@ -551,107 +421,3 @@ class LedgerViewModel(
     /** Categories used on entries in [accountId], most-used first. */
     suspend fun usedCategories(accountId: Long): List<Category> = entryDao.categoriesForAccount(accountId)
 }
-
-/** An entry with its searchable fields pre-lowercased, so filtering on a keystroke does not re-lowercase every field. */
-private class SearchableEntry(val entry: Entry) {
-    private val description = entry.description?.lowercase()
-    private val categoryName = entry.category?.name?.lowercase()
-    private val accountName = entry.account.name.lowercase()
-    private val toAccountName = (entry as? TransferEntry)?.toAccount?.name?.lowercase()
-
-    fun matches(query: String): Boolean = description?.contains(query) == true ||
-        categoryName?.contains(query) == true ||
-        accountName.contains(query) ||
-        toAccountName?.contains(query) == true
-
-    /** Whether the entry's amount (or, for transfers, its to-amount) satisfies [filter]. */
-    fun matchesAmount(filter: AmountFilter): Boolean =
-        filter.matches(entry.amount) || (entry as? TransferEntry)?.toAmount?.let(filter::matches) == true
-}
-
-/** How an amount filter compares an entry's amount against a target value. */
-enum class AmountOperator {
-    GreaterThan,
-    LessThan,
-    Approximately,
-}
-
-/** A filter on entry amounts: [operator] applied to [minor] (minor units). */
-data class AmountFilter(
-    val operator: AmountOperator,
-    val minor: Long,
-) {
-    fun matches(amount: Long): Boolean = when (operator) {
-        AmountOperator.GreaterThan -> amount > minor
-        AmountOperator.LessThan -> amount < minor
-        AmountOperator.Approximately -> abs(amount - minor) <= (minor * 5 + 50) / 100
-    }
-}
-
-/**
- * Last date whose entries count while the show-future toggle is off, or null for
- * [LedgerPeriod.All] with the toggle on (no bound). Rows dated after [today] are
- * hidden only while the window spans today: a wholly past window never contains
- * them, and a wholly future window was opened to see exactly those entries.
- */
-private fun hideFutureBound(start: LocalDate?, end: LocalDate?, today: LocalDate): LocalDate? {
-    if (start == null || end == null) return today
-    return if (today >= start && today <= end) today else end
-}
-
-private fun Entry.isInWindow(
-    start: LocalDate?,
-    end: LocalDate?,
-    today: LocalDate,
-    showFuture: Boolean,
-    zone: TimeZone,
-): Boolean {
-    val date = dayIn(zone)
-    val bound = if (showFuture) end else hideFutureBound(start, end, today)
-    return (bound == null || date <= bound) &&
-        (start == null || date >= start)
-}
-
-/**
- * Epoch-millis lower bound for a period query. Entries are re-filtered in memory
- * afterwards, so this only needs to be safe: entries in zones ahead of UTC can
- * fall up to 14 hours before UTC midnight of [this], hence the one-day margin.
- */
-private fun LocalDate.sqlLowerBound(): Long =
-    minus(1, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-
-/**
- * Epoch-millis upper bound for a period query. Entries are re-filtered in memory
- * afterwards, so this only needs to be safe: entries in zones behind UTC can fall
- * up to ~14 hours after UTC midnight of the day after [this], hence the two-day margin.
- */
-private fun LocalDate.sqlUpperBound(): Long =
-    plus(2, DateTimeUnit.DAY).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-
-/** What the ledger screen shows: the entry list, period-end account balances, or category totals. */
-enum class LedgerViewMode {
-    Entries,
-    Accounts,
-    Categories,
-}
-
-/** The selected [LedgerPeriod] together with the anchor date its window is centered on. */
-data class PeriodSelection(
-    val period: LedgerPeriod,
-    val anchor: LocalDate,
-)
-
-/** First and last day of the calendar window of a period selection; null for [LedgerPeriod.All]. */
-private data class PeriodWindow(
-    val start: LocalDate,
-    val end: LocalDate,
-)
-
-/** A category paired with its net total in the default currency (minor units) and entry count. */
-data class CategoryWithTotal(
-    val category: Category?,
-    val total: Long,
-    val count: Int,
-    /** Monthly budget limit in the default currency's minor units; null when none is set or the period is not a month. */
-    val budget: Long? = null,
-)
