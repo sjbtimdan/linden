@@ -94,6 +94,20 @@ class LedgerFilterStateTest : StringSpec({
         }
     }
 
+    "today jump re-anchors the current period without changing its granularity" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15))
+            state.setPeriod(LedgerPeriod.Week)
+            state.goToPreviousPeriod()
+
+            state.goToToday(LocalDate(2026, 3, 2))
+
+            state.periodSelection.value shouldBe PeriodSelection(LedgerPeriod.Week, LocalDate(2026, 3, 2))
+            scope.cancel()
+        }
+    }
+
     "the categories view treats a Transfer filter as All" {
         onTestMain {
             val scope = testScope()

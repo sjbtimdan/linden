@@ -34,6 +34,7 @@
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">खाते</string>
     <string name="common_all">सभी</string>
+    <string name="common_today">आज</string>
     <string name="common_categories">श्रेणियाँ</string>
     <string name="common_category">श्रेणी</string>
     <string name="common_invalid_amount">मान्य राशि दर्ज करें</string>

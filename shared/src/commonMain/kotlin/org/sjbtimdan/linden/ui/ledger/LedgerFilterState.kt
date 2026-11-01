@@ -135,4 +135,9 @@ internal class LedgerFilterState(
     fun goToNextPeriod() {
         _periodSelection.update { it.copy(anchor = it.period.nextAnchor(it.anchor)) }
     }
+
+    /** Re-anchors the shown period to the one containing [today], keeping its granularity. */
+    fun goToToday(today: LocalDate) {
+        _periodSelection.update { it.copy(anchor = today) }
+    }
 }

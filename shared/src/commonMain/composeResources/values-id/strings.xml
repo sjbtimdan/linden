@@ -34,6 +34,7 @@
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">Akun</string>
     <string name="common_all">Semua</string>
+    <string name="common_today">Hari ini</string>
     <string name="common_categories">Kategori</string>
     <string name="common_category">Kategori</string>
     <string name="common_invalid_amount">Masukkan jumlah yang valid</string>

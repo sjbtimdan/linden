@@ -34,6 +34,7 @@
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">Conti</string>
     <string name="common_all">Tutti</string>
+    <string name="common_today">Oggi</string>
     <string name="common_categories">Categorie</string>
     <string name="common_category">Categoria</string>
     <string name="common_invalid_amount">Inserisci un importo valido</string>

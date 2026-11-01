@@ -405,6 +405,22 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "today jump returns the shown period to the clock's today" {
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { _, _, _, viewModel ->
+            viewModel.setPeriod(LedgerPeriod.Month)
+            viewModel.goToPreviousPeriod()
+
+            viewModel.periodSelection.value.anchor shouldBe LocalDate(2026, 7, 15)
+
+            viewModel.goToToday()
+
+            viewModel.periodSelection.value shouldBe
+                PeriodSelection(LedgerPeriod.Month, LocalDate(2026, 8, 15))
+        }
+    }
+
     "week period shows only entries in the calendar week" {
         withLedgerViewModel(
             clock = FakeClock(today = LocalDate(2026, 8, 16)),

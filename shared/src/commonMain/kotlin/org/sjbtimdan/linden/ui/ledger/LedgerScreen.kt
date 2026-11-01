@@ -267,6 +267,8 @@ fun LedgerScreen(
                     } else {
                         null
                     },
+                    today = todayDate,
+                    onToday = viewModel::goToToday,
                 )
             }
             TotalLabel(

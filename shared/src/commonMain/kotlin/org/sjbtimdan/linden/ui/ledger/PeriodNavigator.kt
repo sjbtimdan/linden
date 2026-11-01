@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -30,6 +31,7 @@ import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_all
+import org.sjbtimdan.linden.resources.common_today
 import org.sjbtimdan.linden.resources.ledger_hide_future_entries
 import org.sjbtimdan.linden.resources.ledger_next_period
 import org.sjbtimdan.linden.resources.ledger_period_day
@@ -42,7 +44,9 @@ import org.sjbtimdan.linden.resources.ledger_show_future_entries
 /**
  * The selected period with arrows and a dropdown to switch granularity. When
  * [onToggleShowFuture] is provided, a calendar toggle next to the arrows shows
- * whether future-dated entries count towards the period.
+ * whether future-dated entries count towards the period. When [onToday] is
+ * provided, a today button appears whenever the shown window does not contain
+ * [today].
  */
 @Composable
 fun PeriodNavigator(
@@ -53,6 +57,8 @@ fun PeriodNavigator(
     onNext: () -> Unit,
     showFuture: Boolean = false,
     onToggleShowFuture: (() -> Unit)? = null,
+    today: LocalDate? = null,
+    onToday: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val canNavigate = period != LedgerPeriod.All
@@ -106,6 +112,17 @@ fun PeriodNavigator(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = stringResource(Res.string.ledger_next_period),
             )
+        }
+        if (onToday != null && today != null && !period.includes(today, anchor)) {
+            IconButton(
+                onClick = onToday,
+                modifier = Modifier.testTag("jumpToToday"),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Today,
+                    contentDescription = stringResource(Res.string.common_today),
+                )
+            }
         }
         if (onToggleShowFuture != null) {
             Spacer(modifier = Modifier.width(4.dp))

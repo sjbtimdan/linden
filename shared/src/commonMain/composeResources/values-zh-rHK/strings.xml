@@ -34,6 +34,7 @@
     <!-- Shared labels with identical copy across screens -->
     <string name="common_accounts">戶口</string>
     <string name="common_all">全部</string>
+    <string name="common_today">今日</string>
     <string name="common_categories">分類</string>
     <string name="common_category">分類</string>
     <string name="common_invalid_amount">請輸入有效金額</string>

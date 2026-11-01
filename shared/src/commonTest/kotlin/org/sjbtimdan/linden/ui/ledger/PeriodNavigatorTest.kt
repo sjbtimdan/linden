@@ -122,6 +122,69 @@ class PeriodNavigatorTest : StringSpec({
         }
     }
 
+    "today jump is hidden while the window contains today" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    PeriodNavigator(
+                        period = LedgerPeriod.Month,
+                        anchor = LocalDate(2026, 8, 15),
+                        onPeriodChange = {},
+                        onPrevious = {},
+                        onNext = {},
+                        today = LocalDate(2026, 8, 20),
+                        onToday = {},
+                    )
+                }
+
+                onNodeWithTag("jumpToToday").assertDoesNotExist()
+            }
+        }
+    }
+
+    "today jump appears outside today's window and reports a click" {
+        onTestMain {
+            runComposeUiTest {
+                var jumps = 0
+                setContent {
+                    PeriodNavigator(
+                        period = LedgerPeriod.Month,
+                        anchor = LocalDate(2026, 7, 15),
+                        onPeriodChange = {},
+                        onPrevious = {},
+                        onNext = {},
+                        today = LocalDate(2026, 8, 20),
+                        onToday = { jumps++ },
+                    )
+                }
+
+                onNodeWithContentDescription("Today").assertIsDisplayed()
+                onNodeWithTag("jumpToToday").performClick()
+
+                jumps shouldBe 1
+            }
+        }
+    }
+
+    "today jump is hidden without a callback" {
+        onTestMain {
+            runComposeUiTest {
+                setContent {
+                    PeriodNavigator(
+                        period = LedgerPeriod.Month,
+                        anchor = LocalDate(2026, 7, 15),
+                        onPeriodChange = {},
+                        onPrevious = {},
+                        onNext = {},
+                        today = LocalDate(2026, 8, 20),
+                    )
+                }
+
+                onNodeWithTag("jumpToToday").assertDoesNotExist()
+            }
+        }
+    }
+
     "future toggle is hidden without a toggle callback" {
         onTestMain {
             runComposeUiTest {

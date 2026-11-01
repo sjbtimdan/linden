@@ -344,6 +344,9 @@ class LedgerViewModel(
 
     fun goToNextPeriod() = filters.goToNextPeriod()
 
+    /** Re-anchors the shown period to the one containing today, keeping its granularity. */
+    fun goToToday() = filters.goToToday(today())
+
     /**
      * Draft currently being edited in the entry dialog, or null when it is closed.
      * The draft outlives the screen with this ViewModel, so the host dismisses it
