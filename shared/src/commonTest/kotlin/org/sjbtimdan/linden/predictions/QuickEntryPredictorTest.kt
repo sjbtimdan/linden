@@ -185,7 +185,7 @@ class QuickEntryPredictorTest : StringSpec({
                 .shouldContainExactly("Coffee", "Train", "Lunch", "Dinner", "Cinema")
         }
 
-        "keeps recurring variants of the same description separate" {
+        "keeps the two highest-ranked recurring variants of the same description" {
             val entries = listOf(
                 expense(1, "Coffee", now.minus(1.days), amount = 450),
                 expense(2, "Coffee", now.minus(8.days), amount = 450),
@@ -194,7 +194,41 @@ class QuickEntryPredictorTest : StringSpec({
                 expense(5, "Coffee", now.minus(3.days), amount = 500, account = savings),
                 expense(6, "Coffee", now.minus(10.days), amount = 500, account = savings),
             )
-            predict(entries).map { it.entry.amount }.shouldContainExactly(450L, 480L, 500L)
+            predict(entries).map { it.entry.amount }.shouldContainExactly(450L, 480L)
+        }
+
+        "caps a description at two variants so other descriptions still surface" {
+            val atm = (1L..4L).map { id ->
+                expense(id, "ATM", now.minus(id.days), amount = 2_000 + id * 100)
+            }
+            val atmHistory = atm.flatMap { entry ->
+                listOf(entry, expense(entry.id + 10, "ATM", entry.createdAt.minus(30.days), amount = entry.amount))
+            }
+            val others = listOf(
+                expense(101, "Coffee", now.minus(20.days), amount = 450),
+                expense(102, "Coffee", now.minus(21.days), amount = 450),
+                expense(103, "Train", now.minus(20.days), amount = 350),
+                expense(104, "Train", now.minus(21.days), amount = 350),
+            )
+
+            predict(atmHistory + others).map { it.entry.amount }
+                .shouldContainExactly(2_100L, 2_200L, 450L, 350L)
+        }
+
+        "treats punctuation and whitespace variants as one description family" {
+            val entries = listOf(
+                expense(1, "ATM .", now.minus(1.days), amount = 2_000),
+                expense(2, "ATM .", now.minus(31.days), amount = 2_000),
+                expense(3, "ATM.", now.minus(2.days), amount = 2_300),
+                expense(4, "ATM.", now.minus(32.days), amount = 2_300),
+                expense(5, "ATM", now.minus(3.days), amount = 2_500),
+                expense(6, "ATM", now.minus(33.days), amount = 2_500),
+                expense(7, "Coffee", now.minus(10.days)),
+                expense(8, "Coffee", now.minus(11.days)),
+            )
+
+            predict(entries).map { it.entry.description }
+                .shouldContainExactly("ATM .", "ATM.", "Coffee")
         }
 
         "keeps recurring variants on different accounts separate" {
@@ -440,6 +474,20 @@ class QuickEntryPredictorTest : StringSpec({
             )
 
             predict(entries).map { it.entry.description }.shouldContainExactly("Lunch")
+        }
+    }
+
+    context("descriptionFamily") {
+        "normalizes case, whitespace and trailing punctuation" {
+            descriptionFamily("  ATM . ") shouldBe "atm"
+            descriptionFamily("ATM.") shouldBe "atm"
+            descriptionFamily("ATM") shouldBe "atm"
+            descriptionFamily("Coffee  Shop") shouldBe "coffee shop"
+        }
+
+        "keeps different descriptions apart" {
+            descriptionFamily("Coffee") shouldBe "coffee"
+            descriptionFamily("Taxi") shouldBe "taxi"
         }
     }
 })

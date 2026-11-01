@@ -11,6 +11,9 @@ import kotlin.time.Instant
 
 const val QUICK_ENTRY_TOP_N = 5
 
+/** How many variants of one description may fill quick-entry chips. */
+const val QUICK_ENTRY_MAX_VARIANTS_PER_DESCRIPTION = 2
+
 /**
  * How many days around a recurring description's predicted next occurrence
  * still count as due, so a bill logged a day early or late still surfaces.
@@ -48,8 +51,11 @@ data class QuickEntry(
  * variants, only variants that recur (the same amount and account seen at
  * least twice) stay in the list, plus the highest-ranked one: a lumped
  * "Groceries" series whose total changes every time collapses to one chip,
- * while two recurring coffee prices remain separate. Entries matching the
- * draft's
+ * while two recurring coffee prices remain separate. A description still fills
+ * at most [QUICK_ENTRY_MAX_VARIANTS_PER_DESCRIPTION] chips — its highest-ranked
+ * variants — so three recurring ATM totals leave room for other descriptions.
+ * Descriptions that differ only in case, whitespace or punctuation ("ATM .",
+ * "ATM.", "ATM") form one family for that cap. Entries matching the draft's
  * entered amount/account/category (or typed description) float above the rest
  * as a group — each group keeps its time ordering, so the strongest time match
  * wins within it — and unmatched entries stay below rather than disappear.
@@ -132,20 +138,26 @@ fun predictQuickEntries(
     // amount and account seen twice) survive: a lumped "Groceries" series with
     // a new total every time collapses back to one chip, while two recurring
     // coffee prices stay separate. The top-ranked variant always survives, so
-    // a brand-new variant is still available.
-    val variants = groupScoredVariants(scored)
+    // a brand-new variant is still available. Deduplicating variants first
+    // keeps a variant's history from consuming the per-description cap twice.
+    val distinctVariants = scored.distinctBy { variantKey(it.entry) }
+    val variants = groupScoredVariants(distinctVariants)
     val recurringVariants = variantFrequency.filterValues { it >= 2 }.keys
-    return scored
-        .filter { scoredEntry ->
-            val description = scoredEntry.entry.description.orEmpty().lowercase()
-            val variant = variantKey(scoredEntry.entry)
-            variants.multiple[description] != true ||
-                variant == variants.first[description] ||
-                variant in recurringVariants
-        }
-        .distinctBy { variantKey(it.entry) }
+    val kept = distinctVariants.filter { scoredEntry ->
+        val description = scoredEntry.entry.description.orEmpty().lowercase()
+        val variant = variantKey(scoredEntry.entry)
+        variants.multiple[description] != true ||
+            variant == variants.first[description] ||
+            variant in recurringVariants
+    }
+    return kept
+        .withIndex()
+        .groupBy { (_, scoredEntry) -> descriptionFamily(scoredEntry.entry.description) }
+        .values
+        .flatMap { family -> family.take(QUICK_ENTRY_MAX_VARIANTS_PER_DESCRIPTION) }
+        .sortedBy { it.index }
         .take(topN)
-        .map { QuickEntry(it.entry, it.cadence) }
+        .map { QuickEntry(it.value.entry, it.value.cadence) }
 }
 
 private data class ScoredVariants(
@@ -172,6 +184,19 @@ private fun variantKey(entry: Entry): String {
     val destination = (entry as? TransferEntry)?.toAccount?.id ?: -1L
     return "${entry.description.orEmpty().lowercase()}|${entry.amount}|${entry.account.id}|$destination"
 }
+
+/**
+ * Grouping key for the per-description chip cap: descriptions that differ only
+ * in case, whitespace or trailing punctuation are one merchant, so their
+ * variants share the limit. [variantKey] still keeps their amounts separate.
+ */
+internal fun descriptionFamily(description: String?): String = description.orEmpty()
+    .trim()
+    .lowercase()
+    .replace(Regex("\\s+"), " ")
+    .replace(Regex("\\s+([.,;:!?])")) { it.groupValues[1] }
+    .replace(Regex("[.,;:!?]+$"), "")
+    .trim()
 
 /** Whether [instant] falls within [DUE_WINDOW_DAYS] of [target]. */
 private fun withinTargetWindow(instant: Instant, target: Instant): Boolean =
