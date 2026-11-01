@@ -171,15 +171,17 @@ class PaymentCaptureListener : NotificationListenerService() {
         val notification = notification ?: return null
         if (isOngoing) return null
         if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
+        // Extras is a public Java field that can come back null after parcelling.
+        val extras = notification.extras ?: return null
         return Candidate(
             packageName = packageName,
             key = key,
             postTime = postTime,
             content = CaptureNotification(
-                title = notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
-                text = notification.extras.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
-                bigText = notification.extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
-                subText = notification.extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
+                title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
+                text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
+                bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
+                subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
             ),
         )
     }
