@@ -176,8 +176,7 @@ fun EntryPoint(
 
     // Create dialogs shared with EntryForm and opened from the missing-requirement
     // hint when no accounts/categories exist. EntryForm renders them from this state.
-    var createCategoryDialog by remember { mutableStateOf<CategoryDialogState?>(null) }
-    var createAccountDialog by remember { mutableStateOf<AccountDialogState?>(null) }
+    var formDialogs by remember { mutableStateOf(EntryFormDialogs()) }
 
     // The back arrow and the system back both exit editing: clearFocus closes
     // text fields and dropdowns, bumping editEpoch closes EntryForm's
@@ -340,10 +339,8 @@ fun EntryPoint(
                         if (created) markEdited()
                         created
                     },
-                    categoryDialogState = createCategoryDialog,
-                    onCategoryDialogStateChange = { createCategoryDialog = it },
-                    accountDialogState = createAccountDialog,
-                    onAccountDialogStateChange = { createAccountDialog = it },
+                    dialogs = formDialogs,
+                    onDialogsChange = { formDialogs = it },
                 )
             }
         }
@@ -359,20 +356,24 @@ fun EntryPoint(
         // same create dialogs as the form's "+ New" chips.
         val openCreateCategoryFromHint: () -> Unit = {
             draft?.type?.let { type ->
-                createCategoryDialog = CategoryDialogState(
-                    category = null,
-                    name = "",
-                    type = type.toCategoryType(),
+                formDialogs = formDialogs.copy(
+                    category = CategoryDialogState(
+                        category = null,
+                        name = "",
+                        type = type.toCategoryType(),
+                    ),
                 )
             }
         }
         val openCreateAccountFromHint: () -> Unit = {
-            createAccountDialog = AccountDialogState(
-                account = null,
-                name = "",
-                currency = defaultCurrency,
-                initialBalanceText = "",
-                selectAsTo = false,
+            formDialogs = formDialogs.copy(
+                account = AccountDialogState(
+                    account = null,
+                    name = "",
+                    currency = defaultCurrency,
+                    initialBalanceText = "",
+                    selectAsTo = false,
+                ),
             )
         }
 

@@ -41,7 +41,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.accounts_duplicate_name
 import org.sjbtimdan.linden.resources.accounts_empty_no_match
 import org.sjbtimdan.linden.resources.accounts_empty_none
 import org.sjbtimdan.linden.resources.accounts_hidden
@@ -50,8 +49,6 @@ import org.sjbtimdan.linden.resources.accounts_hide_confirm
 import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
-import org.sjbtimdan.linden.resources.common_invalid_amount
-import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ErrorSnackbar
@@ -62,7 +59,6 @@ import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
 import org.sjbtimdan.linden.ui.entry.formatAmount
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
-import org.sjbtimdan.linden.ui.entry.parseAmount
 import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.theme.CardElevation
 import org.sjbtimdan.linden.ui.theme.CardShape
@@ -81,10 +77,6 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     // dialog must be answered before the account is actually hidden.
     var hideConfirmation by remember { mutableStateOf<AccountDialogState?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    // Error copy for the dialog's plain save lambda, resolved in composition.
-    val invalidAmountError = stringResource(Res.string.common_invalid_amount)
-    val duplicateNameError = stringResource(Res.string.accounts_duplicate_name)
-    val nameRequiredError = stringResource(Res.string.common_name_required)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -235,76 +227,40 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
         modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
     )
 
-    dialogState?.let { state ->
-        val isEditing = state.account != null
-        AccountDialog(
-            name = state.name,
-            currency = state.currency,
-            initialBalanceText = state.initialBalanceText,
-            nameError = state.nameError,
-            initialBalanceError = state.initialBalanceError,
-            isEditing = isEditing,
-            canChangeCurrency = !isEditing || state.account.id !in accountsWithEntries,
-            canDelete = isEditing && state.account.id !in accountsWithEntries,
-            hidden = state.hidden,
-            onNameChange = { dialogState = state.copy(name = it, nameError = null) },
-            onCurrencyChange = { dialogState = state.copy(currency = it) },
-            onInitialBalanceChange = { dialogState = state.copy(initialBalanceText = it, initialBalanceError = null) },
-            onHiddenChange = { wantHidden ->
-                val existing = state.account
-                if (existing == null) return@AccountDialog
-                if (wantHidden && (allTimeBalances[existing.id] ?: existing.initialBalance) != 0L) {
+    AccountDialogHost(
+        state = dialogState,
+        isEditing = dialogState?.account != null,
+        canChangeCurrency = dialogState?.account?.let { it.id !in accountsWithEntries } ?: true,
+        canDelete = dialogState?.account?.let { it.id !in accountsWithEntries } == true,
+        onStateChange = { dialogState = it },
+        onSave = { name, currency, initialBalance, _ ->
+            val existing = dialogState?.account
+            if (existing != null) {
+                viewModel.updateAccount(
+                    existing.copy(
+                        name = name,
+                        currency = currency,
+                        initialBalance = initialBalance,
+                    ),
+                )
+            } else {
+                viewModel.createAccount(name, currency, initialBalance)
+            }
+        },
+        onHiddenChange = { current, hidden ->
+            val existing = current.account
+            if (existing != null) {
+                if (hidden && (allTimeBalances[existing.id] ?: existing.initialBalance) != 0L) {
                     // A non-zero account is about to leave the totals: ask first.
-                    hideConfirmation = state
+                    hideConfirmation = current
                 } else {
-                    viewModel.setHidden(existing.id, wantHidden)
-                    dialogState = state.copy(hidden = wantHidden)
+                    viewModel.setHidden(existing.id, hidden)
+                    dialogState = current.copy(hidden = hidden)
                 }
-            },
-            onDelete = {
-                val existing = state.account
-                if (existing != null) {
-                    dialogState = null
-                    viewModel.deleteAccount(existing.id)
-                }
-            },
-            onSave = {
-                val name = state.name.trim()
-                if (name.isEmpty()) {
-                    dialogState = state.copy(nameError = nameRequiredError)
-                } else {
-                    // Blank means zero; any other unparseable value is an error, not zero.
-                    val initialBalance = if (state.initialBalanceText.isBlank()) {
-                        0L
-                    } else {
-                        parseAmount(state.initialBalanceText, state.currency.decimalDigits)
-                    }
-                    if (initialBalance == null) {
-                        dialogState = state.copy(initialBalanceError = invalidAmountError)
-                    } else {
-                        val existing = state.account
-                        val saved = if (existing != null) {
-                            viewModel.updateAccount(
-                                existing.copy(
-                                    name = name,
-                                    currency = state.currency,
-                                    initialBalance = initialBalance,
-                                ),
-                            )
-                        } else {
-                            viewModel.createAccount(name, state.currency, initialBalance)
-                        }
-                        if (saved) {
-                            dialogState = null
-                        } else {
-                            dialogState = state.copy(nameError = duplicateNameError)
-                        }
-                    }
-                }
-            },
-            onDismiss = { dialogState = null },
-        )
-    }
+            }
+        },
+        onDelete = { viewModel.deleteAccount(it.id) },
+    )
 
     hideConfirmation?.let { pending ->
         val account = pending.account

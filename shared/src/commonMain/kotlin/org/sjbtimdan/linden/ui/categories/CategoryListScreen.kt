@@ -44,11 +44,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_new
-import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
@@ -66,8 +64,6 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     val categoriesWithEntries by viewModel.categoriesWithEntries.collectAsState()
     var dialogState by remember { mutableStateOf<CategoryDialogState?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val duplicateNameError = stringResource(Res.string.categories_duplicate_name)
-    val nameRequiredError = stringResource(Res.string.common_name_required)
 
     BackHandler(enabled = dialogState != null) {
         dialogState = null
@@ -176,48 +172,21 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
         modifier = Modifier.offset(y = -LocalBottomBarContentPadding.current),
     )
 
-    dialogState?.let { state ->
-        val isEditing = state.category != null
-        CategoryDialog(
-            name = state.name,
-            type = state.type,
-            icon = state.icon,
-            nameError = state.nameError,
-            isEditing = isEditing,
-            canDelete = isEditing && state.category.id !in categoriesWithEntries,
-            onNameChange = { dialogState = state.copy(name = it, nameError = null) },
-            onTypeChange = { dialogState = state.copy(type = it) },
-            onIconChange = { dialogState = state.copy(icon = it) },
-            onDelete = {
-                val existing = state.category
-                if (existing != null) {
-                    dialogState = null
-                    viewModel.deleteCategory(existing.id)
-                }
-            },
-            onSave = {
-                val name = state.name.trim()
-                if (name.isEmpty()) {
-                    dialogState = state.copy(nameError = nameRequiredError)
-                } else {
-                    val existing = state.category
-                    val saved = if (existing != null) {
-                        viewModel.updateCategory(
-                            existing.copy(name = name, type = state.type, icon = state.icon),
-                        )
-                    } else {
-                        viewModel.createCategory(name, state.type, state.icon)
-                    }
-                    if (saved) {
-                        dialogState = null
-                    } else {
-                        dialogState = state.copy(nameError = duplicateNameError)
-                    }
-                }
-            },
-            onDismiss = { dialogState = null },
-        )
-    }
+    CategoryDialogHost(
+        state = dialogState,
+        isEditing = dialogState?.category != null,
+        canDelete = dialogState?.category?.let { it.id !in categoriesWithEntries } == true,
+        onStateChange = { dialogState = it },
+        onSave = { name, type, icon ->
+            val existing = dialogState?.category
+            if (existing != null) {
+                viewModel.updateCategory(existing.copy(name = name, type = type, icon = icon))
+            } else {
+                viewModel.createCategory(name, type, icon)
+            }
+        },
+        onDelete = { viewModel.deleteCategory(it.id) },
+    )
 }
 
 @Composable

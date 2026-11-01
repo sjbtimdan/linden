@@ -35,11 +35,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.accounts_duplicate_name
-import org.sjbtimdan.linden.resources.categories_duplicate_name
 import org.sjbtimdan.linden.resources.common_category
-import org.sjbtimdan.linden.resources.common_invalid_amount
-import org.sjbtimdan.linden.resources.common_name_required
 import org.sjbtimdan.linden.resources.entry_account
 import org.sjbtimdan.linden.resources.entry_add_to_ledger
 import org.sjbtimdan.linden.resources.entry_amount
@@ -58,9 +54,9 @@ import org.sjbtimdan.linden.resources.entry_recurring
 import org.sjbtimdan.linden.resources.entry_to_account
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ClearIconButton
-import org.sjbtimdan.linden.ui.accounts.AccountDialog
+import org.sjbtimdan.linden.ui.accounts.AccountDialogHost
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
-import org.sjbtimdan.linden.ui.categories.CategoryDialog
+import org.sjbtimdan.linden.ui.categories.CategoryDialogHost
 import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import kotlin.time.Instant
 
@@ -119,11 +115,9 @@ fun EntryForm(
     onCreateAccount: ((String, Currency, Long, Boolean) -> Boolean)? = null,
     // Create-dialog state hoisted by a host that wants to open the same dialogs
     // from outside the form (e.g. from its missing-requirement hint). When the
-    // holders are left null, EntryForm remembers its own dialog state.
-    categoryDialogState: CategoryDialogState? = null,
-    onCategoryDialogStateChange: ((CategoryDialogState?) -> Unit)? = null,
-    accountDialogState: AccountDialogState? = null,
-    onAccountDialogStateChange: ((AccountDialogState?) -> Unit)? = null,
+    // holder is left null, EntryForm remembers its own dialog state.
+    dialogs: EntryFormDialogs? = null,
+    onDialogsChange: ((EntryFormDialogs) -> Unit)? = null,
 ) {
     val visibleCategories = categoriesForType(categories, state.type)
     val fromAccount = accounts.firstOrNull { it.id == state.accountId }
@@ -145,10 +139,16 @@ fun EntryForm(
     val newCategoryWithName = stringResource(Res.string.entry_new_category_with_name)
     val newAccountText = stringResource(Res.string.entry_new_account)
     val newAccountWithName = stringResource(Res.string.entry_new_account_with_name)
-    val duplicateCategoryNameError = stringResource(Res.string.categories_duplicate_name)
-    val duplicateAccountNameError = stringResource(Res.string.accounts_duplicate_name)
-    val invalidAmountError = stringResource(Res.string.common_invalid_amount)
-    val nameRequiredError = stringResource(Res.string.common_name_required)
+    val accountCreateLabel: ((String) -> String)? = if (onCreateAccount != null) {
+        { query -> if (query.isBlank()) newAccountText else newAccountWithName.format(query) }
+    } else {
+        null
+    }
+    val categoryCreateLabel: ((String) -> String)? = if (onCreateCategory != null) {
+        { query -> if (query.isBlank()) newCategoryText else newCategoryWithName.format(query) }
+    } else {
+        null
+    }
     // A new entry can be committed from the keypad in one tap; an edit is
     // committed by the form's Save row, so the keypad shows only Enter there.
     val addLabel = Res.string.entry_add_to_ledger
@@ -164,33 +164,35 @@ fun EntryForm(
     // Create dialogs, opened from the "+ New" chips or from hoisted state a
     // host seeded via the missing-requirement hint. The host's state wins when
     // provided; otherwise the dialogs are remembered inside the form.
-    var internalCreateCategory by remember { mutableStateOf<CategoryDialogState?>(null) }
-    var internalCreateAccount by remember { mutableStateOf<AccountDialogState?>(null) }
-    val setCreateCategory: (CategoryDialogState?) -> Unit =
-        onCategoryDialogStateChange ?: { internalCreateCategory = it }
-    val createCategory = categoryDialogState ?: internalCreateCategory
-    val setCreateAccount: (AccountDialogState?) -> Unit =
-        onAccountDialogStateChange ?: { internalCreateAccount = it }
-    val createAccount = accountDialogState ?: internalCreateAccount
+    var internalDialogs by remember { mutableStateOf(EntryFormDialogs()) }
+    val currentDialogs = dialogs ?: internalDialogs
+    val setDialogs: (EntryFormDialogs) -> Unit = onDialogsChange ?: { internalDialogs = it }
+    val updateDialogs: ((EntryFormDialogs) -> EntryFormDialogs) -> Unit = { transform ->
+        setDialogs(transform(currentDialogs))
+    }
     val openCreateCategory: (String) -> Unit = { query ->
-        setCreateCategory(
-            CategoryDialogState(
-                category = null,
-                name = query,
-                type = state.type.toCategoryType(),
-            ),
-        )
+        updateDialogs {
+            it.copy(
+                category = CategoryDialogState(
+                    category = null,
+                    name = query,
+                    type = state.type.toCategoryType(),
+                ),
+            )
+        }
     }
     val openCreateAccount: (String, Boolean) -> Unit = { query, selectAsTo ->
-        setCreateAccount(
-            AccountDialogState(
-                account = null,
-                name = query,
-                currency = defaultCurrency,
-                initialBalanceText = "",
-                selectAsTo = selectAsTo,
-            ),
-        )
+        updateDialogs {
+            it.copy(
+                account = AccountDialogState(
+                    account = null,
+                    name = query,
+                    currency = defaultCurrency,
+                    initialBalanceText = "",
+                    selectAsTo = selectAsTo,
+                ),
+            )
+        }
     }
 
     // While a field is focused the form collapses so that field and its options
@@ -260,11 +262,7 @@ fun EntryForm(
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.From else null },
-                    createLabel = if (onCreateAccount != null) {
-                        { query -> if (query.isBlank()) newAccountText else newAccountWithName.format(query) }
-                    } else {
-                        null
-                    },
+                    createLabel = accountCreateLabel,
                     onCreate = if (onCreateAccount != null) {
                         { query -> openCreateAccount(query, false) }
                     } else {
@@ -281,11 +279,7 @@ fun EntryForm(
                     optionLabel = { it.name },
                     onSelect = { onToAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.To else null },
-                    createLabel = if (onCreateAccount != null) {
-                        { query -> if (query.isBlank()) newAccountText else newAccountWithName.format(query) }
-                    } else {
-                        null
-                    },
+                    createLabel = accountCreateLabel,
                     onCreate = if (onCreateAccount != null) {
                         { query -> openCreateAccount(query, true) }
                     } else {
@@ -321,11 +315,7 @@ fun EntryForm(
                         .filterNot { it == state.categoryId }
                         .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
                     optionIcon = { it.icon?.imageVector() },
-                    createLabel = if (onCreateCategory != null) {
-                        { query -> if (query.isBlank()) newCategoryText else newCategoryWithName.format(query) }
-                    } else {
-                        null
-                    },
+                    createLabel = categoryCreateLabel,
                     onCreate = if (onCreateCategory != null) {
                         { query -> openCreateCategory(query) }
                     } else {
@@ -345,11 +335,7 @@ fun EntryForm(
                     predictedOptions = accountSuggestions
                         .filterNot { it == state.accountId }
                         .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
-                    createLabel = if (onCreateAccount != null) {
-                        { query -> if (query.isBlank()) newAccountText else newAccountWithName.format(query) }
-                    } else {
-                        null
-                    },
+                    createLabel = accountCreateLabel,
                     onCreate = if (onCreateAccount != null) {
                         { query -> openCreateAccount(query, false) }
                     } else {
@@ -501,86 +487,22 @@ fun EntryForm(
         )
     }
 
-    createCategory?.let { dialogState ->
-        CategoryDialog(
-            name = dialogState.name,
-            type = dialogState.type,
-            icon = dialogState.icon,
-            nameError = dialogState.nameError,
-            isEditing = false,
-            canDelete = false,
-            onNameChange = { setCreateCategory(dialogState.copy(name = it, nameError = null)) },
-            onTypeChange = { setCreateCategory(dialogState.copy(type = it)) },
-            onIconChange = { setCreateCategory(dialogState.copy(icon = it)) },
-            onDelete = {},
-            onSave = {
-                val name = dialogState.name.trim()
-                if (name.isEmpty()) {
-                    setCreateCategory(dialogState.copy(nameError = nameRequiredError))
-                } else {
-                    val saved = onCreateCategory?.invoke(name, dialogState.type, dialogState.icon) ?: false
-                    if (saved) {
-                        setCreateCategory(null)
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                    } else {
-                        setCreateCategory(dialogState.copy(nameError = duplicateCategoryNameError))
-                    }
-                }
-            },
-            onDismiss = { setCreateCategory(null) },
-        )
-    }
+    CategoryDialogHost(
+        state = currentDialogs.category,
+        isEditing = false,
+        canDelete = false,
+        onStateChange = { category -> updateDialogs { it.copy(category = category) } },
+        onSave = { name, type, icon -> onCreateCategory?.invoke(name, type, icon) ?: false },
+    )
 
-    createAccount?.let { dialogState ->
-        AccountDialog(
-            name = dialogState.name,
-            currency = dialogState.currency,
-            initialBalanceText = dialogState.initialBalanceText,
-            nameError = dialogState.nameError,
-            initialBalanceError = dialogState.initialBalanceError,
-            isEditing = false,
-            canChangeCurrency = true,
-            canDelete = false,
-            hidden = false,
-            onNameChange = { setCreateAccount(dialogState.copy(name = it, nameError = null)) },
-            onCurrencyChange = { setCreateAccount(dialogState.copy(currency = it)) },
-            onInitialBalanceChange = {
-                setCreateAccount(dialogState.copy(initialBalanceText = it, initialBalanceError = null))
-            },
-            onHiddenChange = {},
-            onDelete = {},
-            onSave = {
-                val name = dialogState.name.trim()
-                if (name.isEmpty()) {
-                    setCreateAccount(dialogState.copy(nameError = nameRequiredError))
-                } else {
-                    // Blank means zero; any other unparseable value is an error, not zero.
-                    val initialBalance = if (dialogState.initialBalanceText.isBlank()) {
-                        0L
-                    } else {
-                        parseAmount(dialogState.initialBalanceText, dialogState.currency.decimalDigits)
-                    }
-                    if (initialBalance == null) {
-                        setCreateAccount(dialogState.copy(initialBalanceError = invalidAmountError))
-                    } else {
-                        val saved = onCreateAccount?.invoke(
-                            name,
-                            dialogState.currency,
-                            initialBalance,
-                            dialogState.selectAsTo,
-                        ) ?: false
-                        if (saved) {
-                            setCreateAccount(null)
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        } else {
-                            setCreateAccount(dialogState.copy(nameError = duplicateAccountNameError))
-                        }
-                    }
-                }
-            },
-            onDismiss = { setCreateAccount(null) },
-        )
-    }
+    AccountDialogHost(
+        state = currentDialogs.account,
+        isEditing = false,
+        canChangeCurrency = true,
+        canDelete = false,
+        onStateChange = { account -> updateDialogs { it.copy(account = account) } },
+        onSave = { name, currency, initialBalance, selectAsTo ->
+            onCreateAccount?.invoke(name, currency, initialBalance, selectAsTo) ?: false
+        },
+    )
 }
