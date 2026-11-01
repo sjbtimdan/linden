@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import org.sjbtimdan.linden.data.CAPTURE_PROCESSED_KEY
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
 import org.sjbtimdan.linden.data.CAPTURE_SEEN_KEY
 import org.sjbtimdan.linden.data.CAPTURE_TEMPLATES_KEY
@@ -20,6 +21,9 @@ const val MAX_PENDING_CAPTURES = 50
 
 /** How many learned templates are kept; the oldest learned falls off the tail. */
 const val MAX_CAPTURE_TEMPLATES = 100
+
+/** How many handled-notification fingerprints are remembered; the oldest falls off the tail. */
+const val MAX_PROCESSED_NOTIFICATIONS = 200
 
 /**
  * Reads and writes the capture allowlist, the pending-capture inbox and the
@@ -73,6 +77,21 @@ class CaptureRepository(
         settingsDao.rawFlow(CAPTURE_TEMPLATES_KEY).map { decodeOrDefault(it) }
 
     /**
+     * Fingerprints of notification versions already handled, newest first, or
+     * null before the listener has ever seeded the store. The listener reads
+     * the active notifications again after a reconnect and skips these, so
+     * catching up cannot duplicate a capture or re-add one already confirmed.
+     */
+    suspend fun processedNotifications(): List<String>? =
+        settingsDao.getRaw(CAPTURE_PROCESSED_KEY)?.let { decodeOrDefault<String>(it) }
+
+    /** Remembers [fingerprints] as handled, newest first and capped; an empty batch still seeds the store. */
+    suspend fun rememberProcessed(fingerprints: Collection<String>) {
+        val current = processedNotifications().orEmpty()
+        writeProcessed((fingerprints + current).distinct().take(MAX_PROCESSED_NOTIFICATIONS))
+    }
+
+    /**
      * Completes [captureId] once its entry is saved: remembers the template
      * [entry] teaches and removes the capture in one step. A capture that is
      * already gone has nothing to learn from and is simply left alone.
@@ -109,6 +128,18 @@ class CaptureRepository(
         val withId = capture.copy(id = id)
         writePending((listOf(withId) + current).take(MAX_PENDING_CAPTURES))
         return withId
+    }
+
+    /**
+     * True when [capture] is already waiting in the inbox. Used before a retry
+     * so a write that failed after the insert cannot add the capture twice; a
+     * confirmed capture has left the inbox and is guarded by its fingerprint.
+     */
+    suspend fun containsPending(capture: PendingCapture): Boolean = pending().any {
+        it.packageName == capture.packageName &&
+            it.capturedAtMillis == capture.capturedAtMillis &&
+            it.amountMinor == capture.amountMinor &&
+            it.description == capture.description
     }
 
     suspend fun removePending(id: Long) {
@@ -153,5 +184,9 @@ class CaptureRepository(
 
     private suspend fun writeTemplates(templates: List<CaptureTemplate>) {
         settingsDao.setRaw(CAPTURE_TEMPLATES_KEY, json.encodeToString(templates))
+    }
+
+    private suspend fun writeProcessed(fingerprints: List<String>) {
+        settingsDao.setRaw(CAPTURE_PROCESSED_KEY, json.encodeToString(fingerprints))
     }
 }

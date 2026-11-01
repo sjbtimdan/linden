@@ -19,6 +19,7 @@ const val CAPTURE_RULES_KEY = "captureRules"
 const val PENDING_CAPTURES_KEY = "pendingCaptures"
 const val CAPTURE_SEEN_KEY = "captureSeenId"
 const val CAPTURE_TEMPLATES_KEY = "captureTemplates"
+const val CAPTURE_PROCESSED_KEY = "captureProcessed"
 
 class SettingsDao(private val queries: SettingsQueries) {
     suspend fun getTheme(): ThemeMode {

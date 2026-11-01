@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.data.CAPTURE_PROCESSED_KEY
 import org.sjbtimdan.linden.data.CAPTURE_RULES_KEY
 import org.sjbtimdan.linden.data.CAPTURE_SEEN_KEY
 import org.sjbtimdan.linden.data.CAPTURE_TEMPLATES_KEY
@@ -107,6 +108,59 @@ class CaptureRepositoryTest : StringSpec({
         second.id shouldBe 2
         repository.pending() shouldBe listOf(second, first)
         repository.pendingFlow().first() shouldBe listOf(second, first)
+    }
+
+    "containsPending matches the posted notification and not another payment" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        val pending = repository.addPending(capture(1))
+
+        repository.containsPending(pending.copy(id = 0)) shouldBe true
+        repository.containsPending(pending.copy(amountMinor = 999)) shouldBe false
+        repository.containsPending(pending.copy(capturedAtMillis = 999)) shouldBe false
+        repository.containsPending(pending.copy(description = "Other")) shouldBe false
+        repository.containsPending(pending.copy(packageName = "other.app")) shouldBe false
+    }
+
+    "processed fingerprints start absent and remember the newest first" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repository.processedNotifications() shouldBe null
+
+        repository.rememberProcessed(listOf("first"))
+        repository.rememberProcessed(listOf("second", "first"))
+
+        repository.processedNotifications() shouldBe listOf("second", "first")
+    }
+
+    "an empty processed batch still seeds the store" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repository.rememberProcessed(emptyList())
+
+        repository.processedNotifications().shouldBeEmpty()
+    }
+
+    "processed fingerprints cap and drop the oldest remembered" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+
+        repeat(MAX_PROCESSED_NOTIFICATIONS + 5) { index -> repository.rememberProcessed(listOf("notification-$index")) }
+
+        val processed = repository.processedNotifications()
+        processed?.size shouldBe MAX_PROCESSED_NOTIFICATIONS
+        processed?.first() shouldBe "notification-${MAX_PROCESSED_NOTIFICATIONS + 4}"
+        processed?.last() shouldBe "notification-5"
+    }
+
+    "a corrupt processed value reads as empty instead of reseeding" {
+        val database = lindenDatabase()
+        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
+        database.settingsQueries.insertOrReplace(CAPTURE_PROCESSED_KEY, "{not json")
+
+        repository.processedNotifications().shouldBeEmpty()
     }
 
     "a capture keeps its zone through the settings table" {
