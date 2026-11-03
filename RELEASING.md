@@ -105,7 +105,8 @@ overlay captions:
 | File | Caption |
 |---|---|
 | `screen-1-ledger-entries.png` | All your money, one timeline |
-| `screen-2-entry-calculator.png` | Add entries in seconds |
-| `screen-3-ledger-accounts.png` | Track accounts in any currency |
-| `screen-4-ledger-categories.png` | Know where it goes |
-| `screen-5-insights.png` | 12 months at a glance |
+| `screen-2-payment-capture.png` | Automatic payment capture |
+| `screen-3-entry-calculator.png` | Add entries in seconds |
+| `screen-4-ledger-accounts.png` | Track accounts in any currency |
+| `screen-5-ledger-categories.png` | Know where it goes |
+| `screen-6-insights.png` | 12 months at a glance |

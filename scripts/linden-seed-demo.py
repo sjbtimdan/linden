@@ -7,8 +7,13 @@ the USD pot), US trips, a December bonus and the occasional reverse conversion.
 
 Idempotent: re-running replaces all rows. No backups are made (caller keeps copies).
 Nothing is ever dated after "now", so the app never enters its hidden-future state.
+
+Pass --capture-demo to also seed a pending Monzo payment and pin the dark theme;
+that is the state used for the Play Store screenshot set.
 """
+import argparse
 import datetime as dt
+import json
 import os
 import random
 import sqlite3
@@ -318,7 +323,35 @@ def build():
 
 
 # ------------------------------------------------------------------- insert --
+def seed_capture_demo(cur):
+    """Add one reviewable Monzo payment and the dark theme used for screenshots."""
+    captured = NOW.replace(hour=8, minute=12, second=0, microsecond=0)
+    rule = [{"packageName": "com.monzo.android", "accountId": MAIN, "enabled": True}]
+    pending = [{
+        "id": 1,
+        "packageName": "com.monzo.android",
+        "amountMinor": cents(8.45),
+        "currency": None,
+        "description": "Pret A Manger",
+        "type": "Expense",
+        "capturedAtMillis": int(captured.timestamp() * 1000),
+        "capturedAtZoneId": "Europe/London",
+    }]
+    for key, value in {
+        "captureRules": json.dumps(rule),
+        "pendingCaptures": json.dumps(pending),
+        "captureSeenId": "0",
+        "theme": "DARK",
+    }.items():
+        cur.execute("INSERT OR REPLACE INTO AppSettingsEntity (key, value) VALUES (?, ?)",
+                    (key, value))
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--capture-demo", action="store_true",
+                        help="seed a pending payment capture and the dark theme")
+    args = parser.parse_args()
     build()
     # Safety net: never store anything after "now".
     now_ms = int(NOW.timestamp() * 1000)
@@ -354,6 +387,8 @@ def main():
                        ("hideLedgerTotal", "false"), ("hideEntryTotal", "false")]:
         cur.execute("INSERT OR REPLACE INTO AppSettingsEntity (key, value) VALUES (?, ?)",
                     (key, value))
+    if args.capture_demo:
+        seed_capture_demo(cur)
 
     # FX rates: GBP base (the default currency). Fresh fetchedAt so startup does
     # not try to refresh and risk a warning banner mid-screenshot.

@@ -48,11 +48,21 @@ The committed set (`screenshots/`, 1080 × 1920, 24-bit PNG without alpha). Each
 carries its caption as an overlay:
 
 1. `screen-1-ledger-entries.png` — Ledger entries — "All your money, one timeline"
-2. `screen-2-entry-calculator.png` — amount calculator — "Add entries in seconds"
-3. `screen-3-ledger-accounts.png` — accounts and currencies — "Track accounts in any currency"
-4. `screen-4-ledger-categories.png` — category totals — "Know where it goes"
-5. `screen-5-insights.png` — 12-month trend — "12 months at a glance"
+2. `screen-2-payment-capture.png` — captured payment — "Automatic payment capture"
+3. `screen-3-entry-calculator.png` — amount calculator — "Add entries in seconds"
+4. `screen-4-ledger-accounts.png` — accounts and currencies — "Track accounts in any currency"
+5. `screen-5-ledger-categories.png` — category totals — "Know where it goes"
+6. `screen-6-insights.png` — 12-month trend — "12 months at a glance"
 
-Regenerate: seed the demo database with `scripts/linden-seed-demo.py` (writes
-`~/.linden/linden.db` — back up the real one first), install the debug APK on a
+Regenerate: seed the demo database with `scripts/linden-seed-demo.py --capture-demo`
+(writes `~/.linden/linden.db` — back up the real one first), install the debug APK on a
 16:9 emulator, then capture with `adb exec-out screencap -p > shot.png`.
+
+Name the raw captures as above, put them in one directory, and overlay the captions:
+
+```bash
+python3 scripts/store-captions.py <raw-dir> docs/store-assets/screenshots
+```
+
+The payment-capture shot expects a launcher app with package `com.monzo.android`
+(label "Monzo"); without one the capture row falls back to the package name.
