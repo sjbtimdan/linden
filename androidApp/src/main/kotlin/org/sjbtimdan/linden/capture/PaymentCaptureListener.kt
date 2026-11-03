@@ -42,13 +42,15 @@ import kotlin.time.Duration.Companion.milliseconds
  * user already confirmed. Notifications dismissed before recovery are
  * unrecoverable.
  */
-class PaymentCaptureListener : NotificationListenerService() {
+class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryListener {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mutex = Mutex()
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        val candidate = sbn.toCandidate() ?: return
-        scope.launch { serialized { processWithRetry(candidate) } }
+        if (sbn.isOngoing) return
+        val notification = sbn.notification ?: return
+        if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
+        scope.launch { serialized { processPostedWithRetry(sbn) } }
     }
 
     override fun onListenerConnected() {
@@ -72,18 +74,32 @@ class PaymentCaptureListener : NotificationListenerService() {
         super.onDestroy()
     }
 
-    /** Captures the notifications still in the shade; shared by the connect and app-resume paths. */
+    override fun recoverMissed() {
+        recoverActiveOnIo()
+    }
+
+    /** Captures the notifications still in the shade; the connect path needs the snapshot before returning. */
     private fun recoverActive() {
         // Snapshot synchronously: a notification posted after this point is
         // delivered to onNotificationPosted, and processing it before the
         // catch-up seeds the store must not make it look already handled.
-        val active = try {
-            activeNotifications?.toList().orEmpty()
-        } catch (e: Exception) {
-            Log.w(TAG, "Cannot read the active notifications", e)
-            emptyList()
-        }
+        val active = snapshotActive()
         scope.launch { serialized { catchUp(active) } }
+    }
+
+    /** Resume path: reading the shade is a binder call, so keep it off the main thread. */
+    private fun recoverActiveOnIo() {
+        scope.launch {
+            val active = snapshotActive()
+            serialized { catchUp(active) }
+        }
+    }
+
+    private fun snapshotActive(): List<StatusBarNotification> = try {
+        activeNotifications?.toList().orEmpty()
+    } catch (e: Exception) {
+        Log.w(TAG, "Cannot read the active notifications", e)
+        emptyList()
     }
 
     private suspend fun serialized(block: suspend () -> Unit) {
@@ -101,8 +117,9 @@ class PaymentCaptureListener : NotificationListenerService() {
         val repository = sharedRepository(applicationContext) ?: return
         val allowlisted = repository.rules().filter { it.enabled }.mapTo(HashSet()) { it.packageName }
         val cutoff = SystemClock.now().toEpochMilliseconds() - CATCH_UP_WINDOW_MILLIS
-        val candidates = active.mapNotNull { it.toCandidate() }
+        val candidates = active
             .filter { it.packageName in allowlisted && it.postTime >= cutoff }
+            .mapNotNull { it.toCandidate() }
             .sortedBy { it.postTime }
         val processed = repository.processedNotifications()
         if (processed == null) {
@@ -116,11 +133,25 @@ class PaymentCaptureListener : NotificationListenerService() {
     }
 
     /**
+     * Reads the allowlist before the notification content: only an allowlisted
+     * package is turned into a [Candidate]. Uses the same retry as [processWithRetry],
+     * so one bad connection cannot drop the notification.
+     */
+    private suspend fun processPostedWithRetry(sbn: StatusBarNotification) = retrying(sbn.packageName) { repository ->
+        if (repository.rules().none { it.enabled && it.packageName == sbn.packageName }) return@retrying
+        val candidate = sbn.toCandidate() ?: return@retrying
+        process(candidate, repository)
+    }
+
+    /**
      * Processes [candidate], retrying a failed database write with a fresh
      * connection: a connection left in a bad state would otherwise make every
      * later capture fail until the process restarts.
      */
-    private suspend fun processWithRetry(candidate: Candidate) {
+    private suspend fun processWithRetry(candidate: Candidate) =
+        retrying(candidate.packageName) { repository -> process(candidate, repository) }
+
+    private suspend fun retrying(packageName: String, block: suspend (CaptureRepository) -> Unit) {
         var lastError: Exception? = null
         for (attempt in 0 until PROCESS_ATTEMPTS) {
             if (attempt > 0) delay(RETRY_DELAY)
@@ -129,7 +160,7 @@ class PaymentCaptureListener : NotificationListenerService() {
                 if (repository == null) {
                     lastError = IllegalStateException("Cannot open the database")
                 } else {
-                    process(candidate, repository)
+                    block(repository)
                     return
                 }
             } catch (e: CancellationException) {
@@ -139,7 +170,7 @@ class PaymentCaptureListener : NotificationListenerService() {
                 discardSharedRepository()
             }
         }
-        Log.w(TAG, "Failed to process a notification from ${candidate.packageName}", lastError)
+        Log.w(TAG, "Failed to process a notification from $packageName", lastError)
     }
 
     private suspend fun process(candidate: Candidate, repository: CaptureRepository) {
@@ -219,10 +250,11 @@ class PaymentCaptureListener : NotificationListenerService() {
          * there instead of waiting for the next process restart.
          */
         fun recover(context: Context) {
-            val listener = connected
-            if (listener == null) Log.i(TAG, "No connected listener; requesting a rebind")
-            requestRebindSafely(context)
-            listener?.recoverActive()
+            if (connected == null) Log.i(TAG, "No connected listener; requesting a rebind")
+            CaptureRecovery(
+                listener = { connected },
+                requestRebind = { requestRebindSafely(context) },
+            ).recover()
         }
 
         private fun requestRebindSafely(context: Context) {
