@@ -1,3 +1,13 @@
+## Version 1.3.0
+
+<en-US>
+- A refreshed look: soft ambient background, floating frosted navigation bar, and smoother card presses and list entrances.
+- New AMOLED theme: true black for OLED screens.
+- The Ledger now has a Today button to jump back to the current period.
+- Quick-entry suggestions show their amount and keep repeated prices separate.
+- Technical upgrades and bug fixes.
+</en-US>
+
 ## Version 1.2.0
 
 <en-US>
