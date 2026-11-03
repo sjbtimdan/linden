@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.sjbtimdan.linden.capture.PaymentCaptureListener
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 
 class MainActivity : ComponentActivity() {
@@ -21,5 +22,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Android can stop delivering notification callbacks while the app is away.
+        PaymentCaptureListener.recover(applicationContext)
     }
 }

@@ -34,12 +34,13 @@ import kotlin.time.Duration.Companion.milliseconds
  * granted notification access.
  *
  * The system can stop delivering callbacks for hours (rebinding the service,
- * killing its process, freezing the app) without telling the user. On every
- * (re)connect the listener therefore scans the notifications still in the
- * shade and captures the recent ones it has not handled; handled versions are
- * remembered in the settings table, so the catch-up cannot duplicate a capture
- * or re-add one the user already confirmed. Notifications dismissed before the
- * reconnect are unrecoverable.
+ * killing its process, freezing the app) without telling the user. The
+ * listener therefore scans the notifications still in the shade on every
+ * (re)connect and whenever the app returns to the foreground, capturing the
+ * recent ones it has not handled; handled versions are remembered in the
+ * settings table, so the catch-up cannot duplicate a capture or re-add one the
+ * user already confirmed. Notifications dismissed before recovery are
+ * unrecoverable.
  */
 class PaymentCaptureListener : NotificationListenerService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -52,6 +53,27 @@ class PaymentCaptureListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         Log.i(TAG, "Listener connected")
+        connected = this
+        recoverActive()
+    }
+
+    override fun onListenerDisconnected() {
+        Log.i(TAG, "Listener disconnected")
+        if (connected === this) connected = null
+        // Re-enables a listener the system snoozed; a listener the user
+        // turned off stays off, because the system denies the request
+        // without access.
+        requestRebindSafely(this)
+    }
+
+    override fun onDestroy() {
+        if (connected === this) connected = null
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    /** Captures the notifications still in the shade; shared by the connect and app-resume paths. */
+    private fun recoverActive() {
         // Snapshot synchronously: a notification posted after this point is
         // delivered to onNotificationPosted, and processing it before the
         // catch-up seeds the store must not make it look already handled.
@@ -62,23 +84,6 @@ class PaymentCaptureListener : NotificationListenerService() {
             emptyList()
         }
         scope.launch { serialized { catchUp(active) } }
-    }
-
-    override fun onListenerDisconnected() {
-        Log.i(TAG, "Listener disconnected")
-        try {
-            // Re-enables a listener the system snoozed; a listener the user
-            // turned off stays off, because the system denies the request
-            // without access.
-            requestRebind(ComponentName(this, PaymentCaptureListener::class.java))
-        } catch (e: Exception) {
-            Log.w(TAG, "Cannot request a listener rebind", e)
-        }
-    }
-
-    override fun onDestroy() {
-        scope.cancel()
-        super.onDestroy()
     }
 
     private suspend fun serialized(block: suspend () -> Unit) {
@@ -190,11 +195,14 @@ class PaymentCaptureListener : NotificationListenerService() {
         null
     }
 
-    private companion object {
-        const val TAG = "PaymentCaptureListener"
-        const val CATCH_UP_WINDOW_MILLIS = 24 * 60 * 60 * 1000L
-        const val PROCESS_ATTEMPTS = 3
-        val RETRY_DELAY = 500.milliseconds
+    companion object {
+        private const val TAG = "PaymentCaptureListener"
+        private const val CATCH_UP_WINDOW_MILLIS = 24 * 60 * 60 * 1000L
+        private const val PROCESS_ATTEMPTS = 3
+        private val RETRY_DELAY = 500.milliseconds
+
+        @Volatile
+        private var connected: PaymentCaptureListener? = null
 
         @Volatile
         private var repository: CaptureRepository? = null
@@ -205,12 +213,35 @@ class PaymentCaptureListener : NotificationListenerService() {
         private val lock = Any()
 
         /**
+         * Called when the app returns to the foreground. The system can stop
+         * delivering callbacks or unbind the listener without telling the app;
+         * asking for a rebind and re-scanning the shade recovers what is still
+         * there instead of waiting for the next process restart.
+         */
+        fun recover(context: Context) {
+            val listener = connected
+            if (listener == null) Log.i(TAG, "No connected listener; requesting a rebind")
+            requestRebindSafely(context)
+            listener?.recoverActive()
+        }
+
+        private fun requestRebindSafely(context: Context) {
+            try {
+                NotificationListenerService.requestRebind(
+                    ComponentName(context, PaymentCaptureListener::class.java),
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Cannot request a listener rebind", e)
+            }
+        }
+
+        /**
          * One database connection for the process, shared by every bind of the
          * listener and never closed while healthy — the app's own connection
          * lives just as long. Null when the database cannot be opened; then
          * nothing is captured rather than crashing the listener.
          */
-        suspend fun sharedRepository(context: Context): CaptureRepository? {
+        private suspend fun sharedRepository(context: Context): CaptureRepository? {
             repository?.let { return it }
             val created = try {
                 val newDriver = DatabaseDriverFactory(context).createDriver()
@@ -231,7 +262,7 @@ class PaymentCaptureListener : NotificationListenerService() {
         }
 
         /** Drops the cached connection so the next attempt opens a fresh one. */
-        fun discardSharedRepository() {
+        private fun discardSharedRepository() {
             synchronized(lock) {
                 repository = null
                 try {
