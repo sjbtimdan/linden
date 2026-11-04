@@ -19,8 +19,6 @@ import kotlinx.coroutines.sync.withLock
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
-import org.sjbtimdan.linden.time.SystemClock
-import java.util.TimeZone
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -75,20 +73,16 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
     }
 
     override fun recoverMissed() {
-        recoverActiveOnIo()
+        recoverActive()
     }
 
-    /** Captures the notifications still in the shade; the connect path needs the snapshot before returning. */
+    /**
+     * Captures the notifications still in the shade, on the listener's IO scope:
+     * reading the shade is a binder call. The connect and resume paths use the
+     * same scope so neither blocks the main thread; posted notifications and the
+     * catch-up are serialized by [mutex] and deduped by fingerprint.
+     */
     private fun recoverActive() {
-        // Snapshot synchronously: a notification posted after this point is
-        // delivered to onNotificationPosted, and processing it before the
-        // catch-up seeds the store must not make it look already handled.
-        val active = snapshotActive()
-        scope.launch { serialized { catchUp(active) } }
-    }
-
-    /** Resume path: reading the shade is a binder call, so keep it off the main thread. */
-    private fun recoverActiveOnIo() {
         scope.launch {
             val active = snapshotActive()
             serialized { catchUp(active) }
@@ -114,44 +108,37 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
 
     /** Captures the recent notifications still in the shade that this listener has not handled. */
     private suspend fun catchUp(active: List<StatusBarNotification>) {
-        val repository = sharedRepository(applicationContext) ?: return
-        val allowlisted = repository.rules().filter { it.enabled }.mapTo(HashSet()) { it.packageName }
-        val cutoff = SystemClock.now().toEpochMilliseconds() - CATCH_UP_WINDOW_MILLIS
-        val candidates = active
-            .filter { it.packageName in allowlisted && it.postTime >= cutoff }
-            .mapNotNull { it.toCandidate() }
-            .sortedBy { it.postTime }
-        val processed = repository.processedNotifications()
-        if (processed == null) {
-            // First connect under this version: remember what is already in
-            // the shade instead of importing it all as new captures.
-            repository.rememberProcessed(candidates.map(::fingerprint))
-            Log.i(TAG, "Seeded ${candidates.size} active notifications")
-            return
+        retrying(label = "catch-up notifications") { ingest ->
+            // Filter by package before reading any content, so a non-allowlisted
+            // app's notification is never parsed.
+            val allowed = ingest.allowedPackages()
+            val candidates = active
+                .filter { it.packageName in allowed }
+                .mapNotNull { it.toCandidate() }
+            val result = ingest.catchUp(candidates)
+            result.seeded?.let { Log.i(TAG, "Seeded $it active notifications") }
         }
-        candidates.filterNot { fingerprint(it) in processed }.forEach { processWithRetry(it) }
     }
 
     /**
      * Reads the allowlist before the notification content: only an allowlisted
-     * package is turned into a [Candidate]. Uses the same retry as [processWithRetry],
-     * so one bad connection cannot drop the notification.
+     * package is turned into a [CaptureCandidate]. Uses the same retry as the
+     * catch-up, so one bad connection cannot drop the notification.
      */
-    private suspend fun processPostedWithRetry(sbn: StatusBarNotification) = retrying(sbn.packageName) { repository ->
-        if (repository.rules().none { it.enabled && it.packageName == sbn.packageName }) return@retrying
-        val candidate = sbn.toCandidate() ?: return@retrying
-        process(candidate, repository)
+    private suspend fun processPostedWithRetry(sbn: StatusBarNotification) {
+        retrying(label = sbn.packageName) { ingest ->
+            if (!ingest.isAllowed(sbn.packageName)) return@retrying
+            val candidate = sbn.toCandidate() ?: return@retrying
+            ingest.process(candidate)
+        }
     }
 
     /**
-     * Processes [candidate], retrying a failed database write with a fresh
-     * connection: a connection left in a bad state would otherwise make every
-     * later capture fail until the process restarts.
+     * Runs [block] against a repository, retrying a failed database write with a
+     * fresh connection: a connection left in a bad state would otherwise make
+     * every later capture fail until the process restarts.
      */
-    private suspend fun processWithRetry(candidate: Candidate) =
-        retrying(candidate.packageName) { repository -> process(candidate, repository) }
-
-    private suspend fun retrying(packageName: String, block: suspend (CaptureRepository) -> Unit) {
+    private suspend fun retrying(label: String, block: suspend (CaptureIngest) -> Unit) {
         var lastError: Exception? = null
         for (attempt in 0 until PROCESS_ATTEMPTS) {
             if (attempt > 0) delay(RETRY_DELAY)
@@ -160,7 +147,7 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
                 if (repository == null) {
                     lastError = IllegalStateException("Cannot open the database")
                 } else {
-                    block(repository)
+                    block(CaptureIngest(repository))
                     return
                 }
             } catch (e: CancellationException) {
@@ -170,46 +157,16 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
                 discardSharedRepository()
             }
         }
-        Log.w(TAG, "Failed to process a notification from $packageName", lastError)
+        Log.w(TAG, "Failed to process $label", lastError)
     }
 
-    private suspend fun process(candidate: Candidate, repository: CaptureRepository) {
-        if (repository.rules().none { it.enabled && it.packageName == candidate.packageName }) return
-        val fingerprint = fingerprint(candidate)
-        if (repository.processedNotifications()?.contains(fingerprint) == true) return
-
-        val parsed = parseCaptureNotification(candidate.content) ?: return
-        val capture = PendingCapture(
-            packageName = candidate.packageName,
-            amountMinor = parsed.amountMinor,
-            currency = parsed.currency,
-            description = parsed.description,
-            type = parsed.type,
-            capturedAtMillis = candidate.postTime,
-            // The device zone when the notification arrived, so an entry
-            // confirmed after a flight still lands on the payment's day.
-            capturedAtZoneId = TimeZone.getDefault().id,
-        )
-        if (!repository.containsPending(capture)) repository.addPending(capture)
-        repository.rememberProcessed(listOf(fingerprint))
-    }
-
-    private fun fingerprint(candidate: Candidate): String = captureFingerprint(candidate.key, candidate.content)
-
-    private data class Candidate(
-        val packageName: String,
-        val key: String,
-        val postTime: Long,
-        val content: CaptureNotification,
-    )
-
-    private fun StatusBarNotification.toCandidate(): Candidate? = try {
+    private fun StatusBarNotification.toCandidate(): CaptureCandidate? = try {
         val notification = notification ?: return null
         if (isOngoing) return null
         if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return null
         // Extras is a public Java field that can come back null after parcelling.
         val extras = notification.extras ?: return null
-        Candidate(
+        CaptureCandidate(
             packageName = packageName,
             key = key,
             postTime = postTime,
@@ -228,7 +185,6 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
 
     companion object {
         private const val TAG = "PaymentCaptureListener"
-        private const val CATCH_UP_WINDOW_MILLIS = 24 * 60 * 60 * 1000L
         private const val PROCESS_ATTEMPTS = 3
         private val RETRY_DELAY = 500.milliseconds
 

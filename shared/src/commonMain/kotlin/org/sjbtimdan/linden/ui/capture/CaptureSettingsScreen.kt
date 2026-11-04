@@ -175,6 +175,7 @@ fun CaptureSettingsScreen(
 
                 FilledTonalButton(
                     onClick = { showAppPicker = true },
+                    enabled = accounts.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(
@@ -247,7 +248,7 @@ fun CaptureSettingsScreen(
             apps = capturableApps.filterNot { app -> rules.any { it.packageName == app.packageName } },
             onPick = { app ->
                 showAppPicker = false
-                viewModel.setRule(app.packageName, accounts.firstOrNull()?.id ?: 0L)
+                accounts.firstOrNull()?.let { account -> viewModel.setRule(app.packageName, account.id) }
             },
             onDismiss = { showAppPicker = false },
         )

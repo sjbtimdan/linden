@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.capture
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -77,6 +78,22 @@ class CaptureSettingsScreenTest : StringSpec({
             onNodeWithText("Example Bank").performClick()
 
             repository.rules() shouldBe listOf(CaptureRule("com.example.bank", main.id))
+        }
+    }
+
+    "an app cannot be added before an account exists to map it to" {
+        withCaptureSettingsViewModel { repository, _, _, viewModel ->
+            setContent {
+                CaptureSettingsScreen(
+                    viewModel = viewModel,
+                    access = access(granted = true),
+                    capturableApps = listOf(CapturableApp("com.example.bank", "Example Bank")),
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Add app").assertIsNotEnabled()
+            repository.rules().shouldBeEmpty()
         }
     }
 
