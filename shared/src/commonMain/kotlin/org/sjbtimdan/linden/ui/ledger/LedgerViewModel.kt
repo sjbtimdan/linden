@@ -326,6 +326,9 @@ class LedgerViewModel(
     /** Drills into an account from the accounts view: narrows the entries to it and switches to the entries view. */
     fun openAccount(accountId: Long) = filters.openAccount(accountId)
 
+    /** Backs out of a drill-down or entry filter: clears it and returns to the view it was opened from. */
+    fun exitDrillDown() = filters.exitDrillDown()
+
     /** Narrows the entries view to a single category; null restores all entries. */
     fun setCategoryFilter(categoryId: Long?) = filters.setCategoryFilter(categoryId)
 

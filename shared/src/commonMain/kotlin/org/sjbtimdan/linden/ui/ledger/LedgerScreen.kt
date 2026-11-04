@@ -116,8 +116,7 @@ fun LedgerScreen(
     }
 
     BackHandler(enabled = dialogState == null && (categoryFilter != null || accountFilter != null)) {
-        viewModel.clearCategoryFilter()
-        viewModel.clearAccountFilter()
+        viewModel.exitDrillDown()
     }
 
     BackHandler(enabled = dialogState != null) {

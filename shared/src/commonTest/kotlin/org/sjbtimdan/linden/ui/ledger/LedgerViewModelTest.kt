@@ -1347,6 +1347,23 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
+    "exitDrillDown restores the view the drill-down started from" {
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+
+            viewModel.setViewMode(LedgerViewMode.Categories)
+            viewModel.openCategory(groceries.id)
+            viewModel.viewMode.value shouldBe LedgerViewMode.Entries
+
+            viewModel.exitDrillDown()
+
+            viewModel.viewMode.value shouldBe LedgerViewMode.Categories
+            viewModel.categoryFilter.value.shouldBeNull()
+            viewModel.displayedEntries.value.shouldHaveSize(1)
+        }
+    }
+
     "category filter follows the type filter" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

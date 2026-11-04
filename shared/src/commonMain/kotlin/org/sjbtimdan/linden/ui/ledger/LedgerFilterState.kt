@@ -55,6 +55,9 @@ internal class LedgerFilterState(
     private val _accountFilter = MutableStateFlow<Long?>(null)
     val accountFilter: StateFlow<Long?> = _accountFilter.asStateFlow()
 
+    /** The view a drill-down started from, so back can return there; null when the filter was set from the entries view. */
+    private var drillOrigin: LedgerViewMode? = null
+
     /** The type filter as the categories view applies it: Transfer counts as All. */
     val typeFilterForCategories: StateFlow<EntryType?> = _typeFilter
         .map { type -> type?.takeUnless { it == EntryType.Transfer } }
@@ -93,19 +96,33 @@ internal class LedgerFilterState(
             _categoryFilter.value = null
             _accountFilter.value = null
         }
+        drillOrigin = null
         _viewMode.value = mode
     }
 
     /** Drills into a category from the categories view: narrows the entries to it and switches to the entries view. */
     fun openCategory(categoryId: Long) {
+        drillOrigin = _viewMode.value.takeIf { it != LedgerViewMode.Entries }
         setCategoryFilter(categoryId)
         _viewMode.value = LedgerViewMode.Entries
     }
 
     /** Drills into an account from the accounts view: narrows the entries to it and switches to the entries view. */
     fun openAccount(accountId: Long) {
+        drillOrigin = _viewMode.value.takeIf { it != LedgerViewMode.Entries }
         setAccountFilter(accountId)
         _viewMode.value = LedgerViewMode.Entries
+    }
+
+    /** Backs out of a drill-down or entry filter: clears it and returns to the view it was opened from. */
+    fun exitDrillDown() {
+        val origin = drillOrigin
+        _categoryFilter.value = null
+        _accountFilter.value = null
+        drillOrigin = null
+        if (origin != null) {
+            _viewMode.value = origin
+        }
     }
 
     /** Narrows the entries view to a single category; null restores all entries. */
@@ -116,6 +133,7 @@ internal class LedgerFilterState(
     /** Removes the category filter, restoring the full entries list. */
     fun clearCategoryFilter() {
         _categoryFilter.value = null
+        drillOrigin = null
     }
 
     /** Narrows the entries view to a single account; null restores all entries. */
@@ -126,6 +144,7 @@ internal class LedgerFilterState(
     /** Removes the account filter, restoring the full entries list. */
     fun clearAccountFilter() {
         _accountFilter.value = null
+        drillOrigin = null
     }
 
     fun goToPreviousPeriod() {

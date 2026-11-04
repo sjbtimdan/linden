@@ -77,6 +77,70 @@ class LedgerFilterStateTest : StringSpec({
         }
     }
 
+    "back from a category drill-down restores the categories view and clears the filter" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15))
+
+            state.setViewMode(LedgerViewMode.Categories)
+            state.openCategory(42)
+            state.exitDrillDown()
+
+            state.viewMode.value shouldBe LedgerViewMode.Categories
+            state.categoryFilter.value shouldBe null
+            scope.cancel()
+        }
+    }
+
+    "back from an account drill-down restores the accounts view and clears the filter" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15))
+
+            state.setViewMode(LedgerViewMode.Accounts)
+            state.openAccount(9)
+            state.exitDrillDown()
+
+            state.viewMode.value shouldBe LedgerViewMode.Accounts
+            state.accountFilter.value shouldBe null
+            scope.cancel()
+        }
+    }
+
+    "back from a filter set in the entries view keeps the entries view" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15))
+
+            state.setCategoryFilter(5)
+            state.exitDrillDown()
+
+            state.viewMode.value shouldBe LedgerViewMode.Entries
+            state.categoryFilter.value shouldBe null
+            scope.cancel()
+        }
+    }
+
+    "clearing a filter chip leaves the entries view and forgets the drill origin" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15))
+
+            state.setViewMode(LedgerViewMode.Categories)
+            state.openCategory(42)
+            state.clearCategoryFilter()
+
+            state.viewMode.value shouldBe LedgerViewMode.Entries
+            state.categoryFilter.value shouldBe null
+
+            state.setCategoryFilter(7)
+            state.exitDrillDown()
+
+            state.viewMode.value shouldBe LedgerViewMode.Entries
+            scope.cancel()
+        }
+    }
+
     "period navigation moves the anchor" {
         onTestMain {
             val scope = testScope()
