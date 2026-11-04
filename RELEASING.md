@@ -79,6 +79,38 @@ are applied automatically.
 The definitive test is installing the minified release APK and exercising the full app
 (add entries, check FX rates, backup/restore, ledger views).
 
+### Play Console edge-to-edge warnings
+
+Play may report two edge-to-edge items after an upload. Neither is a release blocker:
+
+- **Deprecated APIs or parameters for edge-to-edge** (`Window.setStatusBarColor`,
+  `Window.setNavigationBarColor`, `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`). These calls
+  come from AndroidX `enableEdgeToEdge()` itself (`androidx.activity:activity:1.13.0`): its
+  per-API implementations still set bar colors on pre-35 branches and use `SHORT_EDGES` on
+  API 28. Play's static scan does not evaluate the `SDK_INT` guards. No stable AndroidX
+  release removes them (1.14.0-alpha03 only moves the entry point to
+  `WindowCompat.enableEdgeToEdge`, which calls the same setters). Keep
+  `enableEdgeToEdge()`: Google still recommends it, and removing it would drop edge-to-edge
+  on API < 35.
+- **Edge-to-edge may not display for all users.** This is an R8 false positive in the
+  minified release: R8 inlines and removes the tiny `androidx.activity.EdgeToEdge` class, so
+  Play cannot find `EdgeToEdge.enable` even though `MainActivity` calls it. To clear the
+  warning, add this to `proguard-rules.pro` and rebuild:
+
+  ```proguard
+  -keep class androidx.activity.EdgeToEdge {
+      public static void enable(...);
+  }
+  ```
+
+  Verify `androidx.activity.EdgeToEdge` appears in
+  `androidApp/build/outputs/mapping/release/mapping.txt` (and in the AAB DEX). If R8 still
+  inlines the call, add `-neverinline` for the same class.
+
+The app handles insets via `Modifier.screenInsets()` / `screenContainer()` and
+`navigationBarsPadding()`; when touching edge-to-edge code, test on API 24, 28/29, 30–34
+and 35+ with gesture and 3-button navigation and a display cutout.
+
 ## Native debug symbols
 
 The release AAB contains two prebuilt native libraries from dependencies:
