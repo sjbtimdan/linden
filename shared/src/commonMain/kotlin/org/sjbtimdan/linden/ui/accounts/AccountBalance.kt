@@ -1,5 +1,7 @@
 package org.sjbtimdan.linden.ui.accounts
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -7,6 +9,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
+import org.sjbtimdan.linden.model.dayIn
 import org.sjbtimdan.linden.ui.money.ratesByQuote
 import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
 import org.sjbtimdan.linden.ui.money.toDefaultMinor
@@ -44,6 +47,27 @@ fun entryDeltas(entries: List<Entry>): Map<Long, Long> = buildMap {
  */
 fun accountBalancesMinor(deltas: Map<Long, Long>, accounts: List<Account>): Map<Long, Long> =
     accounts.associate { account -> account.id to account.initialBalance + (deltas[account.id] ?: 0) }
+
+/**
+ * Balance of each account after [entries] dated on or before [cutoff]
+ * (inclusive), in the account's own currency: the initial balance plus the net
+ * of those entries. A null [cutoff] includes every entry. Entries are classified
+ * by their day in [zone], not their `createdZone`, so a period boundary near
+ * midnight is applied consistently. Accounts with no entries keep their initial
+ * balance.
+ */
+fun accountBalancesAtEnd(
+    entries: List<Entry>,
+    cutoff: LocalDate?,
+    accounts: List<Account>,
+    zone: TimeZone,
+): List<AccountWithBalance> {
+    val relevant = entries.filter { entry ->
+        cutoff == null || entry.dayIn(zone) <= cutoff
+    }
+    val balances = accountBalancesMinor(entryDeltas(relevant), accounts)
+    return accounts.map { account -> AccountWithBalance(account, balances.getValue(account.id)) }
+}
 
 /**
  * Net total of all account balances converted to [defaultCurrency] minor units.

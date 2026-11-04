@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.accounts
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
@@ -40,8 +41,8 @@ class AccountListViewModel(
         accounts,
         allEntries,
     ) { accounts, entries ->
-        val deltas = entryDeltas(entries)
-        accounts.associate { account -> account.id to account.initialBalance + (deltas[account.id] ?: 0) }
+        accountBalancesAtEnd(entries, cutoff = null, accounts, TimeZone.currentSystemDefault())
+            .associate { item -> item.account.id to item.balance }
     }.stateFlow(emptyMap())
 
     /** Hides or reveals [id]; hidden accounts stay in history but leave the ledger, pickers and filters. */

@@ -23,9 +23,9 @@ import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.time.AppClock
+import org.sjbtimdan.linden.ui.accounts.accountBalancesAtEnd
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.insights.PaceForecast
-import org.sjbtimdan.linden.ui.ledger.accountBalancesAtEnd
 import org.sjbtimdan.linden.ui.insights.paceForecast as computePaceForecast
 
 class EntryPointViewModel(
