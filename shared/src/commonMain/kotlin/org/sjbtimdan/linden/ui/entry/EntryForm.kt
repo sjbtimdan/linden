@@ -1,5 +1,10 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -422,7 +427,11 @@ fun EntryForm(
         }
     }
 
-    if (activeField == ActiveField.Amount) {
+    AnimatedVisibility(
+        visible = activeField == ActiveField.Amount,
+        enter = slideInVertically(tween(220)) { it / 4 } + fadeIn(tween(220)),
+        exit = fadeOut(tween(120)),
+    ) {
         EntryAmountCalculator(
             isToAmount = false,
             state = state,
@@ -439,7 +448,11 @@ fun EntryForm(
         )
     }
 
-    if (activeField == ActiveField.ToAmount) {
+    AnimatedVisibility(
+        visible = activeField == ActiveField.ToAmount,
+        enter = slideInVertically(tween(220)) { it / 4 } + fadeIn(tween(220)),
+        exit = fadeOut(tween(120)),
+    ) {
         EntryAmountCalculator(
             isToAmount = true,
             state = state,

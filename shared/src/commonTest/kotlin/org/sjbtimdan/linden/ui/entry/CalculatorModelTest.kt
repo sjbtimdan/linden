@@ -95,6 +95,26 @@ class CalculatorModelTest : StringSpec({
         CalculatorModel(null).type("100/3").commitValue shouldBe "33.33"
     }
 
+    "reports the pending expression while an operator waits for its operand" {
+        CalculatorModel(null).pendingExpression.shouldBeNull()
+        CalculatorModel(null).type("100").pendingExpression.shouldBeNull()
+        CalculatorModel(null).type("100+").pendingExpression shouldBe "100.00 +"
+        CalculatorModel(null).type("100+3").pendingExpression shouldBe "100.00 + 3"
+        CalculatorModel(null).type("100+3=").pendingExpression.shouldBeNull()
+    }
+
+    "pending expression uses the keypad symbols and replaces a dangling operator" {
+        CalculatorModel(null).type("1-2").pendingExpression shouldBe "1.00 − 2"
+        CalculatorModel(null).type("2*3").pendingExpression shouldBe "2.00 × 3"
+        CalculatorModel(null).type("8/4").pendingExpression shouldBe "8.00 ÷ 4"
+        CalculatorModel(null).type("5+*").pendingExpression shouldBe "5.00 ×"
+    }
+
+    "pending expression follows the currency decimals and hides errors" {
+        CalculatorModel(null, decimalDigits = 0).type("100+3").pendingExpression shouldBe "100 + 3"
+        CalculatorModel(null).type("5/0=").pendingExpression.shouldBeNull()
+    }
+
     "rejects a commit whose pending operation is not a positive amount" {
         CalculatorModel(null).type("100-").commitValue.shouldBeNull()
         CalculatorModel(null).type("5/0").commitValue.shouldBeNull()

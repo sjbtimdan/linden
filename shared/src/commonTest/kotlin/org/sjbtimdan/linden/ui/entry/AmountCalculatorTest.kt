@@ -21,6 +21,7 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
@@ -205,6 +206,55 @@ class AmountCalculatorTest : StringSpec({
                 onNodeWithTag("calculatorModeToggle").performClick()
                 waitForIdle()
                 onNodeWithText("÷").assertDoesNotExist()
+            }
+        }
+    }
+
+    "calculator shows the pending expression above the display" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+                switchToCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("0").performClick()
+                onNodeWithText("+").performClick()
+                onNodeWithText("3").performClick()
+
+                onNodeWithTag("calculatorExpression").assertTextEquals("100.00 + 3")
+            }
+        }
+    }
+
+    "expression line clears once the calculation is evaluated" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+                switchToCalculator()
+
+                onNodeWithText("1").performClick()
+                onNodeWithText("+").performClick()
+                onNodeWithText("2").performClick()
+                onNodeWithText("=").performClick()
+
+                onNodeWithTag("calculatorExpression").assertTextEquals("")
+            }
+        }
+    }
+
+    "Add action takes the primary slot while Enter stays a secondary action" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""), onAdd = {})
+                openCalculator()
+
+                val addBounds = onNodeWithTag("calculatorAdd").getBoundsInRoot()
+                val enterBounds = onNodeWithText("Enter").getBoundsInRoot()
+
+                (addBounds.width > enterBounds.width) shouldBe true
             }
         }
     }

@@ -4,6 +4,14 @@ import kotlin.math.abs
 
 enum class CalculatorOp { Add, Subtract, Multiply, Divide }
 
+private val CalculatorOp.symbol: String
+    get() = when (this) {
+        CalculatorOp.Add -> "+"
+        CalculatorOp.Subtract -> "−"
+        CalculatorOp.Multiply -> "×"
+        CalculatorOp.Divide -> "÷"
+    }
+
 private const val MAX_INT_DIGITS = 14
 private const val MAX_FRAC_DIGITS = 4
 
@@ -50,6 +58,21 @@ class CalculatorModel(
             val minor = value?.toMinorUnitsOrNull() ?: return null
             if (minor <= 0) return null
             return formatMinorUnits(minor, decimalDigits)
+        }
+
+    /**
+     * The pending calculation as it reads on the display ("100.00 + 3"), or null
+     * when no operator is pending. The typed operand is kept verbatim so the line
+     * follows keystrokes; the accumulator is rounded to [decimalDigits] like the
+     * display.
+     */
+    val pendingExpression: String?
+        get() {
+            if (error) return null
+            val operator = op ?: return null
+            val left = acc?.toDisplayStringOrNull(decimalDigits) ?: return null
+            val right = entry.ifEmpty { null }
+            return if (right != null) "$left ${operator.symbol} $right" else "$left ${operator.symbol}"
         }
 
     fun onDigit(digit: Char) {
