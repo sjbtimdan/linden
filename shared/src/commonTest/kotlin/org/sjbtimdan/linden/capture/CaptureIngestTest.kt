@@ -124,4 +124,71 @@ class CaptureIngestTest : StringSpec({
 
         repository.pending().shouldBeEmpty()
     }
+
+    "isAllowed and allowedPackages follow only enabled rules" {
+        val repository = newRepository()
+        repository.setRule(CaptureRule("app.enabled", accountId = 1))
+        repository.setRule(CaptureRule("app.disabled", accountId = 2, enabled = false))
+        val ingest = ingest(repository)
+
+        ingest.isAllowed("app.enabled") shouldBe true
+        ingest.isAllowed("app.disabled") shouldBe false
+        ingest.isAllowed("app.unknown") shouldBe false
+        ingest.allowedPackages() shouldBe setOf("app.enabled")
+    }
+
+    "a catch-up skips an allowlisted app whose rule is disabled" {
+        val repository = newRepository()
+        repository.rememberProcessed(emptyList())
+        repository.setRule(CaptureRule(BANK, accountId = 7, enabled = false))
+
+        val result = ingest(repository).catchUp(listOf(candidate()))
+
+        result.imported shouldBe 0
+        repository.pending().shouldBeEmpty()
+    }
+
+    "the first catch-up seeds only the allowlisted notifications inside the window" {
+        val repository = newRepository()
+        repository.setRule(CaptureRule(BANK, accountId = 7))
+        val allowedRecent = candidate(key = "recent", postTime = NOW - 1_000)
+        val allowedOld = candidate(key = "old", postTime = NOW - CATCH_UP_WINDOW_MILLIS - 1)
+        val otherApp = candidate(packageName = "com.example.other", key = "other")
+
+        val result = ingest(repository).catchUp(
+            listOf(allowedRecent, allowedOld, otherApp),
+            nowMillis = NOW,
+        )
+
+        result shouldBe CaptureCatchUpResult(imported = 0, seeded = 1)
+        repository.pending().shouldBeEmpty()
+        repository.processedNotifications()?.size shouldBe 1
+    }
+
+    "a catch-up does not re-import a capture the user already confirmed" {
+        val repository = newRepository()
+        repository.rememberProcessed(emptyList())
+        repository.setRule(CaptureRule(BANK, accountId = 7))
+        val ingest = ingest(repository)
+
+        ingest.catchUp(listOf(candidate()), nowMillis = NOW).imported shouldBe 1
+        val pending = repository.pending().single()
+        repository.removePending(pending.id)
+
+        ingest.catchUp(listOf(candidate()), nowMillis = NOW).imported shouldBe 0
+        repository.pending().shouldBeEmpty()
+    }
+
+    "a changed notification under the same key creates a new capture" {
+        val repository = newRepository()
+        repository.setRule(CaptureRule(BANK, accountId = 7))
+        val ingest = ingest(repository)
+        val first = candidate(key = "same", content = CaptureNotification("Paid", "CHF 12.50 at Coop"))
+        val second = candidate(key = "same", content = CaptureNotification("Paid", "CHF 8.00 at Migros"))
+
+        ingest.process(first) shouldNotBe null
+        ingest.process(second) shouldNotBe null
+
+        repository.pending().size shouldBe 2
+    }
 })
