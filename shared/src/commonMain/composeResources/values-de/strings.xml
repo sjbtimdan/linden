@@ -51,7 +51,6 @@
     <string name="entry_add">Hinzufügen</string>
     <string name="entry_added">Hinzugefügt</string>
     <string name="entry_updated">Aktualisiert</string>
-    <string name="entry_add_to_ledger">Zur Übersicht hinzufügen</string>
     <string name="entry_undo">Rückgängig</string>
     <string name="entry_edit">Bearbeiten</string>
     <string name="entry_deleted">Buchung gelöscht</string>

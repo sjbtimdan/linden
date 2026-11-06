@@ -42,7 +42,6 @@ import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.entry_account
-import org.sjbtimdan.linden.resources.entry_add_to_ledger
 import org.sjbtimdan.linden.resources.entry_amount
 import org.sjbtimdan.linden.resources.entry_amount_positive
 import org.sjbtimdan.linden.resources.entry_amount_received
@@ -98,7 +97,6 @@ fun EntryForm(
     editEpoch: Int = 0,
     suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
     onQuickEntry: (QuickEntry) -> Unit = {},
-    onAdd: (() -> Unit)? = null,
     defaultCurrency: Currency = Currency.CHF,
     paceCaption: (@Composable () -> Unit)? = null,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
@@ -139,10 +137,6 @@ fun EntryForm(
     } else {
         null
     }
-    // A new entry can be committed from the keypad in one tap; an edit is
-    // committed by the form's Save row, so the keypad shows only Enter there.
-    val addLabel = Res.string.entry_add_to_ledger
-    val calculatorAdd = if (state.editing != null) null else onAdd
     // Recurring quick-entry chips get a subtle tint and a screen-reader label:
     // the chip itself only shows the description and the repeat icon.
     val recurringChipColors = OptionChipColors(
@@ -435,7 +429,6 @@ fun EntryForm(
         EntryAmountCalculator(
             isToAmount = false,
             state = state,
-            accounts = accounts,
             fromAccount = fromAccount,
             toAccount = toAccount,
             purpose = amountLabel,
@@ -443,8 +436,6 @@ fun EntryForm(
             onCommit = onAmountChange,
             onWarning = { amountWarning = it },
             onCancel = { activeField = null },
-            onAdd = calculatorAdd,
-            addLabel = addLabel,
         )
     }
 
@@ -456,7 +447,6 @@ fun EntryForm(
         EntryAmountCalculator(
             isToAmount = true,
             state = state,
-            accounts = accounts,
             fromAccount = fromAccount,
             toAccount = toAccount,
             purpose = receivedAmountLabel,
@@ -464,8 +454,6 @@ fun EntryForm(
             onCommit = onToAmountChange,
             onWarning = { toAmountWarning = it },
             onCancel = { activeField = null },
-            onAdd = calculatorAdd,
-            addLabel = addLabel,
         )
     }
 

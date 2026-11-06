@@ -8,8 +8,6 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
@@ -21,7 +19,6 @@ import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
-import androidx.compose.ui.unit.width
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
@@ -53,11 +50,7 @@ private fun draft(amountText: String): EntryDraft = EntryDraft(
 )
 
 @OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.showForm(
-    initial: EntryDraft,
-    onAmountChange: (String) -> Unit = {},
-    onAdd: (() -> Unit)? = null,
-) {
+private fun ComposeUiTest.showForm(initial: EntryDraft, onAmountChange: (String) -> Unit = {}) {
     setContent {
         var state by remember { mutableStateOf(initial) }
         EntryForm(
@@ -74,7 +67,6 @@ private fun ComposeUiTest.showForm(
             onToAmountChange = {},
             onDescriptionChange = {},
             onCreatedAtChange = {},
-            onAdd = onAdd,
         )
     }
 }
@@ -245,20 +237,6 @@ class AmountCalculatorTest : StringSpec({
         }
     }
 
-    "Add action takes the primary slot while Enter stays a secondary action" {
-        onTestMain {
-            runComposeUiTest {
-                showForm(draft(""), onAdd = {})
-                openCalculator()
-
-                val addBounds = onNodeWithTag("calculatorAdd").getBoundsInRoot()
-                val enterBounds = onNodeWithText("Enter").getBoundsInRoot()
-
-                (addBounds.width > enterBounds.width) shouldBe true
-            }
-        }
-    }
-
     "simple keypad commits a typed amount" {
         onTestMain {
             runComposeUiTest {
@@ -274,129 +252,6 @@ class AmountCalculatorTest : StringSpec({
                 waitForIdle()
 
                 committed shouldBe "12.50"
-            }
-        }
-    }
-
-    "Add action is hidden when the host provides no handler" {
-        onTestMain {
-            runComposeUiTest {
-                showForm(draft(""))
-                openCalculator()
-
-                onNodeWithTag("calculatorAdd").assertDoesNotExist()
-            }
-        }
-    }
-
-    "Add action stays disabled until a valid amount is typed" {
-        onTestMain {
-            runComposeUiTest {
-                showForm(draft(""), onAdd = {})
-                openCalculator()
-
-                onNodeWithTag("calculatorAdd").assertIsNotEnabled()
-
-                onNodeWithText("1").performClick()
-                waitForIdle()
-                onNodeWithTag("calculatorAdd").assertIsEnabled()
-            }
-        }
-    }
-
-    "Add action stays disabled while another required field is missing" {
-        onTestMain {
-            runComposeUiTest {
-                showForm(draft("").copy(accountId = null), onAdd = {})
-                openCalculator()
-
-                onNodeWithText("1").performClick()
-                waitForIdle()
-
-                onNodeWithTag("calculatorAdd").assertIsNotEnabled()
-            }
-        }
-    }
-
-    "Add action commits the amount and fires the handler" {
-        onTestMain {
-            runComposeUiTest {
-                var committed: String? = null
-                var added = false
-                showForm(draft(""), onAmountChange = { committed = it }, onAdd = { added = true })
-                openCalculator()
-
-                onNodeWithText("1").performClick()
-                onNodeWithText("2").performClick()
-                onNodeWithTag("calculatorAdd").performClick()
-                waitForIdle()
-
-                committed shouldBe "12.00"
-                added shouldBe true
-            }
-        }
-    }
-
-    "Add action after a dangling operator commits the value it was enabled for" {
-        onTestMain {
-            runComposeUiTest {
-                var committed: String? = null
-                var added = false
-                showForm(draft(""), onAmountChange = { committed = it }, onAdd = { added = true })
-                openCalculator()
-                switchToCalculator()
-
-                onNodeWithText("1").performClick()
-                onNodeWithText("0").performClick()
-                onNodeWithText("0").performClick()
-                onNodeWithText("+").performClick()
-                waitForIdle()
-                onNodeWithTag("calculatorAdd").assertIsEnabled()
-
-                onNodeWithTag("calculatorAdd").performClick()
-                waitForIdle()
-
-                committed shouldBe "200.00"
-                added shouldBe true
-            }
-        }
-    }
-
-    "Add action is enabled for the evaluated amount of a pending expression" {
-        onTestMain {
-            runComposeUiTest {
-                var committed: String? = null
-                var offered: String? = null
-                var added = false
-                setContent {
-                    AmountCalculator(
-                        initialMinor = null,
-                        currencySymbol = null,
-                        onEnter = { committed = it },
-                        onInvalid = {},
-                        onCancel = {},
-                        onAdd = { added = true },
-                        addEnabled = { value ->
-                            offered = value
-                            true
-                        },
-                    )
-                }
-                switchToCalculator()
-
-                onNodeWithText("1").performClick()
-                onNodeWithText("0").performClick()
-                onNodeWithText("0").performClick()
-                onNodeWithText("+").performClick()
-                onNodeWithText("5").performClick()
-                waitForIdle()
-
-                offered shouldBe "105.00"
-                onNodeWithTag("calculatorAdd").performClick()
-                waitForIdle()
-
-                committed shouldBe "105.00"
-                added shouldBe true
             }
         }
     }

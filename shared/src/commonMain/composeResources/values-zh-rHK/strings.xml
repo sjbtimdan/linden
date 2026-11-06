@@ -51,7 +51,6 @@
     <string name="entry_add">新增</string>
     <string name="entry_added">已新增</string>
     <string name="entry_updated">已更新</string>
-    <string name="entry_add_to_ledger">新增至帳目</string>
     <string name="entry_undo">復原</string>
     <string name="entry_edit">編輯</string>
     <string name="entry_deleted">記錄已刪除</string>

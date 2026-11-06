@@ -328,7 +328,6 @@ fun EntryPoint(
                         viewModel.applyQuickEntry(it)
                         markEdited()
                     },
-                    onAdd = addDraft,
                     defaultCurrency = defaultCurrency,
                     paceCaption = paceCaption,
                     onCreateCategory = { name, type, icon ->

@@ -32,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.entry_add_to_ledger
 import org.sjbtimdan.linden.resources.entry_backspace
 import org.sjbtimdan.linden.resources.entry_calculator
 import org.sjbtimdan.linden.resources.entry_enter
@@ -71,11 +69,6 @@ import org.sjbtimdan.linden.ui.theme.lindenColors
  * calculator; the display-row toggle switches modes, carrying the typed value
  * across. Enter commits a valid positive amount via [onEnter] (otherwise
  * [onInvalid] fires); Escape or the system back cancels via [onCancel].
- *
- * When [onAdd] is provided, an Add action commits the amount like Enter and
- * then fires [onAdd]; it is enabled only while that amount keeps the rest of
- * the entry valid according to [addEnabled]. This lets a host save in one tap
- * when the other fields are already filled.
  */
 @Composable
 fun AmountCalculator(
@@ -87,9 +80,6 @@ fun AmountCalculator(
     onInvalid: () -> Unit,
     onCancel: () -> Unit,
     contextLabel: String? = null,
-    onAdd: (() -> Unit)? = null,
-    addEnabled: (String) -> Boolean = { true },
-    addLabel: StringResource = Res.string.entry_add_to_ledger,
 ) {
     val model = remember(initialMinor, decimalDigits) { CalculatorModel(initialMinor, decimalDigits) }
     var display by remember { mutableStateOf(model.display) }
@@ -204,13 +194,7 @@ fun AmountCalculator(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            CalculatorActions(
-                enter = { enter() },
-                onAdd = onAdd,
-                addEnabled = addEnabled,
-                addLabel = addLabel,
-                commitValue = model.commitValue,
-            )
+            CalculatorActions(enter = { enter() })
         }
     }
 }
@@ -297,42 +281,12 @@ private fun CalculatorDisplay(
 }
 
 @Composable
-private fun CalculatorActions(
-    enter: () -> Unit,
-    onAdd: (() -> Unit)?,
-    addEnabled: (String) -> Boolean,
-    addLabel: StringResource,
-    commitValue: String?,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (onAdd != null) {
-            GradientActionButton(
-                label = stringResource(addLabel),
-                onClick = {
-                    enter()
-                    onAdd()
-                },
-                enabled = commitValue != null && addEnabled(commitValue),
-                modifier = Modifier.weight(1f).height(56.dp).testTag("calculatorAdd"),
-            )
-            TextButton(
-                onClick = enter,
-                modifier = Modifier.height(56.dp),
-            ) {
-                Text(stringResource(Res.string.entry_enter))
-            }
-        } else {
-            GradientActionButton(
-                label = stringResource(Res.string.entry_enter),
-                onClick = enter,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-            )
-        }
-    }
+private fun CalculatorActions(enter: () -> Unit) {
+    GradientActionButton(
+        label = stringResource(Res.string.entry_enter),
+        onClick = enter,
+        modifier = Modifier.fillMaxWidth().height(56.dp),
+    )
 }
 
 @Composable

@@ -51,7 +51,6 @@
     <string name="entry_add">Add</string>
     <string name="entry_added">Added</string>
     <string name="entry_updated">Updated</string>
-    <string name="entry_add_to_ledger">Add To Ledger</string>
     <string name="entry_undo">Undo</string>
     <string name="entry_edit">Edit</string>
     <string name="entry_deleted">Entry deleted</string>
