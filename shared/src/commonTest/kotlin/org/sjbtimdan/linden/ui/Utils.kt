@@ -20,6 +20,7 @@ import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
+import org.sjbtimdan.linden.data.CategoryBudgetService
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
@@ -117,7 +118,7 @@ fun withViewModel(block: suspend ComposeUiTest.(CategoryDao, EntryDao, AccountDa
             val categoryDao = CategoryDao(database.categoryQueries)
             val entryDao = EntryDao(database.entryQueries)
             val accountDao = AccountDao(database.accountQueries)
-            val viewModel = CategoryListViewModel(categoryDao, entryDao)
+            val viewModel = CategoryListViewModel(categoryDao, CategoryBudgetService(database), entryDao)
             block(categoryDao, entryDao, accountDao, viewModel)
         }
     }

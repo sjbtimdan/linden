@@ -12,6 +12,7 @@ import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
+import org.sjbtimdan.linden.data.CategoryBudgetService
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.DefaultDataSeeder
 import org.sjbtimdan.linden.data.EntryDao
@@ -160,7 +161,9 @@ class AppDependencies(
     fun ledgerViewModelIfCreated(): LedgerViewModel? =
         if (ledgerViewModelLazy.isInitialized()) ledgerViewModelLazy.value else null
 
-    val categoryListViewModel: CategoryListViewModel by lazy { CategoryListViewModel(categoryDao, entryDao) }
+    val categoryListViewModel: CategoryListViewModel by lazy {
+        CategoryListViewModel(categoryDao, CategoryBudgetService(database), entryDao)
+    }
     val accountListViewModel: AccountListViewModel by lazy {
         AccountListViewModel(
             accountDao,

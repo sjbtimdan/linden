@@ -12,6 +12,7 @@ import app.cash.sqldelight.db.SqlPreparedStatement
 import io.kotest.core.spec.style.StringSpec
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.BudgetDao
+import org.sjbtimdan.linden.data.CategoryBudgetService
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.SettingsDao
@@ -63,6 +64,7 @@ class BottomBarSnackbarTest : StringSpec({
                 val database = failingWriteDatabase()
                 val viewModel = CategoryListViewModel(
                     categoryDao = CategoryDao(database.categoryQueries),
+                    categoryBudgetService = CategoryBudgetService(database),
                     entryDao = EntryDao(database.entryQueries),
                 )
 

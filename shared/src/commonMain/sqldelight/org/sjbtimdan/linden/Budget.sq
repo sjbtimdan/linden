@@ -17,6 +17,11 @@ insertWithId:
 INSERT OR REPLACE INTO BudgetEntity (id, category_name, limit_minor)
 VALUES (?, ?, ?);
 
+renameByCategoryName:
+UPDATE OR REPLACE BudgetEntity
+SET category_name = :newName
+WHERE category_name = :oldName;
+
 deleteByCategoryName:
 DELETE FROM BudgetEntity
 WHERE category_name = ?;

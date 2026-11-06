@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.ui.categories
 
 import kotlinx.coroutines.flow.StateFlow
+import org.sjbtimdan.linden.data.CategoryBudgetService
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.model.Category
@@ -11,6 +12,7 @@ import org.sjbtimdan.linden.ui.SearchableListViewModel
 
 class CategoryListViewModel(
     private val categoryDao: CategoryDao,
+    private val categoryBudgetService: CategoryBudgetService,
     entryDao: EntryDao,
 ) : SearchableListViewModel() {
     private val searchableCategories = categoryDao.getAll().searchable()
@@ -34,15 +36,19 @@ class CategoryListViewModel(
             category.name,
             excludingId = category.id,
         ) ?: return false
-        launchWrite { categoryDao.update(category.copy(name = trimmed)) }
+        launchWrite {
+            val previousName = searchableCategories.all.value.firstOrNull { it.id == category.id }?.name
+            categoryBudgetService.updateCategory(category.copy(name = trimmed), previousName)
+        }
         return true
     }
 
-    /** Deletes a category; ignored when the category still has entries on it. */
+    /** Deletes a category and its budget; ignored when the category still has entries on it. */
     fun deleteCategory(id: Long) {
         launchWrite {
             if (id in categoriesWithEntries.value) return@launchWrite
-            categoryDao.delete(id)
+            val name = searchableCategories.all.value.firstOrNull { it.id == id }?.name
+            categoryBudgetService.deleteCategory(id, name)
         }
     }
 }
