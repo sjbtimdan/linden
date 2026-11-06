@@ -49,8 +49,9 @@ import org.sjbtimdan.linden.resources.rates_from_date
 import org.sjbtimdan.linden.resources.rates_refresh
 import org.sjbtimdan.linden.resources.rates_refresh_failed
 import org.sjbtimdan.linden.resources.rates_update_automatically
+import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.ui.BottomBarContentSpacer
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.screenContainer
 
 @Composable
@@ -72,7 +73,10 @@ fun RatesScreen(viewModel: RatesViewModel, onNavigateBack: () -> Unit) {
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
+        ScreenHeader(
+            title = stringResource(Res.string.settings_nav_rates),
+            onBack = onNavigateBack,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 

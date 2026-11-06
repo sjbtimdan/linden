@@ -46,8 +46,9 @@ import org.sjbtimdan.linden.resources.insights_next_period
 import org.sjbtimdan.linden.resources.insights_no_entries
 import org.sjbtimdan.linden.resources.insights_previous_period
 import org.sjbtimdan.linden.resources.insights_vs_previous
+import org.sjbtimdan.linden.resources.settings_nav_insights
 import org.sjbtimdan.linden.ui.BottomBarContentSpacer
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.dateLanguage
 import org.sjbtimdan.linden.ui.entry.formatAmountCompact
@@ -88,7 +89,10 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
+        ScreenHeader(
+            title = stringResource(Res.string.settings_nav_insights),
+            onBack = onNavigateBack,
+        )
 
         if (months.isNotEmpty() && !hasEntries) {
             Spacer(modifier = Modifier.height(48.dp))

@@ -45,7 +45,7 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Category").performClick()
+            onNodeWithContentDescription("New Category").performClick()
             onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
 
             onAllNodes(hasSetTextAction())[1].performTextInput("Groceries")
@@ -67,7 +67,7 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Category").performClick()
+            onNodeWithContentDescription("New Category").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Groceries")
             onNodeWithText("Save").performClick()
 
@@ -86,7 +86,7 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Category").performClick()
+            onNodeWithContentDescription("New Category").performClick()
             onNodeWithText("Save").performClick()
 
             onNodeWithText("A name is required").assertIsDisplayed()
@@ -193,7 +193,7 @@ class CategoryListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Category").performClick()
+            onNodeWithContentDescription("New Category").performClick()
             onNode(hasText("New Category") and !hasClickAction()).assertIsDisplayed()
             onNodeWithText("Delete Category").assertDoesNotExist()
         }

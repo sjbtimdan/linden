@@ -50,7 +50,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
 
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
@@ -71,7 +71,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onAllNodes(hasSetTextAction())[2].performTextInput("1500.50")
             onNodeWithText("Save").performClick()
@@ -91,7 +91,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onNodeWithText("Save").performClick()
 
@@ -110,7 +110,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNodeWithText("Save").performClick()
 
             onNodeWithText("A name is required").assertIsDisplayed()
@@ -215,7 +215,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onAllNodes(hasSetTextAction())[1].performTextInput("Main")
             onAllNodes(hasSetTextAction())[2].performTextInput("1o5o0")
             onNodeWithText("Save").performClick()
@@ -234,7 +234,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNodeWithText("Initial balance").assertIsDisplayed()
         }
     }
@@ -248,7 +248,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             Currency.entries.forEach { currency ->
                 onNodeWithText(currency.name).assertIsDisplayed()
             }
@@ -303,7 +303,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNodeWithText("EUR").assertIsEnabled()
         }
     }
@@ -449,7 +449,7 @@ class AccountListScreenTest : StringSpec({
                 )
             }
 
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNode(hasText("New Account") and !hasClickAction()).assertIsDisplayed()
             onNodeWithText("Delete Account").assertDoesNotExist()
         }
@@ -535,7 +535,7 @@ class AccountListScreenTest : StringSpec({
             onNodeWithTag("hiddenSwitch").assertIsDisplayed()
 
             onNodeWithText("Cancel").performClick()
-            onNodeWithText("New Account").performClick()
+            onNodeWithContentDescription("New Account").performClick()
             onNodeWithTag("hiddenSwitch").assertDoesNotExist()
             onNodeWithText("Cancel").performClick()
         }

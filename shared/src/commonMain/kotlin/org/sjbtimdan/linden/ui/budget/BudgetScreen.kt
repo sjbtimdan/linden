@@ -58,12 +58,13 @@ import org.sjbtimdan.linden.resources.budget_new
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.common_invalid_amount
 import org.sjbtimdan.linden.resources.common_save
+import org.sjbtimdan.linden.resources.settings_nav_budgets
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.DialogCancelButton
 import org.sjbtimdan.linden.ui.DialogDeleteButton
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.entry.AmountField
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.filterAmountInput
@@ -102,24 +103,22 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                dialogState = BudgetDialogState(null, "", "")
+        ScreenHeader(
+            title = stringResource(Res.string.settings_nav_budgets),
+            onBack = onNavigateBack,
+            actions = {
+                IconButton(
+                    onClick = {
+                        dialogState = BudgetDialogState(null, "", "")
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(Res.string.budget_new),
+                    )
+                }
             },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(Res.string.budget_new))
-        }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -130,11 +129,30 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = stringResource(Res.string.budget_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.budget_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Button(
+                        onClick = {
+                            dialogState = BudgetDialogState(null, "", "")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(Res.string.budget_new))
+                    }
+                }
             }
         } else {
             val entranceComplete = rememberEntranceComplete(budgets.size)

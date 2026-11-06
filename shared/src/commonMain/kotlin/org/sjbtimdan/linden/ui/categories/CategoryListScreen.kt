@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -44,10 +45,11 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.categories_empty_no_match
 import org.sjbtimdan.linden.resources.categories_empty_none
 import org.sjbtimdan.linden.resources.categories_new
+import org.sjbtimdan.linden.resources.common_categories
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.rememberEntranceComplete
 import org.sjbtimdan.linden.ui.screenContainer
@@ -72,28 +74,26 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
+        ScreenHeader(
+            title = stringResource(Res.string.common_categories),
+            onBack = onNavigateBack,
+            actions = {
+                IconButton(
+                    onClick = {
+                        dialogState = CategoryDialogState(null, "", CategoryType.Expense)
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(Res.string.categories_new),
+                    )
+                }
+            },
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         SearchField(value = searchQuery, onValueChange = viewModel::setSearchQuery)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                dialogState = CategoryDialogState(null, "", CategoryType.Expense)
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(Res.string.categories_new))
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -104,15 +104,36 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = if (searchQuery.isBlank()) {
-                        stringResource(Res.string.categories_empty_none)
-                    } else {
-                        stringResource(Res.string.categories_empty_no_match)
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = if (searchQuery.isBlank()) {
+                            stringResource(Res.string.categories_empty_none)
+                        } else {
+                            stringResource(Res.string.categories_empty_no_match)
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (searchQuery.isBlank()) {
+                        Button(
+                            onClick = {
+                                dialogState = CategoryDialogState(null, "", CategoryType.Expense)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(Res.string.categories_new))
+                        }
+                    }
+                }
             }
         } else {
             val entranceComplete = rememberEntranceComplete(categories.size)

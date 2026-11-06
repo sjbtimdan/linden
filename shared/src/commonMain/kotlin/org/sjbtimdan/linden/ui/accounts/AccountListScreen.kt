@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -46,11 +47,12 @@ import org.sjbtimdan.linden.resources.accounts_hide_confirm
 import org.sjbtimdan.linden.resources.accounts_hide_title
 import org.sjbtimdan.linden.resources.accounts_initial_balance
 import org.sjbtimdan.linden.resources.accounts_new
+import org.sjbtimdan.linden.resources.common_accounts
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.SearchField
 import org.sjbtimdan.linden.ui.entry.HIDDEN_AMOUNT
 import org.sjbtimdan.linden.ui.entry.VisibilityOffIcon
@@ -85,28 +87,26 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
     Column(
         modifier = Modifier.screenContainer(),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
+        ScreenHeader(
+            title = stringResource(Res.string.common_accounts),
+            onBack = onNavigateBack,
+            actions = {
+                IconButton(
+                    onClick = {
+                        dialogState = AccountDialogState(null, "", defaultCurrency, "")
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(Res.string.accounts_new),
+                    )
+                }
+            },
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         SearchField(value = searchQuery, onValueChange = viewModel::setSearchQuery)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                dialogState = AccountDialogState(null, "", defaultCurrency, "")
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(stringResource(Res.string.accounts_new))
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -117,15 +117,36 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = if (searchQuery.isBlank()) {
-                        stringResource(Res.string.accounts_empty_none)
-                    } else {
-                        stringResource(Res.string.accounts_empty_no_match)
-                    },
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Text(
+                        text = if (searchQuery.isBlank()) {
+                            stringResource(Res.string.accounts_empty_none)
+                        } else {
+                            stringResource(Res.string.accounts_empty_no_match)
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (searchQuery.isBlank()) {
+                        Button(
+                            onClick = {
+                                dialogState = AccountDialogState(null, "", defaultCurrency, "")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(Res.string.accounts_new))
+                        }
+                    }
+                }
             }
         } else {
             val entranceComplete = rememberEntranceComplete(accounts.size)

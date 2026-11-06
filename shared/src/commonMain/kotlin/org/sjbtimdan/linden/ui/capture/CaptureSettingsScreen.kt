@@ -62,7 +62,7 @@ import org.sjbtimdan.linden.resources.capture_unsupported
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ConfirmDialog
-import org.sjbtimdan.linden.ui.ScreenBackButton
+import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.screenContainer
 import org.sjbtimdan.linden.ui.settings.SettingsCard
 import org.sjbtimdan.linden.ui.settings.SettingsSectionHeader
@@ -97,15 +97,12 @@ fun CaptureSettingsScreen(
             .screenContainer()
             .verticalScroll(rememberScrollState()),
     ) {
-        ScreenBackButton(onClick = onNavigateBack)
+        ScreenHeader(
+            title = stringResource(Res.string.capture_title),
+            onBack = onNavigateBack,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(Res.string.capture_title),
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
 
         when {
             !access.supported -> SettingsCard {
