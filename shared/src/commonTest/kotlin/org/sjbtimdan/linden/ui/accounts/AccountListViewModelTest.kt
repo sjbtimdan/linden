@@ -291,4 +291,43 @@ class AccountListViewModelTest : StringSpec({
             viewModel.allTimeBalances.value shouldBe mapOf(viewModel.accounts.value.single().id to 3_000L)
         }
     }
+
+    "createAccount refuses a duplicate hidden by the current search" {
+        withAccountViewModel { accountDao, _, _, viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.setSearchQuery("zzz")
+
+            viewModel.createAccount("Main", Currency.USD) shouldBe false
+            viewModel.createAccount("MAIN", Currency.USD) shouldBe false
+
+            accountDao.getAll().first().shouldHaveSize(1)
+        }
+    }
+
+    "updateAccount refuses a name hidden by the current search" {
+        withAccountViewModel { viewModel ->
+            viewModel.createAccount("Main", Currency.CHF)
+            viewModel.createAccount("Savings", Currency.USD)
+            val main = viewModel.accounts.value.first { it.name == "Main" }
+            viewModel.setSearchQuery("Main")
+
+            viewModel.updateAccount(main.copy(name = "Savings")) shouldBe false
+        }
+    }
+
+    "updateAccount blocks a currency change when the account is filtered out by the search" {
+        withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            val main = accountDao.getAll().first().first()
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val groceries = categoryDao.getAll().first().first()
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            viewModel.accountsWithEntries.first { main.id in it }
+            viewModel.setSearchQuery("zzz")
+
+            viewModel.updateAccount(main.copy(currency = Currency.EUR))
+
+            accountDao.getAll().first().single().currency shouldBe Currency.CHF
+        }
+    }
 })

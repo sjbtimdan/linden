@@ -163,4 +163,27 @@ class CategoryListViewModelTest : StringSpec({
             viewModel.categories.value.map { it.name } shouldBe listOf("Groceries")
         }
     }
+
+    "createCategory refuses a duplicate hidden by the current search" {
+        withViewModel { categoryDao, _, _, viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.setSearchQuery("zzz")
+
+            viewModel.createCategory("Groceries", CategoryType.Income) shouldBe false
+            viewModel.createCategory("GROCERIES", CategoryType.Income) shouldBe false
+
+            categoryDao.getAll().first().shouldHaveSize(1)
+        }
+    }
+
+    "updateCategory refuses a name hidden by the current search" {
+        withViewModel { viewModel ->
+            viewModel.createCategory("Groceries", CategoryType.Expense)
+            viewModel.createCategory("Salary", CategoryType.Income)
+            val groceries = viewModel.categories.value.first { it.name == "Groceries" }
+            viewModel.setSearchQuery("Groceries")
+
+            viewModel.updateCategory(groceries.copy(name = "Salary")) shouldBe false
+        }
+    }
 })

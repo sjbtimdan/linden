@@ -20,6 +20,22 @@ abstract class SearchableListViewModel : AppViewModel() {
         _searchQuery.value = query
     }
 
+    /**
+     * A shared source together with its search-narrowed view. Name validation
+     * must use [all], because a duplicate filtered out by the current search
+     * would otherwise be invisible to it and reach the database.
+     */
+    protected class SearchableList<T : NamedEntity>(
+        val all: StateFlow<List<T>>,
+        val filtered: StateFlow<List<T>>,
+    )
+
+    /** Shares [this] once and derives both the complete and the filtered list from it. */
+    protected fun <T : NamedEntity> Flow<List<T>>.searchable(): SearchableList<T> {
+        val all = stateFlow(emptyList())
+        return SearchableList(all, all.filteredBySearch())
+    }
+
     /** [source] narrowed by the current search query on the entity name. */
     protected fun <T : NamedEntity> Flow<List<T>>.filteredBySearch(): StateFlow<List<T>> = combine(
         this,

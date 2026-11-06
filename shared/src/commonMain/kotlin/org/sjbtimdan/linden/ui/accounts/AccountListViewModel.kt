@@ -27,7 +27,9 @@ class AccountListViewModel(
     val hideTotal: StateFlow<Boolean> =
         HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
 
-    val accounts: StateFlow<List<Account>> = accountDao.getAll().filteredBySearch()
+    private val searchableAccounts = accountDao.getAll().searchable()
+
+    val accounts: StateFlow<List<Account>> = searchableAccounts.filtered
 
     /** Accounts referenced by at least one entry; their currency must not be changed. */
     val accountsWithEntries: StateFlow<Set<Long>> = entryDao.accountsWithEntries().stateFlow(emptySet())
@@ -38,7 +40,7 @@ class AccountListViewModel(
      * every entry. The amount a hidden account would remove from the totals.
      */
     val allTimeBalances: StateFlow<Map<Long, Long>> = combine(
-        accounts,
+        searchableAccounts.all,
         allEntries,
     ) { accounts, entries ->
         accountBalancesAtEnd(entries, cutoff = null, accounts, TimeZone.currentSystemDefault())
@@ -52,16 +54,16 @@ class AccountListViewModel(
 
     /** Creates an account; returns false when the name is empty or already taken (case-insensitive). */
     fun createAccount(name: String, currency: Currency, initialBalance: Long = 0): Boolean {
-        val trimmed = uniqueName(accounts.value, name) ?: return false
+        val trimmed = uniqueName(searchableAccounts.all.value, name) ?: return false
         launchWrite { accountDao.create(trimmed, currency, initialBalance) }
         return true
     }
 
     /** Updates an account; returns false when the name is empty or taken by another account (case-insensitive). */
     fun updateAccount(account: Account): Boolean {
-        val trimmed = uniqueName(accounts.value, account.name, excludingId = account.id) ?: return false
+        val trimmed = uniqueName(searchableAccounts.all.value, account.name, excludingId = account.id) ?: return false
         launchWrite {
-            val current = accounts.value.firstOrNull { it.id == account.id }
+            val current = searchableAccounts.all.value.firstOrNull { it.id == account.id }
             val currencyChanged = current != null && current.currency != account.currency
             // Changing the currency of an account with entries would reinterpret
             // every historical entry in the new currency, so it is refused.
