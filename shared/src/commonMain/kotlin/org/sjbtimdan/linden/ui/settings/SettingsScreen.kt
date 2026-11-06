@@ -1,6 +1,5 @@
 package org.sjbtimdan.linden.ui.settings
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -9,40 +8,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -57,43 +42,18 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.common_accounts
 import org.sjbtimdan.linden.resources.common_categories
-import org.sjbtimdan.linden.resources.common_dismiss
-import org.sjbtimdan.linden.resources.common_unknown_error
 import org.sjbtimdan.linden.resources.nav_settings
-import org.sjbtimdan.linden.resources.settings_backup
-import org.sjbtimdan.linden.resources.settings_backup_db
-import org.sjbtimdan.linden.resources.settings_backup_failed
-import org.sjbtimdan.linden.resources.settings_backup_saved
 import org.sjbtimdan.linden.resources.settings_default_currency
-import org.sjbtimdan.linden.resources.settings_export_csv
-import org.sjbtimdan.linden.resources.settings_export_done
-import org.sjbtimdan.linden.resources.settings_export_failed
 import org.sjbtimdan.linden.resources.settings_hide_totals
-import org.sjbtimdan.linden.resources.settings_import_confirm
-import org.sjbtimdan.linden.resources.settings_import_confirm_body
-import org.sjbtimdan.linden.resources.settings_import_failed
-import org.sjbtimdan.linden.resources.settings_import_ivy
-import org.sjbtimdan.linden.resources.settings_import_split_note
-import org.sjbtimdan.linden.resources.settings_import_summary
 import org.sjbtimdan.linden.resources.settings_language
 import org.sjbtimdan.linden.resources.settings_nav_budgets
 import org.sjbtimdan.linden.resources.settings_nav_insights
 import org.sjbtimdan.linden.resources.settings_nav_rates
 import org.sjbtimdan.linden.resources.settings_privacy
-import org.sjbtimdan.linden.resources.settings_restore_backup
-import org.sjbtimdan.linden.resources.settings_restore_confirm
-import org.sjbtimdan.linden.resources.settings_restore_confirm_body
-import org.sjbtimdan.linden.resources.settings_restore_failed
-import org.sjbtimdan.linden.resources.settings_restore_summary
 import org.sjbtimdan.linden.resources.settings_theme
-import org.sjbtimdan.linden.resources.settings_working_backup
-import org.sjbtimdan.linden.resources.settings_working_export
-import org.sjbtimdan.linden.resources.settings_working_import
-import org.sjbtimdan.linden.resources.settings_working_restore
 import org.sjbtimdan.linden.resources.settings_your_data
 import org.sjbtimdan.linden.time.SystemClock
 import org.sjbtimdan.linden.ui.BottomBarContentSpacer
-import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ThemeModePicker
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.label
@@ -122,8 +82,6 @@ fun SettingsScreen(
     val backupState by viewModel.backupState.collectAsState()
     val restoreState by viewModel.restoreState.collectAsState()
     val exportState by viewModel.exportState.collectAsState()
-    var showImportConfirmation by remember { mutableStateOf(false) }
-    var showRestoreConfirmation by remember { mutableStateOf(false) }
 
     val importFilePicker = pickImportFile
         ?: rememberZipFilePicker { input -> input?.let(viewModel::importIvy) }
@@ -133,7 +91,6 @@ fun SettingsScreen(
         ?: rememberDatabaseRestorePicker { input -> input?.let(viewModel::restoreFrom) }
     val exportFilePicker = pickExportFile
         ?: rememberCsvExportPicker { output -> output?.let(viewModel::exportCsv) }
-    val transferInProgress = backupState is BackupState.Working || restoreState is BackupState.Working
 
     Column(
         modifier = Modifier
@@ -265,132 +222,19 @@ fun SettingsScreen(
             }
         }
 
-        SettingsSectionHeader(stringResource(Res.string.settings_backup))
-
-        SettingsCard {
-            FlowRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilledTonalButton(
-                    onClick = { backupFilePicker() },
-                    enabled = !transferInProgress,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.settings_backup_db))
-                }
-                FilledTonalButton(
-                    onClick = { exportFilePicker() },
-                    enabled = exportState !is BackupState.Working,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.settings_export_csv))
-                }
-                OutlinedButton(
-                    onClick = { showRestoreConfirmation = true },
-                    enabled = !transferInProgress,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.settings_restore_backup))
-                }
-                OutlinedButton(
-                    onClick = { showImportConfirmation = true },
-                    enabled = importState !is BackupState.Working,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.settings_import_ivy))
-                }
-            }
-        }
-
-        OperationStatus(
-            state = backupState,
-            workingText = stringResource(Res.string.settings_working_backup),
-            successText = { stringResource(Res.string.settings_backup_saved) },
-            errorText = { message ->
-                stringResource(
-                    Res.string.settings_backup_failed,
-                    message ?: stringResource(Res.string.common_unknown_error),
-                )
-            },
-            onDismiss = viewModel::clearBackupState,
-        )
-
-        OperationStatus(
-            state = restoreState,
-            workingText = stringResource(Res.string.settings_working_restore),
-            successText = { result ->
-                stringResource(Res.string.settings_restore_summary, result.accounts, result.categories, result.entries)
-            },
-            errorText = { message ->
-                stringResource(
-                    Res.string.settings_restore_failed,
-                    message ?: stringResource(Res.string.common_unknown_error),
-                )
-            },
-            onDismiss = viewModel::clearRestoreState,
-        )
-
-        OperationStatus(
-            state = exportState,
-            workingText = stringResource(Res.string.settings_working_export),
-            successText = { stringResource(Res.string.settings_export_done) },
-            errorText = { message ->
-                stringResource(
-                    Res.string.settings_export_failed,
-                    message ?: stringResource(Res.string.common_unknown_error),
-                )
-            },
-            onDismiss = viewModel::clearExportState,
-        )
-
-        OperationStatus(
-            state = importState,
-            workingText = stringResource(Res.string.settings_working_import),
-            successText = { result ->
-                val summary = stringResource(
-                    Res.string.settings_import_summary,
-                    result.accounts,
-                    result.categories,
-                    result.transactions,
-                )
-                val note = if (result.splitTransactions > 0) {
-                    stringResource(Res.string.settings_import_split_note, result.splitTransactions)
-                } else {
-                    ""
-                }
-                summary + note
-            },
-            errorText = { message ->
-                stringResource(
-                    Res.string.settings_import_failed,
-                    message ?: stringResource(Res.string.common_unknown_error),
-                )
-            },
-            onDismiss = viewModel::clearImportState,
+        BackupRestoreSection(
+            backupState = backupState,
+            restoreState = restoreState,
+            exportState = exportState,
+            importState = importState,
+            onBackup = { backupFilePicker() },
+            onExport = { exportFilePicker() },
+            onRestore = { restoreFilePicker() },
+            onImport = { importFilePicker() },
+            onDismissBackup = viewModel::clearBackupState,
+            onDismissRestore = viewModel::clearRestoreState,
+            onDismissExport = viewModel::clearExportState,
+            onDismissImport = viewModel::clearImportState,
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -404,93 +248,6 @@ fun SettingsScreen(
         )
 
         BottomBarContentSpacer()
-
-        if (showImportConfirmation) {
-            ConfirmDialog(
-                title = stringResource(Res.string.settings_import_ivy),
-                body = stringResource(Res.string.settings_import_confirm_body),
-                confirmLabel = stringResource(Res.string.settings_import_confirm),
-                onConfirm = {
-                    showImportConfirmation = false
-                    importFilePicker()
-                },
-                onDismiss = { showImportConfirmation = false },
-            )
-        }
-
-        if (showRestoreConfirmation) {
-            ConfirmDialog(
-                title = stringResource(Res.string.settings_restore_backup),
-                body = stringResource(Res.string.settings_restore_confirm_body),
-                confirmLabel = stringResource(Res.string.settings_restore_confirm),
-                onConfirm = {
-                    showRestoreConfirmation = false
-                    restoreFilePicker()
-                },
-                onDismiss = { showRestoreConfirmation = false },
-            )
-        }
-    }
-}
-
-@Composable
-private fun <T> OperationStatus(
-    state: BackupState<T>,
-    workingText: String,
-    successText: @Composable (T) -> String,
-    errorText: @Composable (String?) -> String,
-    onDismiss: () -> Unit,
-) {
-    when (state) {
-        BackupState.Idle -> Unit
-        BackupState.Working -> WorkingRow(text = workingText)
-        is BackupState.Success -> ImportResultRow(text = successText(state.value), onDismiss = onDismiss)
-        is BackupState.Error -> ImportResultRow(text = errorText(state.message), onDismiss = onDismiss)
-    }
-}
-
-@Composable
-private fun WorkingRow(text: String) {
-    Row(
-        modifier = Modifier.padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(16.dp),
-            strokeWidth = 2.dp,
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
-
-@Composable
-private fun ImportResultRow(text: String, onDismiss: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                role = Role.Button,
-                onClick = onDismiss,
-            )
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            imageVector = Icons.Filled.Close,
-            contentDescription = stringResource(Res.string.common_dismiss),
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(20.dp),
-        )
     }
 }
 
