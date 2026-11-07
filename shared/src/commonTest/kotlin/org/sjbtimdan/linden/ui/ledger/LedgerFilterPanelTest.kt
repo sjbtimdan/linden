@@ -68,8 +68,6 @@ private fun ComposeUiTest.showPanel(viewMode: LedgerViewMode, expanded: Boolean)
     setContent {
         LedgerFilterPanel(
             expanded = expanded,
-            onToggle = {},
-            onSearchClick = {},
             viewMode = viewMode,
             searchQuery = "",
             onSearchQueryChange = {},

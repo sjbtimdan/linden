@@ -744,18 +744,18 @@ class LedgerScreenTest : StringSpec({
             onNodeWithText("Month").performClick()
 
             onNodeWithText("Aug 15, 2026").assertIsDisplayed()
-            onNodeWithText("08:00").assertIsDisplayed()
-            onNodeWithText("12:30").assertIsDisplayed()
-            onNodeWithText("19:00").assertIsDisplayed()
+            onNodeWithText("Main · 08:00").assertIsDisplayed()
+            onNodeWithText("Main · 12:30").assertIsDisplayed()
+            onNodeWithText("Main · 19:00").assertIsDisplayed()
             onNodeWithText("Aug 15, 2026, 08:00").assertDoesNotExist()
 
             // Day: same split — header carries the date, rows only the time.
             onNodeWithTag("periodLabel").performClick()
             onNodeWithText("Day").performClick()
 
-            onNodeWithText("08:00").assertIsDisplayed()
-            onNodeWithText("12:30").assertIsDisplayed()
-            onNodeWithText("19:00").assertIsDisplayed()
+            onNodeWithText("Main · 08:00").assertIsDisplayed()
+            onNodeWithText("Main · 12:30").assertIsDisplayed()
+            onNodeWithText("Main · 19:00").assertIsDisplayed()
             onNodeWithText("Aug 15, 2026, 08:00").assertDoesNotExist()
         }
     }
@@ -1581,7 +1581,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertIsDisplayed()
 
-            onNodeWithTag("filtersHeader").performClick()
+            onNodeWithTag("filterAction").performClick()
             waitForIdle()
 
             onNodeWithTag("searchField").assertDoesNotExist()
@@ -1607,7 +1607,7 @@ class LedgerScreenTest : StringSpec({
 
             val expandedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
 
-            onNodeWithTag("filtersHeader").performClick()
+            onNodeWithTag("filterAction").performClick()
             waitForIdle()
 
             val collapsedTop = onNodeWithTag("entryList").getUnclippedBoundsInRoot().top
@@ -1647,7 +1647,7 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("typeFilter-Income").performClick()
 
-            onNodeWithTag("filtersHeader").performClick()
+            onNodeWithTag("filterAction").performClick()
             waitForIdle()
 
             onNodeWithTag("searchField").assertDoesNotExist()
@@ -1896,6 +1896,6 @@ private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair
 /** The search/filter panel starts collapsed; tests that use it open it first. */
 @OptIn(ExperimentalTestApi::class)
 private fun ComposeUiTest.expandFilters() {
-    onNodeWithTag("filtersHeader").performClick()
+    onNodeWithTag("filterAction").performClick()
     waitForIdle()
 }

@@ -55,6 +55,12 @@ internal fun Entry.subtitle(): String = when (this) {
     else -> account.name
 }
 
+/** The single secondary line: the account (or transfer pair) with the time appended. */
+internal fun Entry.subtitleLine(showTime: Boolean, zone: TimeZone): String {
+    val subtitle = subtitle()
+    return if (showTime) "$subtitle · ${formatTime(createdAt, zone)}" else subtitle
+}
+
 internal fun Entry.amountLabel(): String = when (type) {
     EntryType.Expense -> "− ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
     EntryType.Income -> "+ ${formatAmountCompact(amount, account.currency.decimalDigits)} ${account.currency.symbol}"
@@ -72,11 +78,11 @@ internal fun Entry.tintColor(): Color = when (type) {
  * A single entry row, colored by its category accent (transfers, which carry
  * none, fall back to the entry-type tint): a full-height rail on the leading
  * edge and a solid icon disc, while the amount keeps the type tint so the
- * direction of the money stays readable. [showTime] controls the trailing
- * time-of-day line: rows are grouped under day headers that already carry the
- * date, so the line only shows the time to tell same-day entries apart.
- * [hideAmounts] masks the amount while "Hide Totals" is on, leaving the title
- * and subtitle readable.
+ * direction of the money stays readable. Two text lines: the title, then the
+ * account (or transfer pair). [showTime] appends the time-of-day to that
+ * secondary line: rows are grouped under day headers that already carry the
+ * date, so it only tells same-day entries apart. [hideAmounts] masks the
+ * amount while "Hide Totals" is on, leaving the text readable.
  */
 @Composable
 fun EntryRow(
@@ -129,17 +135,10 @@ fun EntryRow(
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
-                text = entry.subtitle(),
+                text = entry.subtitleLine(showTime, zone),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (showTime) {
-                Text(
-                    text = formatTime(entry.createdAt, zone),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Text(

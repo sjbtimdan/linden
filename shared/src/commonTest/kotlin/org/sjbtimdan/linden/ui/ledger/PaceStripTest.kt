@@ -81,7 +81,7 @@ class PaceStripTest : StringSpec({
             setContent { LedgerScreen(viewModel = viewModel) }
             waitForIdle()
 
-            onNodeWithTag("filtersHeader").performClick()
+            onNodeWithTag("filterAction").performClick()
             waitForIdle()
 
             onNodeWithTag("paceBar").assertDoesNotExist()

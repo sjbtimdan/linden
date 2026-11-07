@@ -23,8 +23,6 @@ private val categoryTypeOptions = listOf(EntryType.Expense, EntryType.Income)
 @Composable
 internal fun LedgerFilterPanel(
     expanded: Boolean,
-    onToggle: () -> Unit,
-    onSearchClick: () -> Unit,
     viewMode: LedgerViewMode,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
@@ -42,47 +40,39 @@ internal fun LedgerFilterPanel(
     onClearAmountFilter: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        FiltersHeader(
-            expanded = expanded,
-            onToggle = onToggle,
-            onSearchClick = onSearchClick,
-        )
+    AnimatedVisibility(visible = expanded, modifier = modifier) {
+        Column {
+            LedgerSearchPanel(
+                query = searchQuery,
+                onQueryChange = onSearchQueryChange,
+                viewMode = viewMode,
+                categories = categories,
+                accounts = accounts,
+                activeCategoryId = activeCategoryId,
+                activeAccountId = activeAccountId,
+                onCategorySelected = onCategorySelected,
+                onAccountSelected = onAccountSelected,
+                focusRequester = focusRequester,
+            )
 
-        AnimatedVisibility(visible = expanded) {
-            Column {
-                LedgerSearchPanel(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    viewMode = viewMode,
-                    categories = categories,
-                    accounts = accounts,
-                    activeCategoryId = activeCategoryId,
-                    activeAccountId = activeAccountId,
-                    onCategorySelected = onCategorySelected,
-                    onAccountSelected = onAccountSelected,
-                    focusRequester = focusRequester,
+            // The accounts view has no chip filters: a balance mixes every
+            // entry type, so its panel only holds the search field. The other
+            // views edit their filters inline — no dialog.
+            if (viewMode != LedgerViewMode.Accounts) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LedgerFilterControls(
+                    typeFilter = typeFilter,
+                    onTypeFilterChange = onTypeFilterChange,
+                    typeOptions = if (viewMode == LedgerViewMode.Categories) {
+                        categoryTypeOptions
+                    } else {
+                        typeOrder
+                    },
+                    showAmountFilter = viewMode == LedgerViewMode.Entries,
+                    amountFilter = amountFilter,
+                    onAmountFilterChange = onAmountFilterChange,
+                    onClearAmountFilter = onClearAmountFilter,
                 )
-
-                // The accounts view has no chip filters: a balance mixes every
-                // entry type, so its panel only holds the search field. The other
-                // views edit their filters inline — no dialog.
-                if (viewMode != LedgerViewMode.Accounts) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LedgerFilterControls(
-                        typeFilter = typeFilter,
-                        onTypeFilterChange = onTypeFilterChange,
-                        typeOptions = if (viewMode == LedgerViewMode.Categories) {
-                            categoryTypeOptions
-                        } else {
-                            typeOrder
-                        },
-                        showAmountFilter = viewMode == LedgerViewMode.Entries,
-                        amountFilter = amountFilter,
-                        onAmountFilterChange = onAmountFilterChange,
-                        onClearAmountFilter = onClearAmountFilter,
-                    )
-                }
             }
         }
     }

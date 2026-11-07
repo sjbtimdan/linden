@@ -47,8 +47,7 @@ class EntryRowTest : StringSpec({
                 }
 
                 onNodeWithText("Coffee").assertIsDisplayed()
-                onNodeWithText("Main").assertIsDisplayed()
-                onNodeWithText("14:30").assertIsDisplayed()
+                onNodeWithText("Main · 14:30").assertIsDisplayed()
                 onNodeWithText("− 4.50 CHF").assertIsDisplayed()
             }
         }
@@ -116,11 +115,12 @@ class EntryRowTest : StringSpec({
                         ),
                         onClick = {},
                         hideAmounts = true,
+                        zone = TimeZone.UTC,
                     )
                 }
 
                 onNodeWithText("Coffee").assertIsDisplayed()
-                onNodeWithText("Main").assertIsDisplayed()
+                onNodeWithText("Main · 00:00").assertIsDisplayed()
                 onNodeWithText("− 4.50 CHF").assertDoesNotExist()
                 onNodeWithText("••••••").assertIsDisplayed()
             }
@@ -163,11 +163,12 @@ class EntryRowTest : StringSpec({
                             toAmount = 7_500,
                         ),
                         onClick = {},
+                        zone = TimeZone.UTC,
                     )
                 }
 
                 onNodeWithText("Transfer").assertIsDisplayed()
-                onNodeWithText("Main → Savings").assertIsDisplayed()
+                onNodeWithText("Main → Savings · 00:00").assertIsDisplayed()
                 onNodeWithText("100.00 CHF").assertIsDisplayed()
             }
         }
