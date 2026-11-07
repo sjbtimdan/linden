@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -1615,7 +1616,7 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "search icon in the collapsed header opens the panel and focuses the search field" {
+    "the filter button in the collapsed header opens the panel and focuses the search field" {
         withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
@@ -1626,10 +1627,11 @@ class LedgerScreenTest : StringSpec({
 
             onNodeWithTag("searchField").assertDoesNotExist()
 
-            onNodeWithContentDescription("Search").performClick()
+            onNodeWithTag("filterAction").performClick()
             waitForIdle()
 
             onNodeWithTag("searchField").assertIsDisplayed()
+            onNodeWithTag("searchField").assertIsFocused()
         }
     }
 

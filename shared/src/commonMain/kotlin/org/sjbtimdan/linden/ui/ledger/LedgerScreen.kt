@@ -85,15 +85,15 @@ fun LedgerScreen(
     val searchFocusRequester = remember { FocusRequester() }
     var requestSearchFocus by remember { mutableStateOf(false) }
 
-    // The filter icon's badge: every active narrowing counts, including a
+    // The filter icon lights up while any narrowing is active, including a
     // non-blank search.
-    val activeFilterCount = listOf(
+    val hasActiveFilters = listOf(
         searchQuery.isNotBlank(),
         typeFilter != null,
         categoryFilter != null,
         accountFilter != null,
         amountFilter != null,
-    ).count { it }
+    ).any { it }
 
     // The one-line Pace strip belongs to the default current-month entries view:
     // a filtered or future-inclusive list no longer describes the whole month.
@@ -170,15 +170,14 @@ fun LedgerScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The search and filter icons live in the period toolbar; the panel
-            // they open sits above it and the removable chips below it.
+            // The filter icon lives in the period toolbar; the panel it opens
+            // sits above it and the removable chips below it.
             LedgerFilterActions(
-                activeFilterCount = activeFilterCount,
-                onSearch = {
-                    filtersExpanded = true
-                    requestSearchFocus = true
+                hasActiveFilters = hasActiveFilters,
+                onToggle = {
+                    if (!filtersExpanded) requestSearchFocus = true
+                    filtersExpanded = !filtersExpanded
                 },
-                onToggle = { filtersExpanded = !filtersExpanded },
             )
             Box(
                 modifier = Modifier.weight(1f),

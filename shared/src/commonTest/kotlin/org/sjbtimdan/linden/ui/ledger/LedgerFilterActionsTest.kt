@@ -1,9 +1,9 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
@@ -13,21 +13,16 @@ import org.sjbtimdan.linden.ui.onTestMain
 @OptIn(ExperimentalTestApi::class)
 class LedgerFilterActionsTest : StringSpec({
 
-    "search fires its callback and filter toggles" {
+    "fires its toggle callback" {
         onTestMain {
             runComposeUiTest {
-                var searched = false
                 var toggled = false
                 setContent {
                     LedgerFilterActions(
-                        activeFilterCount = 0,
-                        onSearch = { searched = true },
+                        hasActiveFilters = false,
                         onToggle = { toggled = true },
                     )
                 }
-
-                onNodeWithTag("searchAction").performClick()
-                searched shouldBe true
 
                 onNodeWithTag("filterAction").performClick()
                 toggled shouldBe true
@@ -35,31 +30,29 @@ class LedgerFilterActionsTest : StringSpec({
         }
     }
 
-    "the badge counts the active filters and disappears at zero" {
+    "lights up while filters are active and off otherwise" {
         onTestMain {
             runComposeUiTest {
                 setContent {
                     LedgerFilterActions(
-                        activeFilterCount = 3,
-                        onSearch = {},
+                        hasActiveFilters = true,
                         onToggle = {},
                     )
                 }
 
-                onNodeWithText("3").assertIsDisplayed()
+                onNodeWithTag("filterAction").assertIsOn()
             }
         }
         onTestMain {
             runComposeUiTest {
                 setContent {
                     LedgerFilterActions(
-                        activeFilterCount = 0,
-                        onSearch = {},
+                        hasActiveFilters = false,
                         onToggle = {},
                     )
                 }
 
-                onNodeWithText("3").assertDoesNotExist()
+                onNodeWithTag("filterAction").assertIsOff()
             }
         }
     }
