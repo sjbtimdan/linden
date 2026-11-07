@@ -12,7 +12,19 @@
 
     <!-- First run -->
     <string name="first_run_title">Willkommen bei Linden</string>
-    <string name="first_run_subtitle">Wähle deine Sprache, Währung und dein Design. Du kannst sie später in den Einstellungen ändern.</string>
+    <string name="first_run_tagline">Verfolge Ausgaben und Einnahmen über Konten und Währungen hinweg.</string>
+    <string name="first_run_feature_accounts_title">Mehrere Konten und Währungen</string>
+    <string name="first_run_feature_accounts_body">Konten in verschiedenen Währungen.</string>
+    <string name="first_run_feature_private_title">Auf deinem Gerät gespeichert</string>
+    <string name="first_run_feature_private_body">Deine Finanzdaten bleiben auf deinem Gerät. Kein Konto erforderlich.</string>
+    <string name="first_run_feature_fast_title">Schnelle Erfassung</string>
+    <string name="first_run_feature_fast_body">Vorschläge aus früheren Einträgen und ein exakter Rechner.</string>
+    <string name="first_run_feature_ledger_title">Übersicht</string>
+    <string name="first_run_feature_ledger_body">Durchsuche deine vergangenen Einnahmen und Ausgaben.</string>
+    <string name="first_run_get_started">Loslegen</string>
+    <string name="first_run_choose_language">Wähle deine Sprache</string>
+    <string name="first_run_choose_currency">Wähle deine Währung</string>
+    <string name="first_run_choose_theme">Wähle dein Design</string>
     <string name="first_run_continue">Weiter</string>
     <string name="first_run_capture_allowed">Benachrichtigungszugriff erlaubt</string>
     <string name="first_run_capture_later">Wähle die Bank-Apps später unter Einstellungen → Zahlungserfassung.</string>

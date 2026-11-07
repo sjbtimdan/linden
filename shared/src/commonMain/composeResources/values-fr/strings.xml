@@ -12,7 +12,19 @@
 
     <!-- First run -->
     <string name="first_run_title">Bienvenue dans Linden</string>
-    <string name="first_run_subtitle">Choisissez votre langue, votre devise et votre thème. Vous pourrez les modifier plus tard dans les Paramètres.</string>
+    <string name="first_run_tagline">Suivez vos dépenses et vos revenus sur tous vos comptes et devises.</string>
+    <string name="first_run_feature_accounts_title">Plusieurs comptes et devises</string>
+    <string name="first_run_feature_accounts_body">Des comptes dans différentes devises.</string>
+    <string name="first_run_feature_private_title">Stocké sur votre appareil</string>
+    <string name="first_run_feature_private_body">Vos données financières restent sur votre appareil. Aucun compte requis.</string>
+    <string name="first_run_feature_fast_title">Saisie rapide</string>
+    <string name="first_run_feature_fast_body">Des suggestions issues de vos entrées passées et une calculatrice exacte.</string>
+    <string name="first_run_feature_ledger_title">Journal</string>
+    <string name="first_run_feature_ledger_body">Recherchez vos revenus et dépenses passés.</string>
+    <string name="first_run_get_started">Commencer</string>
+    <string name="first_run_choose_language">Choisissez votre langue</string>
+    <string name="first_run_choose_currency">Choisissez votre devise</string>
+    <string name="first_run_choose_theme">Choisissez votre thème</string>
     <string name="first_run_continue">Continuer</string>
     <string name="first_run_capture_allowed">Accès aux notifications autorisé</string>
     <string name="first_run_capture_later">Choisissez plus tard les applications bancaires à lire, dans Paramètres → Capture des paiements.</string>

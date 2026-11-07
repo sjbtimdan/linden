@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -37,34 +39,46 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.capture_enable
 import org.sjbtimdan.linden.resources.capture_intro
 import org.sjbtimdan.linden.resources.capture_title
+import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.first_run_capture_allowed
 import org.sjbtimdan.linden.resources.first_run_capture_find
 import org.sjbtimdan.linden.resources.first_run_capture_later
+import org.sjbtimdan.linden.resources.first_run_choose_currency
+import org.sjbtimdan.linden.resources.first_run_choose_language
+import org.sjbtimdan.linden.resources.first_run_choose_theme
 import org.sjbtimdan.linden.resources.first_run_continue
-import org.sjbtimdan.linden.resources.first_run_subtitle
-import org.sjbtimdan.linden.resources.first_run_title
-import org.sjbtimdan.linden.resources.settings_default_currency
-import org.sjbtimdan.linden.resources.settings_language
-import org.sjbtimdan.linden.resources.settings_theme
-import org.sjbtimdan.linden.ui.ThemeModePicker
+import org.sjbtimdan.linden.resources.first_run_get_started
 import org.sjbtimdan.linden.ui.capture.NotificationAccess
 import org.sjbtimdan.linden.ui.capture.rememberNotificationAccess
 import org.sjbtimdan.linden.ui.entry.platformLocaleTag
-import org.sjbtimdan.linden.ui.settings.SettingsSectionHeader
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
+/** The ordered steps of the first-run wizard. */
+internal enum class FirstRunStep { Welcome, Language, Currency, Theme, Capture }
+
+/** The wizard steps; payment capture is only offered where the platform supports it. */
+internal fun firstRunSteps(captureSupported: Boolean): List<FirstRunStep> = buildList {
+    add(FirstRunStep.Welcome)
+    add(FirstRunStep.Language)
+    add(FirstRunStep.Currency)
+    add(FirstRunStep.Theme)
+    if (captureSupported) add(FirstRunStep.Capture)
+}
+
 /**
- * Shown once on a fresh install, before the app: asks for the app language,
- * default currency and theme so the app starts in a setup the user recognizes.
- * The language previews live — picking one re-composes the screen in it — and
- * the theme previews the same way. Nothing is persisted until Continue, which
- * passes all three choices to [onComplete]; the resolved system language, CHF
- * and the System theme are pre-selected so Continue is always enabled.
+ * Shown once on a fresh install, before the app: a short wizard that
+ * introduces Linden, then asks for the app language, default currency and
+ * theme so the app starts in a setup the user recognizes. The language and
+ * theme preview live — picking one re-composes every step in it — and nothing
+ * is persisted until the last step's Continue, which passes all three choices
+ * to [onComplete]; the resolved system language, CHF and the System theme are
+ * pre-selected so the wizard always reaches the end.
  *
- * Where the platform has notification capture (Android), the same screen
- * introduces it and offers the system grant. Which apps may be read is left to
- * Settings: a capture rule binds an app to an account, and no accounts exist
- * until Continue seeds them. Capture is never a gate — Continue stays enabled.
+ * Where the platform has notification capture (Android), a dedicated step
+ * introduces it and offers the system grant. Which apps may be read is left
+ * to Settings: a capture rule binds an app to an account, and no accounts
+ * exist until the wizard completes. Capture is never a gate — Continue stays
+ * enabled.
  */
 @Composable
 fun FirstRunScreen(
@@ -76,6 +90,10 @@ fun FirstRunScreen(
     }
     var currency by rememberSaveable { mutableStateOf(Currency.CHF) }
     var theme by rememberSaveable { mutableStateOf(ThemeMode.SYSTEM) }
+    var stepIndex by rememberSaveable { mutableIntStateOf(0) }
+
+    val steps = firstRunSteps(access.supported)
+    val step = steps[stepIndex]
 
     ApplyLanguageOverride(language)
     key(language) {
@@ -83,118 +101,174 @@ fun FirstRunScreen(
             Column(
                 modifier = Modifier
                     .screenContainer()
-                    .verticalScroll(rememberScrollState())
                     .testTag("firstRunScreen"),
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(Res.string.first_run_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(Res.string.first_run_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                SettingsSectionHeader(stringResource(Res.string.settings_language))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    languageOptions.forEach { option ->
-                        FilterChip(
-                            selected = language == option,
-                            onClick = { language = option },
-                            label = { Text(option.label()) },
-                            modifier = Modifier.testTag("firstRunLanguage-${option.name}"),
-                        )
-                    }
-                }
-
-                SettingsSectionHeader(stringResource(Res.string.settings_default_currency))
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Currency.entries.forEach { entry ->
-                        FilterChip(
-                            selected = currency == entry,
-                            onClick = { currency = entry },
-                            label = { Text(entry.name) },
-                            modifier = Modifier.testTag("firstRunCurrency-${entry.name}"),
-                        )
-                    }
-                }
-
-                SettingsSectionHeader(stringResource(Res.string.settings_theme))
-                ThemeModePicker(
-                    selected = theme,
-                    onSelect = { theme = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    tagPrefix = "firstRunTheme-",
-                )
-
-                if (access.supported) {
-                    SettingsSectionHeader(stringResource(Res.string.capture_title))
-                    Text(
-                        text = stringResource(Res.string.capture_intro),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (access.granted) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = stringResource(Res.string.first_run_capture_allowed),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.testTag("firstRunCaptureAllowed"),
-                            )
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = access.openSettings,
-                            modifier = Modifier.testTag("firstRunCaptureAccess"),
-                        ) {
-                            Text(stringResource(Res.string.capture_enable))
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(Res.string.first_run_capture_find),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.testTag("firstRunCaptureFind"),
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(Res.string.first_run_capture_later),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                if (step != FirstRunStep.Welcome) {
+                    ScreenHeader(
+                        title = stepTitle(step),
+                        onBack = { stepIndex-- },
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(
-                    onClick = { onComplete(language, currency, theme) },
+                Column(
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .testTag("firstRunContinue"),
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
                 ) {
-                    Text(stringResource(Res.string.first_run_continue))
+                    when (step) {
+                        FirstRunStep.Welcome -> FirstRunWelcome()
+                        FirstRunStep.Language -> LanguageStep(language) { language = it }
+                        FirstRunStep.Currency -> CurrencyStep(currency) { currency = it }
+                        FirstRunStep.Theme -> ThemeStep(theme) { theme = it }
+                        FirstRunStep.Capture -> CaptureStep(access)
+                    }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+
+                FirstRunFooter(
+                    isFirst = stepIndex == 0,
+                    onBack = { stepIndex-- },
+                    onContinue = {
+                        if (stepIndex == steps.lastIndex) {
+                            onComplete(language, currency, theme)
+                        } else {
+                            stepIndex++
+                        }
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun stepTitle(step: FirstRunStep): String = when (step) {
+    FirstRunStep.Language -> stringResource(Res.string.first_run_choose_language)
+    FirstRunStep.Currency -> stringResource(Res.string.first_run_choose_currency)
+    FirstRunStep.Theme -> stringResource(Res.string.first_run_choose_theme)
+    FirstRunStep.Capture -> stringResource(Res.string.capture_title)
+    FirstRunStep.Welcome -> ""
+}
+
+@Composable
+private fun LanguageStep(selected: AppLanguage, onSelect: (AppLanguage) -> Unit) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        languageOptions.forEach { option ->
+            FilterChip(
+                selected = selected == option,
+                onClick = { onSelect(option) },
+                label = { Text(option.label()) },
+                modifier = Modifier.testTag("firstRunLanguage-${option.name}"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CurrencyStep(selected: Currency, onSelect: (Currency) -> Unit) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Currency.entries.forEach { entry ->
+            FilterChip(
+                selected = selected == entry,
+                onClick = { onSelect(entry) },
+                label = { Text(entry.name) },
+                modifier = Modifier.testTag("firstRunCurrency-${entry.name}"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeStep(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
+    ThemeModePicker(
+        selected = selected,
+        onSelect = onSelect,
+        modifier = Modifier.fillMaxWidth(),
+        tagPrefix = "firstRunTheme-",
+    )
+}
+
+@Composable
+private fun CaptureStep(access: NotificationAccess) {
+    Text(
+        text = stringResource(Res.string.capture_intro),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+    if (access.granted) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = stringResource(Res.string.first_run_capture_allowed),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("firstRunCaptureAllowed"),
+            )
+        }
+    } else {
+        OutlinedButton(
+            onClick = access.openSettings,
+            modifier = Modifier.testTag("firstRunCaptureAccess"),
+        ) {
+            Text(stringResource(Res.string.capture_enable))
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(Res.string.first_run_capture_find),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag("firstRunCaptureFind"),
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = stringResource(Res.string.first_run_capture_later),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun FirstRunFooter(isFirst: Boolean, onBack: () -> Unit, onContinue: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (!isFirst) {
+            OutlinedButton(
+                onClick = onBack,
+                modifier = Modifier.testTag("firstRunBack"),
+            ) {
+                Text(stringResource(Res.string.common_back))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+        Button(
+            onClick = onContinue,
+            modifier = Modifier
+                .weight(1f)
+                .testTag("firstRunContinue"),
+        ) {
+            Text(
+                stringResource(
+                    if (isFirst) Res.string.first_run_get_started else Res.string.first_run_continue,
+                ),
+            )
         }
     }
 }

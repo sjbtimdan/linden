@@ -12,7 +12,19 @@
 
     <!-- First run -->
     <string name="first_run_title">Linden में आपका स्वागत है</string>
-    <string name="first_run_subtitle">अपनी भाषा, मुद्रा और थीम चुनें। आप इन्हें बाद में सेटिंग्स में बदल सकते हैं।</string>
+    <string name="first_run_tagline">खातों और मुद्राओं में खर्च और आय पर नज़र रखें।</string>
+    <string name="first_run_feature_accounts_title">कई खाते और मुद्राएँ</string>
+    <string name="first_run_feature_accounts_body">अलग-अलग मुद्राओं में खाते।</string>
+    <string name="first_run_feature_private_title">आपके डिवाइस पर संग्रहीत</string>
+    <string name="first_run_feature_private_body">आपके वित्तीय डेटा आपके डिवाइस पर रहते हैं। कोई खाता आवश्यक नहीं।</string>
+    <string name="first_run_feature_fast_title">तेज़ प्रविष्टि</string>
+    <string name="first_run_feature_fast_body">पिछली प्रविष्टियों से सुझाव और एक सटीक कैलकुलेटर।</string>
+    <string name="first_run_feature_ledger_title">बहीखाता</string>
+    <string name="first_run_feature_ledger_body">अपनी पिछली आय और खर्च खोजें।</string>
+    <string name="first_run_get_started">शुरू करें</string>
+    <string name="first_run_choose_language">अपनी भाषा चुनें</string>
+    <string name="first_run_choose_currency">अपनी मुद्रा चुनें</string>
+    <string name="first_run_choose_theme">अपनी थीम चुनें</string>
     <string name="first_run_continue">जारी रखें</string>
     <string name="first_run_capture_allowed">सूचना पहुँच अनुमत है</string>
     <string name="first_run_capture_later">कौन-से बैंक ऐप्स पढ़ने हैं, यह बाद में सेटिंग्स → भुगतान कैप्चर में चुनें।</string>

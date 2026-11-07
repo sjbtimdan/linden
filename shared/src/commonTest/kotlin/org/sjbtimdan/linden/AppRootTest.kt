@@ -119,7 +119,11 @@ class AppRootTest : StringSpec({
 
                     onNodeWithTag("firstRunScreen").assertIsDisplayed()
 
+                    // Welcome → Language → Currency → Theme (then completes).
+                    onNodeWithTag("firstRunContinue").performClick()
+                    onNodeWithTag("firstRunContinue").performClick()
                     onNodeWithTag("firstRunCurrency-USD").performClick()
+                    onNodeWithTag("firstRunContinue").performClick()
                     onNodeWithTag("firstRunContinue").performClick()
                     waitForIdle()
 

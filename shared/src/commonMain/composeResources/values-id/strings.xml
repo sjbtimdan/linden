@@ -12,7 +12,19 @@
 
     <!-- First run -->
     <string name="first_run_title">Selamat datang di Linden</string>
-    <string name="first_run_subtitle">Pilih bahasa, mata uang, dan tema Anda. Anda dapat mengubahnya nanti di Pengaturan.</string>
+    <string name="first_run_tagline">Lacak pengeluaran dan pemasukan di berbagai akun dan mata uang.</string>
+    <string name="first_run_feature_accounts_title">Beberapa akun dan mata uang</string>
+    <string name="first_run_feature_accounts_body">Akun dalam mata uang yang berbeda.</string>
+    <string name="first_run_feature_private_title">Tersimpan di perangkat Anda</string>
+    <string name="first_run_feature_private_body">Data keuangan Anda tetap di perangkat Anda. Tidak perlu akun.</string>
+    <string name="first_run_feature_fast_title">Entri cepat</string>
+    <string name="first_run_feature_fast_body">Saran dari entri sebelumnya dan kalkulator yang tepat.</string>
+    <string name="first_run_feature_ledger_title">Catatan</string>
+    <string name="first_run_feature_ledger_body">Cari pemasukan dan pengeluaran Anda sebelumnya.</string>
+    <string name="first_run_get_started">Mulai</string>
+    <string name="first_run_choose_language">Pilih bahasa Anda</string>
+    <string name="first_run_choose_currency">Pilih mata uang Anda</string>
+    <string name="first_run_choose_theme">Pilih tema Anda</string>
     <string name="first_run_continue">Lanjutkan</string>
     <string name="first_run_capture_allowed">Akses notifikasi diizinkan</string>
     <string name="first_run_capture_later">Pilih aplikasi bank yang dibaca nanti, di Pengaturan → Tangkap pembayaran.</string>

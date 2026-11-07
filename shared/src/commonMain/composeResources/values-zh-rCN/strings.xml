@@ -12,7 +12,19 @@
 
     <!-- First run -->
     <string name="first_run_title">欢迎使用 Linden</string>
-    <string name="first_run_subtitle">选择你的语言、货币和主题。之后可以在设置中更改。</string>
+    <string name="first_run_tagline">跨账户和货币追踪支出与收入。</string>
+    <string name="first_run_feature_accounts_title">多个账户与货币</string>
+    <string name="first_run_feature_accounts_body">不同货币的账户。</string>
+    <string name="first_run_feature_private_title">存储在您的设备上</string>
+    <string name="first_run_feature_private_body">您的财务数据保存在设备上。无需账户。</string>
+    <string name="first_run_feature_fast_title">快速记账</string>
+    <string name="first_run_feature_fast_body">来自历史记录的建议和精确计算器。</string>
+    <string name="first_run_feature_ledger_title">账本</string>
+    <string name="first_run_feature_ledger_body">搜索您过去的收入与支出。</string>
+    <string name="first_run_get_started">开始使用</string>
+    <string name="first_run_choose_language">选择您的语言</string>
+    <string name="first_run_choose_currency">选择您的货币</string>
+    <string name="first_run_choose_theme">选择您的主题</string>
     <string name="first_run_continue">继续</string>
     <string name="first_run_capture_allowed">已允许通知访问</string>
     <string name="first_run_capture_later">稍后可在“设置 → 支付捕获”中选择要读取的银行应用。</string>

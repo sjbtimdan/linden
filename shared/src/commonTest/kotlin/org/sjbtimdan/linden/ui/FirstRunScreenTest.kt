@@ -35,26 +35,69 @@ private fun runFirstRunTest(block: suspend ComposeUiTest.() -> Unit) {
     }
 }
 
+/** Clicks the wizard's Continue/Get started button [times] times. */
+@OptIn(ExperimentalTestApi::class)
+private suspend fun ComposeUiTest.advance(times: Int = 1) {
+    repeat(times) { onNodeWithTag("firstRunContinue").performClick() }
+}
+
 private fun access(supported: Boolean, granted: Boolean = false, onOpen: () -> Unit = {}) =
     NotificationAccess(supported = supported, granted = granted, openSettings = onOpen)
 
 @OptIn(ExperimentalTestApi::class)
 class FirstRunScreenTest : StringSpec({
-    "shows the welcome copy with the pre-selected language, currency and theme" {
+
+    "firstRunSteps omits capture when unsupported and includes it when supported" {
+        firstRunSteps(captureSupported = false) shouldBe
+            listOf(FirstRunStep.Welcome, FirstRunStep.Language, FirstRunStep.Currency, FirstRunStep.Theme)
+
+        firstRunSteps(captureSupported = true) shouldBe
+            listOf(
+                FirstRunStep.Welcome,
+                FirstRunStep.Language,
+                FirstRunStep.Currency,
+                FirstRunStep.Theme,
+                FirstRunStep.Capture,
+            )
+    }
+
+    "shows the welcome copy and features on the first step" {
         runFirstRunTest {
             setContent {
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
             onNodeWithText("Welcome to Linden").assertIsDisplayed()
-            onNodeWithTag("firstRunLanguage-ENGLISH").assertIsSelected()
-            onNodeWithTag("firstRunCurrency-CHF").assertIsSelected()
-            onNodeWithTag("firstRunTheme-SYSTEM").assertIsSelected()
-            onNodeWithTag("firstRunContinue").assertIsDisplayed()
+            onNodeWithText("Track expenses and income across accounts and currencies.").assertIsDisplayed()
+            onNodeWithText("Multiple accounts and currencies").assertIsDisplayed()
+            onNodeWithText("Stored on your device").assertIsDisplayed()
+            onNodeWithText("Fast entry").assertIsDisplayed()
+            onNodeWithText("Ledger").assertIsDisplayed()
+            onNodeWithText("Get started").assertIsDisplayed()
         }
     }
 
-    "completes with the pre-selected choices without any interaction" {
+    "advances through the steps with the pre-selected language, currency and theme" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(onComplete = { _, _, _ -> })
+            }
+
+            advance()
+            onNodeWithText("Choose your language").assertIsDisplayed()
+            onNodeWithTag("firstRunLanguage-ENGLISH").assertIsSelected()
+
+            advance()
+            onNodeWithText("Choose your currency").assertIsDisplayed()
+            onNodeWithTag("firstRunCurrency-CHF").assertIsSelected()
+
+            advance()
+            onNodeWithText("Choose your theme").assertIsDisplayed()
+            onNodeWithTag("firstRunTheme-SYSTEM").assertIsSelected()
+        }
+    }
+
+    "completes with the pre-selected choices by advancing to the end" {
         runFirstRunTest {
             var completed: Triple<AppLanguage, Currency, ThemeMode>? = null
             setContent {
@@ -63,7 +106,7 @@ class FirstRunScreenTest : StringSpec({
                 }
             }
 
-            onNodeWithTag("firstRunContinue").performClick()
+            advance(4)
 
             completed shouldBe Triple(AppLanguage.ENGLISH, Currency.CHF, ThemeMode.SYSTEM)
         }
@@ -76,8 +119,9 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen { _, currency, _ -> completed = currency }
             }
 
+            advance(2)
             onNodeWithTag("firstRunCurrency-USD").performClick()
-            onNodeWithTag("firstRunContinue").performClick()
+            advance(2)
 
             completed shouldBe Currency.USD
         }
@@ -92,9 +136,11 @@ class FirstRunScreenTest : StringSpec({
                 }
             }
 
+            advance()
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
+            advance(2)
             onNodeWithTag("firstRunTheme-DARK").performClick()
-            onNodeWithTag("firstRunContinue").performClick()
+            advance()
 
             completed shouldBe Triple(AppLanguage.FRENCH, Currency.CHF, ThemeMode.DARK)
         }
@@ -107,8 +153,9 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen { _, _, theme -> completed = theme }
             }
 
+            advance(3)
             onNodeWithTag("firstRunTheme-AMOLED").performClick()
-            onNodeWithTag("firstRunContinue").performClick()
+            advance()
 
             completed shouldBe ThemeMode.AMOLED
         }
@@ -120,16 +167,28 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
+            advance()
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
 
-            onNodeWithText(
-                "Choisissez votre langue, votre devise et votre thème. " +
-                    "Vous pourrez les modifier plus tard dans les Paramètres.",
-            ).assertIsDisplayed()
+            onNodeWithText("Continuer").assertIsDisplayed()
         }
     }
 
-    "payment capture is introduced with its grant when the platform supports it" {
+    "back returns to the previous step" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(onComplete = { _, _, _ -> })
+            }
+
+            advance()
+            onNodeWithText("Choose your language").assertIsDisplayed()
+            onNodeWithTag("firstRunBack").performClick()
+
+            onNodeWithText("Welcome to Linden").assertIsDisplayed()
+        }
+    }
+
+    "payment capture is introduced with its grant on its own step when supported" {
         runFirstRunTest {
             var opened = false
             setContent {
@@ -139,6 +198,7 @@ class FirstRunScreenTest : StringSpec({
                 )
             }
 
+            advance(4)
             onNodeWithText("Payment capture").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAccess").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureFind").assertIsDisplayed()
@@ -156,6 +216,8 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen(onComplete = { _, _, _ -> }, access = access(supported = false))
             }
 
+            advance(4)
+
             onNodeWithText("Payment capture").assertDoesNotExist()
             onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
         }
@@ -164,9 +226,13 @@ class FirstRunScreenTest : StringSpec({
     "granted notification access replaces the button with its state" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> }, access = access(supported = true, granted = true))
+                FirstRunScreen(
+                    onComplete = { _, _, _ -> },
+                    access = access(supported = true, granted = true),
+                )
             }
 
+            advance(4)
             onNodeWithTag("firstRunCaptureAllowed").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
             onNodeWithTag("firstRunCaptureFind").assertDoesNotExist()
