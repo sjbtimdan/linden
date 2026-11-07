@@ -19,9 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -53,6 +50,8 @@ import org.sjbtimdan.linden.resources.entry_add
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
+import org.sjbtimdan.linden.ui.SlidingPillTab
+import org.sjbtimdan.linden.ui.SlidingPillTabs
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsBanner
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
@@ -217,23 +216,17 @@ fun EntryPoint(
         }
 
         if (!fieldFocused) {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                entryTypes.forEachIndexed { index, type ->
-                    SegmentedButton(
-                        selected = selectedType == type,
-                        onClick = { viewModel.selectType(type) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = entryTypes.size),
-                        icon = {
-                            Icon(
-                                imageVector = type.icon(),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        },
-                        label = { Text(type.displayName()) },
+            SlidingPillTabs(
+                tabs = entryTypes.map { type ->
+                    SlidingPillTab(
+                        label = type.displayName(),
+                        icon = type.icon(),
+                        tag = "entryType-${type.name}",
                     )
-                }
-            }
+                },
+                selectedIndex = entryTypes.indexOf(selectedType).coerceAtLeast(0),
+                onSelect = { index -> viewModel.selectType(entryTypes[index]) },
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

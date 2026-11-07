@@ -3,15 +3,9 @@ package org.sjbtimdan.linden.ui.entry
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +27,8 @@ import org.sjbtimdan.linden.resources.entry_type_expense
 import org.sjbtimdan.linden.resources.entry_type_income
 import org.sjbtimdan.linden.resources.entry_type_transfer
 import org.sjbtimdan.linden.ui.DialogCancelButton
+import org.sjbtimdan.linden.ui.SlidingPillTab
+import org.sjbtimdan.linden.ui.SlidingPillTabs
 import org.sjbtimdan.linden.ui.theme.DialogShape
 import kotlin.time.Instant
 
@@ -90,30 +86,18 @@ fun EntryDialog(
                 // Flipping the type while editing: only Expense/Income, never a
                 // Transfer. Hidden when no handler is wired (e.g. a read-only host).
                 if (onTypeChange != null && state.type != EntryType.Transfer) {
-                    SingleChoiceSegmentedButtonRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("dialogTypePicker"),
-                    ) {
-                        flippableEntryTypes.forEachIndexed { index, type ->
-                            SegmentedButton(
-                                selected = state.type == type,
-                                onClick = { onTypeChange(type) },
-                                shape = SegmentedButtonDefaults.itemShape(
-                                    index = index,
-                                    count = flippableEntryTypes.size,
-                                ),
-                                icon = {
-                                    Icon(
-                                        imageVector = type.icon(),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                },
-                                label = { Text(type.displayName()) },
+                    SlidingPillTabs(
+                        tabs = flippableEntryTypes.map { type ->
+                            SlidingPillTab(
+                                label = type.displayName(),
+                                icon = type.icon(),
+                                tag = "dialogType-${type.name}",
                             )
-                        }
-                    }
+                        },
+                        selectedIndex = flippableEntryTypes.indexOfFirst { it == state.type }.coerceAtLeast(0),
+                        onSelect = { index -> onTypeChange(flippableEntryTypes[index]) },
+                        modifier = Modifier.testTag("dialogTypePicker"),
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
                 // Explains why Save is disabled unless the form cannot be
