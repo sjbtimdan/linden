@@ -181,6 +181,7 @@ fun App(
                                             onNavigateToEntry = { currentScreen = Screen.Entry },
                                             onNavigateToAccounts = { openSubScreen(Screen.AccountList) },
                                             onNavigateToCategories = { openSubScreen(Screen.CategoryList) },
+                                            onNavigateToInsights = { openSubScreen(Screen.Insights) },
                                         )
 
                                         Screen.Entry -> EntryPoint(

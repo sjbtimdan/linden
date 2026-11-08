@@ -33,6 +33,7 @@ fun LedgerScreen(
     onNavigateToEntry: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
+    onNavigateToInsights: () -> Unit = {},
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val visibleAccounts by viewModel.visibleAccounts.collectAsState()
@@ -179,6 +180,7 @@ fun LedgerScreen(
                     filtersExpanded = !filtersExpanded
                 },
             )
+            LedgerInsightsAction(onClick = onNavigateToInsights)
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,
