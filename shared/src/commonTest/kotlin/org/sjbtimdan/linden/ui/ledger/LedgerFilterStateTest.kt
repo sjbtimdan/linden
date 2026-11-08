@@ -27,6 +27,21 @@ class LedgerFilterStateTest : StringSpec({
         }
     }
 
+    "the debounced search query follows the raw query when the debounce is disabled" {
+        onTestMain {
+            val scope = testScope()
+            val state = LedgerFilterState(scope, LocalDate(2026, 1, 15), searchDebounceMillis = 0)
+
+            state.debouncedSearchQuery.value shouldBe ""
+
+            state.setSearchQuery("coffee")
+
+            state.searchQuery.value shouldBe "coffee"
+            state.debouncedSearchQuery.value shouldBe "coffee"
+            scope.cancel()
+        }
+    }
+
     "periodWindow follows the selected period" {
         onTestMain {
             val scope = testScope()

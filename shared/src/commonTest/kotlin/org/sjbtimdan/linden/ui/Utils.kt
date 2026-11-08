@@ -375,6 +375,7 @@ fun withLedgerViewModel(
                 testAllEntries(entryDao),
                 clock = clock,
                 zone = TimeZone.UTC,
+                searchDebounceMillis = 0,
             )
             // Tests create entries with the default epoch timestamp, so they assume
             // the "All" period rather than the production default of "Month".

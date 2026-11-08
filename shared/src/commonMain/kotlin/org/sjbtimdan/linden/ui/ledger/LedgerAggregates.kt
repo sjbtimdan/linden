@@ -74,7 +74,7 @@ internal class LedgerAggregates(
      */
     private fun filteredEntries(typeFilter: StateFlow<EntryType?>): StateFlow<List<Entry>> = combine(
         periodEntries,
-        filters.searchQuery,
+        filters.debouncedSearchQuery,
         typeFilter,
         filters.amountFilter,
     ) { periodEntries, query, type, amountFilter ->

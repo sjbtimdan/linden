@@ -1,14 +1,20 @@
 package org.sjbtimdan.linden.ui.ledger
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.LocalDate
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.util.stateFlow
+import kotlin.time.Duration.Companion.milliseconds
+
+/** How long the search text must be quiet before the entries filter recomputes. */
+internal const val SEARCH_DEBOUNCE_MILLIS = 150L
 
 /**
  * The ledger's input filters: search text, type/amount/category/account
@@ -16,12 +22,29 @@ import org.sjbtimdan.linden.util.stateFlow
  * aggregation flows in [LedgerViewModel] so the filter rules can be read and
  * tested on their own.
  */
+@OptIn(FlowPreview::class)
 internal class LedgerFilterState(
     scope: CoroutineScope,
     initialAnchor: LocalDate,
+    searchDebounceMillis: Long = SEARCH_DEBOUNCE_MILLIS,
 ) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    /**
+     * The search text delayed by [searchDebounceMillis], so the entries filter
+     * only recomputes once typing pauses. [searchQuery] stays immediate for the
+     * text field and filter chips. A non-positive debounce disables the delay.
+     */
+    val debouncedSearchQuery: StateFlow<String> = _searchQuery
+        .let { query ->
+            if (searchDebounceMillis <= 0) {
+                query
+            } else {
+                query.debounce(searchDebounceMillis.milliseconds)
+            }
+        }
+        .stateFlow(scope, "")
 
     private val _typeFilter = MutableStateFlow<EntryType?>(null)
     val typeFilter: StateFlow<EntryType?> = _typeFilter.asStateFlow()

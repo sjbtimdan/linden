@@ -35,6 +35,7 @@ class LedgerViewModel(
     ratesProvider: RatesFlowProvider,
     allEntries: StateFlow<List<Entry>>,
     private val clock: AppClock,
+    searchDebounceMillis: Long = SEARCH_DEBOUNCE_MILLIS,
     val zone: TimeZone = TimeZone.currentSystemDefault(),
 ) : EntryEditorViewModel(
     entryDao,
@@ -49,7 +50,7 @@ class LedgerViewModel(
     /** Stored FX rates, exposed for the entries list's per-day totals. */
     val fxRates: StateFlow<List<FxRate>> get() = rates
 
-    private val filters = LedgerFilterState(viewModelScope, today())
+    private val filters = LedgerFilterState(viewModelScope, today(), searchDebounceMillis)
 
     /** Derived rows, totals and balances; see [LedgerAggregates]. */
     private val aggregates = LedgerAggregates(
