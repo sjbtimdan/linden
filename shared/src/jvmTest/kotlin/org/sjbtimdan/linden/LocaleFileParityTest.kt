@@ -44,6 +44,7 @@ class LocaleFileParityTest : StringSpec({
     val locales = listOf(
         "values-it",
         "values-fr",
+        "values-es",
         "values-de",
         "values-hi",
         "values-id",

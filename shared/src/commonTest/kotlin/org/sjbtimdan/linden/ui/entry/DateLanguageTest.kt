@@ -8,7 +8,8 @@ class DateLanguageTest : StringSpec({
     "maps language codes onto a date language" {
         dateLanguage(null) shouldBe DateLanguage.English
         dateLanguage("en") shouldBe DateLanguage.English
-        dateLanguage("es") shouldBe DateLanguage.English
+        dateLanguage("es") shouldBe DateLanguage.Spanish
+        dateLanguage("es-ES") shouldBe DateLanguage.Spanish
         dateLanguage("it") shouldBe DateLanguage.Italian
         dateLanguage("IT") shouldBe DateLanguage.Italian
         dateLanguage("it-CH") shouldBe DateLanguage.Italian
@@ -50,6 +51,13 @@ class DateLanguageTest : StringSpec({
         )
     }
 
+    "keeps the Spanish month table" {
+        (1..12).map(DateLanguage.Spanish::monthShort) shouldBe listOf(
+            "ene", "feb", "mar", "abr", "may", "jun",
+            "jul", "ago", "sep", "oct", "nov", "dic",
+        )
+    }
+
     "keeps the German month table" {
         (1..12).map(DateLanguage.German::monthShort) shouldBe listOf(
             "Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
@@ -81,6 +89,7 @@ class DateLanguageTest : StringSpec({
         DateLanguage.English.dateText(13, 8, 2026) shouldBe "Aug 13, 2026"
         DateLanguage.Italian.dateText(13, 8, 2026) shouldBe "13 ago 2026"
         DateLanguage.French.dateText(13, 8, 2026) shouldBe "13 août 2026"
+        DateLanguage.Spanish.dateText(13, 8, 2026) shouldBe "13 ago 2026"
         DateLanguage.German.dateText(13, 8, 2026) shouldBe "13. Aug. 2026"
         DateLanguage.Hindi.dateText(13, 8, 2026) shouldBe "13 अग 2026"
         DateLanguage.Indonesian.dateText(13, 8, 2026) shouldBe "13 Agu 2026"
@@ -91,6 +100,7 @@ class DateLanguageTest : StringSpec({
         DateLanguage.English.monthYearText(8, 2026) shouldBe "Aug 2026"
         DateLanguage.Italian.monthYearText(8, 2026) shouldBe "ago 2026"
         DateLanguage.French.monthYearText(8, 2026) shouldBe "août 2026"
+        DateLanguage.Spanish.monthYearText(8, 2026) shouldBe "ago 2026"
         DateLanguage.German.monthYearText(8, 2026) shouldBe "Aug. 2026"
         DateLanguage.Hindi.monthYearText(8, 2026) shouldBe "अग 2026"
         DateLanguage.Indonesian.monthYearText(8, 2026) shouldBe "Agu 2026"
@@ -100,6 +110,7 @@ class DateLanguageTest : StringSpec({
     "week text follows the language layout across months and years" {
         DateLanguage.English.weekLabel(10, 8, 2026, 16, 8, 2026) shouldBe "Aug 10–16, 2026"
         DateLanguage.Italian.weekLabel(31, 8, 2026, 6, 9, 2026) shouldBe "31 ago – 6 set 2026"
+        DateLanguage.Spanish.weekLabel(31, 8, 2026, 6, 9, 2026) shouldBe "31 ago – 6 sep 2026"
         DateLanguage.Chinese.weekLabel(28, 12, 2026, 3, 1, 2027) shouldBe "2026年12月28日 – 2027年1月3日"
     }
 })

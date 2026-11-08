@@ -46,7 +46,7 @@ Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.l
   Firebase Crashlytics and Analytics are wired here only (`google-services.json`, BoM, plugins applied on the module —
   not `apply false`). Analytics brings the merged `AD_ID`/ads-services/install-referrer permissions, so Data safety
   declares advertising-ID usage and the privacy policy discloses anonymous usage + crash data. The manifest declares
-  `android:localeConfig` (`res/xml/locales_config.xml`, the 8 app languages) so Android 13+ per-app language settings
+  `android:localeConfig` (`res/xml/locales_config.xml`, the 9 app languages) so Android 13+ per-app language settings
   expose Linden; an in-app pin still wins. Desktop has no crash reporting.
 - `:desktopApp` — Desktop/JVM entry (`Main.kt` → Compose `Window`, main class `org.sjbtimdan.linden.MainKt`).
 
@@ -104,7 +104,7 @@ git describe). It is generated code — never edit it.
   closed client). `MainActivity` passes `applicationContext` to `DatabaseDriverFactory` so the retained ViewModel never
   leaks the activity. A plain `remember` in either place resets navigation and loses the in-progress `EntryDraft`.
 - **All UI copy lives in resources** (`shared/src/commonMain/composeResources/values/strings.xml`; per-locale dirs
-  `values-it`, `values-fr`, `values-de`, `values-hi`, `values-id`, `values-in`, `values-zh`, `values-zh-rCN`,
+  `values-it`, `values-fr`, `values-es`, `values-de`, `values-hi`, `values-id`, `values-in`, `values-zh`, `values-zh-rCN`,
   `values-zh-rHK`). Use `stringResource(Res.string.key)` /
   `pluralStringResource(Res.plurals.key, qty, qty)` — **repeat the quantity as the `%1$d` arg**. Accessors are
   top-level extensions on `Res.string`/`Res.plurals` and need explicit per-key imports (no wildcards). Never call

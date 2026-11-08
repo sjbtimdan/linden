@@ -12,6 +12,10 @@ private val FRENCH_MONTHS = listOf(
     "janv.", "févr.", "mars", "avr.", "mai", "juin",
     "juil.", "août", "sept.", "oct.", "nov.", "déc.",
 )
+private val SPANISH_MONTHS = listOf(
+    "ene", "feb", "mar", "abr", "may", "jun",
+    "jul", "ago", "sep", "oct", "nov", "dic",
+)
 private val GERMAN_MONTHS = listOf(
     "Jan.", "Feb.", "März", "Apr.", "Mai", "Juni",
     "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez.",
@@ -35,6 +39,7 @@ internal enum class DateLanguage {
     English,
     Italian,
     French,
+    Spanish,
     German,
     Hindi,
     Indonesian,
@@ -47,6 +52,7 @@ internal enum class DateLanguage {
         English -> ENGLISH_MONTHS[monthNumber - 1]
         Italian -> ITALIAN_MONTHS[monthNumber - 1]
         French -> FRENCH_MONTHS[monthNumber - 1]
+        Spanish -> SPANISH_MONTHS[monthNumber - 1]
         German -> GERMAN_MONTHS[monthNumber - 1]
         Hindi -> HINDI_MONTHS[monthNumber - 1]
         Indonesian -> INDONESIAN_MONTHS[monthNumber - 1]
@@ -57,13 +63,13 @@ internal enum class DateLanguage {
     internal fun dateText(day: Int, monthNumber: Int, year: Int): String = when (this) {
         English -> "${monthShort(monthNumber)} $day, $year"
         German -> "$day. ${monthShort(monthNumber)} $year"
-        Italian, French, Hindi, Indonesian -> "$day ${monthShort(monthNumber)} $year"
+        Italian, French, Spanish, Hindi, Indonesian -> "$day ${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}${day}日"
     }
 
     /** Localized month-and-year label, e.g. "Aug 2026", "août 2026", "Aug. 2026", "2026年8月". */
     internal fun monthYearText(monthNumber: Int, year: Int): String = when (this) {
-        English, Italian, French, German, Hindi, Indonesian -> "${monthShort(monthNumber)} $year"
+        English, Italian, French, Spanish, German, Hindi, Indonesian -> "${monthShort(monthNumber)} $year"
         Chinese -> "${year}年${monthShort(monthNumber)}"
     }
 
@@ -88,7 +94,7 @@ internal enum class DateLanguage {
 
                 German -> "$startDay. $startMonthName $startYear – $endDay. $endMonthName $endYear"
 
-                Italian, French, Hindi, Indonesian ->
+                Italian, French, Spanish, Hindi, Indonesian ->
                     "$startDay $startMonthName $startYear – $endDay $endMonthName $endYear"
 
                 Chinese -> "${startYear}年$startMonthName${startDay}日 – ${endYear}年$endMonthName${endDay}日"
@@ -99,7 +105,7 @@ internal enum class DateLanguage {
 
                 German -> "$startDay. $startMonthName – $endDay. $endMonthName $startYear"
 
-                Italian, French, Hindi, Indonesian ->
+                Italian, French, Spanish, Hindi, Indonesian ->
                     "$startDay $startMonthName – $endDay $endMonthName $startYear"
 
                 Chinese -> "${startYear}年$startMonthName${startDay}日 – $endMonthName${endDay}日"
@@ -110,7 +116,7 @@ internal enum class DateLanguage {
 
                 German -> "$startDay.–$endDay. $startMonthName $startYear"
 
-                Italian, French, Hindi, Indonesian ->
+                Italian, French, Spanish, Hindi, Indonesian ->
                     "$startDay–$endDay $startMonthName $startYear"
 
                 Chinese -> "${startYear}年$startMonthName${startDay}日–${endDay}日"
@@ -124,6 +130,8 @@ internal fun dateLanguage(languageCode: String?): DateLanguage = when {
     languageCode.orEmpty().startsWith("it", ignoreCase = true) -> DateLanguage.Italian
 
     languageCode.orEmpty().startsWith("fr", ignoreCase = true) -> DateLanguage.French
+
+    languageCode.orEmpty().startsWith("es", ignoreCase = true) -> DateLanguage.Spanish
 
     languageCode.orEmpty().startsWith("de", ignoreCase = true) -> DateLanguage.German
 

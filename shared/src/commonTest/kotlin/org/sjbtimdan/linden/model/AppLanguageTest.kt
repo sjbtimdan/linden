@@ -9,6 +9,7 @@ class AppLanguageTest : StringSpec({
         AppLanguage.fromTag("en") shouldBe AppLanguage.ENGLISH
         AppLanguage.fromTag("it") shouldBe AppLanguage.ITALIAN
         AppLanguage.fromTag("fr") shouldBe AppLanguage.FRENCH
+        AppLanguage.fromTag("es") shouldBe AppLanguage.SPANISH
         AppLanguage.fromTag("de") shouldBe AppLanguage.GERMAN
         AppLanguage.fromTag("hi") shouldBe AppLanguage.HINDI
         AppLanguage.fromTag("id") shouldBe AppLanguage.INDONESIAN
@@ -17,7 +18,7 @@ class AppLanguageTest : StringSpec({
     }
 
     "fromTag falls back to SYSTEM for unknown or missing values" {
-        AppLanguage.fromTag("es") shouldBe AppLanguage.SYSTEM
+        AppLanguage.fromTag("pt") shouldBe AppLanguage.SYSTEM
         AppLanguage.fromTag("") shouldBe AppLanguage.SYSTEM
         AppLanguage.fromTag("system") shouldBe AppLanguage.SYSTEM
     }
@@ -33,6 +34,9 @@ class AppLanguageTest : StringSpec({
         AppLanguage.fromSystemLanguage("fr") shouldBe AppLanguage.FRENCH
         AppLanguage.fromSystemLanguage("fr-FR") shouldBe AppLanguage.FRENCH
         AppLanguage.fromSystemLanguage("fr-CH") shouldBe AppLanguage.FRENCH
+        AppLanguage.fromSystemLanguage("es") shouldBe AppLanguage.SPANISH
+        AppLanguage.fromSystemLanguage("es-ES") shouldBe AppLanguage.SPANISH
+        AppLanguage.fromSystemLanguage("es-MX") shouldBe AppLanguage.SPANISH
         AppLanguage.fromSystemLanguage("de") shouldBe AppLanguage.GERMAN
         AppLanguage.fromSystemLanguage("de-DE") shouldBe AppLanguage.GERMAN
         AppLanguage.fromSystemLanguage("de-AT") shouldBe AppLanguage.GERMAN
@@ -55,7 +59,7 @@ class AppLanguageTest : StringSpec({
     "fromSystemLanguage falls back to English for unsupported systems" {
         AppLanguage.fromSystemLanguage(null) shouldBe AppLanguage.ENGLISH
         AppLanguage.fromSystemLanguage("") shouldBe AppLanguage.ENGLISH
-        AppLanguage.fromSystemLanguage("es-ES") shouldBe AppLanguage.ENGLISH
+        AppLanguage.fromSystemLanguage("pt-BR") shouldBe AppLanguage.ENGLISH
         AppLanguage.fromSystemLanguage("nl-NL") shouldBe AppLanguage.ENGLISH
         AppLanguage.fromSystemLanguage("en-US") shouldBe AppLanguage.ENGLISH
         AppLanguage.fromSystemLanguage("en-GB") shouldBe AppLanguage.ENGLISH
@@ -64,6 +68,7 @@ class AppLanguageTest : StringSpec({
     "resolve turns SYSTEM into the resolved language and keeps pins" {
         AppLanguage.resolve(AppLanguage.SYSTEM, "de-DE") shouldBe AppLanguage.GERMAN
         AppLanguage.resolve(AppLanguage.SYSTEM, "fr-CH") shouldBe AppLanguage.FRENCH
+        AppLanguage.resolve(AppLanguage.SYSTEM, "es-MX") shouldBe AppLanguage.SPANISH
         AppLanguage.resolve(AppLanguage.SYSTEM, "id-ID") shouldBe AppLanguage.INDONESIAN
         AppLanguage.resolve(AppLanguage.SYSTEM, "zh-HK") shouldBe AppLanguage.CHINESE_TRADITIONAL_HK
         AppLanguage.resolve(AppLanguage.SYSTEM, "hi-IN") shouldBe AppLanguage.HINDI

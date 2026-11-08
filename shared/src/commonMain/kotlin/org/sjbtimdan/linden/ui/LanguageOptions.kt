@@ -8,6 +8,7 @@ internal val languageOptions = listOf(
     AppLanguage.ENGLISH,
     AppLanguage.ITALIAN,
     AppLanguage.FRENCH,
+    AppLanguage.SPANISH,
     AppLanguage.GERMAN,
     AppLanguage.HINDI,
     AppLanguage.INDONESIAN,
@@ -26,6 +27,8 @@ internal fun AppLanguage.label(): String = when (this) {
     AppLanguage.ITALIAN -> "Italiano"
 
     AppLanguage.FRENCH -> "Français"
+
+    AppLanguage.SPANISH -> "Español"
 
     AppLanguage.GERMAN -> "Deutsch"
 

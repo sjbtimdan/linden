@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell -->
+    <string name="nav_ledger">Movimientos</string>
+    <string name="nav_entry">Entrada</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <!-- Startup error -->
+    <string name="startup_error_title">Linden no pudo iniciarse</string>
+    <string name="startup_error_message">Se produjo un error al abrir tus datos.</string>
+    <string name="startup_error_retry">Reintentar</string>
+
+    <!-- First run -->
+    <string name="first_run_title">Te damos la bienvenida a Linden</string>
+    <string name="first_run_tagline">Registra tus gastos e ingresos en distintas cuentas y monedas.</string>
+    <string name="first_run_feature_accounts_title">Varias cuentas y monedas</string>
+    <string name="first_run_feature_accounts_body">Cuentas en distintas monedas.</string>
+    <string name="first_run_feature_private_title">Guardado en tu dispositivo</string>
+    <string name="first_run_feature_private_body">Tus datos financieros se quedan en tu dispositivo. No necesitas una cuenta.</string>
+    <string name="first_run_feature_fast_title">Entrada rápida</string>
+    <string name="first_run_feature_fast_body">Sugerencias de tus entradas anteriores y una calculadora exacta.</string>
+    <string name="first_run_feature_ledger_title">Movimientos</string>
+    <string name="first_run_feature_ledger_body">Busca tus ingresos y gastos anteriores.</string>
+    <string name="first_run_get_started">Empezar</string>
+    <string name="first_run_choose_language">Elige tu idioma</string>
+    <string name="first_run_choose_currency">Elige tu moneda</string>
+    <string name="first_run_choose_theme">Elige tu tema</string>
+    <string name="first_run_continue">Continuar</string>
+    <string name="first_run_capture_allowed">Acceso a notificaciones permitido</string>
+    <string name="first_run_capture_later">Elige más tarde qué apps bancarias leer, en Ajustes → Captura de pagos.</string>
+    <string name="first_run_capture_find">Busca Linden en la lista que se abre.</string>
+
+    <!-- Common actions -->
+    <string name="common_back">Atrás</string>
+    <string name="common_save">Guardar</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_clear">Borrar</string>
+    <string name="common_duplicate">Duplicar</string>
+    <string name="common_ok">Aceptar</string>
+    <string name="common_delete">Eliminar</string>
+    <string name="common_dismiss">Descartar</string>
+    <!-- Fallback detail shown after an operation's failure copy (e.g. "Import failed: …") when the exception carries no message -->
+    <string name="common_unknown_error">error desconocido</string>
+    <string name="common_write_failed">No se pudo guardar el cambio. Inténtalo de nuevo.</string>
+
+    <!-- Shared labels with identical copy across screens -->
+    <string name="common_accounts">Cuentas</string>
+    <string name="common_all">Todo</string>
+    <string name="common_today">Hoy</string>
+    <string name="common_categories">Categorías</string>
+    <string name="common_category">Categoría</string>
+    <string name="common_invalid_amount">Introduce un importe válido</string>
+    <string name="common_name">Nombre</string>
+    <string name="common_name_required">El nombre es obligatorio</string>
+    <string name="common_search">Buscar</string>
+
+    <!-- Entry types; category type labels reuse the expense/income words -->
+    <string name="entry_type_expense">Gasto</string>
+    <string name="entry_type_income">Ingreso</string>
+    <string name="entry_type_transfer">Transferencia</string>
+
+    <!-- Entry point -->
+    <string name="entry_add">Añadir</string>
+    <string name="entry_added">Añadido</string>
+    <string name="entry_updated">Actualizado</string>
+    <string name="entry_undo">Deshacer</string>
+    <string name="entry_edit">Editar</string>
+    <string name="entry_deleted">Entrada eliminada</string>
+    <string name="entry_total_balance">Saldo total</string>
+    <string name="entry_show_total">Mostrar total</string>
+    <string name="entry_hide_total">Ocultar total</string>
+
+    <!-- Entry form -->
+    <string name="entry_amount">Importe</string>
+    <string name="entry_amount_sent">Importe (enviado)</string>
+    <string name="entry_amount_received">Importe (recibido)</string>
+    <string name="entry_from_account">Cuenta de origen</string>
+    <string name="entry_to_account">Cuenta de destino</string>
+    <string name="entry_account">Cuenta</string>
+    <string name="entry_description_optional">Descripción (opcional)</string>
+    <string name="entry_ok">Aceptar</string>
+    <string name="entry_quick_entry">Entrada rápida</string>
+    <string name="entry_upcoming">Próximos</string>
+    <string name="entry_due">Vence %1$s</string>
+    <string name="entry_amount_positive">El importe debe ser mayor que cero</string>
+
+    <!-- Inline create chips in the entry form: %1$s is the typed query -->
+    <string name="entry_new_category">Nueva categoría</string>
+    <string name="entry_new_category_with_name">Nueva categoría "%1$s"</string>
+    <string name="entry_new_account">Nueva cuenta</string>
+    <string name="entry_new_account_with_name">Nueva cuenta "%1$s"</string>
+    <string name="entry_date_time_section">Fecha y hora</string>
+    <string name="entry_select_time">Seleccionar hora</string>
+
+    <!-- Entry dialog titles: %1$s is the localized entry type name -->
+    <string name="entry_title_new">Añadir %1$s</string>
+    <string name="entry_title_edit">Editar %1$s</string>
+
+    <!-- Draft validation hints (firstMissingRequirement) -->
+    <string name="entry_req_amount">Introduce un importe</string>
+    <string name="entry_req_account">Elige una cuenta</string>
+    <string name="entry_req_source">Elige de dónde sale el dinero</string>
+    <string name="entry_req_category">Elige una categoría</string>
+    <string name="entry_req_destination">Elige a dónde va el dinero</string>
+    <string name="entry_req_different_destination">Elige una cuenta de destino distinta</string>
+    <string name="entry_req_received">Introduce el importe recibido</string>
+    <string name="entry_req_no_accounts">Añade una cuenta para continuar</string>
+    <string name="entry_req_no_categories">Aún no hay categorías: crea una</string>
+
+    <!-- Entry calculator and misc -->
+    <string name="entry_calculator">Calculadora</string>
+    <string name="entry_simple_keypad">Teclado simple</string>
+    <string name="entry_backspace">Borrar</string>
+    <string name="entry_enter">Intro</string>
+    <string name="entry_recommended">Recomendado</string>
+    <string name="entry_recurring">Recurrente</string>
+
+    <!-- Pace forecast -->
+    <string name="pace_on_pace_for">En camino de %1$s</string>
+    <string name="pace_vs_usual">%1$s frente a lo habitual</string>
+    <string name="pace_usual">Habitual: %1$s</string>
+    <string name="pace_likely_range">Probable: %1$s – %2$s</string>
+    <string name="pace_daily_allowance">Quedan %1$s/día para mantenerte en lo habitual</string>
+    <string name="pace_expand">Mostrar detalles del ritmo</string>
+    <string name="pace_collapse">Ocultar detalles del ritmo</string>
+    <string name="pace_after_this">Después de esto: quedan %1$s/día este mes</string>
+
+    <!-- Ledger view modes; the Accounts/Categories labels are the shared common_accounts/common_categories -->
+    <string name="ledger_mode_entries">Entradas</string>
+
+    <!-- Ledger search & filters -->
+    <string name="ledger_search_entries">Buscar entradas</string>
+    <string name="ledger_filter_accounts">Filtrar cuentas</string>
+    <string name="ledger_filter_categories">Filtrar categorías</string>
+    <string name="ledger_filters_header">Filtros y búsqueda</string>
+    <string name="ledger_expand_filters">Ampliar filtros</string>
+    <string name="ledger_collapse_filters">Contraer filtros</string>
+    <string name="ledger_remove_filter">Quitar filtro</string>
+    <string name="ledger_clear_all">Borrar todo</string>
+    <string name="ledger_uncategorized">Sin categoría</string>
+    <string name="ledger_unknown_account">Cuenta desconocida</string>
+    <string name="ledger_amount_all">Importe: Todo</string>
+    <string name="ledger_filter_by_amount">Filtrar por importe</string>
+    <string name="ledger_apply">Aplicar</string>
+
+    <string name="ledger_day_total">Total %1$s</string>
+
+    <!-- Period navigator -->
+    <string name="ledger_period_day">Día</string>
+    <string name="ledger_period_week">Semana</string>
+    <string name="ledger_period_month">Mes</string>
+    <string name="ledger_period_year">Año</string>
+    <!-- The "All" option uses the shared common_all -->
+    <string name="ledger_previous_period">Periodo anterior</string>
+    <string name="ledger_next_period">Periodo siguiente</string>
+    <string name="ledger_show_future_entries">Mostrar entradas futuras</string>
+    <string name="ledger_hide_future_entries">Ocultar entradas futuras</string>
+
+    <!-- Future-entries notice -->
+    <string name="ledger_future_none_bounded">No hay entradas después de hoy en este periodo</string>
+    <string name="ledger_future_none">No hay entradas después de hoy</string>
+    <string name="ledger_future_balances">Los saldos incluyen entradas posteriores a hoy</string>
+    <string name="ledger_future_totals">Los totales incluyen entradas posteriores a hoy</string>
+    <plurals name="ledger_future_entries">
+        <item quantity="one">Mostrando %1$d entrada posterior a hoy</item>
+        <item quantity="other">Mostrando %1$d entradas posteriores a hoy</item>
+    </plurals>
+
+    <!-- Ledger empty states: entries view -->
+    <string name="ledger_empty_future_hidden">Las entradas posteriores a hoy están ocultas.</string>
+    <string name="ledger_empty_no_entries">Aún no hay entradas.</string>
+    <string name="ledger_empty_no_match_filter">Ninguna entrada coincide con este filtro.</string>
+    <string name="ledger_empty_no_match">Ninguna entrada coincide.</string>
+    <string name="ledger_action_add_first_entry">Añade tu primera entrada</string>
+    <string name="ledger_action_show_future_entries">Mostrar entradas posteriores a hoy</string>
+
+    <!-- Ledger empty states: accounts view; "No accounts yet." is the shared accounts_empty_none -->
+    <string name="ledger_accounts_no_match">Ninguna cuenta coincide.</string>
+    <string name="ledger_accounts_all_hidden">Todas las cuentas están ocultas.</string>
+    <string name="ledger_action_create_account">Crear una cuenta</string>
+    <string name="ledger_action_manage_accounts">Gestionar cuentas</string>
+
+    <!-- Ledger empty states: categories view; "No categories yet." is the shared categories_empty_none -->
+    <string name="ledger_categories_no_match">Ninguna categoría coincide.</string>
+    <string name="ledger_categories_future_hidden">El gasto posterior a hoy está oculto.</string>
+    <string name="ledger_categories_no_spending">Aún no hay gastos.</string>
+    <string name="ledger_action_add_categories">Añadir categorías</string>
+
+    <!-- Category totals list -->
+    <plurals name="ledger_entry_count">
+        <item quantity="one">%1$d entrada</item>
+        <item quantity="other">%1$d entradas</item>
+    </plurals>
+    <string name="ledger_budget_progress">%1$s de %2$s</string>
+
+    <!-- Accounts list overflow menu -->
+    <string name="ledger_more_options">Más opciones</string>
+    <string name="ledger_view_entries">Ver entradas</string>
+    <string name="ledger_adjust_balance">Ajustar saldo</string>
+    <string name="ledger_adjust_latest_period_only">Solo disponible cuando se muestra el periodo más reciente.</string>
+
+    <!-- Adjust Balance dialog -->
+    <string name="ledger_adjust_current_balance">Saldo actual: %1$s %2$s</string>
+    <string name="ledger_adjust_bank_balance">Saldo del banco</string>
+    <string name="ledger_adjust_explainer">Se creará una entrada en la categoría elegida.</string>
+    <string name="ledger_adjust_explainer_income">Se creará una entrada de ingreso en la categoría elegida.</string>
+    <string name="ledger_adjust_explainer_expense">Se creará una entrada de gasto en la categoría elegida.</string>
+    <string name="ledger_adjust_confirm">Ajustar</string>
+
+    <!-- Accounts screen -->
+    <string name="accounts_new">Nueva cuenta</string>
+    <string name="accounts_edit">Editar cuenta</string>
+    <string name="accounts_empty_none">Aún no hay cuentas.</string>
+    <string name="accounts_empty_no_match">No hay cuentas que coincidan.</string>
+    <string name="accounts_initial_balance">Saldo inicial</string>
+    <string name="accounts_currency">Moneda</string>
+    <string name="accounts_currency_locked">No se puede cambiar la moneda: esta cuenta tiene entradas.</string>
+    <string name="accounts_hidden">Oculta</string>
+    <string name="accounts_hidden_help">Conserva las entradas, pero quita la cuenta del registro, de los selectores de cuenta y de los filtros.</string>
+    <string name="accounts_delete_locked">Esta cuenta no se puede eliminar: tiene entradas.</string>
+    <string name="accounts_delete">Eliminar cuenta</string>
+    <string name="accounts_duplicate_name">Ya existe una cuenta con este nombre</string>
+    <string name="accounts_hide_title">¿Ocultar cuenta?</string>
+    <string name="accounts_hide_confirm">Ocultar</string>
+    <string name="accounts_hide_body">%1$s tiene un saldo de %2$s %3$s. Al ocultarla, la cuenta se quita del registro, de los selectores de cuenta y de los filtros. Sus entradas se conservan en el historial y puedes volver a mostrarla en cualquier momento.</string>
+
+    <!-- Categories screen -->
+    <string name="categories_new">Nueva categoría</string>
+    <string name="categories_edit">Editar categoría</string>
+    <string name="categories_empty_none">Aún no hay categorías.</string>
+    <string name="categories_empty_no_match">No hay categorías que coincidan.</string>
+    <string name="categories_icon">Icono</string>
+    <string name="categories_type">Tipo</string>
+    <string name="categories_duplicate_name">Ya existe una categoría con este nombre</string>
+    <string name="categories_delete_locked">Esta categoría no se puede eliminar: tiene entradas.</string>
+    <string name="categories_delete">Eliminar categoría</string>
+    <string name="category_type_both">Ambos</string>
+    <string name="category_type_both_row">Como ingreso/gasto</string>
+    <string name="category_icon_restaurant">Comida y restauración</string>
+    <string name="category_icon_movie">Entretenimiento</string>
+    <string name="category_icon_shopping_cart">Supermercado</string>
+    <string name="category_icon_account_balance">Banca y finanzas</string>
+    <string name="category_icon_savings">Ahorro y salario</string>
+    <string name="category_icon_shopping_bag">Compras</string>
+    <string name="category_icon_home">Hogar</string>
+    <string name="category_icon_local_hospital">Salud</string>
+    <string name="category_icon_favorite_border">Regalos y donaciones</string>
+    <string name="category_icon_pets">Mascotas</string>
+    <string name="category_icon_school">Educación</string>
+    <string name="category_icon_flight">Viajes</string>
+    <string name="category_icon_spa">Cuidado personal</string>
+    <string name="category_icon_car">Coche</string>
+    <string name="category_icon_public_transport">Transporte público</string>
+
+    <!-- Settings screen -->
+    <string name="settings_language">Idioma</string>
+    <string name="settings_theme">Tema</string>
+    <string name="settings_theme_system">Sistema</string>
+    <string name="settings_theme_light">Claro</string>
+    <string name="settings_theme_dark">Oscuro</string>
+    <string name="settings_theme_amoled">AMOLED</string>
+    <string name="settings_default_currency">Moneda por defecto</string>
+    <string name="settings_privacy">Privacidad</string>
+    <string name="settings_hide_totals">Ocultar totales</string>
+    <string name="settings_nav_rates">Tipos de cambio</string>
+    <string name="settings_nav_budgets">Presupuestos</string>
+    <string name="settings_nav_insights">Análisis</string>
+    <string name="settings_your_data">Tus datos</string>
+    <string name="insights_vs_previous">vs %1$s: %2$s</string>
+    <string name="insights_expenses">Gastos</string>
+    <string name="insights_income">Ingresos</string>
+    <string name="insights_previous_period">12 meses anteriores</string>
+    <string name="insights_next_period">12 meses siguientes</string>
+    <string name="insights_net">Neto</string>
+    <string name="insights_no_entries">Añade una entrada para empezar a ver tendencias mensuales</string>
+    <string name="insights_average">Promedio de 12 meses: %1$s</string>
+    <string name="settings_import_ivy">Importar desde Ivy</string>
+    <string name="settings_backup">Copia de seguridad</string>
+    <string name="settings_backup_db">Hacer copia de seguridad de la base de datos</string>
+    <string name="settings_restore_backup">Restaurar desde copia de seguridad</string>
+    <string name="settings_export_csv">Exportar a CSV</string>
+    <string name="settings_working_import">Importando…</string>
+    <string name="settings_working_backup">Haciendo copia de seguridad…</string>
+    <string name="settings_working_restore">Restaurando…</string>
+    <string name="settings_working_export">Exportando…</string>
+    <string name="settings_import_summary">Se importaron %1$d cuentas, %2$d categorías y %3$d transacciones</string>
+    <string name="settings_import_split_note">\nNota: %1$d transacción(es) estaban en una moneda distinta a la de su cuenta y se importaron en cuentas nuevas "IVY: …".</string>
+    <string name="settings_import_failed">Error al importar: %1$s</string>
+    <string name="settings_backup_saved">Copia de seguridad guardada.</string>
+    <string name="settings_backup_failed">Error al hacer la copia: %1$s</string>
+    <string name="settings_restore_summary">Se restauraron %1$d cuentas, %2$d categorías y %3$d entradas</string>
+    <string name="settings_restore_failed">Error al restaurar: %1$s</string>
+    <string name="settings_export_done">CSV exportado.</string>
+    <string name="settings_export_failed">Error al exportar: %1$s</string>
+    <string name="settings_import_confirm_body">Esto reemplazará todas tus cuentas, categorías y transacciones actuales. ¿Continuar?</string>
+    <string name="settings_restore_confirm_body">Esto reemplazará todas tus cuentas, categorías, transacciones y ajustes actuales. ¿Continuar?</string>
+    <string name="settings_import_confirm">Importar</string>
+    <string name="settings_restore_confirm">Restaurar</string>
+
+    <!-- Rates screen -->
+    <string name="rates_refresh">Actualizar</string>
+    <string name="rates_refresh_failed">Error al actualizar: %1$s</string>
+    <string name="rates_from_date">Tipos del %1$s</string>
+    <string name="rates_update_automatically">Actualizar automáticamente</string>
+    <string name="rates_auto_update_help">Descarga tipos nuevos cuando los guardados tienen más de un día. Desactívalo para conservar los tipos introducidos manualmente.</string>
+    <string name="rates_edit_rate">Editar tipo de %1$s</string>
+    <string name="rates_set">Establecer tipos</string>
+    <string name="rates_missing">No hay tipos de cambio disponibles. Puedes introducirlos manualmente.</string>
+    <string name="rates_outdated">Los tipos de cambio tienen más de una semana. Puedes introducirlos manualmente.</string>
+    <string name="rates_rate_label">Tipo</string>
+    <string name="rates_positive_number">Introduce un número positivo.</string>
+
+    <!-- Budgets -->
+    <string name="budget_new">Nuevo presupuesto</string>
+    <string name="budget_edit">Editar presupuesto</string>
+    <string name="budget_delete">Eliminar presupuesto</string>
+    <string name="budget_choose_category">Elegir categoría</string>
+    <string name="budget_monthly_limit">Límite mensual</string>
+    <string name="budget_empty">Aún no hay presupuestos. Añade uno para seguir el gasto mensual de una categoría.</string>
+    <!-- Payment capture (Android notification listener) -->
+    <string name="capture_title">Captura de pagos</string>
+    <string name="capture_intro">Linden puede leer las notificaciones de las apps que elijas y convertir las notificaciones de pago en entradas para revisar. Nada se añade al registro automáticamente.</string>
+    <string name="capture_enable">Permitir acceso a notificaciones</string>
+    <string name="capture_unsupported">La captura de notificaciones está disponible en la app de Android.</string>
+    <string name="capture_disclosure_title">¿Permitir acceso a notificaciones?</string>
+    <string name="capture_disclosure_body">Linden solo lee las notificaciones de las apps que permitas y conserva únicamente las que parecen pagos. Cada captura espera tu confirmación y nunca se envía a ningún sitio.</string>
+    <string name="capture_continue">Continuar</string>
+    <string name="capture_pending_title">Pagos capturados</string>
+    <plurals name="capture_pending_count">
+        <item quantity="one">%1$d pago por revisar</item>
+        <item quantity="other">%1$d pagos por revisar</item>
+    </plurals>
+    <string name="capture_apps_header">Apps permitidas</string>
+    <string name="capture_apps_empty">Aún no hay apps permitidas.</string>
+    <string name="capture_apps_note">Solo se leen las notificaciones de estas apps.</string>
+    <string name="capture_add_app">Añadir app</string>
+    <string name="capture_remove_app">Quitar</string>
+    <string name="capture_account_missing">Sin cuenta</string>
+    <string name="capture_row_supporting">%1$s · %2$s · %3$s</string>
+    <string name="capture_template_supporting">%1$s · %2$s</string>
+    <string name="capture_dismiss">Descartar</string>
+    <string name="capture_collapse">Contraer</string>
+    <string name="capture_app_picker_title">Elegir una app</string>
+    <string name="capture_app_search">Buscar apps</string>
+    <string name="capture_no_apps_found">Ninguna app coincide.</string>
+    <string name="capture_templates_header">Reglas aprendidas</string>
+    <string name="capture_templates_empty">Aún no has aprendido nada. Registra un pago capturado y Linden recordará cómo lo clasificaste.</string>
+</resources>
