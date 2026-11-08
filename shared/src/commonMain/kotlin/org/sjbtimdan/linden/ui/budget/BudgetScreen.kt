@@ -161,7 +161,11 @@ fun BudgetScreen(viewModel: BudgetViewModel, onNavigateBack: () -> Unit) {
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                itemsIndexed(budgets, key = { _, budget -> budget.categoryName }, contentType = { _, _ -> "budget" }) { index, budget ->
+                itemsIndexed(
+                    budgets,
+                    key = { _, budget -> budget.categoryName },
+                    contentType = { _, _ -> "budget" },
+                ) { index, budget ->
                     val accent = accentColor(budget.categoryName)
                     val interactionSource = remember { MutableInteractionSource() }
                     Row(

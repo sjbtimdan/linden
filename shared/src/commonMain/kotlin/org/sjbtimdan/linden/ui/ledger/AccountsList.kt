@@ -84,7 +84,11 @@ fun AccountsList(
             contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            itemsIndexed(balances, key = { _, item -> item.account.id }, contentType = { _, _ -> "account" }) { index, item ->
+            itemsIndexed(
+                balances,
+                key = { _, item -> item.account.id },
+                contentType = { _, _ -> "account" },
+            ) { index, item ->
                 val account = item.account
                 val interactionSource = remember { MutableInteractionSource() }
                 Row(

@@ -43,9 +43,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.CategoryIcon
+import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_clear
@@ -64,6 +67,7 @@ import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.rates.RatesWarningBanner
 import org.sjbtimdan.linden.ui.screenContainerWithIme
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 private val entryTypes = listOf(EntryType.Expense, EntryType.Income, EntryType.Transfer)
 
@@ -116,15 +120,17 @@ fun EntryPoint(
     // prefill from the last entry does not count as a touch. Saveable so a
     // draft that survives a configuration change keeps the compact header.
     var draftTouched by rememberSaveable { mutableStateOf(false) }
-    val markTouched: () -> Unit = { draftTouched = true }
+    val markTouched: () -> Unit = remember { { draftTouched = true } }
 
     // Whether the user has edited the form since the last save or clear. Opening
     // the screen, a prefill from the last entry, and the reset after a save are
     // not user edits, so the missing-requirement hint stays hidden until one.
     var draftEdited by rememberSaveable { mutableStateOf(false) }
-    val markEdited: () -> Unit = {
-        markTouched()
+    val markEdited: () -> Unit = remember {
+        {
+        markTouched();
         draftEdited = true
+    }
     }
 
     // A draft loaded from a captured payment arrives prefilled but incomplete —
@@ -156,6 +162,10 @@ fun EntryPoint(
     // Create dialogs shared with EntryForm and opened from the missing-requirement
     // hint when no accounts/categories exist. EntryForm renders them from this state.
     var formDialogs by remember { mutableStateOf(EntryFormDialogs()) }
+    // Stable callbacks for the form, so EntryForm can skip recomposition when
+    // its inputs are unchanged.
+    val onFieldFocusChange = remember { { focused: Boolean -> fieldFocused = focused } }
+    val onDialogsChange = remember { { dialogs: EntryFormDialogs -> formDialogs = dialogs } }
 
     // The back arrow and the system back both exit editing: clearFocus closes
     // text fields and dropdowns, bumping editEpoch closes EntryForm's
@@ -246,10 +256,10 @@ fun EntryPoint(
                     categories = categories,
                     defaultCurrency = defaultCurrency,
                     editEpoch = editEpoch,
-                    onFieldFocusChange = { fieldFocused = it },
+                    onFieldFocusChange = onFieldFocusChange,
                     markEdited = markEdited,
                     dialogs = formDialogs,
-                    onDialogsChange = { formDialogs = it },
+                    onDialogsChange = onDialogsChange,
                 )
             }
         }
@@ -394,10 +404,7 @@ private fun EntryHeaderRegion(
 }
 
 @Composable
-private fun LastAddedRegion(
-    viewModel: EntryPointViewModel,
-    onTouched: () -> Unit,
-) {
+private fun LastAddedRegion(viewModel: EntryPointViewModel, onTouched: () -> Unit) {
     val lastAdded by viewModel.lastAdded.collectAsState()
     val lastAddedWasEdit by viewModel.lastAddedWasEdit.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
@@ -449,46 +456,96 @@ private fun EntryFormRegion(
     val upcomingRecurring by viewModel.upcomingRecurring.collectAsState()
     val paceAfterThis by viewModel.paceAfterThis.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
-    val paceCaption: (@Composable () -> Unit)? = if (!hideTotal) {
-        paceAfterThis?.let { pace ->
-            { PaceCaption(pace = pace) }
+    val paceCaption: (@Composable () -> Unit)? = remember(hideTotal, paceAfterThis) {
+        if (!hideTotal) {
+            paceAfterThis?.let { pace -> { PaceCaption(pace = pace) } }
+        } else {
+            null
         }
-    } else {
-        null
+    }
+
+    // Remembered so the form can skip: a freshly allocated lambda on every
+    // recomposition would make every callback param unstable.
+    val onAmountChange = remember(viewModel, markEdited) {
+        { text: String ->
+            viewModel.onAmountChange(text);
+            markEdited()
+        }
+    }
+    val onCategoryChange = remember(viewModel, markEdited) {
+        { id: Long? ->
+            viewModel.onCategoryChange(id);
+            markEdited()
+        }
+    }
+    val onAccountChange = remember(viewModel, markEdited) {
+        { id: Long? ->
+            viewModel.onAccountChangeWithAutoCategory(id);
+            markEdited()
+        }
+    }
+    val onToAccountChange = remember(viewModel, markEdited) {
+        { id: Long? ->
+            viewModel.onToAccountChange(id);
+            markEdited()
+        }
+    }
+    val onToAmountChange = remember(viewModel, markEdited) {
+        { text: String ->
+            viewModel.onToAmountChange(text);
+            markEdited()
+        }
+    }
+    val onDescriptionChange = remember(viewModel, markEdited) {
+        { text: String ->
+            viewModel.onDescriptionChange(text);
+            markEdited()
+        }
+    }
+    val onCreatedAtChange = remember(viewModel, markEdited) {
+        { instant: Instant ->
+            viewModel.onCreatedAtChange(instant);
+            markEdited()
+        }
+    }
+    val onQuickEntry = remember(viewModel, markEdited) {
+        { entry: QuickEntry ->
+            viewModel.applyQuickEntry(entry);
+            markEdited()
+        }
+    }
+    val onUpcoming = remember(viewModel, markEdited) {
+        { upcoming: UpcomingRecurring ->
+            viewModel.applyQuickEntry(QuickEntry(upcoming.entry, upcoming.cadence))
+            markEdited()
+        }
+    }
+    val onCreateCategory = remember(viewModel, markEdited) {
+        { name: String, type: CategoryType, icon: CategoryIcon? ->
+            val created = viewModel.createCategory(name, type, icon)
+            if (created) markEdited()
+            created
+        }
+    }
+    val onCreateAccount = remember(viewModel, markEdited) {
+        { name: String, currency: Currency, initialBalance: Long, selectAsTo: Boolean ->
+            val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
+            if (created) markEdited()
+            created
+        }
     }
 
     EntryForm(
         state = state,
         accounts = accounts,
         categories = categories,
-        onAmountChange = {
-            viewModel.onAmountChange(it)
-            markEdited()
-        },
-        onCategoryChange = {
-            viewModel.onCategoryChange(it)
-            markEdited()
-        },
-        onAccountChange = {
-            viewModel.onAccountChangeWithAutoCategory(it)
-            markEdited()
-        },
-        onToAccountChange = {
-            viewModel.onToAccountChange(it)
-            markEdited()
-        },
-        onToAmountChange = {
-            viewModel.onToAmountChange(it)
-            markEdited()
-        },
-        onDescriptionChange = {
-            viewModel.onDescriptionChange(it)
-            markEdited()
-        },
-        onCreatedAtChange = {
-            viewModel.onCreatedAtChange(it)
-            markEdited()
-        },
+        onAmountChange = onAmountChange,
+        onCategoryChange = onCategoryChange,
+        onAccountChange = onAccountChange,
+        onToAccountChange = onToAccountChange,
+        onToAmountChange = onToAmountChange,
+        onDescriptionChange = onDescriptionChange,
+        onCreatedAtChange = onCreatedAtChange,
         onFieldFocusChange = onFieldFocusChange,
         editEpoch = editEpoch,
         suggestions = EntryFormSuggestions(
@@ -498,26 +555,12 @@ private fun EntryFormRegion(
             quickEntries = quickEntries,
             upcomingRecurring = upcomingRecurring,
         ),
-        onQuickEntry = {
-            viewModel.applyQuickEntry(it)
-            markEdited()
-        },
-        onUpcoming = {
-            viewModel.applyQuickEntry(QuickEntry(it.entry, it.cadence))
-            markEdited()
-        },
+        onQuickEntry = onQuickEntry,
+        onUpcoming = onUpcoming,
         defaultCurrency = defaultCurrency,
         paceCaption = paceCaption,
-        onCreateCategory = { name, type, icon ->
-            val created = viewModel.createCategory(name, type, icon)
-            if (created) markEdited()
-            created
-        },
-        onCreateAccount = { name, currency, initialBalance, selectAsTo ->
-            val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
-            if (created) markEdited()
-            created
-        },
+        onCreateCategory = onCreateCategory,
+        onCreateAccount = onCreateAccount,
         dialogs = dialogs,
         onDialogsChange = onDialogsChange,
     )

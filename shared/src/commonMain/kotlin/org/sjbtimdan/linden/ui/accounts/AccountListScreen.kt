@@ -155,7 +155,11 @@ fun AccountListScreen(viewModel: AccountListViewModel, onNavigateBack: () -> Uni
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                itemsIndexed(accounts, key = { _, account -> account.id }, contentType = { _, _ -> "account" }) { index, account ->
+                itemsIndexed(
+                    accounts,
+                    key = { _, account -> account.id },
+                    contentType = { _, _ -> "account" },
+                ) { index, account ->
                     val accent = accentColor(account.name)
                     Row(
                         modifier = Modifier
