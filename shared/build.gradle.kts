@@ -188,6 +188,9 @@ tasks.withType<Test>().configureEach {
     providers.systemProperty("descriptionQualityTest").orNull?.let {
         systemProperty("descriptionQualityTest", it)
     }
+    providers.systemProperty("descriptionQualitySampleSize").orNull?.let {
+        systemProperty("descriptionQualitySampleSize", it)
+    }
     // Same forwarding for the manual Pace backtest harness.
     listOf(
         "paceBacktest",

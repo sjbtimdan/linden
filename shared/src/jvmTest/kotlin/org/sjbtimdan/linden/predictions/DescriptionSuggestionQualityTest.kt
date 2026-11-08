@@ -37,7 +37,7 @@ import kotlin.time.measureTime
 class DescriptionSuggestionQualityTest : StringSpec({
 
     // Skipped by default. Run manually from the IDE (test method, not the class) or:
-    //   ./gradlew :shared:jvmTest -DdescriptionQualityTest=true \
+    //   ./gradlew :shared:jvmTest -DdescriptionQualityTest=true -DdescriptionQualitySampleSize=5000 \
     //       --tests "org.sjbtimdan.linden.predictions.DescriptionSuggestionQualityTest"
     "leave-one-out description prediction quality".config(
         enabled = System.getProperty("descriptionQualityTest") == "true",
@@ -68,7 +68,7 @@ class DescriptionSuggestionQualityTest : StringSpec({
                 println("Entries in last year with description: ${testable.size}")
 
                 if (testable.isNotEmpty()) {
-                    val sampleSize = minOf(300, testable.size)
+                    val sampleSize = minOf(SAMPLE_SIZE_CAP, testable.size)
                     val sample = testable.shuffled(Random(42)).take(sampleSize)
                     println("Sample size: $sampleSize")
                     println()
@@ -328,6 +328,10 @@ private fun hitPct(hits: Int, total: Int): String = if (total == 0) "  N/A" else
 
 /** Characters typed in the warm evaluation pass. */
 private const val WARM_PREFIX_LENGTH = 3
+
+/** Maximum entries sampled for evaluation; override with -DdescriptionQualitySampleSize. */
+private val SAMPLE_SIZE_CAP: Int =
+    System.getProperty("descriptionQualitySampleSize")?.toIntOrNull() ?: 5000
 
 /** Training data for [entry]: every entry but itself, nothing created after it. */
 private fun pastTrainingData(allEntries: List<Entry>, entry: Entry): List<Entry> =
