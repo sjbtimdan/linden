@@ -6,7 +6,6 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.TransferEntry
 import kotlin.math.abs
 import kotlin.math.ln
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 const val QUICK_ENTRY_TOP_N = 5
@@ -108,7 +107,7 @@ fun predictQuickEntries(
                 emptyList()
             } else {
                 val last = lastByDescription[description] ?: group.maxOf { it.createdAt }
-                val due = cadence != null && isDue(last, cadence, target)
+                val due = cadence != null && isDue(last, cadence, target, timeZone)
                 group.map { entry ->
                     val weight = recencyWeight(entry.createdAt, now) *
                         ln(1.0 + (variantFrequency[key] ?: 0))
@@ -206,14 +205,9 @@ private val TRAILING_PUNCTUATION = Regex("[.,;:!?]+$")
 private fun withinTargetWindow(instant: Instant, target: Instant): Boolean =
     abs((instant - target).inWholeDays) <= DUE_WINDOW_DAYS
 
-/** Whether a recurring group's next occurrence (its last entry plus the interval) lands near [target]. */
-private fun isDue(last: Instant, cadence: RecurrenceCadence, target: Instant): Boolean {
-    val interval = when (cadence) {
-        RecurrenceCadence.Weekly -> WEEKLY_DAYS.days
-        RecurrenceCadence.Monthly -> MONTHLY_DAYS.days
-    }
-    return withinTargetWindow(last + interval, target)
-}
+/** Whether a recurring group's next occurrence lands near [target]. */
+private fun isDue(last: Instant, cadence: RecurrenceCadence, target: Instant, zone: TimeZone): Boolean =
+    withinTargetWindow(nextOccurrence(last, cadence, zone), target)
 
 private data class ScoredEntry(
     val entry: Entry,

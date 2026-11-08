@@ -25,7 +25,7 @@ class UpcomingRecurringTest : StringSpec({
         ExpenseEntry(id, category, description, account, amount, createdAt = createdAt, createdZone = TimeZone.UTC)
 
     fun upcoming(entries: List<Entry>, type: EntryType = EntryType.Expense) =
-        predictUpcomingRecurring(entries, type, now)
+        predictUpcomingRecurring(entries, type, now, TimeZone.UTC)
 
     "returns empty for no entries" {
         upcoming(emptyList()).shouldBeEmpty()
@@ -52,12 +52,13 @@ class UpcomingRecurringTest : StringSpec({
     }
 
     "returns a monthly bill due within the horizon" {
+        // 25 days ago is 2026-12-21; one calendar month later is 2027-01-21.
         val entries = listOf(
             expense(1, "Rent", now.minus(85.days)),
             expense(2, "Rent", now.minus(55.days)),
             expense(3, "Rent", now.minus(25.days)),
         )
-        upcoming(entries).single().nextDue shouldBe now.plus(5.days)
+        upcoming(entries).single().nextDue shouldBe now.plus(6.days)
     }
 
     "hides a monthly bill whose next occurrence is beyond the horizon" {

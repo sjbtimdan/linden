@@ -1,8 +1,16 @@
 package org.sjbtimdan.linden.predictions
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
 import kotlin.math.abs
 import kotlin.math.ceil
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 /** How regularly a set of entries recurs. */
 enum class RecurrenceCadence { Weekly, Monthly }
@@ -44,6 +52,22 @@ fun recurringCadence(entries: List<Entry>, description: String): RecurrenceCaden
         gaps.matchesCadence(WEEKLY_DAYS, WEEKLY_TOLERANCE_DAYS) -> RecurrenceCadence.Weekly
         gaps.matchesCadence(MONTHLY_DAYS, MONTHLY_TOLERANCE_DAYS) -> RecurrenceCadence.Monthly
         else -> null
+    }
+}
+
+/**
+ * The next occurrence of a recurring entry after [last], in [zone]: a week for
+ * weekly entries, the next calendar month for monthly ones. The day-of-month is
+ * preserved — clamped to the target month's last day, so the 31st follows onto
+ * the 28th/29th — keeping a 1st-of-month bill on the 1st instead of drifting
+ * with a fixed 30-day interval.
+ */
+fun nextOccurrence(last: Instant, cadence: RecurrenceCadence, zone: TimeZone): Instant = when (cadence) {
+    RecurrenceCadence.Weekly -> last + WEEKLY_DAYS.days
+
+    RecurrenceCadence.Monthly -> {
+        val local = last.toLocalDateTime(zone)
+        LocalDateTime(local.date.plus(1, DateTimeUnit.MONTH), local.time).toInstant(zone)
     }
 }
 

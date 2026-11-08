@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.predictions
 
+import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
 import kotlin.time.Duration.Companion.days
@@ -33,6 +34,7 @@ fun predictUpcomingRecurring(
     entries: List<Entry>,
     type: EntryType,
     now: Instant,
+    timeZone: TimeZone,
     horizonDays: Int = UPCOMING_HORIZON_DAYS,
     topN: Int = UPCOMING_TOP_N,
 ): List<UpcomingRecurring> {
@@ -42,11 +44,7 @@ fun predictUpcomingRecurring(
         .mapNotNull { (description, group) ->
             val cadence = recurringCadence(group, description) ?: return@mapNotNull null
             val last = group.maxBy { it.createdAt }
-            val interval = when (cadence) {
-                RecurrenceCadence.Weekly -> WEEKLY_DAYS.days
-                RecurrenceCadence.Monthly -> MONTHLY_DAYS.days
-            }
-            val nextDue = last.createdAt + interval
+            val nextDue = nextOccurrence(last.createdAt, cadence, timeZone)
             val forward = when (cadence) {
                 RecurrenceCadence.Weekly -> DUE_WINDOW_DAYS.days
                 RecurrenceCadence.Monthly -> horizonDays.days

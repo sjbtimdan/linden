@@ -119,4 +119,20 @@ class RecurringDetectorTest : StringSpec({
             detect(listOf(expense(1, "Rent", now)), "Coffee") shouldBe null
         }
     }
+
+    context("nextOccurrence") {
+        "weekly adds a week" {
+            nextOccurrence(now, RecurrenceCadence.Weekly, TimeZone.UTC) shouldBe now.plus(7.days)
+        }
+
+        "monthly advances one calendar month, preserving the day" {
+            nextOccurrence(now, RecurrenceCadence.Monthly, TimeZone.UTC) shouldBe
+                Instant.parse("2027-02-15T08:00:00Z")
+        }
+
+        "monthly clamps the 31st to the last day of a shorter month" {
+            nextOccurrence(Instant.parse("2027-01-31T08:00:00Z"), RecurrenceCadence.Monthly, TimeZone.UTC) shouldBe
+                Instant.parse("2027-02-28T08:00:00Z")
+        }
+    }
 })

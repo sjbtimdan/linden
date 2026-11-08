@@ -181,7 +181,7 @@ class EntrySuggestionsProvider(
 
     /** Recurring bills due within the next week, most imminent first. */
     val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = suggestion(allTypeEntries) { state, entries, _ ->
-        predictUpcomingRecurring(entries, state.type, clock.now())
+        predictUpcomingRecurring(entries, state.type, clock.now(), TimeZone.currentSystemDefault())
     }
 
     /**
