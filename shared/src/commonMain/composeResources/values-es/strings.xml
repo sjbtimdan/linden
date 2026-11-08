@@ -143,7 +143,6 @@
     <string name="ledger_filter_by_amount">Filtrar por importe</string>
     <string name="ledger_apply">Aplicar</string>
 
-    <string name="ledger_day_total">Total %1$s</string>
 
     <!-- Period navigator -->
     <string name="ledger_period_day">Día</string>

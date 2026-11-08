@@ -6,18 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import kotlinx.datetime.TimeZone
-import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
-import org.sjbtimdan.linden.model.FxRate
 
 /** The entries view: the day-grouped list, or its guided/filtered empty state. */
 @Composable
 internal fun LedgerEntriesView(
     entries: List<Entry>,
     zone: TimeZone,
-    defaultCurrency: Currency,
-    rates: List<FxRate>,
     hideAmounts: Boolean,
     searchQuery: String,
     typeFilter: EntryType?,
@@ -57,19 +53,16 @@ internal fun LedgerEntriesView(
             )
         }
     } else {
-        val listItems = remember(entries, defaultCurrency, rates) {
+        val listItems = remember(entries) {
             ledgerListItems(
                 entries = entries,
                 zone = zone,
-                defaultCurrency = defaultCurrency,
-                rates = rates,
             )
         }
         LedgerEntriesList(
             items = listItems,
             hideAmounts = hideAmounts,
             zone = zone,
-            defaultCurrency = defaultCurrency,
             onEntryClick = onEntryClick,
             header = paceHeader,
             modifier = modifier,

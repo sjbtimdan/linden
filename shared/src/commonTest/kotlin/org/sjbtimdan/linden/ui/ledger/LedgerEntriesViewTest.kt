@@ -39,8 +39,6 @@ class LedgerEntriesViewTest : StringSpec({
                     LedgerEntriesView(
                         entries = emptyList(),
                         zone = TimeZone.UTC,
-                        defaultCurrency = Currency.CHF,
-                        rates = emptyList(),
                         hideAmounts = false,
                         searchQuery = "",
                         typeFilter = null,
@@ -75,8 +73,6 @@ class LedgerEntriesViewTest : StringSpec({
                     LedgerEntriesView(
                         entries = emptyList(),
                         zone = TimeZone.UTC,
-                        defaultCurrency = Currency.CHF,
-                        rates = emptyList(),
                         hideAmounts = false,
                         searchQuery = "",
                         typeFilter = null,
@@ -110,8 +106,6 @@ class LedgerEntriesViewTest : StringSpec({
                     LedgerEntriesView(
                         entries = listOf(coffee),
                         zone = TimeZone.UTC,
-                        defaultCurrency = Currency.CHF,
-                        rates = emptyList(),
                         hideAmounts = false,
                         searchQuery = "",
                         typeFilter = null,

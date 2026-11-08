@@ -45,7 +45,6 @@ fun LedgerScreen(
     val upcomingCount by viewModel.upcomingCount.collectAsState()
     val periodSelection by viewModel.periodSelection.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val fxRates by viewModel.fxRates.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
@@ -287,8 +286,6 @@ fun LedgerScreen(
             LedgerViewMode.Entries -> LedgerEntriesView(
                 entries = displayedEntries,
                 zone = viewModel.zone,
-                defaultCurrency = defaultCurrency,
-                rates = fxRates,
                 hideAmounts = hideTotal,
                 searchQuery = searchQuery,
                 typeFilter = typeFilter,
