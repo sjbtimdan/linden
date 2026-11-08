@@ -201,6 +201,13 @@ tasks.withType<Test>().configureEach {
     ).forEach { name ->
         providers.systemProperty(name).orNull?.let { systemProperty(name, it) }
     }
+    // Cache test results so an unchanged suite is skipped (locally, via the
+    // up-to-date check + build cache) or restored (remote cache). Only the
+    // in-memory suites are deterministic enough to cache; integrationTest
+    // mutates a real on-disk database, so it is excluded.
+    if (name != "integrationTest") {
+        outputs.cacheIf { true }
+    }
 }
 
 // Integration tests live in their own source set (jvmIntegrationTest) so they
