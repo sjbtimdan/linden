@@ -61,8 +61,8 @@
 
     <!-- Entry point -->
     <string name="entry_add">Aggiungi</string>
-    <string name="entry_added">Aggiunto</string>
-    <string name="entry_updated">Aggiornato</string>
+    <string name="entry_added">Aggiunta</string>
+    <string name="entry_updated">Aggiornata</string>
     <string name="entry_undo">Annulla</string>
     <string name="entry_edit">Modifica</string>
     <string name="entry_deleted">Voce eliminata</string>
@@ -139,7 +139,7 @@
     <string name="ledger_clear_all">Cancella tutto</string>
     <string name="ledger_uncategorized">Non categorizzato</string>
     <string name="ledger_unknown_account">Conto sconosciuto</string>
-    <string name="ledger_amount_all">Importo: Tutti</string>
+    <string name="ledger_amount_all">Importo: Tutto</string>
     <string name="ledger_filter_by_amount">Filtra per importo</string>
     <string name="ledger_apply">Applica</string>
 
@@ -338,5 +338,5 @@
     <string name="capture_app_search">Cerca app</string>
     <string name="capture_no_apps_found">Nessuna app trovata.</string>
     <string name="capture_templates_header">Regole apprese</string>
-    <string name="capture_templates_empty">Ancora nulla appreso. Registra un pagamento acquisito e Linden ricorderà come l\'hai classificato.</string>
+    <string name="capture_templates_empty">Ancora nulla appreso. Registra un pagamento acquisito e Linden ricorderà come l'hai classificato.</string>
 </resources>

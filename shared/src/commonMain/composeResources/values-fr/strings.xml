@@ -61,8 +61,8 @@
 
     <!-- Entry point -->
     <string name="entry_add">Ajouter</string>
-    <string name="entry_added">Ajouté</string>
-    <string name="entry_updated">Mis à jour</string>
+    <string name="entry_added">Ajoutée</string>
+    <string name="entry_updated">Mise à jour</string>
     <string name="entry_undo">Annuler</string>
     <string name="entry_edit">Modifier</string>
     <string name="entry_deleted">Opération supprimée</string>
@@ -344,5 +344,5 @@
     <string name="capture_app_search">Rechercher une application</string>
     <string name="capture_no_apps_found">Aucune application trouvée.</string>
     <string name="capture_templates_header">Règles apprises</string>
-    <string name="capture_templates_empty">Rien d\'appris pour l\'instant. Enregistrez un paiement capturé et Linden retiendra votre classement.</string>
+    <string name="capture_templates_empty">Rien d'appris pour l'instant. Enregistrez un paiement capturé et Linden retiendra votre classement.</string>
 </resources>

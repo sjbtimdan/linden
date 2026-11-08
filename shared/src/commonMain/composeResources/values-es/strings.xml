@@ -80,7 +80,7 @@
     <string name="entry_description_optional">Descripción (opcional)</string>
     <string name="entry_ok">Aceptar</string>
     <string name="entry_quick_entry">Entrada rápida</string>
-    <string name="entry_upcoming">Próximos</string>
+    <string name="entry_upcoming">Próximamente</string>
     <string name="entry_due">Vence %1$s</string>
     <string name="entry_amount_positive">El importe debe ser mayor que cero</string>
 
@@ -110,7 +110,7 @@
     <!-- Entry calculator and misc -->
     <string name="entry_calculator">Calculadora</string>
     <string name="entry_simple_keypad">Teclado simple</string>
-    <string name="entry_backspace">Borrar</string>
+    <string name="entry_backspace">Retroceso</string>
     <string name="entry_enter">Intro</string>
     <string name="entry_recommended">Recomendado</string>
     <string name="entry_recurring">Recurrente</string>
@@ -238,7 +238,7 @@
     <string name="category_type_both_row">Como ingreso/gasto</string>
     <string name="category_icon_restaurant">Comida y restauración</string>
     <string name="category_icon_movie">Entretenimiento</string>
-    <string name="category_icon_shopping_cart">Supermercado</string>
+    <string name="category_icon_shopping_cart">Alimentos</string>
     <string name="category_icon_account_balance">Banca y finanzas</string>
     <string name="category_icon_savings">Ahorro y salario</string>
     <string name="category_icon_shopping_bag">Compras</string>
@@ -249,7 +249,7 @@
     <string name="category_icon_school">Educación</string>
     <string name="category_icon_flight">Viajes</string>
     <string name="category_icon_spa">Cuidado personal</string>
-    <string name="category_icon_car">Coche</string>
+    <string name="category_icon_car">Auto</string>
     <string name="category_icon_public_transport">Transporte público</string>
 
     <!-- Settings screen -->

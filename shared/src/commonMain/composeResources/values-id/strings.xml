@@ -78,7 +78,7 @@
     <string name="entry_to_account">Ke akun</string>
     <string name="entry_account">Akun</string>
     <string name="entry_description_optional">Deskripsi (opsional)</string>
-    <string name="entry_ok">Oke</string>
+    <string name="entry_ok">OK</string>
     <string name="entry_quick_entry">Entri cepat</string>
     <string name="entry_upcoming">Mendatang</string>
     <string name="entry_due">Jatuh tempo %1$s</string>
@@ -303,8 +303,8 @@
     <string name="rates_auto_update_help">Mengunduh kurs terbaru saat kurs tersimpan berusia lebih dari satu hari. Nonaktifkan untuk mempertahankan kurs yang dimasukkan secara manual.</string>
     <string name="rates_edit_rate">Edit kurs %1$s</string>
     <string name="rates_set">Atur kurs</string>
-    <string name="rates_missing">Tidak ada nilai tukar yang tersedia. Anda dapat mengaturnya secara manual.</string>
-    <string name="rates_outdated">Nilai tukar sudah berusia lebih dari seminggu. Anda dapat mengaturnya secara manual.</string>
+    <string name="rates_missing">Tidak ada kurs yang tersedia. Anda dapat mengaturnya secara manual.</string>
+    <string name="rates_outdated">Kurs sudah berusia lebih dari seminggu. Anda dapat mengaturnya secara manual.</string>
     <string name="rates_rate_label">Kurs</string>
     <string name="rates_positive_number">Masukkan angka positif.</string>
 

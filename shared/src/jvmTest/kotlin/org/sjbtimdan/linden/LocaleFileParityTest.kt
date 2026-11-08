@@ -81,6 +81,14 @@ class LocaleFileParityTest : StringSpec({
                 }
             }
         }
+
+        "($locale) never backslash-escapes apostrophes" {
+            val raw = File(root, "$locale/strings.xml").readText()
+            // Compose Multiplatform parses these as standard XML, so `'` needs no
+            // escaping and `\'` renders a stray backslash. The only intended
+            // backslash sequence is `\n` (the split note's literal newline).
+            raw.replace("\\n", "").contains("\\") shouldBe false
+        }
     }
 
     "the script-less zh fallback mirrors Simplified Chinese" {
