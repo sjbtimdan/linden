@@ -41,6 +41,15 @@ JOIN AccountEntity ON AccountEntity.id = EntryEntity.account_id
 LEFT JOIN CategoryEntity ON CategoryEntity.id = EntryEntity.category_id
 LEFT JOIN AccountEntity AS ToAccountEntity ON ToAccountEntity.id = EntryEntity.to_account_id;
 
+-- The read queries above filter and order by created_at, type, account_id,
+-- category_id and to_account_id. Without these the ledger and suggestion reads
+-- full-scan and sort the table on every emission.
+CREATE INDEX IF NOT EXISTS entry_created_at_idx ON EntryEntity (created_at DESC);
+CREATE INDEX IF NOT EXISTS entry_type_created_at_idx ON EntryEntity (type, created_at DESC);
+CREATE INDEX IF NOT EXISTS entry_account_id_idx ON EntryEntity (account_id);
+CREATE INDEX IF NOT EXISTS entry_category_id_idx ON EntryEntity (category_id);
+CREATE INDEX IF NOT EXISTS entry_to_account_id_idx ON EntryEntity (to_account_id);
+
 insert:
 INSERT INTO EntryEntity (
     type, category_id, description, account_id, amount,
