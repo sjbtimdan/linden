@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -17,6 +18,7 @@ import kotlin.time.Instant
  * Validation and conversion are pure functions of the draft and the lookup
  * lists, so they are unit-tested directly.
  */
+@Immutable
 data class EntryDraft(
     val editing: Entry?,
     val type: EntryType,

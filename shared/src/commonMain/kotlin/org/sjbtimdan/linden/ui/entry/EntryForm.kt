@@ -109,9 +109,23 @@ fun EntryForm(
     dialogs: EntryFormDialogs? = null,
     onDialogsChange: ((EntryFormDialogs) -> Unit)? = null,
 ) {
-    val visibleCategories = categoriesForType(categories, state.type)
-    val fromAccount = accounts.firstOrNull { it.id == state.accountId }
-    val toAccount = accounts.firstOrNull { it.id == state.toAccountId }
+    val visibleCategories = remember(categories, state.type) { categoriesForType(categories, state.type) }
+    val fromAccount = remember(accounts, state.accountId) { accounts.firstOrNull { it.id == state.accountId } }
+    val toAccount = remember(accounts, state.toAccountId) { accounts.firstOrNull { it.id == state.toAccountId } }
+    val toAccountOptions = remember(accounts, state.accountId) { accounts.filter { it.id != state.accountId } }
+    val selectedCategory = remember(visibleCategories, state.categoryId) {
+        visibleCategories.firstOrNull { it.id == state.categoryId }
+    }
+    val predictedCategoryOptions = remember(suggestions.categoryIds, visibleCategories, state.categoryId) {
+        suggestions.categoryIds
+            .filterNot { it == state.categoryId }
+            .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } }
+    }
+    val predictedAccountOptions = remember(suggestions.accountIds, accounts, state.accountId) {
+        suggestions.accountIds
+            .filterNot { it == state.accountId }
+            .mapNotNull { id -> accounts.firstOrNull { it.id == id } }
+    }
     val showReceivedAmount = state.type == EntryType.Transfer &&
         fromAccount != null && toAccount != null &&
         fromAccount.currency != toAccount.currency
@@ -251,7 +265,7 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 DropdownField(
                     label = stringResource(Res.string.entry_from_account),
-                    selected = accounts.firstOrNull { it.id == state.accountId },
+                    selected = fromAccount,
                     options = accounts,
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
@@ -268,8 +282,8 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 DropdownField(
                     label = stringResource(Res.string.entry_to_account),
-                    selected = accounts.firstOrNull { it.id == state.toAccountId },
-                    options = accounts.filter { it.id != state.accountId },
+                    selected = toAccount,
+                    options = toAccountOptions,
                     optionLabel = { it.name },
                     onSelect = { onToAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.To else null },
@@ -300,14 +314,12 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 DropdownField(
                     label = stringResource(Res.string.common_category),
-                    selected = visibleCategories.firstOrNull { it.id == state.categoryId },
+                    selected = selectedCategory,
                     options = visibleCategories,
                     optionLabel = { it.name },
                     onSelect = { onCategoryChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Category else null },
-                    predictedOptions = suggestions.categoryIds
-                        .filterNot { it == state.categoryId }
-                        .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } },
+                    predictedOptions = predictedCategoryOptions,
                     optionIcon = { it.icon?.imageVector() },
                     createLabel = categoryCreateLabel,
                     onCreate = if (onCreateCategory != null) {
@@ -321,14 +333,12 @@ fun EntryForm(
                 Spacer(modifier = Modifier.height(16.dp))
                 DropdownField(
                     label = stringResource(Res.string.entry_account),
-                    selected = accounts.firstOrNull { it.id == state.accountId },
+                    selected = fromAccount,
                     options = accounts,
                     optionLabel = { it.name },
                     onSelect = { onAccountChange(it.id) },
                     onFocusChange = { activeField = if (it) ActiveField.Account else null },
-                    predictedOptions = suggestions.accountIds
-                        .filterNot { it == state.accountId }
-                        .mapNotNull { id -> accounts.firstOrNull { it.id == id } },
+                    predictedOptions = predictedAccountOptions,
                     createLabel = accountCreateLabel,
                     onCreate = if (onCreateAccount != null) {
                         { query -> openCreateAccount(query, false) }
@@ -344,13 +354,15 @@ fun EntryForm(
         }
 
         if (activeField == null || activeField == ActiveField.Description) {
-            val visibleSuggestions = state.description.trim().let { query ->
-                val matches = if (query.isEmpty()) {
-                    suggestions.descriptions
-                } else {
-                    suggestions.descriptions.filter { it.contains(query, ignoreCase = true) }
+            val visibleSuggestions = remember(state.description, suggestions.descriptions) {
+                state.description.trim().let { query ->
+                    val matches = if (query.isEmpty()) {
+                        suggestions.descriptions
+                    } else {
+                        suggestions.descriptions.filter { it.contains(query, ignoreCase = true) }
+                    }
+                    matches.filterNot { it.equals(query, ignoreCase = true) }
                 }
-                matches.filterNot { it.equals(query, ignoreCase = true) }
             }
             OutlinedTextField(
                 value = state.description,
@@ -414,7 +426,7 @@ fun EntryForm(
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                val quickChips = quickEntryChips(suggestions.quickEntries)
+                val quickChips = remember(suggestions.quickEntries) { quickEntryChips(suggestions.quickEntries) }
                 OptionChipRow(
                     options = quickChips,
                     optionLabel = { it.label },

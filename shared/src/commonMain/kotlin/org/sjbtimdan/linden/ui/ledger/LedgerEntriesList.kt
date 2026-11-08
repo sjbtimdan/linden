@@ -66,18 +66,18 @@ internal fun LedgerEntriesList(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         header?.let { content ->
-            item(key = "entryListHeader") { content() }
+            item(key = "entryListHeader", contentType = "entryListHeader") { content() }
         }
         var entryIndex = 0
         items.forEach { item ->
             when (item) {
-                is DayHeaderItem -> stickyHeader(item.key) {
+                is DayHeaderItem -> stickyHeader(item.key, contentType = "dayHeader") {
                     DayHeader(label = item.label)
                 }
 
                 is EntryListItem -> {
                     val index = entryIndex++
-                    item(item.key) {
+                    item(item.key, contentType = "entryRow") {
                         EntryRow(
                             entry = item.entry,
                             onClick = { onEntryClick(item.entry) },

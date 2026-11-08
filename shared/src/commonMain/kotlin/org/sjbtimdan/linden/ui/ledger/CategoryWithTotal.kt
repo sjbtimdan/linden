@@ -1,8 +1,10 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.runtime.Immutable
 import org.sjbtimdan.linden.model.Category
 
 /** A category paired with its net total in the default currency (minor units) and entry count. */
+@Immutable
 data class CategoryWithTotal(
     val category: Category?,
     val total: Long,

@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.accounts
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
@@ -15,6 +16,7 @@ import org.sjbtimdan.linden.ui.money.sumInDefaultMinor
 import org.sjbtimdan.linden.ui.money.toDefaultMinor
 
 /** An account paired with its current balance in the account's own currency (minor units). */
+@Immutable
 data class AccountWithBalance(
     val account: Account,
     val balance: Long,

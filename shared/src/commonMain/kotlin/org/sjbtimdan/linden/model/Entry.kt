@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -11,6 +12,7 @@ enum class EntryType {
     Expense,
 }
 
+@Immutable
 sealed interface Entry {
     val type: EntryType
     val id: Long

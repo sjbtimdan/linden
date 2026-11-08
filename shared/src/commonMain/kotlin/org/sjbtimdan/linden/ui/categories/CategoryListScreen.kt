@@ -142,7 +142,7 @@ fun CategoryListScreen(viewModel: CategoryListViewModel, onNavigateBack: () -> U
                 contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                itemsIndexed(categories, key = { _, category -> category.id }) { index, category ->
+                itemsIndexed(categories, key = { _, category -> category.id }, contentType = { _, _ -> "category" }) { index, category ->
                     val accent = accentColor(category.name)
                     Row(
                         modifier = Modifier

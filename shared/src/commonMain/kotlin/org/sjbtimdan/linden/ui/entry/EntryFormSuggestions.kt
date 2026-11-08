@@ -1,9 +1,11 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.runtime.Immutable
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.predictions.UpcomingRecurring
 
 /** Suggestion lists shown by the entry form; empty when there are none. */
+@Immutable
 data class EntryFormSuggestions(
     val descriptions: List<String> = emptyList(),
     val accountIds: List<Long> = emptyList(),

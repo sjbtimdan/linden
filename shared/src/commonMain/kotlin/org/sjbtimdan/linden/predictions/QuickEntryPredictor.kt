@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.predictions
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.sjbtimdan.linden.model.Entry
@@ -20,6 +21,7 @@ const val QUICK_ENTRY_MAX_VARIANTS_PER_DESCRIPTION = 2
 internal const val DUE_WINDOW_DAYS = 2
 
 /** A whole entry the user is likely to repeat right now, with its detected cadence. */
+@Immutable
 data class QuickEntry(
     val entry: Entry,
     val cadence: RecurrenceCadence?,

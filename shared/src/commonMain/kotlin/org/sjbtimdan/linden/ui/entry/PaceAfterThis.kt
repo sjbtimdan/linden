@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.runtime.Immutable
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -10,6 +11,7 @@ import org.sjbtimdan.linden.ui.money.ratesByQuote
 import org.sjbtimdan.linden.ui.money.toDefaultMinor
 
 /** Daily allowance left after the draft expense is included, in the default currency. */
+@Immutable
 data class PaceAfterThis(
     val dailyAllowanceMinor: Long,
     val currency: Currency,

@@ -1,5 +1,8 @@
 package org.sjbtimdan.linden.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class FxRate(
     val baseCurrency: Currency,
     val quoteCurrency: Currency,
@@ -7,6 +10,7 @@ data class FxRate(
     val date: String,
 )
 
+@Immutable
 data class FxRates(
     val base: Currency,
     val date: String,

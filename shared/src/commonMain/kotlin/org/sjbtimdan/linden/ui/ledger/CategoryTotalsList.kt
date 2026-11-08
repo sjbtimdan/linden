@@ -74,7 +74,7 @@ fun CategoryTotalsList(
             contentPadding = PaddingValues(bottom = LocalBottomBarContentPadding.current),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            itemsIndexed(categories, key = { _, item -> item.category?.id ?: 0L }) { index, item ->
+            itemsIndexed(categories, key = { _, item -> item.category?.id ?: 0L }, contentType = { _, _ -> "category" }) { index, item ->
                 val categoryName = item.category?.name
                     ?: stringResource(Res.string.ledger_uncategorized)
                 val accent = item.category?.let { accentColor(it.name) }

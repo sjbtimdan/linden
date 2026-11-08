@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.model
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.DirectionsBus
@@ -61,6 +62,7 @@ enum class CategoryIcon {
     }
 }
 
+@Immutable
 data class Category(
     override val id: Long,
     override val name: String,

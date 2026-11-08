@@ -1,5 +1,8 @@
 package org.sjbtimdan.linden.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Account(
     override val id: Long,
     override val name: String,

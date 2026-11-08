@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.predictions
 
+import androidx.compose.runtime.Immutable
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
@@ -13,6 +14,7 @@ const val UPCOMING_HORIZON_DAYS = 7
 const val UPCOMING_TOP_N = 5
 
 /** A recurring bill whose next occurrence is due soon, with its detected cadence. */
+@Immutable
 data class UpcomingRecurring(
     val entry: Entry,
     val cadence: RecurrenceCadence,
