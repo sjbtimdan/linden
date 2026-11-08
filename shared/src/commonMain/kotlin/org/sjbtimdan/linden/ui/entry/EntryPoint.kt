@@ -42,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.EntryType
+import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.common_clear
@@ -91,6 +92,7 @@ fun EntryPoint(
     val accountSuggestions by viewModel.accountSuggestions.collectAsState()
     val categorySuggestions by viewModel.categorySuggestions.collectAsState()
     val quickEntries by viewModel.quickEntries.collectAsState()
+    val upcomingRecurring by viewModel.upcomingRecurring.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
@@ -316,9 +318,14 @@ fun EntryPoint(
                         accountIds = accountSuggestions,
                         categoryIds = categorySuggestions,
                         quickEntries = quickEntries,
+                        upcomingRecurring = upcomingRecurring,
                     ),
                     onQuickEntry = {
                         viewModel.applyQuickEntry(it)
+                        markEdited()
+                    },
+                    onUpcoming = {
+                        viewModel.applyQuickEntry(QuickEntry(it.entry, it.cadence))
                         markEdited()
                     },
                     defaultCurrency = defaultCurrency,

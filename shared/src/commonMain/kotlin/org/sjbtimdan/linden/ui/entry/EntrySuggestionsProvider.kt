@@ -32,10 +32,13 @@ import org.sjbtimdan.linden.predictions.PREDICTION_HORIZON_MONTHS
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.QUICK_ENTRY_TOP_N
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UpcomingRecurring
+import org.sjbtimdan.linden.predictions.descriptionFamily
 import org.sjbtimdan.linden.predictions.predictAccounts
 import org.sjbtimdan.linden.predictions.predictCategories
 import org.sjbtimdan.linden.predictions.predictDescriptions
 import org.sjbtimdan.linden.predictions.predictQuickEntries
+import org.sjbtimdan.linden.predictions.predictUpcomingRecurring
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.util.stateFlow
 import kotlin.time.Duration.Companion.milliseconds
@@ -164,8 +167,8 @@ class EntrySuggestionsProvider(
         )
     }
 
-    /** Whole entries the user is likely to repeat at the draft's date and time, recurring dues first, boosted by field matches. */
-    val quickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
+    /** Whole entries the user is likely to repeat at the draft's date and time, boosted by field matches. */
+    private val rawQuickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
         predictQuickEntries(
             entries = entries,
             input = state.fieldInput(),
@@ -175,6 +178,24 @@ class EntrySuggestionsProvider(
             target = state.createdAt,
         )
     }
+
+    /** Recurring bills due within the next week, most imminent first. */
+    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = suggestion(allTypeEntries) { state, entries, _ ->
+        predictUpcomingRecurring(entries, state.type, clock.now())
+    }
+
+    /**
+     * Quick-entry chips minus the recurring bills already surfaced by
+     * [upcomingRecurring], so a due bill never appears in both places.
+     */
+    val quickEntries: StateFlow<List<QuickEntry>> = combine(rawQuickEntries, upcomingRecurring) { quick, upcoming ->
+        if (upcoming.isEmpty()) {
+            quick
+        } else {
+            val upcomingFamilies = upcoming.map { descriptionFamily(it.entry.description) }.toSet()
+            quick.filter { descriptionFamily(it.entry.description) !in upcomingFamilies }
+        }
+    }.stateFlow(scope, emptyList())
 
     /** Entries of the draft's type, loaded via [load] whenever the type changes. */
     private fun typeEntries(load: (EntryType) -> Flow<List<Entry>>): StateFlow<List<Entry>> = draft

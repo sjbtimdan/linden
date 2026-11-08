@@ -22,6 +22,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.predictions.autoCategoryForAccount
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.accountBalancesAtEnd
@@ -119,6 +120,9 @@ class EntryPointViewModel(
 
     /** Whole entries the user is likely to repeat right now, time first with field matches boosted. */
     val quickEntries: StateFlow<List<QuickEntry>> get() = suggestions.quickEntries
+
+    /** Recurring bills due within the next week, most imminent first. */
+    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> get() = suggestions.upcomingRecurring
 
     private val _lastAdded = MutableStateFlow<Entry?>(null)
 

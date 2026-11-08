@@ -223,12 +223,13 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
-    "a recurring entry due on the draft date floats to the top" {
+    "a recurring entry due now surfaces in upcoming, not quick entries" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val zone = TimeZone.currentSystemDefault()
-            // Tax is logged monthly on TEST_NOW's day and is due again; Coffee
-            // is logged more often but is not recurring.
+            // Tax is logged monthly and is due again; Coffee is logged more
+            // often but is not recurring. Tax belongs in the upcoming section,
+            // so it no longer fills a quick-entry chip.
             (1..3).forEach { monthsAgo ->
                 entryDao.create(
                     ExpenseEntry(
@@ -255,7 +256,9 @@ class EntrySuggestionsProviderTest : StringSpec({
             }
             draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
 
-            provider.quickEntries.awaitDescriptions(listOf("Tax", "Coffee"))
+            provider.upcomingRecurring.awaitNotEmpty().map { it.entry.description }
+                .shouldContainExactly(listOf("Tax"))
+            provider.quickEntries.awaitDescriptions(listOf("Coffee"))
         }
     }
 

@@ -80,6 +80,8 @@
     <string name="entry_description_optional">विवरण (वैकल्पिक)</string>
     <string name="entry_ok">ठीक है</string>
     <string name="entry_quick_entry">त्वरित प्रविष्टि</string>
+    <string name="entry_upcoming">आगामी</string>
+    <string name="entry_due">देय %1$s</string>
     <string name="entry_amount_positive">राशि शून्य से अधिक होनी चाहिए</string>
 
     <!-- Inline create chips in the entry form: %1$s is the typed query -->

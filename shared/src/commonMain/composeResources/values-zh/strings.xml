@@ -80,6 +80,8 @@
     <string name="entry_description_optional">备注（可选）</string>
     <string name="entry_ok">确定</string>
     <string name="entry_quick_entry">快捷记账</string>
+    <string name="entry_upcoming">即将到期</string>
+    <string name="entry_due">到期 %1$s</string>
     <string name="entry_amount_positive">金额必须大于零</string>
 
     <!-- Inline create chips in the entry form: %1$s is the typed query -->

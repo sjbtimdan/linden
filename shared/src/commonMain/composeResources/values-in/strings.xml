@@ -80,6 +80,8 @@
     <string name="entry_description_optional">Deskripsi (opsional)</string>
     <string name="entry_ok">Oke</string>
     <string name="entry_quick_entry">Entri cepat</string>
+    <string name="entry_upcoming">Mendatang</string>
+    <string name="entry_due">Jatuh tempo %1$s</string>
     <string name="entry_amount_positive">Jumlah harus lebih besar dari nol</string>
 
     <!-- Inline create chips in the entry form: %1$s is the typed query -->

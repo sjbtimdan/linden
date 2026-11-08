@@ -80,6 +80,8 @@
     <string name="entry_description_optional">Description (optional)</string>
     <string name="entry_ok">Ok</string>
     <string name="entry_quick_entry">Quick entry</string>
+    <string name="entry_upcoming">Upcoming</string>
+    <string name="entry_due">Due %1$s</string>
     <string name="entry_amount_positive">Amount must be greater than zero</string>
 
     <!-- Inline create chips in the entry form: %1$s is the typed query -->

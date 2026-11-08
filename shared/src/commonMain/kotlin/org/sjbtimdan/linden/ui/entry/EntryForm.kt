@@ -39,6 +39,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_category
 import org.sjbtimdan.linden.resources.entry_account
@@ -97,6 +98,7 @@ fun EntryForm(
     editEpoch: Int = 0,
     suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
     onQuickEntry: (QuickEntry) -> Unit = {},
+    onUpcoming: (UpcomingRecurring) -> Unit = {},
     defaultCurrency: Currency = Currency.CHF,
     paceCaption: (@Composable () -> Unit)? = null,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
@@ -233,6 +235,14 @@ fun EntryForm(
             paceCaption?.let { caption ->
                 Spacer(modifier = Modifier.height(4.dp))
                 caption()
+            }
+            if (suggestions.upcomingRecurring.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                UpcomingRecurringSection(
+                    upcoming = suggestions.upcomingRecurring,
+                    zone = state.createdZone,
+                    onSelect = onUpcoming,
+                )
             }
         }
 
