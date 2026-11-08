@@ -22,6 +22,10 @@ fun matchCaptureTemplate(capture: PendingCapture, templates: List<CaptureTemplat
  * with too little wording is not a usable match key. The user's description is
  * kept — including null, which restores the notification's own text — so the
  * next prefill repeats exactly what they did once.
+ *
+ * When the user corrected a misparsed amount, the index of the correct amount
+ * among the notification's currency-marked amounts is remembered too, so the
+ * next capture of the same template parses it right the first time.
  */
 fun captureTemplateFor(capture: PendingCapture, entry: Entry): CaptureTemplate? {
     if (entry.type == EntryType.Transfer) return null
@@ -35,5 +39,6 @@ fun captureTemplateFor(capture: PendingCapture, entry: Entry): CaptureTemplate? 
         categoryId = category.id,
         accountId = entry.account.id,
         description = entry.description?.trim()?.ifEmpty { null },
+        amountIndex = amountIndexFor(capture.rawText, entry.amount)?.takeIf { it > 0 },
     )
 }

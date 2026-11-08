@@ -1,6 +1,7 @@
 package org.sjbtimdan.linden.capture
 
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -141,5 +142,26 @@ class NotificationCaptureParserTest : StringSpec({
     "returns null for blank notifications" {
         parseCaptureNotification(CaptureNotification()) shouldBe null
         parseCaptureNotification(notification(title = " ", text = "")) shouldBe null
+    }
+
+    "amountMatches lists every currency-marked amount in order" {
+        amountMatches("Balance CHF 500.00. You paid CHF 12.34.").map { it.amountMinor } shouldBe
+            listOf(50000L, 1234L)
+    }
+
+    "amountAt returns the match at an index" {
+        amountAt("Balance CHF 500.00. You paid CHF 12.34.", 1)?.amountMinor shouldBe 1234L
+    }
+
+    "amountAt returns null past the last match" {
+        amountAt("Balance CHF 500.00. You paid CHF 12.34.", 2).shouldBeNull()
+    }
+
+    "amountIndexFor finds the index of a given amount" {
+        amountIndexFor("Balance CHF 500.00. You paid CHF 12.34.", 1234L) shouldBe 1
+    }
+
+    "amountIndexFor returns null when no match has the amount" {
+        amountIndexFor("Balance CHF 500.00. You paid CHF 12.34.", 999L).shouldBeNull()
     }
 })

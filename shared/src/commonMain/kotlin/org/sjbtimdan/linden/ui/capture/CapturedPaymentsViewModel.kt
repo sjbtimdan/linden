@@ -12,6 +12,7 @@ import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.capture.CaptureRule
 import org.sjbtimdan.linden.capture.CaptureTemplate
 import org.sjbtimdan.linden.capture.PendingCapture
+import org.sjbtimdan.linden.capture.amountAt
 import org.sjbtimdan.linden.capture.matchCaptureTemplate
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.CategoryDao
@@ -138,13 +139,18 @@ class CapturedPaymentsViewModel(
             .firstNotNullOfOrNull { id -> accounts.firstOrNull { it.id == id && !it.hidden }?.id }
         val categoryId = template?.categoryId
             ?.takeIf { id -> categoriesForType(categories.value, type).any { it.id == id } }
-        val decimalDigits = capture.currency?.decimalDigits
+        // A learned amount index re-parses the correct amount, overriding the
+        // first match the parser originally chose.
+        val amount = template?.amountIndex?.let { amountAt(capture.rawText, it) }
+        val amountMinor = amount?.amountMinor ?: capture.amountMinor
+        val decimalDigits = amount?.currency?.decimalDigits
+            ?: capture.currency?.decimalDigits
             ?: accountId?.let { id -> accounts.firstOrNull { it.id == id }?.currency?.decimalDigits }
             ?: 2
         return EntryDraft.forNew(type, clock = clock).copy(
             createdAt = captureInstant(capture),
             createdZone = captureZone(capture),
-            amountText = formatAmount(capture.amountMinor, decimalDigits),
+            amountText = formatAmount(amountMinor, decimalDigits),
             description = template?.description ?: capture.description,
             accountId = accountId,
             categoryId = categoryId,

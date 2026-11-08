@@ -22,4 +22,6 @@ data class PendingCapture(
     val capturedAtMillis: Long,
     /** Zone id (e.g. "Europe/Zurich") active at capture time; null for captures stored before it was recorded. */
     val capturedAtZoneId: String? = null,
+    /** The exact notification text the amount was parsed from, kept for amount-token learning. */
+    val rawText: String = "",
 )

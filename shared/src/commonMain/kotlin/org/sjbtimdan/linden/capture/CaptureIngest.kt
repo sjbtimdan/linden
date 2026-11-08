@@ -79,6 +79,7 @@ class CaptureIngest(
             type = parsed.type,
             capturedAtMillis = candidate.postTime,
             capturedAtZoneId = zoneId(),
+            rawText = captureSearchText(candidate.content),
         )
         if (!repository.containsPending(capture)) repository.addPending(capture)
         repository.rememberProcessed(listOf(fingerprint))

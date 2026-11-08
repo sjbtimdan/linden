@@ -19,18 +19,14 @@ import org.sjbtimdan.linden.ui.entry.parseAmount
 fun parseCaptureNotification(notification: CaptureNotification): ParsedCapture? {
     val body = notification.bigText?.takeIf { it.isNotBlank() }
         ?: notification.text?.takeIf { it.isNotBlank() }
-    val searchText = listOfNotNull(notification.title, body, notification.subText)
-        .filter { it.isNotBlank() }
-        .joinToString(" ")
-        .replace('\n', ' ')
-        .trim()
+    val searchText = captureSearchText(notification)
     if (searchText.isEmpty()) return null
 
     val lower = searchText.lowercase()
     if (OTP_KEYWORDS.any { lower.contains(it) }) return null
     if (DECLINED_KEYWORDS.any { lower.contains(it) }) return null
 
-    val match = firstAmountMatch(searchText) ?: return null
+    val match = amountMatches(searchText).firstOrNull() ?: return null
     val description = (body ?: notification.title.orEmpty())
         .replace('\n', ' ')
         .trim()
@@ -43,19 +39,34 @@ fun parseCaptureNotification(notification: CaptureNotification): ParsedCapture? 
     )
 }
 
+/** The text an amount is parsed from: title, body and subtext joined on one line. */
+internal fun captureSearchText(notification: CaptureNotification): String {
+    val body = notification.bigText?.takeIf { it.isNotBlank() }
+        ?: notification.text?.takeIf { it.isNotBlank() }
+    return listOfNotNull(notification.title, body, notification.subText)
+        .filter { it.isNotBlank() }
+        .joinToString(" ")
+        .replace('\n', ' ')
+        .trim()
+}
+
 private const val DESCRIPTION_MAX_LENGTH = 140
 
-/** First amount directly adjacent to a currency marker, in text order. */
-private fun firstAmountMatch(text: String): AmountMatch? {
-    for (marker in markerMatches(text)) {
-        val decimalDigits = marker.currency?.decimalDigits ?: 2
-        val amount = amountAfter(text, marker.start + marker.length, decimalDigits)
-            ?: amountBefore(text, marker.start, decimalDigits)
-            ?: continue
-        return AmountMatch(amount.amountMinor, marker.currency, amount.sign)
-    }
-    return null
+/** Every amount directly adjacent to a currency marker, in text order. */
+internal fun amountMatches(text: String): List<AmountMatch> = markerMatches(text).mapNotNull { marker ->
+    val decimalDigits = marker.currency?.decimalDigits ?: 2
+    val amount = amountAfter(text, marker.start + marker.length, decimalDigits)
+        ?: amountBefore(text, marker.start, decimalDigits)
+        ?: return@mapNotNull null
+    AmountMatch(amount.amountMinor, marker.currency, amount.sign)
 }
+
+/** The amount match at [index], or null when the text has fewer matches. */
+internal fun amountAt(text: String, index: Int): AmountMatch? = amountMatches(text).getOrNull(index)
+
+/** The index of the first amount match equal to [amountMinor], or null when none is. */
+internal fun amountIndexFor(text: String, amountMinor: Long): Int? =
+    amountMatches(text).indexOfFirst { it.amountMinor == amountMinor }.takeIf { it >= 0 }
 
 private data class MarkerMatch(val start: Int, val length: Int, val currency: Currency?)
 
@@ -107,7 +118,7 @@ private fun isSymbolBoundary(text: String, index: Int, symbol: String): Boolean 
 
 private data class TokenAmount(val amountMinor: Long, val sign: Char?)
 
-private data class AmountMatch(val amountMinor: Long, val currency: Currency?, val sign: Char?)
+internal data class AmountMatch(val amountMinor: Long, val currency: Currency?, val sign: Char?)
 
 /**
  * The number right after a marker, allowing a small gap and a sign. The token

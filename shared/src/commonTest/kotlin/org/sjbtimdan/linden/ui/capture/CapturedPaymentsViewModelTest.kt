@@ -262,6 +262,45 @@ class CapturedPaymentsViewModelTest : StringSpec({
         }
     }
 
+    "buildDraft re-parses the learned amount index instead of the first match" {
+        withCapturedPaymentsViewModel { repository, accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            repository.setRule(CaptureRule("com.example.bank", main.id))
+            repository.addPending(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 50000,
+                    currency = Currency.CHF,
+                    description = "Balance CHF 500.00. You paid CHF 12.34.",
+                    type = EntryType.Expense,
+                    capturedAtMillis = 1L,
+                    rawText = "Balance CHF 500.00. You paid CHF 12.34.",
+                ),
+            )
+            repository.completeCapture(
+                1L,
+                ExpenseEntry(0, groceries, "COOP", main, 1234, createdAt = TEST_NOW, createdZone = TimeZone.UTC),
+            )
+
+            val draft = viewModel.buildDraft(
+                PendingCapture(
+                    packageName = "com.example.bank",
+                    amountMinor = 80000,
+                    currency = Currency.CHF,
+                    description = "Balance CHF 800.00. You paid CHF 9.99.",
+                    type = EntryType.Expense,
+                    capturedAtMillis = 2L,
+                    rawText = "Balance CHF 800.00. You paid CHF 9.99.",
+                ),
+            )
+
+            draft.amountText shouldBe "9.99"
+        }
+    }
+
     "buildDraft falls back to the rule account when the template's account is gone" {
         withCapturedPaymentsViewModel { repository, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)

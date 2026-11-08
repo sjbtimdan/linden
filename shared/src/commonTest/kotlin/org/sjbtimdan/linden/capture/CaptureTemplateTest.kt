@@ -113,4 +113,38 @@ class CaptureTemplateTest : StringSpec({
         captureTemplateFor(capture("12"), ExpenseEntry(0, category(), "COOP", account(), 1250, createdAt = TEST_NOW))
             .shouldBeNull()
     }
+
+    "learn remembers the correct amount index when the first match was wrong" {
+        val learned = captureTemplateFor(
+            PendingCapture(
+                packageName = "com.example.bank",
+                amountMinor = 50000,
+                currency = Currency.CHF,
+                description = "Balance CHF 500.00. You paid CHF 12.34.",
+                type = EntryType.Expense,
+                capturedAtMillis = 1L,
+                rawText = "Balance CHF 500.00. You paid CHF 12.34.",
+            ),
+            ExpenseEntry(0, category(7L), "COOP", account(9L), 1234, createdAt = TEST_NOW),
+        )
+
+        learned?.amountIndex shouldBe 1
+    }
+
+    "learn stores no amount index when the first match was already correct" {
+        val learned = captureTemplateFor(
+            PendingCapture(
+                packageName = "com.example.bank",
+                amountMinor = 50000,
+                currency = Currency.CHF,
+                description = "Balance CHF 500.00. You paid CHF 12.34.",
+                type = EntryType.Expense,
+                capturedAtMillis = 1L,
+                rawText = "Balance CHF 500.00. You paid CHF 12.34.",
+            ),
+            ExpenseEntry(0, category(7L), "COOP", account(9L), 50000, createdAt = TEST_NOW),
+        )
+
+        learned?.amountIndex.shouldBeNull()
+    }
 })

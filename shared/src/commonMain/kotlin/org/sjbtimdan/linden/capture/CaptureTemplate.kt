@@ -20,4 +20,6 @@ data class CaptureTemplate(
     val accountId: Long,
     /** The user's wording for the entry; null keeps the notification's own text. */
     val description: String? = null,
+    /** Index of the correct amount among the notification's currency-marked amounts; null uses the first. */
+    val amountIndex: Int? = null,
 )
