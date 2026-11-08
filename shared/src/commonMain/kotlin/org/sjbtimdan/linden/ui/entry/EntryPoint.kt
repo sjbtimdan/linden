@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.resources.Res
@@ -84,30 +87,14 @@ fun EntryPoint(
 ) {
     // Only visible accounts can back a new entry: pickers, suggestions and the
     // seed all exclude hidden ones, so the form never offers an account to hide.
+    // The screen root keeps only the flows its chrome needs; the hero card,
+    // banners and the form collect their own below so a change in one subtree
+    // does not recompose the whole screen.
     val accounts by viewModel.visibleAccounts.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val selectedType by viewModel.selectedType.collectAsState()
     val draft by viewModel.draft.collectAsState()
-    val descriptionSuggestions by viewModel.descriptionSuggestions.collectAsState()
-    val accountSuggestions by viewModel.accountSuggestions.collectAsState()
-    val categorySuggestions by viewModel.categorySuggestions.collectAsState()
-    val quickEntries by viewModel.quickEntries.collectAsState()
-    val upcomingRecurring by viewModel.upcomingRecurring.collectAsState()
-    val totalMinor by viewModel.totalMinor.collectAsState()
     val defaultCurrency by viewModel.defaultCurrency.collectAsState()
-    val hideTotal by viewModel.hideTotal.collectAsState()
-    val hasEntries by viewModel.hasEntries.collectAsState()
-    val showRatesWarning by viewModel.showRatesWarning.collectAsState()
-    val lastAdded by viewModel.lastAdded.collectAsState()
-    val lastAddedWasEdit by viewModel.lastAddedWasEdit.collectAsState()
-    val paceAfterThis by viewModel.paceAfterThis.collectAsState()
-    val paceCaption: (@Composable () -> Unit)? = if (!hideTotal) {
-        paceAfterThis?.let { pace ->
-            { PaceCaption(pace = pace) }
-        }
-    } else {
-        null
-    }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -118,15 +105,6 @@ fun EntryPoint(
     // screen (and thus the draft) is created fresh.
     LaunchedEffect(Unit) {
         viewModel.seedDraft()
-    }
-
-    // The last-added receipt is both a confirmation and an undo offer: it
-    // dismisses itself after a short window, after which the add is final.
-    LaunchedEffect(lastAdded?.id) {
-        if (lastAdded != null) {
-            delay(LAST_ADDED_UNDO_WINDOW)
-            viewModel.dismissLastAdded()
-        }
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
@@ -232,30 +210,12 @@ fun EntryPoint(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // The hero card is dead weight before the first entry exists.
-            if (hasEntries) {
-                TotalBalanceCard(
-                    total = totalMinor,
-                    currency = defaultCurrency,
-                    hidden = hideTotal,
-                    compact = draftTouched,
-                    onToggleHidden = { viewModel.setHideTotal(!hideTotal) },
-                )
-            }
-
-            // FX rates only matter once entries span currencies or the user has
-            // visited the Rates screen; until then the warning is day-one noise.
-            if (showRatesWarning) {
-                ratesWarning?.let { warning ->
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    RatesWarningBanner(
-                        warning = warning,
-                        onSetRates = onNavigateToRates,
-                        compact = draftTouched,
-                    )
-                }
-            }
+            EntryHeaderRegion(
+                viewModel = viewModel,
+                ratesWarning = ratesWarning,
+                compact = draftTouched,
+                onSetRates = onNavigateToRates,
+            )
         }
         if (fieldFocused) {
             Row(
@@ -279,67 +239,15 @@ fun EntryPoint(
                 .weight(1f),
         ) {
             draft?.let { state ->
-                EntryForm(
+                EntryFormRegion(
+                    viewModel = viewModel,
                     state = state,
                     accounts = accounts,
                     categories = categories,
-                    onAmountChange = {
-                        viewModel.onAmountChange(it)
-                        markEdited()
-                    },
-                    onCategoryChange = {
-                        viewModel.onCategoryChange(it)
-                        markEdited()
-                    },
-                    onAccountChange = {
-                        viewModel.onAccountChangeWithAutoCategory(it)
-                        markEdited()
-                    },
-                    onToAccountChange = {
-                        viewModel.onToAccountChange(it)
-                        markEdited()
-                    },
-                    onToAmountChange = {
-                        viewModel.onToAmountChange(it)
-                        markEdited()
-                    },
-                    onDescriptionChange = {
-                        viewModel.onDescriptionChange(it)
-                        markEdited()
-                    },
-                    onCreatedAtChange = {
-                        viewModel.onCreatedAtChange(it)
-                        markEdited()
-                    },
-                    onFieldFocusChange = { fieldFocused = it },
-                    editEpoch = editEpoch,
-                    suggestions = EntryFormSuggestions(
-                        descriptions = descriptionSuggestions,
-                        accountIds = accountSuggestions,
-                        categoryIds = categorySuggestions,
-                        quickEntries = quickEntries,
-                        upcomingRecurring = upcomingRecurring,
-                    ),
-                    onQuickEntry = {
-                        viewModel.applyQuickEntry(it)
-                        markEdited()
-                    },
-                    onUpcoming = {
-                        viewModel.applyQuickEntry(QuickEntry(it.entry, it.cadence))
-                        markEdited()
-                    },
                     defaultCurrency = defaultCurrency,
-                    paceCaption = paceCaption,
-                    onCreateCategory = { name, type, icon ->
-                        val created = viewModel.createCategory(name, type, icon)
-                        if (created) markEdited()
-                        created
-                    },
-                    onCreateAccount = { name, currency, initialBalance, selectAsTo ->
-                        val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
-                        if (created) markEdited()
-                        created
-                    },
+                    editEpoch = editEpoch,
+                    onFieldFocusChange = { fieldFocused = it },
+                    markEdited = markEdited,
                     dialogs = formDialogs,
                     onDialogsChange = { formDialogs = it },
                 )
@@ -403,23 +311,10 @@ fun EntryPoint(
             // place and Undo pulls it out of the ledger as a fresh draft, while
             // its leading icon dismisses the receipt; a tap on the body does
             // nothing.
-            lastAdded?.let { entry ->
-                LastAddedEntry(
-                    entry = entry,
-                    hideAmounts = hideTotal,
-                    updated = lastAddedWasEdit,
-                    onEdit = {
-                        viewModel.editLastAdded()
-                        markTouched()
-                    },
-                    onUndo = {
-                        viewModel.undoLastAdded()
-                        markTouched()
-                    },
-                    onDismiss = viewModel::dismissLastAdded,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            LastAddedRegion(
+                viewModel = viewModel,
+                onTouched = markTouched,
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -457,4 +352,173 @@ fun EntryPoint(
             }
         }
     }
+}
+
+@Composable
+private fun EntryHeaderRegion(
+    viewModel: EntryPointViewModel,
+    ratesWarning: RatesWarning?,
+    compact: Boolean,
+    onSetRates: () -> Unit,
+) {
+    val hasEntries by viewModel.hasEntries.collectAsState()
+    val totalMinor by viewModel.totalMinor.collectAsState()
+    val defaultCurrency by viewModel.defaultCurrency.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
+    val showRatesWarning by viewModel.showRatesWarning.collectAsState()
+
+    // The hero card is dead weight before the first entry exists.
+    if (hasEntries) {
+        TotalBalanceCard(
+            total = totalMinor,
+            currency = defaultCurrency,
+            hidden = hideTotal,
+            compact = compact,
+            onToggleHidden = { viewModel.setHideTotal(!hideTotal) },
+        )
+    }
+
+    // FX rates only matter once entries span currencies or the user has
+    // visited the Rates screen; until then the warning is day-one noise.
+    if (showRatesWarning) {
+        ratesWarning?.let { warning ->
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RatesWarningBanner(
+                warning = warning,
+                onSetRates = onSetRates,
+                compact = compact,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LastAddedRegion(
+    viewModel: EntryPointViewModel,
+    onTouched: () -> Unit,
+) {
+    val lastAdded by viewModel.lastAdded.collectAsState()
+    val lastAddedWasEdit by viewModel.lastAddedWasEdit.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
+
+    // The receipt dismisses itself after a short window, after which the add is final.
+    LaunchedEffect(lastAdded?.id) {
+        if (lastAdded != null) {
+            delay(LAST_ADDED_UNDO_WINDOW)
+            viewModel.dismissLastAdded()
+        }
+    }
+
+    lastAdded?.let { entry ->
+        LastAddedEntry(
+            entry = entry,
+            hideAmounts = hideTotal,
+            updated = lastAddedWasEdit,
+            onEdit = {
+                viewModel.editLastAdded()
+                onTouched()
+            },
+            onUndo = {
+                viewModel.undoLastAdded()
+                onTouched()
+            },
+            onDismiss = viewModel::dismissLastAdded,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun EntryFormRegion(
+    viewModel: EntryPointViewModel,
+    state: EntryDraft,
+    accounts: List<Account>,
+    categories: List<Category>,
+    defaultCurrency: Currency,
+    editEpoch: Int,
+    onFieldFocusChange: (Boolean) -> Unit,
+    markEdited: () -> Unit,
+    dialogs: EntryFormDialogs,
+    onDialogsChange: (EntryFormDialogs) -> Unit,
+) {
+    val descriptionSuggestions by viewModel.descriptionSuggestions.collectAsState()
+    val accountSuggestions by viewModel.accountSuggestions.collectAsState()
+    val categorySuggestions by viewModel.categorySuggestions.collectAsState()
+    val quickEntries by viewModel.quickEntries.collectAsState()
+    val upcomingRecurring by viewModel.upcomingRecurring.collectAsState()
+    val paceAfterThis by viewModel.paceAfterThis.collectAsState()
+    val hideTotal by viewModel.hideTotal.collectAsState()
+    val paceCaption: (@Composable () -> Unit)? = if (!hideTotal) {
+        paceAfterThis?.let { pace ->
+            { PaceCaption(pace = pace) }
+        }
+    } else {
+        null
+    }
+
+    EntryForm(
+        state = state,
+        accounts = accounts,
+        categories = categories,
+        onAmountChange = {
+            viewModel.onAmountChange(it)
+            markEdited()
+        },
+        onCategoryChange = {
+            viewModel.onCategoryChange(it)
+            markEdited()
+        },
+        onAccountChange = {
+            viewModel.onAccountChangeWithAutoCategory(it)
+            markEdited()
+        },
+        onToAccountChange = {
+            viewModel.onToAccountChange(it)
+            markEdited()
+        },
+        onToAmountChange = {
+            viewModel.onToAmountChange(it)
+            markEdited()
+        },
+        onDescriptionChange = {
+            viewModel.onDescriptionChange(it)
+            markEdited()
+        },
+        onCreatedAtChange = {
+            viewModel.onCreatedAtChange(it)
+            markEdited()
+        },
+        onFieldFocusChange = onFieldFocusChange,
+        editEpoch = editEpoch,
+        suggestions = EntryFormSuggestions(
+            descriptions = descriptionSuggestions,
+            accountIds = accountSuggestions,
+            categoryIds = categorySuggestions,
+            quickEntries = quickEntries,
+            upcomingRecurring = upcomingRecurring,
+        ),
+        onQuickEntry = {
+            viewModel.applyQuickEntry(it)
+            markEdited()
+        },
+        onUpcoming = {
+            viewModel.applyQuickEntry(QuickEntry(it.entry, it.cadence))
+            markEdited()
+        },
+        defaultCurrency = defaultCurrency,
+        paceCaption = paceCaption,
+        onCreateCategory = { name, type, icon ->
+            val created = viewModel.createCategory(name, type, icon)
+            if (created) markEdited()
+            created
+        },
+        onCreateAccount = { name, currency, initialBalance, selectAsTo ->
+            val created = viewModel.createAccount(name, currency, initialBalance, selectAsTo)
+            if (created) markEdited()
+            created
+        },
+        dialogs = dialogs,
+        onDialogsChange = onDialogsChange,
+    )
 }

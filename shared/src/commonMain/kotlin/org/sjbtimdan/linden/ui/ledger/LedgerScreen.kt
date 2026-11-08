@@ -21,6 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
+import org.sjbtimdan.linden.model.Account
+import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
@@ -48,18 +52,13 @@ fun LedgerScreen(
     val totalMinor by viewModel.totalMinor.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
-    val accountBalances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
     val accountTotal by viewModel.accountTotalAtPeriodEnd.collectAsState()
-    val accountConversions by viewModel.accountConversionsAtPeriodEnd.collectAsState()
-    val categoryTotals by viewModel.categoryTotals.collectAsState()
     val categoryTotal by viewModel.categoryTotal.collectAsState()
     val categoryFilter by viewModel.categoryFilter.collectAsState()
     val accountFilter by viewModel.accountFilter.collectAsState()
-    val displayedEntries by viewModel.displayedEntries.collectAsState()
     val hasAnyEntries by viewModel.hasAnyEntries.collectAsState()
     val dialogState by viewModel.dialogState.collectAsState()
     val saving by viewModel.saving.collectAsState()
-    val currentAccountBalances by viewModel.currentAccountBalances.collectAsState()
     val paceForecast by viewModel.paceForecast.collectAsState()
 
     val todayDate = viewModel.today()
@@ -251,41 +250,36 @@ fun LedgerScreen(
         )
 
         when (viewMode) {
-            LedgerViewMode.Accounts -> LedgerAccountsView(
+            LedgerViewMode.Accounts -> LedgerAccountsRegion(
+                viewModel = viewModel,
                 accounts = accounts,
-                balances = accountBalances,
-                conversions = accountConversions,
                 defaultCurrency = defaultCurrency,
                 hideAmounts = hideTotal,
                 searchQuery = searchQuery,
                 canAdjustBalance = periodSpansToday,
-                currentBalances = currentAccountBalances,
                 onEmptyAction = onNavigateToAccounts,
-                onAccountClick = { viewModel.openAccount(it.account.id) },
                 onAdjustBalance = { adjustState = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
             )
 
-            LedgerViewMode.Categories -> LedgerCategoriesView(
+            LedgerViewMode.Categories -> LedgerCategoriesRegion(
+                viewModel = viewModel,
                 categories = categories,
-                totals = categoryTotals,
                 defaultCurrency = defaultCurrency,
                 hideAmounts = hideTotal,
                 searchQuery = searchQuery,
                 showFuture = showFuture,
                 upcomingCount = upcomingCount,
                 onEmptyAction = onNavigateToCategories,
-                onCategoryClick = { viewModel.openCategory(it.category?.id ?: 0L) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
             )
 
-            LedgerViewMode.Entries -> LedgerEntriesView(
-                entries = displayedEntries,
-                zone = viewModel.zone,
+            LedgerViewMode.Entries -> LedgerEntriesRegion(
+                viewModel = viewModel,
                 hideAmounts = hideTotal,
                 searchQuery = searchQuery,
                 typeFilter = typeFilter,
@@ -297,9 +291,7 @@ fun LedgerScreen(
                 upcomingCount = upcomingCount,
                 hasAnyEntries = hasAnyEntries,
                 paceHeader = paceHeader,
-                onEntryClick = viewModel::openEditDialog,
                 onAddFirstEntry = onNavigateToEntry,
-                onRevealUpcoming = { viewModel.setShowFuture(true) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -324,5 +316,105 @@ fun LedgerScreen(
         adjustState = adjustState,
         hideAmounts = hideTotal,
         onAdjustStateChange = { adjustState = it },
+    )
+}
+
+@Composable
+private fun LedgerAccountsRegion(
+    viewModel: LedgerViewModel,
+    accounts: List<Account>,
+    defaultCurrency: Currency,
+    hideAmounts: Boolean,
+    searchQuery: String,
+    canAdjustBalance: Boolean,
+    onEmptyAction: () -> Unit,
+    onAdjustBalance: (AdjustBalanceDialogState) -> Unit,
+    modifier: Modifier,
+) {
+    val balances by viewModel.accountBalancesAtPeriodEnd.collectAsState()
+    val conversions by viewModel.accountConversionsAtPeriodEnd.collectAsState()
+    val currentBalances by viewModel.currentAccountBalances.collectAsState()
+
+    LedgerAccountsView(
+        accounts = accounts,
+        balances = balances,
+        conversions = conversions,
+        defaultCurrency = defaultCurrency,
+        hideAmounts = hideAmounts,
+        searchQuery = searchQuery,
+        canAdjustBalance = canAdjustBalance,
+        currentBalances = currentBalances,
+        onEmptyAction = onEmptyAction,
+        onAccountClick = { viewModel.openAccount(it.account.id) },
+        onAdjustBalance = onAdjustBalance,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun LedgerCategoriesRegion(
+    viewModel: LedgerViewModel,
+    categories: List<Category>,
+    defaultCurrency: Currency,
+    hideAmounts: Boolean,
+    searchQuery: String,
+    showFuture: Boolean,
+    upcomingCount: Int,
+    onEmptyAction: () -> Unit,
+    modifier: Modifier,
+) {
+    val totals by viewModel.categoryTotals.collectAsState()
+
+    LedgerCategoriesView(
+        categories = categories,
+        totals = totals,
+        defaultCurrency = defaultCurrency,
+        hideAmounts = hideAmounts,
+        searchQuery = searchQuery,
+        showFuture = showFuture,
+        upcomingCount = upcomingCount,
+        onEmptyAction = onEmptyAction,
+        onCategoryClick = { viewModel.openCategory(it.category?.id ?: 0L) },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun LedgerEntriesRegion(
+    viewModel: LedgerViewModel,
+    hideAmounts: Boolean,
+    searchQuery: String,
+    typeFilter: EntryType?,
+    categoryFilter: Long?,
+    accountFilter: Long?,
+    amountFilter: AmountFilter?,
+    periodIsAll: Boolean,
+    showFuture: Boolean,
+    upcomingCount: Int,
+    hasAnyEntries: Boolean,
+    paceHeader: (@Composable () -> Unit)?,
+    onAddFirstEntry: () -> Unit,
+    modifier: Modifier,
+) {
+    val displayedEntries by viewModel.displayedEntries.collectAsState()
+
+    LedgerEntriesView(
+        entries = displayedEntries,
+        zone = viewModel.zone,
+        hideAmounts = hideAmounts,
+        searchQuery = searchQuery,
+        typeFilter = typeFilter,
+        categoryFilter = categoryFilter,
+        accountFilter = accountFilter,
+        amountFilter = amountFilter,
+        periodIsAll = periodIsAll,
+        showFuture = showFuture,
+        upcomingCount = upcomingCount,
+        hasAnyEntries = hasAnyEntries,
+        paceHeader = paceHeader,
+        onEntryClick = viewModel::openEditDialog,
+        onAddFirstEntry = onAddFirstEntry,
+        onRevealUpcoming = { viewModel.setShowFuture(true) },
+        modifier = modifier,
     )
 }
