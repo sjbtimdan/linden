@@ -21,8 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -38,8 +36,6 @@ import org.sjbtimdan.linden.ui.theme.accentColor
 import org.sjbtimdan.linden.ui.theme.accentContentColor
 import org.sjbtimdan.linden.ui.theme.lindenCard
 import org.sjbtimdan.linden.ui.theme.lindenColors
-
-private val AccentRailWidth = 4.dp
 
 @Composable
 internal fun Entry.title(): String {
@@ -76,13 +72,13 @@ internal fun Entry.tintColor(): Color = when (type) {
 
 /**
  * A single entry row, colored by its category accent (transfers, which carry
- * none, fall back to the entry-type tint): a full-height rail on the leading
- * edge and a solid icon disc, while the amount keeps the type tint so the
- * direction of the money stays readable. Two text lines: the title, then the
- * account (or transfer pair). [showTime] appends the time-of-day to that
- * secondary line: rows are grouped under day headers that already carry the
- * date, so it only tells same-day entries apart. [hideAmounts] masks the
- * amount while "Hide Totals" is on, leaving the text readable.
+ * none, fall back to the entry-type tint): a solid icon disc leads, while the
+ * amount keeps the type tint so the direction of the money stays readable.
+ * Two text lines: the title, then the account (or transfer pair). [showTime]
+ * appends the time-of-day to that secondary line: rows are grouped under day
+ * headers that already carry the date, so it only tells same-day entries
+ * apart. [hideAmounts] masks the amount while "Hide Totals" is on, leaving the
+ * text readable.
  */
 @Composable
 fun EntryRow(
@@ -102,9 +98,6 @@ fun EntryRow(
             .fillMaxWidth()
             .pressFeedback(interactionSource)
             .lindenCard()
-            .drawBehind {
-                drawRect(color = accent, size = Size(AccentRailWidth.toPx(), size.height))
-            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,

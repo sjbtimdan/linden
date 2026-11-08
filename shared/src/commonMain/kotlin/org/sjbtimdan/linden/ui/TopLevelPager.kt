@@ -2,17 +2,14 @@ package org.sjbtimdan.linden.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -44,22 +41,19 @@ internal fun TopLevelPager(
     val latestScreen by rememberUpdatedState(screen)
 
     // A non-adjacent jump (e.g. Settings -> Ledger) would slide through the
-    // middle screen; fade the target in over the current page instead.
-    val crossFadeAlpha = remember { Animatable(1f) }
-    var crossFadeTarget by remember { mutableStateOf<Screen?>(null) }
+    // middle screen, composing it mid-animation. Fade the pager out, jump it
+    // underneath while hidden, and fade back in: the target composes exactly
+    // once, inside the pager, and no duplicate screen or mid-slide composition
+    // of the middle screen is ever on stage.
+    val pagerAlpha = remember { Animatable(1f) }
 
     LaunchedEffect(screen) {
         val index = topLevelScreens.indexOf(screen)
         if (index >= 0 && pagerState.currentPage != index) {
             if (abs(index - pagerState.currentPage) > 1) {
-                crossFadeTarget = screen
-                try {
-                    crossFadeAlpha.snapTo(0f)
-                    crossFadeAlpha.animateTo(1f, tween(180))
-                    pagerState.scrollToPage(index)
-                } finally {
-                    crossFadeTarget = null
-                }
+                pagerAlpha.animateTo(0f, tween(90))
+                pagerState.scrollToPage(index)
+                pagerAlpha.animateTo(1f, tween(150))
             } else {
                 pagerState.animateScrollToPage(index)
             }
@@ -72,22 +66,13 @@ internal fun TopLevelPager(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize().testTag("topLevelPager"),
-        ) { page ->
-            pageContent(topLevelScreens[page])
-        }
-
-        crossFadeTarget?.let { target ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { alpha = crossFadeAlpha.value },
-            ) {
-                pageContent(target)
-            }
-        }
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier
+            .fillMaxSize()
+            .graphicsLayer { alpha = pagerAlpha.value }
+            .testTag("topLevelPager"),
+    ) { page ->
+        pageContent(topLevelScreens[page])
     }
 }
