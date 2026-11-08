@@ -1,3 +1,14 @@
+## Version 1.4.0
+
+<en-US>
+- Spanish language support — Linden now offers nine languages.
+- Improved welcome screen for new users.
+- The Entry screen surfaces your upcoming recurring bills, and you can dismiss any that are no longer relevant.
+- The Entry screen auto-fills the category from the account you pick.
+- Payment capture (Android) learns the correct amount from each notification.
+- Various user experience improvements, and UI polish.
+</en-US>
+
 ## Version 1.3.0
 
 <en-US>
