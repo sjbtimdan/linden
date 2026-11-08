@@ -308,6 +308,21 @@ class AppTest : StringSpec({
         }
     }
 
+    "tapping a non-adjacent tab lands on it without stopping on the middle screen" {
+        withApp { dependencies ->
+            setContent { App(dependencies) }
+
+            onNodeWithText("Settings").performClick()
+            waitForIdle()
+            onNodeWithText("Import from Ivy").assertExists()
+
+            onNodeWithText("Ledger").performClick()
+            waitForIdle()
+            onNodeWithText("No entries yet.").assertExists()
+            onNode(hasText("Ledger") and isSelectable()).assertIsSelected()
+        }
+    }
+
     "swiping moves between the top-level screens and follows the bottom bar" {
         withApp { dependencies ->
             setContent { App(dependencies) }
