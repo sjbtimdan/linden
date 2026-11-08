@@ -128,9 +128,9 @@ fun EntryPoint(
     var draftEdited by rememberSaveable { mutableStateOf(false) }
     val markEdited: () -> Unit = remember {
         {
-        markTouched();
-        draftEdited = true
-    }
+            markTouched()
+            draftEdited = true
+        }
     }
 
     // A draft loaded from a captured payment arrives prefilled but incomplete —
@@ -468,49 +468,49 @@ private fun EntryFormRegion(
     // recomposition would make every callback param unstable.
     val onAmountChange = remember(viewModel, markEdited) {
         { text: String ->
-            viewModel.onAmountChange(text);
+            viewModel.onAmountChange(text)
             markEdited()
         }
     }
     val onCategoryChange = remember(viewModel, markEdited) {
         { id: Long? ->
-            viewModel.onCategoryChange(id);
+            viewModel.onCategoryChange(id)
             markEdited()
         }
     }
     val onAccountChange = remember(viewModel, markEdited) {
         { id: Long? ->
-            viewModel.onAccountChangeWithAutoCategory(id);
+            viewModel.onAccountChangeWithAutoCategory(id)
             markEdited()
         }
     }
     val onToAccountChange = remember(viewModel, markEdited) {
         { id: Long? ->
-            viewModel.onToAccountChange(id);
+            viewModel.onToAccountChange(id)
             markEdited()
         }
     }
     val onToAmountChange = remember(viewModel, markEdited) {
         { text: String ->
-            viewModel.onToAmountChange(text);
+            viewModel.onToAmountChange(text)
             markEdited()
         }
     }
     val onDescriptionChange = remember(viewModel, markEdited) {
         { text: String ->
-            viewModel.onDescriptionChange(text);
+            viewModel.onDescriptionChange(text)
             markEdited()
         }
     }
     val onCreatedAtChange = remember(viewModel, markEdited) {
         { instant: Instant ->
-            viewModel.onCreatedAtChange(instant);
+            viewModel.onCreatedAtChange(instant)
             markEdited()
         }
     }
     val onQuickEntry = remember(viewModel, markEdited) {
         { entry: QuickEntry ->
-            viewModel.applyQuickEntry(entry);
+            viewModel.applyQuickEntry(entry)
             markEdited()
         }
     }
