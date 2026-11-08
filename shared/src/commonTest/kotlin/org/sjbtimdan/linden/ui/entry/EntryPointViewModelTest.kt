@@ -236,6 +236,57 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 
+    "changing the account auto-fills that account's most-used category" {
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            accountDao.create("Savings", Currency.CHF)
+            categoryDao.create("Transport", CategoryType.Expense)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            val transport = categoryDao.getAll().first().first { it.name == "Transport" }
+            entryDao.create(
+                ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW, createdZone = TimeZone.UTC),
+            )
+            entryDao.create(
+                ExpenseEntry(0, transport, "Train", savings, 300, createdAt = TEST_NOW, createdZone = TimeZone.UTC),
+            )
+            viewModel.seedDraft()
+            // Force a stale category — savings's category — then switch back to main.
+            viewModel.onAccountChange(savings.id)
+            viewModel.onCategoryChange(transport.id)
+
+            viewModel.onAccountChangeWithAutoCategory(main.id)
+
+            viewModel.draft.value?.categoryId shouldBe groceries.id
+        }
+    }
+
+    "editing an entry never auto-fills its category" {
+        withEntryPoint(clock = FakeClock(now = TEST_NOW)) { entryDao, accountDao, categoryDao, viewModel ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            categoryDao.create("Transport", CategoryType.Expense)
+            accountDao.create("Savings", Currency.CHF)
+            val savings = accountDao.getAll().first().first { it.name == "Savings" }
+            val transport = categoryDao.getAll().first().first { it.name == "Transport" }
+            entryDao.create(
+                ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW, createdZone = TimeZone.UTC),
+            )
+            val editing = ExpenseEntry(
+                7,
+                transport,
+                "Train",
+                savings,
+                300,
+                createdAt = TEST_NOW,
+                createdZone = TimeZone.UTC,
+            )
+            viewModel.loadDraft(EntryDraft.forEdit(editing))
+
+            viewModel.onAccountChangeWithAutoCategory(main.id)
+
+            viewModel.draft.value?.categoryId shouldBe transport.id
+        }
+    }
+
     "clearDraft resets to an empty form" {
         withEntryPoint(clock = FakeClock()) { viewModel ->
             viewModel.seedDraft()

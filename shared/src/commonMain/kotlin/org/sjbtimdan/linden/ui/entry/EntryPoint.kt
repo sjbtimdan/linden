@@ -290,7 +290,7 @@ fun EntryPoint(
                         markEdited()
                     },
                     onAccountChange = {
-                        viewModel.onAccountChange(it)
+                        viewModel.onAccountChangeWithAutoCategory(it)
                         markEdited()
                     },
                     onToAccountChange = {

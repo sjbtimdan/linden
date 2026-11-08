@@ -67,6 +67,45 @@ fun predictCategories(
     return predictField(entries, input.copy(categoryId = null), now, timeZone, topN) { it.category?.id }
 }
 
+/**
+ * The category a new expense/income entry should default to when [accountId] is
+ * selected: that account's most-used category from the last
+ * [PREDICTION_HORIZON_MONTHS] months, ranked by usage frequency weighted by
+ * recency. Returns null when the account has no history, so a cold start never
+ * guesses.
+ *
+ * A [currentCategoryId] that is already a category used with [accountId]
+ * survives untouched — a deliberate, compatible choice is never stomped. An
+ * empty or stale category (one never used with this account) is replaced by the
+ * account's most-used one.
+ */
+fun autoCategoryForAccount(
+    entries: List<Entry>,
+    type: EntryType,
+    accountId: Long,
+    currentCategoryId: Long?,
+    now: Instant,
+    timeZone: TimeZone,
+): Long? {
+    val accountEntries = candidateEntries(entries, type, now, timeZone)
+        .filter { it.account.id == accountId }
+        .toList()
+    if (accountEntries.isEmpty()) return null
+    val top = accountEntries
+        .mapNotNull { entry -> entry.category?.id?.let { id -> id to recencyWeight(entry.createdAt, now) } }
+        .groupBy { it.first }
+        .map { (id, scored) -> id to scored.sumOf { it.second } }
+        .sortedWith(compareByDescending<Pair<Long, Double>> { it.second }.thenBy { it.first })
+        .firstOrNull()
+        ?.first
+        ?: return null
+    return when {
+        currentCategoryId == null -> top
+        accountEntries.any { it.category?.id == currentCategoryId } -> currentCategoryId
+        else -> top
+    }
+}
+
 private fun predictField(
     entries: List<Entry>,
     input: FieldPredictionInput,

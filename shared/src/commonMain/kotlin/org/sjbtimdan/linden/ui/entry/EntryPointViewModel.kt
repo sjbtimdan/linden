@@ -22,6 +22,7 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.autoCategoryForAccount
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.accountBalancesAtEnd
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
@@ -34,7 +35,7 @@ class EntryPointViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     ratesProvider: RatesFlowProvider,
-    allEntries: StateFlow<List<Entry>>,
+    private val allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
@@ -151,6 +152,30 @@ class EntryPointViewModel(
      */
     fun applyQuickEntry(quickEntry: QuickEntry) = draftState.update { state ->
         state?.repeatEntry(quickEntry.entry)
+    }
+
+    /**
+     * Sets the account and auto-fills the category with that account's most-used
+     * one for a new, non-transfer entry, so the two most-related fields collapse
+     * into one tap. Only the explicit account dropdown drives this: quick
+     * entries, captures and account creation already set the category they mean,
+     * and editing an existing entry never auto-mutates its category.
+     */
+    fun onAccountChangeWithAutoCategory(id: Long?) {
+        onAccountChange(id)
+        val state = draftState.value ?: return
+        if (state.editing != null || state.type == EntryType.Transfer || id == null) return
+        val categoryId = autoCategoryForAccount(
+            entries = allEntries.value,
+            type = state.type,
+            accountId = id,
+            currentCategoryId = state.categoryId,
+            now = clock.now(),
+            timeZone = zone,
+        )
+        if (categoryId != null && categoryId != state.categoryId) {
+            onCategoryChange(categoryId)
+        }
     }
 
     private val _selectedType = MutableStateFlow(EntryType.Expense)

@@ -3,6 +3,8 @@ package org.sjbtimdan.linden.predictions
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -211,6 +213,49 @@ class FieldPredictorTest : StringSpec({
         "ignores the fallback when history exists" {
             val entries = listOf(expense(1, food, "Coffee", main, 450, now))
             predictCategories(entries, input(), fallback = listOf(99L)).shouldContainExactly(food.id)
+        }
+    }
+
+    context("autoCategoryForAccount") {
+        fun auto(entries: List<Entry>, accountId: Long, current: Long? = null) =
+            autoCategoryForAccount(entries, EntryType.Expense, accountId, current, now, timeZone)
+
+        "returns the account's most-used category when the category is empty" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, food, "Lunch", main, 450, now),
+                expense(3, transport, "Train", main, 300, now),
+            )
+            auto(entries, accountId = main.id) shouldBe food.id
+        }
+
+        "returns null when the account has no history" {
+            val entries = listOf(expense(1, food, "Coffee", main, 450, now))
+            auto(entries, accountId = savings.id).shouldBeNull()
+        }
+
+        "preserves a category already used with the account" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, transport, "Train", main, 300, now),
+            )
+            auto(entries, accountId = main.id, current = transport.id) shouldBe transport.id
+        }
+
+        "replaces a category never used with the account" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now),
+                expense(2, transport, "Train", savings, 300, now),
+            )
+            auto(entries, accountId = main.id, current = transport.id) shouldBe food.id
+        }
+
+        "favours recent usage when ranking the account's categories" {
+            val entries = listOf(
+                expense(1, food, "Coffee", main, 450, now.minus(150.days)),
+                expense(2, transport, "Train", main, 300, now.minus(5.days)),
+            )
+            auto(entries, accountId = main.id) shouldBe transport.id
         }
     }
 
