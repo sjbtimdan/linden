@@ -13,9 +13,22 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+// Compose compiler stability reports: metricsDestination emits per-class
+// stability tables; reportsDestination emits the "skippable/unstable" report.
+val composeMetricsDir = layout.buildDirectory.dir("compose_metrics")
+val composeReportsDir = layout.buildDirectory.dir("compose_reports")
+
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.addAll(
+            listOf(
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=${composeMetricsDir.get().asFile.absolutePath}",
+                "-P",
+                "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=${composeReportsDir.get().asFile.absolutePath}",
+            ),
+        )
     }
 
     jvm()
