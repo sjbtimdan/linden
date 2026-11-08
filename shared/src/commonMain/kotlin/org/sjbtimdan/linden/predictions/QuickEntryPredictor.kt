@@ -193,10 +193,14 @@ private fun variantKey(entry: Entry): String {
 internal fun descriptionFamily(description: String?): String = description.orEmpty()
     .trim()
     .lowercase()
-    .replace(Regex("\\s+"), " ")
-    .replace(Regex("\\s+([.,;:!?])")) { it.groupValues[1] }
-    .replace(Regex("[.,;:!?]+$"), "")
+    .replace(COLLAPSED_WHITESPACE, " ")
+    .replace(WHITESPACE_BEFORE_PUNCTUATION) { it.groupValues[1] }
+    .replace(TRAILING_PUNCTUATION, "")
     .trim()
+
+private val COLLAPSED_WHITESPACE = Regex("\\s+")
+private val WHITESPACE_BEFORE_PUNCTUATION = Regex("\\s+([.,;:!?])")
+private val TRAILING_PUNCTUATION = Regex("[.,;:!?]+$")
 
 /** Whether [instant] falls within [DUE_WINDOW_DAYS] of [target]. */
 private fun withinTargetWindow(instant: Instant, target: Instant): Boolean =
