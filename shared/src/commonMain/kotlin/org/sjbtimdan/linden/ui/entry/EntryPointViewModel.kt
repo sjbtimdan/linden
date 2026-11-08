@@ -158,6 +158,36 @@ class EntryPointViewModel(
         state?.repeatEntry(quickEntry.entry)
     }
 
+    private val _lastDismissed = MutableStateFlow<String?>(null)
+
+    /**
+     * The description of the most recently dismissed upcoming bill, shown as an
+     * undo offer; null while there is nothing to undo.
+     */
+    val lastDismissed: StateFlow<String?> = _lastDismissed.asStateFlow()
+
+    /**
+     * Hides an upcoming recurring bill for the session. The recurrence detector
+     * re-surfaces it if the user logs it again, so nothing is persisted.
+     */
+    fun dismissUpcoming(upcoming: UpcomingRecurring) {
+        val description = upcoming.entry.description.orEmpty()
+        suggestions.dismissRecurring(description)
+        _lastDismissed.value = description
+    }
+
+    /** Reverts the last dismissal, restoring recurring detection for it. */
+    fun undoLastDismiss() {
+        val description = _lastDismissed.value ?: return
+        _lastDismissed.value = null
+        suggestions.restoreRecurring(description)
+    }
+
+    /** Clears the undo offer without restoring; the dismissal becomes final. */
+    fun clearLastDismiss() {
+        _lastDismissed.value = null
+    }
+
     /**
      * Sets the account and auto-fills the category with that account's most-used
      * one for a new, non-transfer entry, so the two most-related fields collapse

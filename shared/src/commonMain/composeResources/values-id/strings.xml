@@ -81,6 +81,7 @@
     <string name="entry_ok">OK</string>
     <string name="entry_quick_entry">Entri cepat</string>
     <string name="entry_upcoming">Mendatang</string>
+    <string name="entry_upcoming_dismissed">Dikesampingkan</string>
     <string name="entry_due">Jatuh tempo %1$s</string>
     <string name="entry_amount_positive">Jumlah harus lebih besar dari nol</string>
 

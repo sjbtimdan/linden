@@ -81,6 +81,7 @@
     <string name="entry_ok">确定</string>
     <string name="entry_quick_entry">快捷记账</string>
     <string name="entry_upcoming">即将到期</string>
+    <string name="entry_upcoming_dismissed">已忽略</string>
     <string name="entry_due">到期 %1$s</string>
     <string name="entry_amount_positive">金额必须大于零</string>
 

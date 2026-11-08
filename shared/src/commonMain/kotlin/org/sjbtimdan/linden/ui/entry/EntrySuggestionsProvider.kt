@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
@@ -82,6 +84,21 @@ class EntrySuggestionsProvider(
      */
     private val allTypeEntries: StateFlow<List<Entry>> = typeEntries(entryDao::getAllByType)
 
+    /** Descriptions dismissed this session, as a lowercase-keyed set. */
+    private val dismissedDescriptions = MutableStateFlow<Set<String>>(emptySet())
+
+    private val activeSuppressed: StateFlow<Set<String>> = dismissedDescriptions
+
+    /** Hides [description] from upcoming and recurring detection for the session. */
+    fun dismissRecurring(description: String) {
+        dismissedDescriptions.update { it + description.lowercase() }
+    }
+
+    /** Restores [description] after a dismissal is undone. */
+    fun restoreRecurring(description: String) {
+        dismissedDescriptions.update { it - description.lowercase() }
+    }
+
     /** Default category ids of the draft's type, in seeder order — the cold-start fallback. */
     private val defaultCategoryIds: StateFlow<List<Long>> = combine(
         draft.map { it?.type }.distinctUntilChanged(),
@@ -125,7 +142,7 @@ class EntrySuggestionsProvider(
     val accountSuggestions: StateFlow<List<Long>> = suggestion(
         predictionEntries,
         defaultAccountIds,
-    ) { state, entries, fallback ->
+    ) { state, entries, fallback, _ ->
         predictAccounts(
             entries = entries,
             input = state.fieldInput(),
@@ -140,7 +157,7 @@ class EntrySuggestionsProvider(
     val categorySuggestions: StateFlow<List<Long>> = suggestion(
         predictionEntries,
         defaultCategoryIds,
-    ) { state, entries, fallback ->
+    ) { state, entries, fallback, _ ->
         predictCategories(
             entries = entries,
             input = state.fieldInput(),
@@ -152,7 +169,7 @@ class EntrySuggestionsProvider(
     }
 
     /** Most likely descriptions for the current draft. */
-    val descriptionSuggestions: StateFlow<List<String>> = suggestion(allTypeEntries) { state, entries, _ ->
+    val descriptionSuggestions: StateFlow<List<String>> = suggestion(allTypeEntries) { state, entries, _, _ ->
         predictDescriptions(
             entries = entries,
             input = DescriptionPredictionInput(
@@ -168,7 +185,10 @@ class EntrySuggestionsProvider(
     }
 
     /** Whole entries the user is likely to repeat at the draft's date and time, boosted by field matches. */
-    private val rawQuickEntries: StateFlow<List<QuickEntry>> = suggestion(allTypeEntries) { state, entries, _ ->
+    private val rawQuickEntries: StateFlow<List<QuickEntry>> = suggestion(
+        entries = allTypeEntries,
+        suppressed = activeSuppressed,
+    ) { state, entries, _, suppressed ->
         predictQuickEntries(
             entries = entries,
             input = state.fieldInput(),
@@ -176,12 +196,22 @@ class EntrySuggestionsProvider(
             timeZone = TimeZone.currentSystemDefault(),
             topN = QUICK_ENTRY_TOP_N,
             target = state.createdAt,
+            suppressed = suppressed,
         )
     }
 
     /** Recurring bills due within the next week, most imminent first. */
-    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = suggestion(allTypeEntries) { state, entries, _ ->
-        predictUpcomingRecurring(entries, state.type, clock.now(), TimeZone.currentSystemDefault())
+    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = suggestion(
+        entries = allTypeEntries,
+        suppressed = activeSuppressed,
+    ) { state, entries, _, suppressed ->
+        predictUpcomingRecurring(
+            entries = entries,
+            type = state.type,
+            now = clock.now(),
+            timeZone = TimeZone.currentSystemDefault(),
+            suppressed = suppressed,
+        )
     }
 
     /**
@@ -218,12 +248,18 @@ class EntrySuggestionsProvider(
     private fun <T> suggestion(
         entries: StateFlow<List<Entry>>,
         fallback: Flow<List<Long>> = flowOf(emptyList()),
-        compute: (EntryDraft, List<Entry>, List<Long>) -> List<T>,
-    ): StateFlow<List<T>> = combine(debouncedDraft, entries, fallback) { state, history, fallbackIds ->
+        suppressed: Flow<Set<String>> = flowOf(emptySet()),
+        compute: (EntryDraft, List<Entry>, List<Long>, Set<String>) -> List<T>,
+    ): StateFlow<List<T>> = combine(
+        debouncedDraft,
+        entries,
+        fallback,
+        suppressed,
+    ) { state, history, fallbackIds, suppressedSet ->
         if (state == null || state.editing != null) {
             emptyList()
         } else {
-            compute(state, history, fallbackIds)
+            compute(state, history, fallbackIds, suppressedSet)
         }
     }
         .flowOn(Dispatchers.Default)

@@ -99,6 +99,10 @@ fun EntryForm(
     suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
     onQuickEntry: (QuickEntry) -> Unit = {},
     onUpcoming: (UpcomingRecurring) -> Unit = {},
+    onDismissUpcoming: (UpcomingRecurring) -> Unit = {},
+    dismissedUpcoming: String? = null,
+    onUndoDismissUpcoming: () -> Unit = {},
+    onClearDismissUpcoming: () -> Unit = {},
     defaultCurrency: Currency = Currency.CHF,
     paceCaption: (@Composable () -> Unit)? = null,
     onCreateCategory: ((String, CategoryType, CategoryIcon?) -> Boolean)? = null,
@@ -234,6 +238,23 @@ fun EntryForm(
 
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
         if (!editing) {
+            dismissedUpcoming?.let { description ->
+                UpcomingDismissBar(
+                    description = description,
+                    onUndo = onUndoDismissUpcoming,
+                    onDismiss = onClearDismissUpcoming,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (suggestions.upcomingRecurring.isNotEmpty()) {
+                UpcomingRecurringSection(
+                    upcoming = suggestions.upcomingRecurring,
+                    zone = state.createdZone,
+                    onSelect = onUpcoming,
+                    onDismiss = onDismissUpcoming,
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
             AmountField(
                 value = state.amountText,
                 label = amountLabel,
@@ -249,14 +270,6 @@ fun EntryForm(
             paceCaption?.let { caption ->
                 Spacer(modifier = Modifier.height(4.dp))
                 caption()
-            }
-            if (suggestions.upcomingRecurring.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                UpcomingRecurringSection(
-                    upcoming = suggestions.upcomingRecurring,
-                    zone = state.createdZone,
-                    onSelect = onUpcoming,
-                )
             }
         }
 

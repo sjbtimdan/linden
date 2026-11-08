@@ -35,6 +35,8 @@ import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.IncomeEntry
 import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.RecurrenceCadence
+import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.onTestMain
@@ -1117,6 +1119,82 @@ class EntryPointViewModelTest : StringSpec({
             viewModel.selectType(EntryType.Income)
 
             viewModel.draft.value?.sourceCaptureId shouldBe 9L
+        }
+    }
+
+    "dismissUpcoming records an undoable dismissal and undoLastDismiss clears it" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = EntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                    zone = TimeZone.UTC,
+                )
+                val (main, groceries) = seed(accountDao, categoryDao)
+                val rent = ExpenseEntry(
+                    0,
+                    groceries,
+                    "Rent",
+                    main,
+                    450,
+                    createdAt = TEST_NOW,
+                    createdZone = TimeZone.UTC,
+                )
+
+                viewModel.dismissUpcoming(UpcomingRecurring(rent, RecurrenceCadence.Monthly, TEST_NOW))
+                viewModel.lastDismissed.value shouldBe "Rent"
+
+                viewModel.undoLastDismiss()
+                viewModel.lastDismissed.value.shouldBeNull()
+            }
+        }
+    }
+
+    "clearLastDismiss clears the undo offer without restoring" {
+        onTestMain {
+            runComposeUiTest {
+                val database = lindenDatabase()
+                val entryDao = EntryDao(database.entryQueries)
+                val accountDao = AccountDao(database.accountQueries)
+                val categoryDao = CategoryDao(database.categoryQueries)
+                val settingsDao = SettingsDao(database.settingsQueries)
+                val fxRateDao = FxRateDao(database.fxRateQueries)
+                val viewModel = EntryPointViewModel(
+                    entryDao,
+                    accountDao,
+                    categoryDao,
+                    settingsDao,
+                    testRatesProvider(settingsDao, fxRateDao),
+                    testAllEntries(entryDao),
+                    clock = FakeClock(),
+                    zone = TimeZone.UTC,
+                )
+                val (main, groceries) = seed(accountDao, categoryDao)
+                val rent = ExpenseEntry(
+                    0,
+                    groceries,
+                    "Rent",
+                    main,
+                    450,
+                    createdAt = TEST_NOW,
+                    createdZone = TimeZone.UTC,
+                )
+
+                viewModel.dismissUpcoming(UpcomingRecurring(rent, RecurrenceCadence.Monthly, TEST_NOW))
+                viewModel.clearLastDismiss()
+                viewModel.lastDismissed.value.shouldBeNull()
+            }
         }
     }
 })

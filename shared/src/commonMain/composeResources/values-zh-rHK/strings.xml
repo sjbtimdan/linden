@@ -81,6 +81,7 @@
     <string name="entry_ok">確定</string>
     <string name="entry_quick_entry">快捷記帳</string>
     <string name="entry_upcoming">即將到期</string>
+    <string name="entry_upcoming_dismissed">已忽略</string>
     <string name="entry_due">到期 %1$s</string>
     <string name="entry_amount_positive">金額必須大於零</string>
 

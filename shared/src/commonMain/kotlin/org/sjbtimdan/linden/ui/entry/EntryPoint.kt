@@ -454,6 +454,15 @@ private fun EntryFormRegion(
     val categorySuggestions by viewModel.categorySuggestions.collectAsState()
     val quickEntries by viewModel.quickEntries.collectAsState()
     val upcomingRecurring by viewModel.upcomingRecurring.collectAsState()
+    val lastDismissed by viewModel.lastDismissed.collectAsState()
+
+    // The dismiss undo offer expires after a short window, like the added-entry receipt.
+    LaunchedEffect(lastDismissed) {
+        if (lastDismissed != null) {
+            delay(LAST_ADDED_UNDO_WINDOW)
+            viewModel.clearLastDismiss()
+        }
+    }
     val paceAfterThis by viewModel.paceAfterThis.collectAsState()
     val hideTotal by viewModel.hideTotal.collectAsState()
     val paceCaption: (@Composable () -> Unit)? = remember(hideTotal, paceAfterThis) {
@@ -520,6 +529,13 @@ private fun EntryFormRegion(
             markEdited()
         }
     }
+    val onDismissUpcoming = remember(viewModel) {
+        { upcoming: UpcomingRecurring ->
+            viewModel.dismissUpcoming(upcoming)
+        }
+    }
+    val onUndoDismissUpcoming = remember(viewModel) { { viewModel.undoLastDismiss() } }
+    val onClearDismissUpcoming = remember(viewModel) { { viewModel.clearLastDismiss() } }
     val onCreateCategory = remember(viewModel, markEdited) {
         { name: String, type: CategoryType, icon: CategoryIcon? ->
             val created = viewModel.createCategory(name, type, icon)
@@ -557,6 +573,10 @@ private fun EntryFormRegion(
         ),
         onQuickEntry = onQuickEntry,
         onUpcoming = onUpcoming,
+        onDismissUpcoming = onDismissUpcoming,
+        dismissedUpcoming = lastDismissed,
+        onUndoDismissUpcoming = onUndoDismissUpcoming,
+        onClearDismissUpcoming = onClearDismissUpcoming,
         defaultCurrency = defaultCurrency,
         paceCaption = paceCaption,
         onCreateCategory = onCreateCategory,

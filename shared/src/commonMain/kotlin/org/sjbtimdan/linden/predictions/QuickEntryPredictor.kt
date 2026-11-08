@@ -76,6 +76,7 @@ fun predictQuickEntries(
     timeZone: TimeZone,
     topN: Int,
     target: Instant = now,
+    suppressed: Set<String> = emptySet(),
 ): List<QuickEntry> {
     val typed = entries.filter { it.type == input.type && !it.description.isNullOrBlank() }
     val descriptionFrequency = typed
@@ -86,7 +87,7 @@ fun predictQuickEntries(
         .eachCount()
     val byDescription = typed.groupBy { it.description!!.lowercase() }
     val cadenceByDescription = byDescription.mapValues { (description, group) ->
-        recurringCadence(group, description)
+        if (description in suppressed) null else recurringCadence(group, description)
     }
     val lastByDescription = byDescription.mapValues { (_, group) -> group.maxOf { it.createdAt } }
 

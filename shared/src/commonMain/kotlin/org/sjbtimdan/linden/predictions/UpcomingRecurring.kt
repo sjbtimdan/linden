@@ -39,11 +39,13 @@ fun predictUpcomingRecurring(
     timeZone: TimeZone,
     horizonDays: Int = UPCOMING_HORIZON_DAYS,
     topN: Int = UPCOMING_TOP_N,
+    suppressed: Set<String> = emptySet(),
 ): List<UpcomingRecurring> {
     val typed = entries.filter { it.type == type && !it.description.isNullOrBlank() }
     return typed
         .groupBy { it.description!!.lowercase() }
         .mapNotNull { (description, group) ->
+            if (description in suppressed) return@mapNotNull null
             val cadence = recurringCadence(group, description) ?: return@mapNotNull null
             val last = group.maxBy { it.createdAt }
             val nextDue = nextOccurrence(last.createdAt, cadence, timeZone)

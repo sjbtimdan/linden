@@ -32,7 +32,8 @@ class QuickEntryPredictorTest : StringSpec({
         entries: List<Entry>,
         input: FieldPredictionInput = FieldPredictionInput(EntryType.Expense, null, null, null, null),
         target: Instant = now,
-    ) = predictQuickEntries(entries, input, now, timeZone, QUICK_ENTRY_TOP_N, target)
+        suppressed: Set<String> = emptySet(),
+    ) = predictQuickEntries(entries, input, now, timeZone, QUICK_ENTRY_TOP_N, target, suppressed)
 
     fun expense(
         id: Long,
@@ -474,6 +475,20 @@ class QuickEntryPredictorTest : StringSpec({
             )
 
             predict(entries).map { it.entry.description }.shouldContainExactly("Lunch")
+        }
+
+        "treats a suppressed recurring description as non-recurring" {
+            val due = now.plus(18.days)
+            val entries = listOf(
+                expense(1, "Service Charge", due.minus(31.days)),
+                expense(2, "Service Charge", due.minus(62.days)),
+                expense(3, "Service Charge", due.minus(93.days)),
+            ) + (1L..10L).map { expense(it + 10, "Coffee", now.minus(it.days)) }
+
+            predict(entries, target = due).first().cadence shouldBe RecurrenceCadence.Monthly
+
+            predict(entries, target = due, suppressed = setOf("service charge"))
+                .single { it.entry.description == "Service Charge" }.cadence shouldBe null
         }
     }
 

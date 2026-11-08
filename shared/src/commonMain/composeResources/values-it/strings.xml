@@ -81,6 +81,7 @@
     <string name="entry_ok">Ok</string>
     <string name="entry_quick_entry">Inserimento rapido</string>
     <string name="entry_upcoming">In arrivo</string>
+    <string name="entry_upcoming_dismissed">Ignorato</string>
     <string name="entry_due">Scadenza %1$s</string>
     <string name="entry_amount_positive">L'importo deve essere maggiore di zero</string>
 

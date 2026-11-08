@@ -128,4 +128,14 @@ class UpcomingRecurringTest : StringSpec({
         }
         upcoming(entries).shouldHaveSize(UPCOMING_TOP_N)
     }
+
+    "excludes a suppressed description" {
+        val entries = listOf(
+            expense(1, "Rent", now.minus(90.days)),
+            expense(2, "Rent", now.minus(60.days)),
+            expense(3, "Rent", now.minus(30.days)),
+        )
+        predictUpcomingRecurring(entries, EntryType.Expense, now, TimeZone.UTC, suppressed = setOf("rent"))
+            .shouldBeEmpty()
+    }
 })

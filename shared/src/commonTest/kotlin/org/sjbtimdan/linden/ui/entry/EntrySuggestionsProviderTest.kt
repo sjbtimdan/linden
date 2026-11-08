@@ -262,6 +262,36 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "dismissing an upcoming bill hides it until it is restored" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val zone = TimeZone.currentSystemDefault()
+            (1..3).forEach { monthsAgo ->
+                entryDao.create(
+                    ExpenseEntry(
+                        0,
+                        groceries,
+                        "Tax",
+                        main,
+                        1_700_000,
+                        createdAt = TEST_NOW.minus(30 * monthsAgo, DateTimeUnit.DAY, zone),
+                    ),
+                )
+            }
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
+
+            provider.upcomingRecurring.awaitNotEmpty().map { it.entry.description }
+                .shouldContainExactly(listOf("Tax"))
+
+            provider.dismissRecurring("Tax")
+            provider.upcomingRecurring.awaitEquals(emptyList())
+
+            provider.restoreRecurring("Tax")
+            provider.upcomingRecurring.awaitNotEmpty().map { it.entry.description }
+                .shouldContainExactly(listOf("Tax"))
+        }
+    }
+
     "a recurring entry already logged on the draft date is not suggested" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)

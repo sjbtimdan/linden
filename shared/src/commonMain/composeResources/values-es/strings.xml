@@ -81,6 +81,7 @@
     <string name="entry_ok">Aceptar</string>
     <string name="entry_quick_entry">Entrada rápida</string>
     <string name="entry_upcoming">Próximamente</string>
+    <string name="entry_upcoming_dismissed">Descartado</string>
     <string name="entry_due">Vence %1$s</string>
     <string name="entry_amount_positive">El importe debe ser mayor que cero</string>
 
