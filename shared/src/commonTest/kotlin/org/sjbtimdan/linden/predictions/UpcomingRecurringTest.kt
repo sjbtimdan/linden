@@ -96,6 +96,15 @@ class UpcomingRecurringTest : StringSpec({
         upcoming(entries).single().cadence shouldBe RecurrenceCadence.Weekly
     }
 
+    "hides a weekly bill whose next occurrence is a full week away" {
+        val entries = listOf(
+            expense(1, "Yoga", now.minus(14.days)),
+            expense(2, "Yoga", now.minus(7.days)),
+            expense(3, "Yoga", now),
+        )
+        upcoming(entries).shouldBeEmpty()
+    }
+
     "ranks by due date, most imminent first" {
         val entries = listOf(
             expense(1, "Later", now.minus(88.days)),

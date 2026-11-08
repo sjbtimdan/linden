@@ -70,7 +70,8 @@ class CaptureIngest(
         if (!isAllowed(candidate.packageName)) return null
         val fingerprint = fingerprint(candidate)
         if (repository.processedNotifications()?.contains(fingerprint) == true) return null
-        val parsed = parseCaptureNotification(candidate.content) ?: return null
+        val searchText = captureSearchText(candidate.content)
+        val parsed = parseCaptureText(searchText, candidate.content) ?: return null
         val capture = PendingCapture(
             packageName = candidate.packageName,
             amountMinor = parsed.amountMinor,
@@ -79,7 +80,7 @@ class CaptureIngest(
             type = parsed.type,
             capturedAtMillis = candidate.postTime,
             capturedAtZoneId = zoneId(),
-            rawText = captureSearchText(candidate.content),
+            rawText = searchText,
         )
         if (!repository.containsPending(capture)) repository.addPending(capture)
         repository.rememberProcessed(listOf(fingerprint))

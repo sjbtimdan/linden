@@ -16,12 +16,19 @@ import org.sjbtimdan.linden.ui.entry.parseAmount
  * - the amount is returned positive and the direction (sign or credited
  *   wording) is carried by [ParsedCapture.type], defaulting to an expense.
  */
-fun parseCaptureNotification(notification: CaptureNotification): ParsedCapture? {
+fun parseCaptureNotification(notification: CaptureNotification): ParsedCapture? =
+    parseCaptureText(captureSearchText(notification), notification)
+
+/**
+ * Parses a payment from [searchText] (see [captureSearchText]), using
+ * [notification] only for the description. Split from [parseCaptureNotification]
+ * so callers that already computed the search text — to retain it on the
+ * capture — parse it once instead of recomputing it.
+ */
+internal fun parseCaptureText(searchText: String, notification: CaptureNotification): ParsedCapture? {
+    if (searchText.isEmpty()) return null
     val body = notification.bigText?.takeIf { it.isNotBlank() }
         ?: notification.text?.takeIf { it.isNotBlank() }
-    val searchText = captureSearchText(notification)
-    if (searchText.isEmpty()) return null
-
     val lower = searchText.lowercase()
     if (OTP_KEYWORDS.any { lower.contains(it) }) return null
     if (DECLINED_KEYWORDS.any { lower.contains(it) }) return null
