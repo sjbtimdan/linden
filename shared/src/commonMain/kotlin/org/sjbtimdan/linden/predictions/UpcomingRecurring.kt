@@ -13,6 +13,16 @@ const val UPCOMING_HORIZON_DAYS = 7
 /** How many upcoming recurring bills to show. */
 const val UPCOMING_TOP_N = 5
 
+/**
+ * Feature toggle for the "Upcoming" recurring-bills banner in the entry form.
+ * Temporarily disabled (2026-11-10): the heuristic does not reliably detect
+ * upcoming payments, and dismissals are session-scoped rather than persisted.
+ * Flip back to `true` to reinstate the banner — the section, dismissal plumbing
+ * and tests are all still in place. See living-notes "Upcoming-payment dismiss
+ * is session-scoped".
+ */
+val UPCOMING_ENABLED = false
+
 /** A recurring bill whose next occurrence is due soon, with its detected cadence. */
 @Immutable
 data class UpcomingRecurring(

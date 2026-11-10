@@ -30,6 +30,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UPCOMING_ENABLED
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.onTestMain
@@ -223,7 +224,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
-    "a recurring entry due now surfaces in upcoming, not quick entries" {
+    "a recurring entry due now surfaces in upcoming, not quick entries".config(enabled = UPCOMING_ENABLED) {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val zone = TimeZone.currentSystemDefault()
@@ -262,7 +263,7 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
-    "dismissing an upcoming bill hides it until it is restored" {
+    "dismissing an upcoming bill hides it until it is restored".config(enabled = UPCOMING_ENABLED) {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)
             val zone = TimeZone.currentSystemDefault()

@@ -34,6 +34,7 @@ import org.sjbtimdan.linden.predictions.PREDICTION_HORIZON_MONTHS
 import org.sjbtimdan.linden.predictions.PREDICTION_TOP_N
 import org.sjbtimdan.linden.predictions.QUICK_ENTRY_TOP_N
 import org.sjbtimdan.linden.predictions.QuickEntry
+import org.sjbtimdan.linden.predictions.UPCOMING_ENABLED
 import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.predictions.descriptionFamily
 import org.sjbtimdan.linden.predictions.predictAccounts
@@ -200,18 +201,26 @@ class EntrySuggestionsProvider(
         )
     }
 
-    /** Recurring bills due within the next week, most imminent first. */
-    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = suggestion(
-        entries = allTypeEntries,
-        suppressed = activeSuppressed,
-    ) { state, entries, _, suppressed ->
-        predictUpcomingRecurring(
-            entries = entries,
-            type = state.type,
-            now = clock.now(),
-            timeZone = TimeZone.currentSystemDefault(),
-            suppressed = suppressed,
-        )
+    /**
+     * Recurring bills due within the next week, most imminent first. Empty while
+     * [UPCOMING_ENABLED] is false — the banner is suppressed, and the empty list
+     * also stops [quickEntries] from filtering due bills out of the chips.
+     */
+    val upcomingRecurring: StateFlow<List<UpcomingRecurring>> = if (UPCOMING_ENABLED) {
+        suggestion(
+            entries = allTypeEntries,
+            suppressed = activeSuppressed,
+        ) { state, entries, _, suppressed ->
+            predictUpcomingRecurring(
+                entries = entries,
+                type = state.type,
+                now = clock.now(),
+                timeZone = TimeZone.currentSystemDefault(),
+                suppressed = suppressed,
+            )
+        }
+    } else {
+        MutableStateFlow(emptyList<UpcomingRecurring>())
     }
 
     /**
