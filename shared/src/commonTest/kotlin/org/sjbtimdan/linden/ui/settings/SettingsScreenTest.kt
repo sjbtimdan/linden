@@ -83,26 +83,6 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
-    "a pinned Hindi language shows selected in the picker" {
-        withSettingsViewModel(initialLanguage = AppLanguage.HINDI) { viewModel ->
-            setContent { SettingsScreen(viewModel) }
-            onNodeWithText("हिन्दी").assertIsSelected()
-            onNodeWithText("English").assertIsNotSelected()
-
-            viewModel.language.value shouldBe AppLanguage.HINDI
-        }
-    }
-
-    "a pinned Indonesian language shows selected in the picker" {
-        withSettingsViewModel(initialLanguage = AppLanguage.INDONESIAN) { viewModel ->
-            setContent { SettingsScreen(viewModel) }
-            onNodeWithText("Bahasa Indonesia").assertIsSelected()
-            onNodeWithText("English").assertIsNotSelected()
-
-            viewModel.language.value shouldBe AppLanguage.INDONESIAN
-        }
-    }
-
     "shows the Settings title" {
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }

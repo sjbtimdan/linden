@@ -188,42 +188,23 @@ class AppTest : StringSpec({
         }
     }
 
-    "settings navigates to categories and back" {
+    "settings navigates to each sub-screen and back" {
         withApp { dependencies ->
             setContent { App(dependencies) }
 
             onNodeWithText("Settings").performClick()
-            onNodeWithText("Categories").performClick()
-            onNodeWithText("No categories yet.").assertExists()
 
-            onNodeWithContentDescription("Back").performClick()
-            onNodeWithText("Import from Ivy").assertExists()
-        }
-    }
+            listOf(
+                "Categories" to "No categories yet.",
+                "Accounts" to "New Account",
+                "Currency rates" to "Refresh",
+            ).forEach { (row, marker) ->
+                onNodeWithText(row).performClick()
+                onNodeWithText(marker).assertExists()
 
-    "settings navigates to accounts and back" {
-        withApp { dependencies ->
-            setContent { App(dependencies) }
-
-            onNodeWithText("Settings").performClick()
-            onNodeWithText("Accounts").performClick()
-            onNodeWithText("New Account").assertExists()
-
-            onNodeWithContentDescription("Back").performClick()
-            onNodeWithText("Import from Ivy").assertExists()
-        }
-    }
-
-    "settings navigates to currency rates and back" {
-        withApp { dependencies ->
-            setContent { App(dependencies) }
-
-            onNodeWithText("Settings").performClick()
-            onNodeWithText("Currency rates").performClick()
-            onNodeWithText("Refresh").assertExists()
-
-            onNodeWithContentDescription("Back").performClick()
-            onNodeWithText("Import from Ivy").assertExists()
+                onNodeWithContentDescription("Back").performClick()
+                onNodeWithText("Import from Ivy").assertExists()
+            }
         }
     }
 
