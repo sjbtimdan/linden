@@ -54,6 +54,10 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
     override fun onListenerConnected() {
         Log.i(TAG, "Listener connected")
         connected = this
+        applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_LAST_CONNECTED, System.currentTimeMillis())
+            .apply()
         recoverActive()
     }
 
@@ -188,6 +192,9 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
         private const val PROCESS_ATTEMPTS = 3
         private val RETRY_DELAY = 500.milliseconds
 
+        private const val PREFS = "paymentCaptureDiagnostics"
+        private const val KEY_LAST_CONNECTED = "lastConnectedAtMillis"
+
         @Volatile
         private var connected: PaymentCaptureListener? = null
 
@@ -206,11 +213,28 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
          * there instead of waiting for the next process restart.
          */
         fun recover(context: Context) {
-            if (connected == null) Log.i(TAG, "No connected listener; requesting a rebind")
+            if (connected == null) logMissingListener(context)
             CaptureRecovery(
                 listener = { connected },
                 requestRebind = { requestRebindSafely(context) },
             ).recover()
+        }
+
+        /**
+         * Logs a detectable marker when the app resumes with no connected
+         * listener — the listener was unbound (process death, battery
+         * optimization) and the system has not rebound it. Includes how long it
+         * has been inactive, so a silent outage is visible in logcat.
+         */
+        private fun logMissingListener(context: Context) {
+            val lastConnected = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getLong(KEY_LAST_CONNECTED, 0L)
+            if (lastConnected == 0L) {
+                Log.w(TAG, "Listener not connected; capture is inactive. Requesting a rebind.")
+            } else {
+                val staleMinutes = (System.currentTimeMillis() - lastConnected) / 60_000L
+                Log.w(TAG, "Listener not connected; capture inactive for ~$staleMinutes minutes. Requesting a rebind.")
+            }
         }
 
         private fun requestRebindSafely(context: Context) {
