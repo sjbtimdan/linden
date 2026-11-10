@@ -175,6 +175,9 @@ git describe). It is generated code — never edit it.
 - `DatabaseDriverFactory` is an `expect class` (shared enables `-Xexpect-actual-classes`), with per-source-set
   actuals at `shared/src/{androidMain,jvmMain}/.../DatabaseDriverFactory.kt`. Desktop persists to `~/.linden/linden.db`;
   Android uses `AndroidSqliteDriver` (its `onDowngrade` is a no-op, so a DB stamped by newer code opens instead of crashing).
+- **JVM-family shared code** lives in `shared/src/jvmSharedMain`: `jvmSharedMain` depends on `commonMain`, and both
+  `jvmMain` and `androidMain` depend on it, so pure `java.*` code needed by both JVM targets gets one actual instead of
+  copy-pasted per-target files (currently only `formatAmount`, `ui/entry/MoneyFormatJvm.kt`).
 - `ui/BackHandler` is a `@Composable expect`: the Android actual wires `androidx.activity.compose.BackHandler` so the
   system back cancels in-progress edits; the JVM actual is a no-op. `ui/AppLocale` (apply-language override) is also
   `expect`/`actual`.

@@ -134,8 +134,6 @@
     <string name="ledger_filter_accounts">Filtra conti</string>
     <string name="ledger_filter_categories">Filtra categorie</string>
     <string name="ledger_filters_header">Filtri e ricerca</string>
-    <string name="ledger_expand_filters">Espandi filtri</string>
-    <string name="ledger_collapse_filters">Comprimi filtri</string>
     <string name="ledger_remove_filter">Rimuovi filtro</string>
     <string name="ledger_clear_all">Cancella tutto</string>
     <string name="ledger_uncategorized">Non categorizzato</string>

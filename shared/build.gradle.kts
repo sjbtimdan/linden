@@ -85,6 +85,14 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.compose.ui.test)
         }
+        // JVM-family code shared by the jvm() and android targets (pure java.*
+        // APIs): both platform source sets depend on it, so an expect declared
+        // in commonMain can have a single actual here for both targets.
+        val jvmSharedMain by creating {
+            dependsOn(commonMain.get())
+        }
+        jvmMain.get().dependsOn(jvmSharedMain)
+        androidMain.get().dependsOn(jvmSharedMain)
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
             implementation(libs.kotlinx.coroutines.swing)
@@ -158,6 +166,7 @@ detekt {
         "src/commonTest/kotlin",
         "src/jvmMain/kotlin",
         "src/jvmTest/kotlin",
+        "src/jvmSharedMain/kotlin",
         "src/androidMain/kotlin",
     )
 }

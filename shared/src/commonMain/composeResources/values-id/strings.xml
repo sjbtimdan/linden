@@ -134,8 +134,6 @@
     <string name="ledger_filter_accounts">Filter akun</string>
     <string name="ledger_filter_categories">Filter kategori</string>
     <string name="ledger_filters_header">Filter &amp; pencarian</string>
-    <string name="ledger_expand_filters">Perluas filter</string>
-    <string name="ledger_collapse_filters">Ciutkan filter</string>
     <string name="ledger_remove_filter">Hapus filter</string>
     <string name="ledger_clear_all">Bersihkan semua</string>
     <string name="ledger_uncategorized">Tanpa kategori</string>

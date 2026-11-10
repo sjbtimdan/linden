@@ -134,8 +134,6 @@
     <string name="ledger_filter_accounts">篩選戶口</string>
     <string name="ledger_filter_categories">篩選分類</string>
     <string name="ledger_filters_header">篩選與搜尋</string>
-    <string name="ledger_expand_filters">展開篩選</string>
-    <string name="ledger_collapse_filters">收起篩選</string>
     <string name="ledger_remove_filter">移除篩選條件</string>
     <string name="ledger_clear_all">全部清除</string>
     <string name="ledger_uncategorized">未分類</string>
