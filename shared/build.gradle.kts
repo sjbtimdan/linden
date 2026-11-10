@@ -1,6 +1,7 @@
 import java.io.File
 import java.time.Instant
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -19,6 +20,23 @@ val composeMetricsDir = layout.buildDirectory.dir("compose_metrics")
 val composeReportsDir = layout.buildDirectory.dir("compose_reports")
 
 kotlin {
+    // Keep the default hierarchy template and add a custom group for it, rather
+    // than wiring dependsOn edges by hand: manual edges make Gradle fall back to
+    // the pre-1.9.20 hierarchy (only commonMain/commonTest get wired).
+    applyDefaultHierarchyTemplate {
+        common {
+            // JVM-family code shared by the jvm() and android targets (pure java.*
+            // APIs): an expect declared in commonMain can have a single actual here
+            // for both targets.
+            group("jvmShared") {
+                withJvm()
+                // The AGP 9 multiplatform-library target is not a KotlinAndroidTarget,
+                // so match it by platform type instead of withAndroidTarget().
+                withCompilations { it.target.platformType == KotlinPlatformType.androidJvm }
+            }
+        }
+    }
+
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
         freeCompilerArgs.addAll(
@@ -85,14 +103,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.compose.ui.test)
         }
-        // JVM-family code shared by the jvm() and android targets (pure java.*
-        // APIs): both platform source sets depend on it, so an expect declared
-        // in commonMain can have a single actual here for both targets.
-        val jvmSharedMain by creating {
-            dependsOn(commonMain.get())
-        }
-        jvmMain.get().dependsOn(jvmSharedMain)
-        androidMain.get().dependsOn(jvmSharedMain)
+        // jvmSharedMain is created by the hierarchy template above; both platform
+        // source sets depend on it.
         jvmMain.dependencies {
             implementation(libs.sqldelight.jdbc.driver)
             implementation(libs.kotlinx.coroutines.swing)
