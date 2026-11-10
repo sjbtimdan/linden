@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -105,10 +106,7 @@ class AccountListViewModelTest : StringSpec({
 
     "updateAccount ignores a currency change when the account has entries" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
 
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
@@ -132,10 +130,7 @@ class AccountListViewModelTest : StringSpec({
 
     "updateAccount allows renaming an account that has entries" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
 
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
@@ -206,10 +201,7 @@ class AccountListViewModelTest : StringSpec({
 
     "deleteAccount ignores an account that still has entries" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
 
@@ -317,10 +309,7 @@ class AccountListViewModelTest : StringSpec({
 
     "updateAccount blocks a currency change when the account is filtered out by the search" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
             viewModel.setSearchQuery("zzz")

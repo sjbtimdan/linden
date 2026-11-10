@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.capture.CaptureRule
 import org.sjbtimdan.linden.capture.PendingCapture
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -264,10 +265,7 @@ class CapturedPaymentsViewModelTest : StringSpec({
 
     "buildDraft re-parses the learned amount index instead of the first match" {
         withCapturedPaymentsViewModel { repository, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             repository.setRule(CaptureRule("com.example.bank", main.id))
             repository.addPending(
                 PendingCapture(
@@ -326,10 +324,7 @@ class CapturedPaymentsViewModelTest : StringSpec({
 
     "buildDraft ignores a learned category that no longer exists" {
         withCapturedPaymentsViewModel { repository, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             repository.setRule(CaptureRule("com.example.bank", main.id))
             repository.addPending(capture(1))
             repository.completeCapture(
@@ -347,10 +342,7 @@ class CapturedPaymentsViewModelTest : StringSpec({
 
     "buildDraft drops a learned category that does not fit the draft's type" {
         withCapturedPaymentsViewModel { repository, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             repository.setRule(CaptureRule("com.example.bank", main.id))
             repository.addPending(capture(1))
             repository.completeCapture(

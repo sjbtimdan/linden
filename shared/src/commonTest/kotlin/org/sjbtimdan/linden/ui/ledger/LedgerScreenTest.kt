@@ -29,10 +29,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import org.sjbtimdan.linden.data.AccountDao
-import org.sjbtimdan.linden.data.CategoryDao
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -1886,14 +1883,6 @@ class LedgerScreenTest : StringSpec({
         }
     }
 })
-
-private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
-    accountDao.create("Main", Currency.CHF)
-    categoryDao.create("Groceries", CategoryType.Expense)
-    val main = accountDao.getAll().first().first()
-    val groceries = categoryDao.getAll().first().first()
-    return main to groceries
-}
 
 /** The search/filter panel starts collapsed; tests that use it open it first. */
 @OptIn(ExperimentalTestApi::class)

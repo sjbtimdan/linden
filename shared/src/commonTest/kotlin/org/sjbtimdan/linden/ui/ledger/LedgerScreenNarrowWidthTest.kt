@@ -9,10 +9,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import io.kotest.core.spec.style.StringSpec
-import kotlinx.coroutines.flow.first
 import kotlinx.datetime.LocalDate
-import org.sjbtimdan.linden.model.CategoryType
-import org.sjbtimdan.linden.model.Currency
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
@@ -27,10 +25,7 @@ import org.sjbtimdan.linden.ui.withLedgerViewModel
 class LedgerScreenNarrowWidthTest : StringSpec({
     "period label, show-future toggle and total all fit on the current month at a phone width" {
         withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 11, 10))) { accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             viewModel.setPeriod(LedgerPeriod.Month)
             viewModel.goToToday()

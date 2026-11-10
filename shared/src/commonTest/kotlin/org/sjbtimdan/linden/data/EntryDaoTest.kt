@@ -80,10 +80,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         val id = entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
@@ -96,10 +93,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         entryDao.create(ExpenseEntry(0, groceries, "First", main, 100))
         entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200))
@@ -146,10 +140,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         entryDao.create(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.fromEpochMilliseconds(1_000)))
         entryDao.create(ExpenseEntry(0, groceries, "Mid", main, 200, createdAt = Instant.fromEpochMilliseconds(2_000)))
@@ -166,10 +157,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         entryDao.create(ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.fromEpochMilliseconds(1_000)))
         entryDao.create(ExpenseEntry(0, groceries, "Mid", main, 200, createdAt = Instant.fromEpochMilliseconds(2_000)))
@@ -186,10 +174,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         entryDao.create(ExpenseEntry(0, groceries, "First", main, 100))
         entryDao.create(ExpenseEntry(0, groceries, "Second", main, 200))
@@ -239,10 +224,7 @@ class EntryDaoTest : StringSpec({
         val accountDao = AccountDao(database.accountQueries)
         val categoryDao = CategoryDao(database.categoryQueries)
 
-        accountDao.create("Main", Currency.CHF)
-        categoryDao.create("Groceries", CategoryType.Expense)
-        val main = accountDao.getAll().first().first()
-        val groceries = categoryDao.getAll().first().first()
+        val (main, groceries) = seed(accountDao, categoryDao)
 
         entryDao.create(ExpenseEntry(0, groceries, null, main, 100))
 

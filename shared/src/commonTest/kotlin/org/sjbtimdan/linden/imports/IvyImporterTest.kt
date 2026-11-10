@@ -1222,28 +1222,7 @@ class IvyImporterTest : StringSpec({
         val database = lindenDatabase()
         val importer = IvyImporter(database, clock = FakeClock())
 
-        val json = """
-            {
-              "accounts": [
-                {"id": "a1", "name": "HSBC", "currency": "USD"}
-              ],
-              "categories": [
-                {"id": "c1", "name": "Food"}
-              ],
-              "transactions": [
-                {
-                  "id": "t1",
-                  "type": "EXPENSE",
-                  "amount": 10.0,
-                  "accountId": "a1",
-                  "categoryId": "c1",
-                  "currency": "EUR",
-                  "title": "EUR purchase",
-                  "dateTime": 946684800000
-                }
-              ]
-            }
-        """.trimIndent()
+        val json = splitCurrencyIvyJson
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
 
@@ -1264,38 +1243,7 @@ class IvyImporterTest : StringSpec({
         val database = lindenDatabase()
         val importer = IvyImporter(database, clock = FakeClock())
 
-        val json = """
-            {
-              "accounts": [
-                {"id": "a1", "name": "HSBC", "currency": "USD"}
-              ],
-              "categories": [
-                {"id": "c1", "name": "Food"}
-              ],
-              "transactions": [
-                {
-                  "id": "t1",
-                  "type": "EXPENSE",
-                  "amount": 10.0,
-                  "accountId": "a1",
-                  "categoryId": "c1",
-                  "currency": "EUR",
-                  "title": "EUR purchase",
-                  "dateTime": 946684800000
-                },
-                {
-                  "id": "t2",
-                  "type": "EXPENSE",
-                  "amount": 20.0,
-                  "accountId": "a1",
-                  "categoryId": "c1",
-                  "currency": "EUR",
-                  "title": "Another EUR purchase",
-                  "dateTime": 946771200000
-                }
-              ]
-            }
-        """.trimIndent()
+        val json = twoSplitCurrencyIvyJson
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
 
@@ -1311,29 +1259,7 @@ class IvyImporterTest : StringSpec({
         val database = lindenDatabase()
         val importer = IvyImporter(database, clock = FakeClock())
 
-        val json = """
-            {
-              "accounts": [
-                {"id": "a1", "name": "HSBC", "currency": "USD"},
-                {"id": "a2", "name": "IVY: HSBC (EUR)", "currency": "EUR"}
-              ],
-              "categories": [
-                {"id": "c1", "name": "Food"}
-              ],
-              "transactions": [
-                {
-                  "id": "t1",
-                  "type": "EXPENSE",
-                  "amount": 10.0,
-                  "accountId": "a1",
-                  "categoryId": "c1",
-                  "currency": "EUR",
-                  "title": "EUR purchase",
-                  "dateTime": 946684800000
-                }
-              ]
-            }
-        """.trimIndent()
+        val json = existingSplitAccountIvyJson
 
         val result = importer.import(ByteArrayInputStream(buildIvyZip(json)))
 

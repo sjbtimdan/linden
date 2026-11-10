@@ -1,6 +1,5 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
@@ -16,6 +15,7 @@ import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.time.FakeClock
+import org.sjbtimdan.linden.ui.enterAmount
 import org.sjbtimdan.linden.ui.withEntryPoint
 import kotlin.time.Instant
 
@@ -89,15 +89,4 @@ private suspend fun seedPaceHistory(entryDao: EntryDao, accountDao: AccountDao, 
             ),
         )
     }
-}
-
-@OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.enterAmount(text: String) {
-    onNodeWithText("Amount").performClick()
-    waitForIdle()
-    text.forEach { char ->
-        onNodeWithText(char.toString()).performClick()
-    }
-    onNodeWithText("Enter").performClick()
-    waitForIdle()
 }

@@ -23,8 +23,7 @@ import org.sjbtimdan.linden.data.DEFAULT_EXPENSE_CATEGORIES
 import org.sjbtimdan.linden.data.DEFAULT_INCOME_CATEGORIES
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.lindenDatabase
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -417,14 +416,6 @@ private suspend fun <T> StateFlow<List<T>>.awaitEquals(expected: List<T>): List<
 /** Awaits quick entries whose descriptions match [expected] in order. */
 private suspend fun StateFlow<List<QuickEntry>>.awaitDescriptions(expected: List<String>): List<QuickEntry> =
     withTimeout(5.seconds) { first { entries -> entries.map { it.entry.description } == expected } }
-
-private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
-    accountDao.create("Main", Currency.CHF)
-    categoryDao.create("Groceries", CategoryType.Expense)
-    val main = accountDao.getAll().first().first()
-    val groceries = categoryDao.getAll().first().first()
-    return main to groceries
-}
 
 /** Seeds the exact starter set [org.sjbtimdan.linden.data.DefaultDataSeeder] writes. */
 private suspend fun seedDefaults(accountDao: AccountDao, categoryDao: CategoryDao) {

@@ -6,6 +6,92 @@ import java.nio.charset.Charset
 internal fun buildIvyZip(json: String, charset: Charset = Charsets.UTF_16BE): ByteArray =
     buildJsonZip(json, "backup.json", charset)
 
+/** One USD account receiving a EUR transaction, which the importer routes to an "IVY: …" split account. */
+internal val splitCurrencyIvyJson: String
+    get() = """
+        {
+          "accounts": [
+            {"id": "a1", "name": "HSBC", "currency": "USD"}
+          ],
+          "categories": [
+            {"id": "c1", "name": "Food"}
+          ],
+          "transactions": [
+            {
+              "id": "t1",
+              "type": "EXPENSE",
+              "amount": 10.0,
+              "accountId": "a1",
+              "categoryId": "c1",
+              "currency": "EUR",
+              "title": "EUR purchase",
+              "dateTime": 946684800000
+            }
+          ]
+        }
+    """.trimIndent()
+
+/** Two EUR transactions against one USD account, both routed to the same split account. */
+internal val twoSplitCurrencyIvyJson: String
+    get() = """
+        {
+          "accounts": [
+            {"id": "a1", "name": "HSBC", "currency": "USD"}
+          ],
+          "categories": [
+            {"id": "c1", "name": "Food"}
+          ],
+          "transactions": [
+            {
+              "id": "t1",
+              "type": "EXPENSE",
+              "amount": 10.0,
+              "accountId": "a1",
+              "categoryId": "c1",
+              "currency": "EUR",
+              "title": "EUR purchase",
+              "dateTime": 946684800000
+            },
+            {
+              "id": "t2",
+              "type": "EXPENSE",
+              "amount": 20.0,
+              "accountId": "a1",
+              "categoryId": "c1",
+              "currency": "EUR",
+              "title": "Another EUR purchase",
+              "dateTime": 946771200000
+            }
+          ]
+        }
+    """.trimIndent()
+
+/** A USD account plus an existing "IVY: HSBC (EUR)" account the split transaction must reuse. */
+internal val existingSplitAccountIvyJson: String
+    get() = """
+        {
+          "accounts": [
+            {"id": "a1", "name": "HSBC", "currency": "USD"},
+            {"id": "a2", "name": "IVY: HSBC (EUR)", "currency": "EUR"}
+          ],
+          "categories": [
+            {"id": "c1", "name": "Food"}
+          ],
+          "transactions": [
+            {
+              "id": "t1",
+              "type": "EXPENSE",
+              "amount": 10.0,
+              "accountId": "a1",
+              "categoryId": "c1",
+              "currency": "EUR",
+              "title": "EUR purchase",
+              "dateTime": 946684800000
+            }
+          ]
+        }
+    """.trimIndent()
+
 internal val minimalIvyJson: String
     get() = """
         {

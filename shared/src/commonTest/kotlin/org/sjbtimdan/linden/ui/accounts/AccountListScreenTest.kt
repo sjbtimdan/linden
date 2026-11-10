@@ -20,6 +20,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -257,10 +258,7 @@ class AccountListScreenTest : StringSpec({
 
     "currency chips are disabled when editing an account with entries" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
 
@@ -457,10 +455,7 @@ class AccountListScreenTest : StringSpec({
 
     "delete button is disabled with a note when editing an account with entries" {
         withAccountViewModel { accountDao, entryDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            val main = accountDao.getAll().first().first()
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             viewModel.accountsWithEntries.first { main.id in it }
 

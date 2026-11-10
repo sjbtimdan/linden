@@ -20,6 +20,7 @@ import org.sjbtimdan.linden.backup.LindenBackupManager
 import org.sjbtimdan.linden.data.lindenDatabase
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
+import org.sjbtimdan.linden.imports.splitCurrencyIvyJson
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -269,28 +270,7 @@ class SettingsScreenTest : StringSpec({
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
 
-            val json = """
-                {
-                  "accounts": [
-                    {"id": "a1", "name": "HSBC", "currency": "USD"}
-                  ],
-                  "categories": [
-                    {"id": "c1", "name": "Food"}
-                  ],
-                  "transactions": [
-                    {
-                      "id": "t1",
-                      "type": "EXPENSE",
-                      "amount": 10.0,
-                      "accountId": "a1",
-                      "categoryId": "c1",
-                      "currency": "EUR",
-                      "title": "EUR purchase",
-                      "dateTime": 946684800000
-                    }
-                  ]
-                }
-            """.trimIndent()
+            val json = splitCurrencyIvyJson
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip(json)))
             withTimeout(5_000.milliseconds) { viewModel.importState.first { it is BackupState.Success } }

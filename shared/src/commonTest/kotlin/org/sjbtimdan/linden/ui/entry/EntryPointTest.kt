@@ -34,12 +34,9 @@ import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.capture.CaptureRepository
 import org.sjbtimdan.linden.capture.PendingCapture
-import org.sjbtimdan.linden.data.AccountDao
-import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
@@ -48,6 +45,7 @@ import org.sjbtimdan.linden.model.TransferEntry
 import org.sjbtimdan.linden.time.FakeClock
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.capture.CapturedPaymentsViewModel
+import org.sjbtimdan.linden.ui.enterAmount
 import org.sjbtimdan.linden.ui.rates.RatesWarning
 import org.sjbtimdan.linden.ui.withEntryPoint
 import kotlin.time.Duration.Companion.days
@@ -1686,24 +1684,4 @@ private fun ComposeUiTest.tapOutside() {
     onRoot().performTouchInput {
         click(Offset(centerX * 0.2f, bottom - 40f))
     }
-}
-
-/** Enters an amount via the calculator keypad and commits it with Enter. */
-@OptIn(ExperimentalTestApi::class)
-private fun ComposeUiTest.enterAmount(text: String, label: String = "Amount") {
-    onNodeWithText(label).performClick()
-    waitForIdle()
-    text.forEach { char ->
-        onNodeWithText(char.toString()).performClick()
-    }
-    onNodeWithText("Enter").performClick()
-    waitForIdle()
-}
-
-private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
-    accountDao.create("Main", Currency.CHF)
-    categoryDao.create("Groceries", CategoryType.Expense)
-    val main = accountDao.getAll().first().first()
-    val groceries = categoryDao.getAll().first().first()
-    return main to groceries
 }

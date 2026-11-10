@@ -24,7 +24,7 @@ import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.flow.first
 import org.sjbtimdan.linden.capture.PendingCapture
 import org.sjbtimdan.linden.data.FakeFxRatesSource
-import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -75,10 +75,7 @@ class AppTest : StringSpec({
 
     "a saved captured payment disappears from the entry alert" {
         withApp { dependencies ->
-            dependencies.accountDao.create("Main", Currency.CHF)
-            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
-            val main = dependencies.accountDao.getAll().first().first()
-            val groceries = dependencies.categoryDao.getAll().first().first()
+            val (main, groceries) = seed(dependencies.accountDao, dependencies.categoryDao)
 
             // Teach a template for this wording so the alert's Add prefills a
             // complete draft, as a repeat notification would.
@@ -141,10 +138,7 @@ class AppTest : StringSpec({
 
     "the ledger keeps its entry dialog while it is the screen in front" {
         withApp { dependencies ->
-            dependencies.accountDao.create("Main", Currency.CHF)
-            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
-            val main = dependencies.accountDao.getAll().first().first()
-            val groceries = dependencies.categoryDao.getAll().first().first()
+            val (main, groceries) = seed(dependencies.accountDao, dependencies.categoryDao)
             dependencies.entryDao.create(ExpenseEntry(0, groceries, "COOP", main, 2450, createdAt = TEST_NOW))
             // The fixture is dated in the past: show every period so the row is
             // on screen whatever today is.
@@ -179,10 +173,7 @@ class AppTest : StringSpec({
 
     "a ledger entry dialog left open does not show once the ledger is not the screen" {
         withApp { dependencies ->
-            dependencies.accountDao.create("Main", Currency.CHF)
-            dependencies.categoryDao.create("Groceries", CategoryType.Expense)
-            val main = dependencies.accountDao.getAll().first().first()
-            val groceries = dependencies.categoryDao.getAll().first().first()
+            val (main, groceries) = seed(dependencies.accountDao, dependencies.categoryDao)
             // The dialog's draft lives in the app-lifetime ledger ViewModel, so it
             // can outlive the screen that showed it; the app starts on Entry.
             dependencies.ledgerViewModel.openEditDialog(

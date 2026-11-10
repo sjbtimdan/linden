@@ -23,8 +23,7 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
@@ -347,10 +346,7 @@ class EntryPointViewModelTest : StringSpec({
                     clock = FakeClock(),
                     zone = TimeZone.UTC,
                 )
-                accountDao.create("Main", Currency.CHF)
-                categoryDao.create("Groceries", CategoryType.Expense)
-                val main = accountDao.getAll().first().first()
-                val groceries = categoryDao.getAll().first().first()
+                val (main, groceries) = seed(accountDao, categoryDao)
                 viewModel.clearDraft()
                 viewModel.onAmountChange("4.50")
                 viewModel.onCategoryChange(groceries.id)
@@ -631,10 +627,7 @@ class EntryPointViewModelTest : StringSpec({
                     clock = FakeClock(),
                     zone = TimeZone.UTC,
                 )
-                accountDao.create("Main", Currency.CHF)
-                categoryDao.create("Groceries", CategoryType.Expense)
-                val main = accountDao.getAll().first().first()
-                val groceries = categoryDao.getAll().first().first()
+                val (main, groceries) = seed(accountDao, categoryDao)
                 viewModel.seedDraft()
                 viewModel.onAmountChange("4.50")
                 viewModel.onCategoryChange(groceries.id)
@@ -1198,14 +1191,6 @@ class EntryPointViewModelTest : StringSpec({
         }
     }
 })
-
-private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
-    accountDao.create("Main", Currency.CHF)
-    categoryDao.create("Groceries", CategoryType.Expense)
-    val main = accountDao.getAll().first().first()
-    val groceries = categoryDao.getAll().first().first()
-    return main to groceries
-}
 
 /** [CategoryDao] whose writes throw once [failWrites] is set; reads stay live. */
 private class FailingCategoryDao(queries: CategoryQueries) : CategoryDao(queries) {

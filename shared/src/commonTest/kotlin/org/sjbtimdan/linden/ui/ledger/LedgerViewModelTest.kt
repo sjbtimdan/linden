@@ -20,8 +20,7 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.FxRateDao
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
-import org.sjbtimdan.linden.model.Account
-import org.sjbtimdan.linden.model.Category
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -1705,10 +1704,7 @@ class LedgerViewModelTest : StringSpec({
 
     "entries of hidden accounts stay editable from the ledger" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             accountDao.setHidden(main.id, true)
 
@@ -1992,14 +1988,6 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 })
-
-private suspend fun seed(accountDao: AccountDao, categoryDao: CategoryDao): Pair<Account, Category> {
-    accountDao.create("Main", Currency.CHF)
-    categoryDao.create("Groceries", CategoryType.Expense)
-    val main = accountDao.getAll().first().first()
-    val groceries = categoryDao.getAll().first().first()
-    return main to groceries
-}
 
 private fun at(millis: Long) = Instant.fromEpochMilliseconds(millis)
 

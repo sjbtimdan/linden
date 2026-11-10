@@ -11,7 +11,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import kotlinx.coroutines.flow.first
-import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.time.FakeClock
@@ -21,10 +21,7 @@ import org.sjbtimdan.linden.ui.withLedgerViewModel
 class UndoDeleteBarTest : StringSpec({
     "shows the undo offer after a delete and restores the entry when tapped" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
@@ -55,10 +52,7 @@ class UndoDeleteBarTest : StringSpec({
             defaultCurrency = Currency.CHF,
             rates = emptyList(),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
@@ -79,10 +73,7 @@ class UndoDeleteBarTest : StringSpec({
 
     "tapping the delete icon dismisses the offer and makes the delete final" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
@@ -107,10 +98,7 @@ class UndoDeleteBarTest : StringSpec({
 
     "leaving the screen clears the offer and makes the delete final" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)

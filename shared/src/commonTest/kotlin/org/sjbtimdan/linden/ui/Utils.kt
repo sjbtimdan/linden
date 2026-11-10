@@ -2,6 +2,8 @@ package org.sjbtimdan.linden.ui
 
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -443,4 +445,16 @@ fun withInsightsViewModel(
             block(accountDao, categoryDao, entryDao, viewModel)
         }
     }
+}
+
+/** Enters an amount via the calculator keypad and commits it with Enter. */
+@OptIn(ExperimentalTestApi::class)
+internal fun ComposeUiTest.enterAmount(text: String, label: String = "Amount") {
+    onNodeWithText(label).performClick()
+    waitForIdle()
+    text.forEach { char ->
+        onNodeWithText(char.toString()).performClick()
+    }
+    onNodeWithText("Enter").performClick()
+    waitForIdle()
 }

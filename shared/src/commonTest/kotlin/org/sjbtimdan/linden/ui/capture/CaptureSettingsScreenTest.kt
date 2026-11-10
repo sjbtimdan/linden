@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.capture.CaptureRule
 import org.sjbtimdan.linden.capture.PendingCapture
-import org.sjbtimdan.linden.model.CategoryType
+import org.sjbtimdan.linden.data.seed
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.model.ExpenseEntry
@@ -136,10 +136,7 @@ class CaptureSettingsScreenTest : StringSpec({
 
     "a learned template lists its skeleton and category and remove forgets it" {
         withCaptureSettingsViewModel { repository, accountDao, categoryDao, viewModel ->
-            accountDao.create("Main", Currency.CHF)
-            categoryDao.create("Groceries", CategoryType.Expense)
-            val main = accountDao.getAll().first().first()
-            val groceries = categoryDao.getAll().first().first()
+            val (main, groceries) = seed(accountDao, categoryDao)
             repository.addPending(
                 PendingCapture(
                     packageName = "com.example.bank",
