@@ -24,9 +24,9 @@ abstract class AppViewModel : ViewModel() {
         stateFlow(viewModelScope, initial, started)
 
     /**
-     * Runs [block] in [viewModelScope], reporting any failure through [reportError].
-     * [CancellationException] is rethrown, so cancellation is not reported as a write
-     * failure.
+     * Runs [block] in [viewModelScope], logging any failure and reporting it through
+     * [reportError]. [CancellationException] is rethrown, so cancellation is not
+     * reported as a write failure.
      */
     protected fun launchWrite(block: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch {
@@ -34,7 +34,8 @@ abstract class AppViewModel : ViewModel() {
                 block()
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                println("Linden: write failed: ${e.stackTraceToString()}")
                 reportError()
             }
         }
