@@ -131,6 +131,28 @@ class EntryPointTest : StringSpec({
         }
     }
 
+    "hero card opens insights" {
+        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+            accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
+            categoryDao.create("Groceries", CategoryType.Expense)
+            val main = accountDao.getAll().first().first()
+            val groceries = categoryDao.getAll().first().first()
+            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+
+            var navigatedToInsights = false
+            setContent {
+                EntryPoint(
+                    viewModel = viewModel,
+                    onNavigateToInsights = { navigatedToInsights = true },
+                )
+            }
+
+            onNodeWithTag("entryInsightsAction").performClick()
+
+            navigatedToInsights shouldBe true
+        }
+    }
+
     "expense is the default selected type" {
         withEntryPoint(clock = FakeClock()) { viewModel ->
             setContent {

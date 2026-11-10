@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.ui.theme.lindenColors
@@ -40,6 +41,7 @@ internal fun TotalLabel(total: Long?, currency: Currency, hidden: Boolean = fals
     Surface(
         shape = RoundedCornerShape(50),
         color = animatedContainer,
+        modifier = Modifier.testTag("totalLabel"),
     ) {
         AnimatedContent(
             targetState = when {

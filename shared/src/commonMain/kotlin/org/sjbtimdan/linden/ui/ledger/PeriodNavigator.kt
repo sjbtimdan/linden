@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.ledger
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -63,7 +64,10 @@ fun PeriodNavigator(
     var expanded by remember { mutableStateOf(false) }
     val canNavigate = period != LedgerPeriod.All
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         IconButton(
             onClick = onPrevious,
             enabled = canNavigate,
@@ -73,13 +77,16 @@ fun PeriodNavigator(
                 contentDescription = stringResource(Res.string.ledger_previous_period),
             )
         }
-        Box {
+        Box(modifier = Modifier.weight(1f)) {
             TextButton(
                 onClick = { expanded = true },
-                modifier = Modifier.testTag("periodLabel"),
+                modifier = Modifier
+                    .testTag("periodLabel")
+                    .fillMaxWidth(),
             ) {
                 Text(
                     text = period.windowLabel(anchor) ?: stringResource(Res.string.common_all),
+                    modifier = Modifier.weight(1f),
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +41,7 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_hide_total
 import org.sjbtimdan.linden.resources.entry_show_total
 import org.sjbtimdan.linden.resources.entry_total_balance
+import org.sjbtimdan.linden.resources.settings_nav_insights
 import org.sjbtimdan.linden.ui.theme.lindenColors
 
 private val HeroShape = RoundedCornerShape(24.dp)
@@ -62,6 +65,7 @@ internal fun TotalBalanceCard(
     hidden: Boolean,
     compact: Boolean,
     onToggleHidden: () -> Unit,
+    onNavigateToInsights: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = lindenColors()
@@ -127,6 +131,7 @@ internal fun TotalBalanceCard(
                 contentColor = colors.heroContent,
                 accentColor = colors.heroAccent,
                 onToggleHidden = onToggleHidden,
+                onNavigateToInsights = onNavigateToInsights,
             )
         }
     }
@@ -140,6 +145,7 @@ private fun ExpandedTotalContent(
     contentColor: Color,
     accentColor: Color,
     onToggleHidden: () -> Unit,
+    onNavigateToInsights: () -> Unit,
 ) {
     Column(
         modifier = Modifier.padding(start = HeroPadding, top = 12.dp, end = 10.dp, bottom = 20.dp),
@@ -151,6 +157,7 @@ private fun ExpandedTotalContent(
                 color = contentColor.copy(alpha = HERO_LABEL_ALPHA),
                 modifier = Modifier.weight(1f),
             )
+            HeroInsightsButton(contentColor = contentColor, onNavigateToInsights = onNavigateToInsights)
             HeroEyeButton(hidden = hidden, contentColor = contentColor, onToggleHidden = onToggleHidden)
         }
         Spacer(modifier = Modifier.height(2.dp))
@@ -237,6 +244,23 @@ private fun CompactTotalRow(
             }
         }
         HeroEyeButton(hidden = hidden, contentColor = contentColor, onToggleHidden = onToggleHidden)
+    }
+}
+
+@Composable
+private fun HeroInsightsButton(contentColor: Color, onNavigateToInsights: () -> Unit) {
+    IconButton(
+        onClick = onNavigateToInsights,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(contentColor.copy(alpha = HERO_BUTTON_ALPHA))
+            .testTag("entryInsightsAction"),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.BarChart,
+            contentDescription = stringResource(Res.string.settings_nav_insights),
+            tint = contentColor,
+        )
     }
 }
 

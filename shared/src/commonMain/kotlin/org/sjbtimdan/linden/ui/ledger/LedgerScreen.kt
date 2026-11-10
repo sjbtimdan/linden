@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -37,7 +38,6 @@ fun LedgerScreen(
     onNavigateToEntry: () -> Unit = {},
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToCategories: () -> Unit = {},
-    onNavigateToInsights: () -> Unit = {},
 ) {
     val accounts by viewModel.accounts.collectAsState()
     val visibleAccounts by viewModel.visibleAccounts.collectAsState()
@@ -137,10 +137,27 @@ fun LedgerScreen(
     Column(
         modifier = Modifier.screenContainerWithIme(),
     ) {
-        LedgerViewModeTabs(
-            viewMode = viewMode,
-            onSelect = viewModel::setViewMode,
-        )
+        // The view-mode tabs share their row with the filter entry point, so the
+        // period bar below has room for the period label, the show-future toggle
+        // and the period total on a phone.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LedgerViewModeTabs(
+                viewMode = viewMode,
+                onSelect = viewModel::setViewMode,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            LedgerFilterActions(
+                hasActiveFilters = hasActiveFilters,
+                onToggle = {
+                    if (!filtersExpanded) requestSearchFocus = true
+                    filtersExpanded = !filtersExpanded
+                },
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -169,16 +186,6 @@ fun LedgerScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // The filter icon lives in the period toolbar; the panel it opens
-            // sits above it and the removable chips below it.
-            LedgerFilterActions(
-                hasActiveFilters = hasActiveFilters,
-                onToggle = {
-                    if (!filtersExpanded) requestSearchFocus = true
-                    filtersExpanded = !filtersExpanded
-                },
-            )
-            LedgerInsightsAction(onClick = onNavigateToInsights)
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center,

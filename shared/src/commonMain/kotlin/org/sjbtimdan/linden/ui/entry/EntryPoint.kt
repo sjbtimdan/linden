@@ -81,6 +81,7 @@ private val LAST_ADDED_UNDO_WINDOW = 5.seconds
 fun EntryPoint(
     viewModel: EntryPointViewModel,
     onNavigateToRates: () -> Unit = {},
+    onNavigateToInsights: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
     captureViewModel: CapturedPaymentsViewModel? = null,
     // Test seam: desktop has no system back, so the real BackHandler is a no-op
@@ -225,6 +226,7 @@ fun EntryPoint(
                 ratesWarning = ratesWarning,
                 compact = draftTouched,
                 onSetRates = onNavigateToRates,
+                onNavigateToInsights = onNavigateToInsights,
             )
         }
         if (fieldFocused) {
@@ -370,6 +372,7 @@ private fun EntryHeaderRegion(
     ratesWarning: RatesWarning?,
     compact: Boolean,
     onSetRates: () -> Unit,
+    onNavigateToInsights: () -> Unit,
 ) {
     val hasEntries by viewModel.hasEntries.collectAsState()
     val totalMinor by viewModel.totalMinor.collectAsState()
@@ -385,6 +388,7 @@ private fun EntryHeaderRegion(
             hidden = hideTotal,
             compact = compact,
             onToggleHidden = { viewModel.setHideTotal(!hideTotal) },
+            onNavigateToInsights = onNavigateToInsights,
         )
     }
 

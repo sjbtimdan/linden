@@ -110,22 +110,6 @@ class LedgerScreenTest : StringSpec({
         }
     }
 
-    "insights action opens insights" {
-        withLedgerViewModel(clock = FakeClock()) { viewModel ->
-            var navigatedToInsights = false
-            setContent {
-                LedgerScreen(
-                    viewModel = viewModel,
-                    onNavigateToInsights = { navigatedToInsights = true },
-                )
-            }
-
-            onNodeWithTag("insightsAction").performClick()
-
-            navigatedToInsights shouldBe true
-        }
-    }
-
     "accounts view hides hidden accounts and explains when every account is hidden" {
         withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
