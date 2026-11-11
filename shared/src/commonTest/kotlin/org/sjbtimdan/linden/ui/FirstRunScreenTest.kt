@@ -47,26 +47,31 @@ private fun access(supported: Boolean, granted: Boolean = false, onOpen: () -> U
 @OptIn(ExperimentalTestApi::class)
 class FirstRunScreenTest : StringSpec({
 
-    "firstRunSteps omits capture when unsupported and includes it when supported" {
+    "firstRunSteps starts on the language and omits capture when unsupported" {
         firstRunSteps(captureSupported = false) shouldBe
-            listOf(FirstRunStep.Welcome, FirstRunStep.Language, FirstRunStep.Currency, FirstRunStep.Theme)
+            listOf(FirstRunStep.Language, FirstRunStep.Welcome, FirstRunStep.Currency, FirstRunStep.Theme)
 
         firstRunSteps(captureSupported = true) shouldBe
             listOf(
-                FirstRunStep.Welcome,
                 FirstRunStep.Language,
+                FirstRunStep.Welcome,
                 FirstRunStep.Currency,
                 FirstRunStep.Theme,
                 FirstRunStep.Capture,
             )
     }
 
-    "shows the welcome copy and features on the first step" {
+    "starts on the language step then shows the welcome copy and features" {
         runFirstRunTest {
             setContent {
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
+            onNodeWithText("Choose your language").assertIsDisplayed()
+            onNodeWithTag("firstRunBack").assertDoesNotExist()
+            onNodeWithText("Continue").assertIsDisplayed()
+
+            advance()
             onNodeWithText("Welcome to Linden").assertIsDisplayed()
             onNodeWithText("Track expenses and income across accounts and currencies.").assertIsDisplayed()
             onNodeWithText("Multiple accounts and currencies").assertIsDisplayed()
@@ -83,9 +88,11 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
-            advance()
             onNodeWithText("Choose your language").assertIsDisplayed()
             onNodeWithTag("firstRunLanguage-ENGLISH").assertIsSelected()
+
+            advance()
+            onNodeWithText("Welcome to Linden").assertIsDisplayed()
 
             advance()
             onNodeWithText("Choose your currency").assertIsDisplayed()
@@ -136,9 +143,8 @@ class FirstRunScreenTest : StringSpec({
                 }
             }
 
-            advance()
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
-            advance(2)
+            advance(3)
             onNodeWithTag("firstRunTheme-DARK").performClick()
             advance()
 
@@ -167,24 +173,42 @@ class FirstRunScreenTest : StringSpec({
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
-            advance()
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
 
             onNodeWithText("Continuer").assertIsDisplayed()
         }
     }
 
-    "back returns to the previous step" {
+    "the steps after the language choice render in the picked language" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(onComplete = { _, _, _ -> })
+            }
+
+            onNodeWithTag("firstRunLanguage-FRENCH").performClick()
+
+            advance()
+            onNodeWithText("Bienvenue dans Linden").assertIsDisplayed()
+
+            advance()
+            onNodeWithText("Choisissez votre devise").assertIsDisplayed()
+
+            advance()
+            onNodeWithText("Choisissez votre thème").assertIsDisplayed()
+        }
+    }
+
+    "back returns to the language step" {
         runFirstRunTest {
             setContent {
                 FirstRunScreen(onComplete = { _, _, _ -> })
             }
 
             advance()
-            onNodeWithText("Choose your language").assertIsDisplayed()
+            onNodeWithText("Welcome to Linden").assertIsDisplayed()
             onNodeWithTag("firstRunBack").performClick()
 
-            onNodeWithText("Welcome to Linden").assertIsDisplayed()
+            onNodeWithText("Choose your language").assertIsDisplayed()
         }
     }
 

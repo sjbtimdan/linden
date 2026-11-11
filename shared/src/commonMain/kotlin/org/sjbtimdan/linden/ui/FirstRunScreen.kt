@@ -54,24 +54,25 @@ import org.sjbtimdan.linden.ui.entry.platformLocaleTag
 import org.sjbtimdan.linden.ui.theme.LindenTheme
 
 /** The ordered steps of the first-run wizard. */
-internal enum class FirstRunStep { Welcome, Language, Currency, Theme, Capture }
+internal enum class FirstRunStep { Language, Welcome, Currency, Theme, Capture }
 
 /** The wizard steps; payment capture is only offered where the platform supports it. */
 internal fun firstRunSteps(captureSupported: Boolean): List<FirstRunStep> = buildList {
-    add(FirstRunStep.Welcome)
     add(FirstRunStep.Language)
+    add(FirstRunStep.Welcome)
     add(FirstRunStep.Currency)
     add(FirstRunStep.Theme)
     if (captureSupported) add(FirstRunStep.Capture)
 }
 
 /**
- * Shown once on a fresh install, before the app: a short wizard that
- * introduces Linden, then asks for the app language, default currency and
- * theme so the app starts in a setup the user recognizes. The language and
- * theme preview live — picking one re-composes every step in it — and nothing
- * is persisted until the last step's Continue, which passes all three choices
- * to [onComplete]; the resolved system language, CHF and the System theme are
+ * Shown once on a fresh install, before the app: a short wizard that starts
+ * with the app language so every later step renders in the user's choice,
+ * then introduces Linden and asks for the default currency and theme so the
+ * app starts in a setup the user recognizes. The language and theme preview
+ * live — picking one re-composes every step in it — and nothing is persisted
+ * until the last step's Continue, which passes all three choices to
+ * [onComplete]; the resolved system language, CHF and the System theme are
  * pre-selected so the wizard always reaches the end.
  *
  * Where the platform has notification capture (Android), a dedicated step
@@ -104,10 +105,18 @@ fun FirstRunScreen(
                     .testTag("firstRunScreen"),
             ) {
                 if (step != FirstRunStep.Welcome) {
-                    ScreenHeader(
-                        title = stepTitle(step),
-                        onBack = { stepIndex-- },
-                    )
+                    if (stepIndex > 0) {
+                        ScreenHeader(
+                            title = stepTitle(step),
+                            onBack = { stepIndex-- },
+                        )
+                    } else {
+                        Text(
+                            text = stepTitle(step),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.testTag("screenTitle"),
+                        )
+                    }
                 }
 
                 Column(
@@ -125,7 +134,8 @@ fun FirstRunScreen(
                 }
 
                 FirstRunFooter(
-                    isFirst = stepIndex == 0,
+                    canGoBack = stepIndex > 0,
+                    isWelcome = step == FirstRunStep.Welcome,
                     onBack = { stepIndex-- },
                     onContinue = {
                         if (stepIndex == steps.lastIndex) {
@@ -242,14 +252,14 @@ private fun CaptureStep(access: NotificationAccess) {
 }
 
 @Composable
-private fun FirstRunFooter(isFirst: Boolean, onBack: () -> Unit, onContinue: () -> Unit) {
+private fun FirstRunFooter(canGoBack: Boolean, isWelcome: Boolean, onBack: () -> Unit, onContinue: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!isFirst) {
+        if (canGoBack) {
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier.testTag("firstRunBack"),
@@ -266,7 +276,7 @@ private fun FirstRunFooter(isFirst: Boolean, onBack: () -> Unit, onContinue: () 
         ) {
             Text(
                 stringResource(
-                    if (isFirst) Res.string.first_run_get_started else Res.string.first_run_continue,
+                    if (isWelcome) Res.string.first_run_get_started else Res.string.first_run_continue,
                 ),
             )
         }
