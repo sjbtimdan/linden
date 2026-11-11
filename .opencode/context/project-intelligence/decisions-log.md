@@ -466,6 +466,43 @@ discoverable and consider prompting for a backup after significant changes.
 
 ---
 
+## Decision: Enforce Cheap Architectural Rules With Source-Scan Tests
+
+**Date**: 2026-11-11
+**Status**: Decided
+**Owner**: Steve
+
+### Context
+`AGENTS.md` and `living-notes.md` carry 100+ dated rules. Prose does not fail the build, so a rule like "time is always injected" or "money is never floating point" erodes silently the first time someone writes `Clock.System.now()` or adds a `Double` amount.
+
+### Decision
+A rule that can be checked cheaply and without ambiguity becomes a test in `shared/src/jvmTest/kotlin/org/sjbtimdan/linden/ArchitectureInvariantsTest.kt`, which scans source text and reports `path:line: code`. Currently enforced: no `Clock.System` outside `time/AppClock.kt`, no `Double`/`Float`/`BigDecimal` in `model/`, no `REAL` column in any `.sq` (`FxRate` allowlisted — a rate is not money). A meta-test asserts the scans still see the expected number of files, so they cannot pass vacuously.
+
+Rules already covered by behaviour tests (zero-decimal parsing, adjustment-entry shape, show-future window) are not duplicated. Rules that are not truly held by the codebase are not encoded: "one Composable per file" is already false (20 files declare two or more), so the docs were corrected to the practised rule instead.
+
+### Rationale
+A text scan is ~80 lines, needs no build plugin, and runs in the existing `jvmTest` task, so the rule fails on the same `./gradlew check` as everything else. A custom detekt rule needs its own module, rule jar and tests — more build surface than the checks it replaces.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|-------------|------|------|---------------|
+| Custom detekt rule module | Integrated with existing static analysis | New module, rule jar on the detekt classpath, own tests | More build surface than the scans |
+| Keep prose only, review manually | Zero build cost | Already failed in practice; rules drift silently | The whole point of the decision |
+| Encode "one Composable per file" too | Would make the doc claim true | Requires an allowlist of 20 legitimate exceptions | That is a ledger of exceptions, not a rule |
+
+### Impact
+**Positive**: The two highest-value rules now fail the build with a file and line; docs point at the enforcing test
+**Negative**: Text scans catch the obvious regression only (a fully-qualified `java.math.BigDecimal` or `Instant.parse` of a literal slips through)
+**Risk**: If the scan's file layout assumptions move, the meta-test fails loudly rather than silently passing
+
+### Related Files
+- `shared/src/jvmTest/kotlin/org/sjbtimdan/linden/ArchitectureInvariantsTest.kt` - the scans
+- `shared/src/jvmTest/kotlin/org/sjbtimdan/linden/LocaleFileParityTest.kt` - the same `File("src/...")` lookup precedent
+- `AGENTS.md` - clock and money bullets name the test; composable rule corrected
+- `.opencode/context/project-intelligence/living-notes.md` - "Executable invariants" table (rule → test)
+
+---
+
 ## Deprecated Decisions
 
 | Decision | Date | Replaced By | Why |

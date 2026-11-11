@@ -65,7 +65,7 @@
 - **`formatAmountCompact` not parseable** - Can't pre-fill edit fields with it
 
 ### Lessons Learned
-- **Money is always integer minor units** - Never `Double`/`BigDecimal`
+- **Money is always integer minor units** - Never `Double`/`BigDecimal`; `ArchitectureInvariantsTest` fails on a `Double`/`Float`/`BigDecimal` field in `model/` or a `REAL` column in any `.sq` (`FxRate` is the documented exception)
 - **`formatAmountCompact` is display-only** - `parseAmount` can't parse "1.25m"
 - **`compileAndroidMain` for `:shared`** - `compileDebugKotlin` only exists on `:androidApp`
 - **Tests inject `FakeFxRatesSource`** - Never hit the real Frankfurter API in tests
@@ -75,7 +75,7 @@
 ## Patterns & Conventions
 
 ### Code Patterns Worth Preserving
-- **AppClock is the only way to read time** (since 2026-09-12): every static time read (`Clock.System.now()`, `Clock.System.todayIn(...)`) is injected as `AppClock` (`time/AppClock.kt`: `now(): Instant` + `todayIn(zone): LocalDate`; `SystemClock` is the production object). Tests inject `FakeClock` (`time/FakeClock.kt`, mutable `now`/`today`, `todayIn` ignores the zone) and share the fixed `TEST_NOW` (2026-01-20 00:00 UTC). Zone reads (`TimeZone.currentSystemDefault()`) stay static — only *time* is injected. New code that reads the clock must take `clock: AppClock = SystemClock` and never call `Clock.System` directly; `DescriptionSuggestionQualityTest` (manual, skipped) is the one deliberate exception.
+- **AppClock is the only way to read time** (since 2026-09-12): every static time read (`Clock.System.now()`, `Clock.System.todayIn(...)`) is injected as `AppClock` (`time/AppClock.kt`: `now(): Instant` + `todayIn(zone): LocalDate`; `SystemClock` is the production object). Tests inject `FakeClock` (`time/FakeClock.kt`, mutable `now`/`today`, `todayIn` ignores the zone) and share the fixed `TEST_NOW` (2026-01-20 00:00 UTC). Zone reads (`TimeZone.currentSystemDefault()`) stay static — only *time* is injected. New code that reads the clock must take `clock: AppClock = SystemClock` and never call `Clock.System` directly; `DescriptionSuggestionQualityTest` (manual, skipped) is the one deliberate exception. Enforced for app sources by `ArchitectureInvariantsTest` (jvmTest), which allows `Clock.System` only in `time/AppClock.kt`.
 - **Zero-decimal currencies (IDR, JPY) are display-only special (since 2026-10-02)**: storage stays uniform 2-decimal minor units for every currency, but `Currency.decimalDigits` (0 for IDR/JPY, default 2) drives formatting/input. `formatAmount(amount, decimalDigits)` rounds to whole units and prints a bare integer; `parseAmount(input, decimalDigits)` treats every separator as grouping and rejects fractions; `CalculatorModel`/`AmountCalculator` round to whole units, ignore the dot key and hide it from the keypad; `formatAmountCompact(amount, decimalDigits)` passes digits through to its fallback. Thread `currency.decimalDigits` (never a literal) through every currency-aware format/parse site; the currency-agnostic amount-filter chip keeps the storage-scale default of 2. Existing sub-unit amounts (e.g. a legacy ¥10.50) display and save as whole units, so editing one normalizes it.
 - **Ledger accounts view converts foreign balances (since 2026-10-02)** - The Accounts view shows a muted `≈ <amount> <symbol>` line under a foreign account's balance, converted into the default currency; default-currency rows get no line, a missing rate shows `–`, and Hide Totals masks the line together with the balance. `accountConversionsMinor` (pure, `ui/accounts/AccountBalance.kt`) converts each balance with the same `toDefaultMinor` call as `accountTotalMinor`, so the rows sum exactly to the header total; `LedgerViewModel.accountConversionsAtPeriodEnd` exposes the id-keyed map and `AccountsList` takes `conversions` + `defaultCurrency`. The line uses the latest stored rate, so a past-period row mixes a period-end balance with today's rate — exactly what the header total already does. The Settings → Accounts screen does not show conversions.
 - **Firebase Analytics + Crashlytics both ship (since 2026-10-04)** - Analytics was briefly removed before the first release, then restored so the Play advertising-ID declaration matches the bundle; the merged manifest therefore carries `AD_ID`, `ACCESS_ADSERVICES_*` and install-referrer permissions (verify in `androidApp/build/intermediates/merged_manifests/release/.../AndroidManifest.xml`). The privacy policy discloses anonymous usage + crash data and notes that the OS may back the local database up to the user's Google account; Data safety must declare advertising ID (Yes), App activity/Device IDs and Crash logs/Diagnostics. No ads; financial data stays on-device (or in the user's own Android backup).
@@ -87,11 +87,36 @@
 - **Quick-entry chips cap one description at two variants (since 2026-11-01)** - `predictQuickEntries` keeps the top-ranked variant plus recurring variants, then keeps at most `QUICK_ENTRY_MAX_VARIANTS_PER_DESCRIPTION` (2) per `descriptionFamily`. The family key normalizes case, whitespace and trailing punctuation, so `"ATM ."`, `"ATM."` and `"ATM"` share one cap; `variantKey` still keeps their amounts separate. Variants are deduplicated before the cap so a variant's history rows don't consume it twice, and the surviving chips keep global score order — the least likely variants drop out and other descriptions take the remaining slots.
 - **Each new class ships with a unit test** - Unless it is pure configuration (constants/values with no behavior), a new class is not done without its test
 - **State must survive configuration changes** (since 2026-09-10): `App` holds the active `Screen` in `rememberSaveable` with `ScreenSaver` (each `Screen` carries a stable `key`, `Screen.fromKey` falls back to `Entry`), and `AppRoot` holds the `AppDependencies` composition root in `AppRootViewModel` (via `viewModel { AppRootViewModel(createDependencies) }`). A plain `remember` in either place reset navigation to `Entry` and rebuilt every ViewModel — losing the in-progress `EntryDraft` — on Android rotation, because `MainActivity` has no `android:configChanges`. Consequences: `AppDependencies.close()` (cancel `appScope`, close the lazily-built `httpClient`) is called from `AppRootViewModel.onCleared` instead of a `DisposableEffect` in `App` (which would fire on every rotation and hand the app a closed client); `MainActivity` passes `applicationContext` to `DatabaseDriverFactory` so the retained ViewModel never leaks the activity. `EntryPoint.draftTouched` is `rememberSaveable` so a surviving draft keeps the compact header; `fieldFocused` (derived from `EntryForm.activeField`, which is `remember` and resets to null, forcing `fieldFocused=false`) and `editEpoch` (a reset counter) intentionally stay `remember`.
-- **Each Composable in its own file** - e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file
+- **Each screen or dialog Composable in its own file** - e.g. `DayHeader` in `DayHeader.kt`, not inside a screen file. Private helpers that only serve one screen (the step composables in `FirstRunScreen.kt`) and composable extensions on a type (`CategoryType.displayName()` in `CategoryDialog.kt`) stay with their owner — the rule is not "one `@Composable` per file"
 - **Comment minimally** - Only add comments for obscure code
 - **Conventional commits** - Standard commit message format
 - **Version catalog** - `gradle/libs.versions.toml`
 - **Kotlin source files use PascalCase** - e.g. `EntryDao.kt`, not `entry_dao.kt`
+
+### Executable invariants (since 2026-11-11)
+
+Some rules above used to be prose only, which is how a rule quietly stops being true. These are now
+source scans in `shared/src/jvmTest/kotlin/org/sjbtimdan/linden/ArchitectureInvariantsTest.kt`, so
+`./gradlew check` and `fastCheck` fail with `path:line: code` instead of a reviewer having to remember:
+
+| Rule | Enforced by |
+|---|---|
+| Time is read only through `AppClock` (no `Clock.System` outside `time/AppClock.kt`) | `app code reads time only through AppClock` |
+| Money is never floating point (no `Double`/`Float`/`BigDecimal` in `model/`, no `REAL` column, `FxRate` excepted) | `the domain model never stores money as floating point` + `the schema never stores money as REAL` |
+| The scans still see the sources (so they cannot silently pass on zero files) | `the scans see the sources they police` |
+
+These are text scans, not compiler checks: they catch the obvious regression (`Clock.System.now()`, a
+`Double` amount, a `REAL` column) and not a clever one (time smuggled in via `Instant.parse`, a
+`java.math.BigDecimal` fully qualified). Comments are stripped before matching, so prose about a rule does
+not trip it. A detekt rule was rejected: it needs its own module, a rule jar on the detekt classpath and its
+own tests, which is more build surface than the ~80 lines here. If the list grows past a handful, revisiting
+that becomes worthwhile.
+
+Already covered by ordinary tests, deliberately not duplicated here: zero-decimal parsing
+(`MoneyFormatTest`), adjustment-entry shape (`BalanceAdjustmentTest`), the show-future window
+(`LedgerWindowTest`), locale parity (`LocaleFileParityTest`). Deliberately not encodable: "one Composable
+per file" (already false — 20 files legitimately declare two or more), hierarchy-template wiring (a build-file
+text scan of a rarely touched ~10 lines), PascalCase filenames (no drift risk).
 
 ### UI strings (i18n, since 2026-09-06)
 - All UI copy lives in `shared/src/commonMain/composeResources/values/strings.xml` (English = default). Per-locale variants come later as `values-<lang>/` dirs (see `.tmp/INTERNATIONALIZATION.md`).

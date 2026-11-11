@@ -97,6 +97,8 @@ git describe). It is generated code — never edit it.
   `clock: AppClock = SystemClock` (`time/AppClock.kt`: `now(): Instant` + `todayIn(zone): LocalDate`) and must not call
   `Clock.System.now()`/`todayIn` directly. Tests inject `FakeClock` (mutable `now`/`today`, shared `TEST_NOW`).
   Zone reads (`TimeZone.currentSystemDefault()`) stay static — only *time* is injected.
+  Enforced by `ArchitectureInvariantsTest` (jvmTest) for app sources; the only allowed `Clock.System` caller is
+  `time/AppClock.kt` itself.
 - **State must survive configuration changes** (since 2026-09-10): `App` keeps the active `Screen` in
   `rememberSaveable` with `ScreenSaver`; `AppRootViewModel` owns the `AppDependencies` composition root for the host
   lifetime. `AppDependencies.close()` (cancel `appScope`, close the lazily-built `httpClient`) is called from
@@ -133,6 +135,8 @@ git describe). It is generated code — never edit it.
   with the same decimal digits);
   never use it to pre-fill edit fields — `parseAmount` can't parse the suffix. `amount` columns in `.sq` files are `INTEGER`.
   `parseAmount` accepts a leading `-` (negative balance/liability); accounts may be negative, entries never are (CHECK-enforced).
+  Enforced by `ArchitectureInvariantsTest` (jvmTest): no `Double`/`Float`/`BigDecimal` in `model/` and no `REAL` column
+  in any `.sq`, with `FxRate.kt`/`FxRate.sq` as the documented exception (a rate is not money).
 - Adjust Balance (accounts view of the ledger): `LedgerViewModel.adjustBalance` reconciles an account to a target
   balance by creating a fresh income/expense entry per adjustment (positive delta → income, negative delta → expense,
   dated now, `description = null`) — pure helpers in `ui/accounts/BalanceAdjustment.kt`. No `is_adjustment` column,
@@ -214,6 +218,8 @@ git describe). It is generated code — never edit it.
   JVM tests pin `user.language=en` / `user.country=US` so `formatAmount` assertions are locale-deterministic,
   and run test classes in parallel across `maxParallelForks = availableProcessors` (`shared/build.gradle.kts`).
 - Configuration cache + build cache enabled (`gradle.properties`).
-- Each Composable goes in its own file (e.g. `DayHeader` lives in `DayHeader.kt`, not inside a screen file).
+- Each screen or dialog Composable goes in its own file (e.g. `DayHeader` lives in `DayHeader.kt`, not inside a
+  screen file). Private helpers that only serve one screen (e.g. the step composables in `FirstRunScreen.kt`) and
+  composable extensions on a type (e.g. `CategoryType.displayName()` in `CategoryDialog.kt`) stay with their owner.
 - Comment minimally: only add comments for obscure code which should be very rare.
 - After each piece of work is done, scan through for omitted tests.
