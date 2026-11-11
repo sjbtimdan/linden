@@ -336,4 +336,8 @@
     <string name="capture_no_apps_found">没有匹配的应用。</string>
     <string name="capture_templates_header">已学习的规则</string>
     <string name="capture_templates_empty">暂无学习记录。记录一笔捕获的付款，Linden 会记住你的分类方式。</string>
+    <string name="capture_check_header">收不到捕获？</string>
+    <string name="capture_check_body">如果付款不再出现，请检查通知栏中仍存在的通知并重启捕获。已清除的通知无法恢复。</string>
+    <string name="capture_check_action">检查通知</string>
+    <string name="capture_check_done">捕获已重启。通知栏中仍存在的通知现在将被检查。</string>
 </resources>

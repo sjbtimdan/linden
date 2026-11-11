@@ -343,4 +343,8 @@
     <string name="capture_no_apps_found">Keine Apps gefunden.</string>
     <string name="capture_templates_header">Gelernte Regeln</string>
     <string name="capture_templates_empty">Noch nichts gelernt. Übernimm eine erfasste Zahlung, und Linden merkt sich deine Kategorisierung.</string>
+    <string name="capture_check_header">Keine Zahlungen erfasst?</string>
+    <string name="capture_check_body">Wenn Zahlungen nicht mehr erscheinen, prüfe die noch im Benachrichtigungsbereich liegenden Benachrichtigungen und starte die Erfassung neu. Bereits verworfene Benachrichtigungen können nicht wiederhergestellt werden.</string>
+    <string name="capture_check_action">Benachrichtigungen prüfen</string>
+    <string name="capture_check_done">Erfassung neu gestartet. Benachrichtigungen, die noch im Bereich liegen, werden jetzt geprüft.</string>
 </resources>

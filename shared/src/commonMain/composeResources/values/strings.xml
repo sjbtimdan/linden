@@ -343,4 +343,8 @@
     <string name="capture_no_apps_found">No apps match.</string>
     <string name="capture_templates_header">Learned rules</string>
     <string name="capture_templates_empty">Nothing learned yet. Log a captured payment and Linden remembers how you classified it.</string>
+    <string name="capture_check_header">Not receiving captures?</string>
+    <string name="capture_check_body">If payments stop appearing, check the notifications still in your shade and restart capture. Notifications you already dismissed cannot be recovered.</string>
+    <string name="capture_check_action">Check notifications</string>
+    <string name="capture_check_done">Capture restarted. Notifications still in the shade will be checked now.</string>
 </resources>

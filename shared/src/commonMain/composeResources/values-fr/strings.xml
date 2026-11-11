@@ -343,4 +343,8 @@
     <string name="capture_no_apps_found">Aucune application trouvée.</string>
     <string name="capture_templates_header">Règles apprises</string>
     <string name="capture_templates_empty">Rien d'appris pour l'instant. Enregistrez un paiement capturé et Linden retiendra votre classement.</string>
+    <string name="capture_check_header">Vous ne recevez plus de captures ?</string>
+    <string name="capture_check_body">Si les paiements n'apparaissent plus, vérifiez les notifications encore présentes dans le panneau et relancez la capture. Les notifications déjà ignorées ne peuvent pas être récupérées.</string>
+    <string name="capture_check_action">Vérifier les notifications</string>
+    <string name="capture_check_done">Capture relancée. Les notifications encore présentes dans le panneau vont être vérifiées.</string>
 </resources>

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,6 +49,10 @@ import org.sjbtimdan.linden.resources.capture_add_app
 import org.sjbtimdan.linden.resources.capture_apps_empty
 import org.sjbtimdan.linden.resources.capture_apps_header
 import org.sjbtimdan.linden.resources.capture_apps_note
+import org.sjbtimdan.linden.resources.capture_check_action
+import org.sjbtimdan.linden.resources.capture_check_body
+import org.sjbtimdan.linden.resources.capture_check_done
+import org.sjbtimdan.linden.resources.capture_check_header
 import org.sjbtimdan.linden.resources.capture_continue
 import org.sjbtimdan.linden.resources.capture_disclosure_body
 import org.sjbtimdan.linden.resources.capture_disclosure_title
@@ -64,6 +69,7 @@ import org.sjbtimdan.linden.ui.BottomBarContentSpacer
 import org.sjbtimdan.linden.ui.ConfirmDialog
 import org.sjbtimdan.linden.ui.ScreenHeader
 import org.sjbtimdan.linden.ui.screenContainer
+import org.sjbtimdan.linden.ui.settings.SettingsActionButton
 import org.sjbtimdan.linden.ui.settings.SettingsCard
 import org.sjbtimdan.linden.ui.settings.SettingsSectionHeader
 
@@ -86,6 +92,7 @@ fun CaptureSettingsScreen(
     val categories by viewModel.categories.collectAsState()
     var showDisclosure by remember { mutableStateOf(false) }
     var showAppPicker by remember { mutableStateOf(false) }
+    var checkRequested by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showDisclosure || showAppPicker) {
         showDisclosure = false
@@ -218,6 +225,40 @@ fun CaptureSettingsScreen(
                                     onRemove = { viewModel.removeTemplate(template.packageName, template.skeleton) },
                                 )
                             }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                SettingsSectionHeader(stringResource(Res.string.capture_check_header))
+
+                SettingsCard {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.capture_check_body),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        SettingsActionButton(
+                            icon = Icons.Filled.Refresh,
+                            label = stringResource(Res.string.capture_check_action),
+                            onClick = {
+                                access.checkNow()
+                                checkRequested = true
+                            },
+                        )
+                        if (checkRequested) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(Res.string.capture_check_done),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
                         }
                     }
                 }

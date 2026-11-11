@@ -343,4 +343,8 @@
     <string name="capture_no_apps_found">कोई ऐप नहीं मिला।</string>
     <string name="capture_templates_header">सीखे गए नियम</string>
     <string name="capture_templates_empty">अभी तक कुछ नहीं सीखा। कैप्चर किया गया भुगतान दर्ज करें और Linden याद रखेगा कि आपने उसे कैसे वर्गीकृत किया।</string>
+    <string name="capture_check_header">कैप्चर नहीं मिल रहे?</string>
+    <string name="capture_check_body">अगर भुगतान दिखना बंद हो जाए, तो शेड में बची सूचनाएँ जाँचें और कैप्चर फिर से शुरू करें। पहले ही हटाई गई सूचनाएँ वापस नहीं पाई जा सकतीं।</string>
+    <string name="capture_check_action">सूचनाएँ जाँचें</string>
+    <string name="capture_check_done">कैप्चर फिर से शुरू हुआ। शेड में बची सूचनाएँ अब जाँची जाएँगी।</string>
 </resources>

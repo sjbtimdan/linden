@@ -20,8 +20,13 @@ import org.sjbtimdan.linden.model.ExpenseEntry
 import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.withCaptureSettingsViewModel
 
-private fun access(granted: Boolean, onOpen: () -> Unit = {}): NotificationAccess =
-    NotificationAccess(supported = true, granted = granted, openSettings = onOpen)
+private fun access(granted: Boolean, onOpen: () -> Unit = {}, onCheck: () -> Unit = {}): NotificationAccess =
+    NotificationAccess(
+        supported = true,
+        granted = granted,
+        openSettings = onOpen,
+        checkNow = onCheck,
+    )
 
 @OptIn(ExperimentalTestApi::class)
 class CaptureSettingsScreenTest : StringSpec({
@@ -114,6 +119,29 @@ class CaptureSettingsScreenTest : StringSpec({
 
             onNodeWithContentDescription("Remove").performClick()
             repository.rules().shouldBeEmpty()
+        }
+    }
+
+    "check notifications restarts capture and confirms inline" {
+        var checked = 0
+        withCaptureSettingsViewModel { _, _, _, viewModel ->
+            setContent {
+                CaptureSettingsScreen(
+                    viewModel = viewModel,
+                    access = access(granted = true, onCheck = { checked++ }),
+                    capturableApps = emptyList(),
+                    onNavigateBack = {},
+                )
+            }
+
+            onNodeWithText("Capture restarted. Notifications still in the shade will be checked now.")
+                .assertDoesNotExist()
+
+            onNodeWithText("Check notifications").performClick()
+
+            checked shouldBe 1
+            onNodeWithText("Capture restarted. Notifications still in the shade will be checked now.")
+                .assertExists()
         }
     }
 

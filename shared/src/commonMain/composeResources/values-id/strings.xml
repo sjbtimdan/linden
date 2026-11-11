@@ -340,4 +340,8 @@
     <string name="capture_no_apps_found">Tidak ada aplikasi yang cocok.</string>
     <string name="capture_templates_header">Aturan yang dipelajari</string>
     <string name="capture_templates_empty">Belum ada yang dipelajari. Catat pembayaran yang ditangkap dan Linden akan mengingat klasifikasi Anda.</string>
+    <string name="capture_check_header">Tidak menerima tangkapan?</string>
+    <string name="capture_check_body">Jika pembayaran berhenti muncul, periksa notifikasi yang masih ada di panel dan mulai ulang penangkapan. Notifikasi yang sudah Anda singkirkan tidak dapat dipulihkan.</string>
+    <string name="capture_check_action">Periksa notifikasi</string>
+    <string name="capture_check_done">Penangkapan dimulai ulang. Notifikasi yang masih ada di panel akan segera diperiksa.</string>
 </resources>

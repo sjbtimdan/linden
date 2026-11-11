@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.os.Build
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +28,8 @@ import kotlinx.coroutines.withContext
 
 /** Class name of the listener declared in the app manifest (androidApp module). */
 private const val LISTENER_CLASS = "org.sjbtimdan.linden.capture.PaymentCaptureListener"
+
+private const val TAG = "CapturePlatform"
 
 @Composable
 actual fun rememberNotificationAccess(): NotificationAccess {
@@ -45,7 +49,18 @@ actual fun rememberNotificationAccess(): NotificationAccess {
         supported = true,
         granted = granted,
         openSettings = { openNotificationAccessSettings(context) },
+        checkNow = { restartCaptureListener(context) },
     )
+}
+
+private fun restartCaptureListener(context: Context) {
+    val component = ComponentName(context.packageName, LISTENER_CLASS)
+    try {
+        NotificationListenerService.requestUnbind(component)
+        NotificationListenerService.requestRebind(component)
+    } catch (e: Exception) {
+        Log.w(TAG, "Cannot restart the capture listener", e)
+    }
 }
 
 private fun isNotificationAccessGranted(context: Context): Boolean =
