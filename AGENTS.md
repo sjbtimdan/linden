@@ -32,7 +32,7 @@ When running tests: if a test configuration is not available (e.g. for jvmTests)
 
 Always run tests at the end of each change. Use `./check.sh` as that runs everything (`./gradlew check`).
 During development, prefer `./gradlew fastCheck` (runs `jvmTest` without the Kover gate) or IntelliJ MCP.
-Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.linden.ui.entry.EntryPointTest"`.
+Run a single test class with `./gradlew :shared:jvmTest --tests "org.sjbtimdan.linden.ui.entry.EntryPointSaveTest"`.
 
 ## Modules
 

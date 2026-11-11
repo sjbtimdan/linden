@@ -1,32 +1,17 @@
 package org.sjbtimdan.linden.ui.entry
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -41,24 +26,15 @@ import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.predictions.QuickEntry
 import org.sjbtimdan.linden.predictions.UpcomingRecurring
 import org.sjbtimdan.linden.resources.Res
-import org.sjbtimdan.linden.resources.common_category
-import org.sjbtimdan.linden.resources.entry_account
 import org.sjbtimdan.linden.resources.entry_amount
 import org.sjbtimdan.linden.resources.entry_amount_positive
 import org.sjbtimdan.linden.resources.entry_amount_received
 import org.sjbtimdan.linden.resources.entry_amount_sent
-import org.sjbtimdan.linden.resources.entry_description_optional
-import org.sjbtimdan.linden.resources.entry_from_account
 import org.sjbtimdan.linden.resources.entry_new_account
 import org.sjbtimdan.linden.resources.entry_new_account_with_name
 import org.sjbtimdan.linden.resources.entry_new_category
 import org.sjbtimdan.linden.resources.entry_new_category_with_name
-import org.sjbtimdan.linden.resources.entry_ok
-import org.sjbtimdan.linden.resources.entry_quick_entry
-import org.sjbtimdan.linden.resources.entry_recurring
-import org.sjbtimdan.linden.resources.entry_to_account
 import org.sjbtimdan.linden.ui.BackHandler
-import org.sjbtimdan.linden.ui.ClearIconButton
 import org.sjbtimdan.linden.ui.accounts.AccountDialogHost
 import org.sjbtimdan.linden.ui.accounts.AccountDialogState
 import org.sjbtimdan.linden.ui.categories.CategoryDialogHost
@@ -66,7 +42,7 @@ import org.sjbtimdan.linden.ui.categories.CategoryDialogState
 import kotlin.time.Instant
 
 /** Which field is expanded right now; while one is, the rest of the form collapses. */
-private enum class ActiveField { Description, From, To, Category, Account, Amount, ToAmount }
+internal enum class ActiveField { Description, From, To, Category, Account, Amount, ToAmount }
 
 /** The category type a new category should get for an entry of [type]. */
 internal fun EntryType.toCategoryType(): CategoryType = when (this) {
@@ -74,9 +50,6 @@ internal fun EntryType.toCategoryType(): CategoryType = when (this) {
     EntryType.Income -> CategoryType.Income
     EntryType.Transfer -> CategoryType.Both
 }
-
-/** Keeps the quick-entry chips from sprawling when a description is long. */
-private val QuickEntryChipMaxWidth = 220.dp
 
 /**
  * The field section of the entry editor, shared between the inline form on the
@@ -113,26 +86,7 @@ fun EntryForm(
     dialogs: EntryFormDialogs? = null,
     onDialogsChange: ((EntryFormDialogs) -> Unit)? = null,
 ) {
-    val visibleCategories = remember(categories, state.type) { categoriesForType(categories, state.type) }
-    val fromAccount = remember(accounts, state.accountId) { accounts.firstOrNull { it.id == state.accountId } }
-    val toAccount = remember(accounts, state.toAccountId) { accounts.firstOrNull { it.id == state.toAccountId } }
-    val toAccountOptions = remember(accounts, state.accountId) { accounts.filter { it.id != state.accountId } }
-    val selectedCategory = remember(visibleCategories, state.categoryId) {
-        visibleCategories.firstOrNull { it.id == state.categoryId }
-    }
-    val predictedCategoryOptions = remember(suggestions.categoryIds, visibleCategories, state.categoryId) {
-        suggestions.categoryIds
-            .filterNot { it == state.categoryId }
-            .mapNotNull { id -> visibleCategories.firstOrNull { it.id == id } }
-    }
-    val predictedAccountOptions = remember(suggestions.accountIds, accounts, state.accountId) {
-        suggestions.accountIds
-            .filterNot { it == state.accountId }
-            .mapNotNull { id -> accounts.firstOrNull { it.id == id } }
-    }
-    val showReceivedAmount = state.type == EntryType.Transfer &&
-        fromAccount != null && toAccount != null &&
-        fromAccount.currency != toAccount.currency
+    val ui = rememberEntryFormUi(state, accounts, categories, suggestions)
 
     // Localized copy for this form; resolved once per composition so plain
     // lambdas (onInvalid, dropdown "missing" texts) can capture the strings.
@@ -157,13 +111,6 @@ fun EntryForm(
     } else {
         null
     }
-    // Recurring quick-entry chips get a subtle tint and a screen-reader label:
-    // the chip itself only shows the description and the repeat icon.
-    val recurringChipColors = OptionChipColors(
-        container = MaterialTheme.colorScheme.tertiaryContainer,
-        content = MaterialTheme.colorScheme.onTertiaryContainer,
-    )
-    val recurringChipDescription = stringResource(Res.string.entry_recurring)
 
     // Create dialogs, opened from the "+ New" chips or from hoisted state a
     // host seeded via the missing-requirement hint. The host's state wins when
@@ -258,7 +205,7 @@ fun EntryForm(
             AmountField(
                 value = state.amountText,
                 label = amountLabel,
-                suffix = fromAccount?.currency?.symbol,
+                suffix = ui.fromAccount?.currency?.symbol,
                 warning = amountWarning,
                 onValueChange = {
                     onAmountChange(it)
@@ -273,154 +220,37 @@ fun EntryForm(
             }
         }
 
-        if (state.type == EntryType.Transfer) {
-            if (!editing || activeField == ActiveField.From) {
-                Spacer(modifier = Modifier.height(16.dp))
-                DropdownField(
-                    label = stringResource(Res.string.entry_from_account),
-                    selected = fromAccount,
-                    options = accounts,
-                    optionLabel = { it.name },
-                    onSelect = { onAccountChange(it.id) },
-                    onFocusChange = { activeField = if (it) ActiveField.From else null },
-                    createLabel = accountCreateLabel,
-                    onCreate = if (onCreateAccount != null) {
-                        { query -> openCreateAccount(query, false) }
-                    } else {
-                        null
-                    },
-                )
-            }
-            if (!editing || activeField == ActiveField.To) {
-                Spacer(modifier = Modifier.height(16.dp))
-                DropdownField(
-                    label = stringResource(Res.string.entry_to_account),
-                    selected = toAccount,
-                    options = toAccountOptions,
-                    optionLabel = { it.name },
-                    onSelect = { onToAccountChange(it.id) },
-                    onFocusChange = { activeField = if (it) ActiveField.To else null },
-                    createLabel = accountCreateLabel,
-                    onCreate = if (onCreateAccount != null) {
-                        { query -> openCreateAccount(query, true) }
-                    } else {
-                        null
-                    },
-                )
-            }
-            if (!editing && showReceivedAmount) {
-                Spacer(modifier = Modifier.height(16.dp))
-                AmountField(
-                    value = state.toAmountText,
-                    label = receivedAmountLabel,
-                    suffix = toAccount.currency.symbol,
-                    warning = toAmountWarning,
-                    onValueChange = {
-                        onToAmountChange(it)
-                        toAmountWarning = null
-                    },
-                    onFocus = ::openToCalculator,
-                )
-            }
-        } else {
-            if (!editing || activeField == ActiveField.Category) {
-                Spacer(modifier = Modifier.height(16.dp))
-                DropdownField(
-                    label = stringResource(Res.string.common_category),
-                    selected = selectedCategory,
-                    options = visibleCategories,
-                    optionLabel = { it.name },
-                    onSelect = { onCategoryChange(it.id) },
-                    onFocusChange = { activeField = if (it) ActiveField.Category else null },
-                    predictedOptions = predictedCategoryOptions,
-                    optionIcon = { it.icon?.imageVector() },
-                    createLabel = categoryCreateLabel,
-                    onCreate = if (onCreateCategory != null) {
-                        { query -> openCreateCategory(query) }
-                    } else {
-                        null
-                    },
-                )
-            }
-            if (!editing || activeField == ActiveField.Account) {
-                Spacer(modifier = Modifier.height(16.dp))
-                DropdownField(
-                    label = stringResource(Res.string.entry_account),
-                    selected = fromAccount,
-                    options = accounts,
-                    optionLabel = { it.name },
-                    onSelect = { onAccountChange(it.id) },
-                    onFocusChange = { activeField = if (it) ActiveField.Account else null },
-                    predictedOptions = predictedAccountOptions,
-                    createLabel = accountCreateLabel,
-                    onCreate = if (onCreateAccount != null) {
-                        { query -> openCreateAccount(query, false) }
-                    } else {
-                        null
-                    },
-                )
-            }
-        }
+        EntrySelectFields(
+            ui = ui,
+            state = state,
+            activeField = activeField,
+            toAmountWarning = toAmountWarning,
+            accountCreateLabel = accountCreateLabel,
+            categoryCreateLabel = categoryCreateLabel,
+            onAccountChange = onAccountChange,
+            onToAccountChange = onToAccountChange,
+            onCategoryChange = onCategoryChange,
+            onToAmountChange = onToAmountChange,
+            onActiveFieldChange = { activeField = it },
+            onOpenCreateAccount = { query, selectAsTo -> openCreateAccount(query, selectAsTo) },
+            onOpenCreateCategory = { query -> openCreateCategory(query) },
+            onToAmountWarningClear = { toAmountWarning = null },
+        )
 
         if (!editing) {
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (activeField == null || activeField == ActiveField.Description) {
-            val visibleSuggestions = remember(state.description, suggestions.descriptions) {
-                state.description.trim().let { query ->
-                    val matches = if (query.isEmpty()) {
-                        suggestions.descriptions
-                    } else {
-                        suggestions.descriptions.filter { it.contains(query, ignoreCase = true) }
-                    }
-                    matches.filterNot { it.equals(query, ignoreCase = true) }
-                }
-            }
-            OutlinedTextField(
+            EntryDescriptionField(
                 value = state.description,
+                suggestions = suggestions.descriptions,
+                expanded = activeField == ActiveField.Description,
                 onValueChange = onDescriptionChange,
-                label = { Text(stringResource(Res.string.entry_description_optional)) },
-                singleLine = true,
-                trailingIcon = if (state.description.isNotEmpty()) {
-                    { ClearIconButton(onClear = { onDescriptionChange("") }) }
-                } else {
-                    null
+                onFocusChange = { focused ->
+                    activeField = if (focused) ActiveField.Description else null
                 },
-                modifier = Modifier
-                    .onFocusChanged { activeField = if (it.isFocused) ActiveField.Description else null }
-                    .fillMaxWidth(),
             )
-            if (activeField == ActiveField.Description && visibleSuggestions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                OptionChipRow(
-                    options = visibleSuggestions,
-                    optionLabel = { it },
-                    onSelect = { suggestion ->
-                        onDescriptionChange(suggestion)
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                    },
-                )
-            }
-            // Ok button to confirm the description without using the back arrow
-            if (activeField == ActiveField.Description) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Button(
-                        onClick = {
-                            keyboardController?.hide()
-                            focusManager.clearFocus()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.entry_ok))
-                    }
-                }
-            }
         }
 
         if (!editing) {
@@ -431,66 +261,30 @@ fun EntryForm(
                 onChange = onCreatedAtChange,
             )
 
-            // Quick entries fill the form from a past entry but keep the current date and time.
             if (suggestions.quickEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(Res.string.entry_quick_entry),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                val quickChips = remember(suggestions.quickEntries) { quickEntryChips(suggestions.quickEntries) }
-                OptionChipRow(
-                    options = quickChips,
-                    optionLabel = { it.label },
-                    onSelect = { onQuickEntry(it.entry) },
-                    dense = true,
-                    maxChipWidth = QuickEntryChipMaxWidth,
-                    optionIcon = { quickEntryIcon(it.entry) },
-                    optionColors = { if (it.entry.cadence != null) recurringChipColors else null },
-                    optionContentDescription = {
-                        if (it.entry.cadence != null) recurringChipDescription else null
-                    },
+                EntryQuickEntrySection(
+                    quickEntries = suggestions.quickEntries,
+                    onSelect = onQuickEntry,
                 )
             }
         }
     }
 
-    AnimatedVisibility(
-        visible = activeField == ActiveField.Amount,
-        enter = slideInVertically(tween(220)) { it / 4 } + fadeIn(tween(220)),
-        exit = fadeOut(tween(120)),
-    ) {
-        EntryAmountCalculator(
-            isToAmount = false,
-            state = state,
-            fromAccount = fromAccount,
-            toAccount = toAccount,
-            purpose = amountLabel,
-            warning = amountPositiveWarning,
-            onCommit = onAmountChange,
-            onWarning = { amountWarning = it },
-            onCancel = { activeField = null },
-        )
-    }
-
-    AnimatedVisibility(
-        visible = activeField == ActiveField.ToAmount,
-        enter = slideInVertically(tween(220)) { it / 4 } + fadeIn(tween(220)),
-        exit = fadeOut(tween(120)),
-    ) {
-        EntryAmountCalculator(
-            isToAmount = true,
-            state = state,
-            fromAccount = fromAccount,
-            toAccount = toAccount,
-            purpose = receivedAmountLabel,
-            warning = amountPositiveWarning,
-            onCommit = onToAmountChange,
-            onWarning = { toAmountWarning = it },
-            onCancel = { activeField = null },
-        )
-    }
+    EntryAmountCalculators(
+        activeField = activeField,
+        state = state,
+        fromAccount = ui.fromAccount,
+        toAccount = ui.toAccount,
+        amountLabel = amountLabel,
+        receivedAmountLabel = receivedAmountLabel,
+        amountPositiveWarning = amountPositiveWarning,
+        onAmountChange = onAmountChange,
+        onToAmountChange = onToAmountChange,
+        onAmountWarning = { amountWarning = it },
+        onToAmountWarning = { toAmountWarning = it },
+        onCancel = { activeField = null },
+    )
 
     CategoryDialogHost(
         state = currentDialogs.category,

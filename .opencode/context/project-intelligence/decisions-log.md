@@ -169,7 +169,7 @@ Fraction arithmetic keeps chains exact; left-to-right evaluation matches a simpl
 
 ### Related
 - `ui/entry/CalculatorModel.kt` - Calculator state machine
-- `ui/entry/AmountCalculator.kt` - Arithmetic
+- `ui/entry/AmountCalculator.kt` - Keypad shell and calculator UI
 
 ---
 
