@@ -8,6 +8,8 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.FakeFxRatesSource
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.lindenDatabase
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.RecordingAppLogger
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -47,6 +49,16 @@ class AppRootViewModelTest : StringSpec({
         onTestMain {
             val viewModel = AppRootViewModel { throw IllegalStateException("boom") }
             viewModel.state.value shouldBe AppRootState.Failed
+        }
+    }
+
+    "reports a startup failure to the logger" {
+        onTestMain {
+            val logger = RecordingAppLogger()
+            val viewModel = AppRootViewModel(logger) { throw IllegalStateException("boom") }
+
+            viewModel.state.value shouldBe AppRootState.Failed
+            logger.reports shouldBe listOf(AppFailure.Startup)
         }
     }
 

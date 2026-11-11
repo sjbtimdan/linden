@@ -5,6 +5,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.util.stateFlow
 
 /**
@@ -17,6 +20,7 @@ class HideEntryTotalSetting(
     private val settingsDao: SettingsDao,
     initial: Boolean,
     private val scope: CoroutineScope,
+    private val logger: AppLogger = NoOpAppLogger,
 ) {
     // Chrome state read synchronously while masking totals; it is a single-row
     // setting, so it stays live even between screens instead of going stale.
@@ -29,8 +33,8 @@ class HideEntryTotalSetting(
                 settingsDao.setHideEntryTotal(hidden)
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
-                // The optimistic state is already propagated through the database flow.
+            } catch (e: Exception) {
+                logger.report(AppFailure.WriteFailed, e)
             }
         }
     }

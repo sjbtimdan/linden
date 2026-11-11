@@ -26,6 +26,8 @@ import org.sjbtimdan.linden.data.createLindenDatabase
 import org.sjbtimdan.linden.db.LindenDatabase
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImporter
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -59,6 +61,7 @@ class AppDependencies(
     initialLanguage: AppLanguage,
     val firstRun: Boolean,
     fxRatesSource: FxRatesSource?,
+    private val logger: AppLogger = NoOpAppLogger,
 ) {
     val settingsDao = SettingsDao(database.settingsQueries)
     val accountDao = AccountDao(database.accountQueries)
@@ -118,8 +121,9 @@ class AppDependencies(
         initialCurrency,
         initialHideEntryTotal,
         initialLanguage,
+        logger = logger,
     )
-    val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock)
+    val ratesViewModel = RatesViewModel(settingsDao, fxRatesRepository, clock = SystemClock, logger = logger)
     val entryViewModel = EntryPointViewModel(
         entryDao,
         accountDao,
@@ -130,6 +134,7 @@ class AppDependencies(
         initialHideEntryTotal = initialHideEntryTotal,
         clock = SystemClock,
         onCaptureConsumed = { captureId, entry -> captureRepository.completeCapture(captureId, entry) },
+        logger = logger,
     )
     val capturedPaymentsViewModel = CapturedPaymentsViewModel(
         captureRepository,
@@ -153,6 +158,7 @@ class AppDependencies(
             ratesProvider,
             allEntries,
             clock = SystemClock,
+            logger = logger,
         )
     }
     val ledgerViewModel: LedgerViewModel by ledgerViewModelLazy
@@ -162,7 +168,7 @@ class AppDependencies(
         if (ledgerViewModelLazy.isInitialized()) ledgerViewModelLazy.value else null
 
     val categoryListViewModel: CategoryListViewModel by lazy {
-        CategoryListViewModel(categoryDao, CategoryBudgetService(database), entryDao)
+        CategoryListViewModel(categoryDao, CategoryBudgetService(database), entryDao, logger)
     }
     val accountListViewModel: AccountListViewModel by lazy {
         AccountListViewModel(
@@ -171,6 +177,7 @@ class AppDependencies(
             settingsDao,
             allEntries,
             initialHideEntryTotal = initialHideEntryTotal,
+            logger = logger,
         )
     }
     val budgetViewModel: BudgetViewModel by lazy {
@@ -179,6 +186,7 @@ class AppDependencies(
             categoryDao,
             settingsDao,
             initialHideEntryTotal = initialHideEntryTotal,
+            logger = logger,
         )
     }
     val insightsViewModel: InsightsViewModel by lazy {
@@ -190,6 +198,7 @@ class AppDependencies(
             allEntries,
             initialHideEntryTotal = initialHideEntryTotal,
             clock = SystemClock,
+            logger = logger,
         )
     }
     val captureSettingsViewModel: CaptureSettingsViewModel by lazy {
@@ -219,7 +228,7 @@ class AppDependencies(
     }
 }
 
-suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
+suspend fun createAppDependencies(driver: SqlDriver, logger: AppLogger = NoOpAppLogger): AppDependencies {
     val database = createLindenDatabase(driver)
     val settingsDao = SettingsDao(database.settingsQueries)
     val initialTheme = settingsDao.getTheme()
@@ -241,5 +250,6 @@ suspend fun createAppDependencies(driver: SqlDriver): AppDependencies {
         initialLanguage,
         firstRun,
         null,
+        logger,
     )
 }

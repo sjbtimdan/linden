@@ -8,6 +8,8 @@ import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -20,12 +22,13 @@ class AccountListViewModel(
     settingsDao: SettingsDao,
     allEntries: StateFlow<List<Entry>>,
     initialHideEntryTotal: Boolean = false,
-) : SearchableListViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : SearchableListViewModel(logger) {
     val defaultCurrency: StateFlow<Currency> = settingsDao.defaultCurrencyFlow().stateFlow(Currency.CHF)
 
     /** Whether amounts are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =
-        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
+        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope, appLogger).state
 
     private val searchableAccounts = accountDao.getAll().searchable()
 

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated:** October 18, 2026
+**Last updated:** November 11, 2026
 
 ## Overview
 
@@ -9,7 +9,7 @@ Linden is a local-first expenses tracker. Your entries, accounts, categories and
 ## Data Collection
 
 - **Usage analytics (Firebase Analytics).** Linden collects anonymous usage data — such as which screens are used, session information, app version and device type — together with a device/advertising identifier, to understand how the app is used and improve it. This data is not used to show ads, and it never includes your entries, accounts, categories, amounts or notification content.
-- **Crash reports (Firebase Crashlytics).** If Linden crashes, a technical report (stack trace, app version, device model, OS version) is sent to help fix bugs.
+- **Crash reports (Firebase Crashlytics).** If Linden crashes **or hits an unexpected internal error**, a technical report is sent to help fix bugs. It contains only a failure code, the exception type and its stack trace, plus app version, device model and OS version. It never includes your entries, accounts, categories, amounts, notification text or file names.
 - **No ads.** Linden shows no advertising.
 - **Exchange rates.** Currency conversion requests current rates from the [Frankfurter API](https://www.frankfurter.app/); only a currency code is sent.
 - **Notifications (optional, Android).** If you explicitly grant Notification access and enable Payment capture, Linden processes notifications from the apps you allowlist to suggest a payment entry. This happens on your device and is described under [Notification Access](#notification-access-android-optional).

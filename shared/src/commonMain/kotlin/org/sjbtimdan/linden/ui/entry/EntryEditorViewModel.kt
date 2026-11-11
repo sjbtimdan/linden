@@ -13,6 +13,8 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
@@ -37,7 +39,8 @@ abstract class EntryEditorViewModel(
     protected val settingsDao: SettingsDao,
     private val ratesProvider: RatesFlowProvider,
     initialHideTotal: Boolean = false,
-) : AppViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : AppViewModel(logger) {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
@@ -54,7 +57,7 @@ abstract class EntryEditorViewModel(
 
     val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
 
-    private val hideEntryTotalSetting = HideEntryTotalSetting(settingsDao, initialHideTotal, viewModelScope)
+    private val hideEntryTotalSetting = HideEntryTotalSetting(settingsDao, initialHideTotal, viewModelScope, appLogger)
 
     /**
      * Whether the totals shown by the screen are masked. Mirrors the "Hide totals"

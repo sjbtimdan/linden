@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.NamedEntity
 import org.sjbtimdan.linden.util.stateFlow
 
@@ -12,7 +14,7 @@ import org.sjbtimdan.linden.util.stateFlow
  * Base for the list screens that offer a name search: owns the query state and
  * narrows a source flow of named entities by it, case-insensitively.
  */
-abstract class SearchableListViewModel : AppViewModel() {
+abstract class SearchableListViewModel(logger: AppLogger = NoOpAppLogger) : AppViewModel(logger) {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 

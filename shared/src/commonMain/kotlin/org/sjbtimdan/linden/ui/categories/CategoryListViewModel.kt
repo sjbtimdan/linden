@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.StateFlow
 import org.sjbtimdan.linden.data.CategoryBudgetService
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
@@ -14,7 +16,8 @@ class CategoryListViewModel(
     private val categoryDao: CategoryDao,
     private val categoryBudgetService: CategoryBudgetService,
     entryDao: EntryDao,
-) : SearchableListViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : SearchableListViewModel(logger) {
     private val searchableCategories = categoryDao.getAll().searchable()
 
     val categories: StateFlow<List<Category>> = searchableCategories.filtered

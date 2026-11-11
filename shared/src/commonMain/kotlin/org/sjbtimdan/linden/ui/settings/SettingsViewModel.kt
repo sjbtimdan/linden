@@ -15,6 +15,9 @@ import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.export.CsvExportManager
 import org.sjbtimdan.linden.imports.IvyImportResult
 import org.sjbtimdan.linden.imports.IvyImporter
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -39,7 +42,8 @@ class SettingsViewModel(
     initialCurrency: Currency,
     initialHideEntryTotal: Boolean = false,
     initialLanguage: AppLanguage = AppLanguage.SYSTEM,
-) : AppViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : AppViewModel(logger) {
     private val _themeMode = MutableStateFlow(initialTheme)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
@@ -49,7 +53,12 @@ class SettingsViewModel(
     private val _language = MutableStateFlow(initialLanguage)
     val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
-    private val hideEntryTotalSetting = HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope)
+    private val hideEntryTotalSetting = HideEntryTotalSetting(
+        settingsDao,
+        initialHideEntryTotal,
+        viewModelScope,
+        appLogger,
+    )
 
     val hideEntryTotal: StateFlow<Boolean> = hideEntryTotalSetting.state
 
@@ -90,7 +99,7 @@ class SettingsViewModel(
 
     fun setHideEntryTotal(hidden: Boolean) = hideEntryTotalSetting.set(hidden)
 
-    fun importIvy(input: InputStream) = runOperation(_importState) {
+    fun importIvy(input: InputStream) = runOperation(AppFailure.ImportFailed, _importState) {
         withContext(Dispatchers.IO) { importer.import(input) }
     }
 
@@ -98,11 +107,11 @@ class SettingsViewModel(
         _importState.value = BackupState.Idle
     }
 
-    fun backupTo(output: OutputStream) = runOperation(_backupState) {
+    fun backupTo(output: OutputStream) = runOperation(AppFailure.BackupFailed, _backupState) {
         withContext(Dispatchers.IO) { backupManager.backupTo(output) }
     }
 
-    fun restoreFrom(input: InputStream) = runOperation(_restoreState) {
+    fun restoreFrom(input: InputStream) = runOperation(AppFailure.RestoreFailed, _restoreState) {
         val result = withContext(Dispatchers.IO) { backupManager.restoreFrom(input) }
         reloadSettings()
         result
@@ -115,7 +124,7 @@ class SettingsViewModel(
         _language.value = settingsDao.getLanguage()
     }
 
-    fun exportCsv(output: OutputStream) = runOperation(_exportState) {
+    fun exportCsv(output: OutputStream) = runOperation(AppFailure.ExportFailed, _exportState) {
         withContext(Dispatchers.IO) { csvExporter.exportTo(output) }
     }
 
@@ -131,7 +140,11 @@ class SettingsViewModel(
         _restoreState.value = BackupState.Idle
     }
 
-    private fun <T> runOperation(state: MutableStateFlow<BackupState<T>>, block: suspend () -> T) {
+    private fun <T> runOperation(
+        failure: AppFailure,
+        state: MutableStateFlow<BackupState<T>>,
+        block: suspend () -> T,
+    ) {
         viewModelScope.launch {
             state.value = BackupState.Working
             state.value = try {
@@ -139,6 +152,7 @@ class SettingsViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                appLogger.report(failure, e)
                 BackupState.Error(e.message)
             }
         }
@@ -151,8 +165,8 @@ class SettingsViewModel(
                 persist(value)
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
-                // The optimistic state is already propagated.
+            } catch (e: Exception) {
+                appLogger.report(AppFailure.WriteFailed, e)
             }
         }
     }

@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -20,6 +23,7 @@ import org.sjbtimdan.linden.model.ThemeMode
  * draft — survive rotation instead of being rebuilt from scratch.
  */
 class AppRootViewModel(
+    private val appLogger: AppLogger = NoOpAppLogger,
     private val createDependencies: suspend () -> AppDependencies,
 ) : ViewModel() {
     private val _state = MutableStateFlow<AppRootState>(AppRootState.Loading)
@@ -45,6 +49,7 @@ class AppRootViewModel(
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (e: Exception) {
+                appLogger.report(AppFailure.Startup, e)
                 AppRootState.Failed
             }
         }
@@ -58,8 +63,16 @@ class AppRootViewModel(
     fun completeFirstRun(language: AppLanguage, currency: Currency, theme: ThemeMode) {
         val dependencies = (_state.value as? AppRootState.FirstRun)?.dependencies ?: return
         viewModelScope.launch {
-            withContext(Dispatchers.IO) { dependencies.completeFirstRun(language, currency, theme) }
-            _state.value = AppRootState.Ready(dependencies)
+            try {
+                withContext(Dispatchers.IO) { dependencies.completeFirstRun(language, currency, theme) }
+                _state.value = AppRootState.Ready(dependencies)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Stay on the first-run screen so the user can try again; the
+                // write that failed is worth reporting on its own.
+                appLogger.report(AppFailure.Startup, e)
+            }
         }
     }
 

@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.ui.FirstRunScreen
 import org.sjbtimdan.linden.ui.StartupError
 
@@ -24,8 +26,8 @@ import org.sjbtimdan.linden.ui.StartupError
  * configuration changes instead of being rebuilt.
  */
 @Composable
-fun AppRoot(createDependencies: suspend () -> AppDependencies) {
-    val viewModel: AppRootViewModel = viewModel { AppRootViewModel(createDependencies) }
+fun AppRoot(logger: AppLogger = NoOpAppLogger, createDependencies: suspend () -> AppDependencies) {
+    val viewModel: AppRootViewModel = viewModel { AppRootViewModel(logger, createDependencies) }
     val state by viewModel.state.collectAsState()
 
     when (val current = state) {

@@ -19,6 +19,8 @@ import org.sjbtimdan.linden.imports.IvyImporter
 import org.sjbtimdan.linden.imports.buildIvyZip
 import org.sjbtimdan.linden.imports.minimalIvyJson
 import org.sjbtimdan.linden.imports.splitCurrencyIvyJson
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.RecordingAppLogger
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -216,6 +218,7 @@ class SettingsViewModelTest : StringSpec({
     "importIvy reports an error for an invalid backup and leaves the database untouched" {
         onTestMain {
             val database = lindenDatabase()
+            val logger = RecordingAppLogger()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database, clock = FakeClock()),
@@ -223,6 +226,7 @@ class SettingsViewModelTest : StringSpec({
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
+                logger = logger,
             )
 
             viewModel.importIvy(ByteArrayInputStream(buildIvyZip("this is not json")))
@@ -232,6 +236,7 @@ class SettingsViewModelTest : StringSpec({
             }
 
             (state as BackupState.Error).message shouldContain "not a valid Ivy backup"
+            logger.reports shouldBe listOf(AppFailure.ImportFailed)
             database.accountQueries.selectAll().awaitAsList() shouldBe emptyList()
         }
     }
@@ -416,6 +421,7 @@ class SettingsViewModelTest : StringSpec({
     "backupTo reports an error when writing the backup fails" {
         onTestMain {
             val database = lindenDatabase()
+            val logger = RecordingAppLogger()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database, clock = FakeClock()),
@@ -423,6 +429,7 @@ class SettingsViewModelTest : StringSpec({
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
+                logger = logger,
             )
 
             val failingStream = object : OutputStream() {
@@ -436,12 +443,14 @@ class SettingsViewModelTest : StringSpec({
             }
 
             (state as BackupState.Error).message shouldContain "stream exploded"
+            logger.reports shouldBe listOf(AppFailure.BackupFailed)
         }
     }
 
     "restoreFrom keeps a null message when the failure has none" {
         onTestMain {
             val database = lindenDatabase()
+            val logger = RecordingAppLogger()
             val viewModel = SettingsViewModel(
                 settingsDao = SettingsDao(database.settingsQueries),
                 importer = IvyImporter(database, clock = FakeClock()),
@@ -449,6 +458,7 @@ class SettingsViewModelTest : StringSpec({
                 csvExporter = CsvExportManager(EntryDao(database.entryQueries)),
                 initialTheme = ThemeMode.SYSTEM,
                 initialCurrency = Currency.CHF,
+                logger = logger,
             )
 
             val failingInput = object : InputStream() {
@@ -460,6 +470,7 @@ class SettingsViewModelTest : StringSpec({
             }
 
             (state as BackupState.Error).message shouldBe null
+            logger.reports shouldBe listOf(AppFailure.RestoreFailed)
         }
     }
 })

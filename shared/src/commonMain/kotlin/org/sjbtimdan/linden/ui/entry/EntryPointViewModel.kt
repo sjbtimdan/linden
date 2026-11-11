@@ -15,6 +15,9 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.EntryType
@@ -41,6 +44,7 @@ class EntryPointViewModel(
     private val clock: AppClock,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
     private val onCaptureConsumed: suspend (Long, Entry) -> Unit = { _, _ -> },
+    logger: AppLogger = NoOpAppLogger,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
@@ -48,6 +52,7 @@ class EntryPointViewModel(
     settingsDao,
     ratesProvider,
     initialHideTotal = initialHideEntryTotal,
+    logger = logger,
 ) {
     private val suggestions = EntrySuggestionsProvider(
         entryDao,
@@ -292,7 +297,8 @@ class EntryPointViewModel(
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                appLogger.report(AppFailure.WriteFailed, e)
                 reportError()
                 return false
             }
@@ -317,8 +323,8 @@ class EntryPointViewModel(
             onCaptureConsumed(captureId, entry)
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
-            // Ignored: the entry is saved; the capture can be dismissed by hand.
+        } catch (e: Exception) {
+            appLogger.report(AppFailure.CaptureWriteFailed, e)
         }
     }
 

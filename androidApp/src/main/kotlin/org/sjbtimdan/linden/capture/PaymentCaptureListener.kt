@@ -19,6 +19,8 @@ import kotlinx.coroutines.sync.withLock
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
 import org.sjbtimdan.linden.data.SettingsDao
 import org.sjbtimdan.linden.data.createLindenDatabase
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.appLogger
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -162,6 +164,10 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
             }
         }
         Log.w(TAG, "Failed to process $label", lastError)
+        appLogger.report(
+            AppFailure.CaptureWriteFailed,
+            lastError ?: IllegalStateException("Cannot process $label"),
+        )
     }
 
     private fun StatusBarNotification.toCandidate(): CaptureCandidate? = try {
@@ -259,7 +265,8 @@ class PaymentCaptureListener : NotificationListenerService(), CaptureRecoveryLis
                 val newDriver = DatabaseDriverFactory(context).createDriver()
                 val database = createLindenDatabase(newDriver)
                 CaptureRepository(SettingsDao(database.settingsQueries)) to newDriver
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                appLogger.report(AppFailure.CaptureDbOpenFailed, e)
                 return null
             }
             synchronized(lock) {

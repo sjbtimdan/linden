@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.sjbtimdan.linden.data.FxRatesRepository
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
@@ -37,7 +39,8 @@ class RatesViewModel(
     private val settingsDao: SettingsDao,
     private val fxRatesRepository: FxRatesRepository,
     private val clock: AppClock,
-) : AppViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : AppViewModel(logger) {
     // Read synchronously by the startup refresh and the refresh actions, which
     // may run before any screen collects them; both are single-row settings.
     val base: StateFlow<Currency> =

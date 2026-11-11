@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.sjbtimdan.linden.capture.PaymentCaptureListener
 import org.sjbtimdan.linden.data.DatabaseDriverFactory
+import org.sjbtimdan.linden.log.appLogger
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,10 +16,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppRoot {
+            AppRoot(logger = appLogger) {
                 val context = applicationContext
                 withContext(Dispatchers.IO) {
-                    createAppDependencies(DatabaseDriverFactory(context).createDriver())
+                    createAppDependencies(DatabaseDriverFactory(context).createDriver(), appLogger)
                 }
             }
         }

@@ -12,6 +12,8 @@ import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Entry
@@ -37,12 +39,14 @@ class LedgerViewModel(
     private val clock: AppClock,
     searchDebounceMillis: Long = SEARCH_DEBOUNCE_MILLIS,
     val zone: TimeZone = TimeZone.currentSystemDefault(),
+    logger: AppLogger = NoOpAppLogger,
 ) : EntryEditorViewModel(
     entryDao,
     accountDao,
     categoryDao,
     settingsDao,
     ratesProvider,
+    logger = logger,
 ) {
     /** Today in [zone], re-read on every call. */
     fun today(): LocalDate = clock.todayIn(zone)

@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.sjbtimdan.linden.log.AppFailure
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.util.DefaultStateFlowStarted
 import org.sjbtimdan.linden.util.stateFlow
 
@@ -19,7 +22,7 @@ import org.sjbtimdan.linden.util.stateFlow
  * repeating the `stateIn` wiring. The upstream runs only while a screen (or
  * another flow) collects it, plus a short stop-timeout grace.
  */
-abstract class AppViewModel : ViewModel() {
+abstract class AppViewModel(protected val appLogger: AppLogger = NoOpAppLogger) : ViewModel() {
     protected fun <T> Flow<T>.stateFlow(initial: T, started: SharingStarted = DefaultStateFlowStarted): StateFlow<T> =
         stateFlow(viewModelScope, initial, started)
 
@@ -35,7 +38,7 @@ abstract class AppViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                println("Linden: write failed: ${e.stackTraceToString()}")
+                appLogger.report(AppFailure.WriteFailed, e)
                 reportError()
             }
         }

@@ -6,6 +6,8 @@ import org.sjbtimdan.linden.data.BudgetDao
 import org.sjbtimdan.linden.data.CategoryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.Currency
@@ -16,7 +18,8 @@ class BudgetViewModel(
     categoryDao: CategoryDao,
     settingsDao: SettingsDao,
     initialHideEntryTotal: Boolean = false,
-) : AppViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : AppViewModel(logger) {
     val budgets: StateFlow<List<Budget>> = budgetDao.budgetsFlow().stateFlow(emptyList())
 
     val categories: StateFlow<List<Category>> = categoryDao.getAll().stateFlow(emptyList())
@@ -27,7 +30,7 @@ class BudgetViewModel(
 
     /** Whether amounts are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =
-        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
+        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope, appLogger).state
 
     /** Adds or updates a budget for [categoryName]; returns false when the limit is not positive. */
     fun saveBudget(categoryName: String, limitMinor: Long): Boolean {

@@ -18,6 +18,8 @@ import org.sjbtimdan.linden.data.EntryDao
 import org.sjbtimdan.linden.data.HideEntryTotalSetting
 import org.sjbtimdan.linden.data.RatesFlowProvider
 import org.sjbtimdan.linden.data.SettingsDao
+import org.sjbtimdan.linden.log.AppLogger
+import org.sjbtimdan.linden.log.NoOpAppLogger
 import org.sjbtimdan.linden.model.Budget
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
@@ -46,13 +48,14 @@ class InsightsViewModel(
     initialHideEntryTotal: Boolean = false,
     private val clock: AppClock,
     private val zone: TimeZone = TimeZone.currentSystemDefault(),
-) : AppViewModel() {
+    logger: AppLogger = NoOpAppLogger,
+) : AppViewModel(logger) {
     /** The currency totals are displayed in, from the settings. */
     val defaultCurrency: StateFlow<Currency> = ratesProvider.defaultCurrency
 
     /** Whether totals are masked by the "Hide totals" setting. */
     val hideTotal: StateFlow<Boolean> =
-        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope).state
+        HideEntryTotalSetting(settingsDao, initialHideEntryTotal, viewModelScope, appLogger).state
 
     /** Whether any entry exists at all — drives the screen's no-data hint. */
     val hasEntries: StateFlow<Boolean> = entryDao.entryExists().stateFlow(false)
