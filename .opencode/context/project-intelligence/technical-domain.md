@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: high | Version: 2.0 | Updated: 2026-08-30 -->
+<!-- Context: project-intelligence/technical | Priority: high | Version: 2.1 | Updated: 2026-11-11 -->
 
 # Technical Domain
 
@@ -111,7 +111,7 @@ See `decisions-log.md` for full decision history with alternatives.
 
 | System | Purpose | Protocol | Direction |
 |--------|---------|----------|-----------|
-| Frankfurter API (`api.frankfurter.dev/v1/latest`) | FX rates | HTTPS GET over Ktor | Outbound |
+| Frankfurter API (`api.frankfurter.dev/v1/latest`) | FX rates — latest only today; v1 also serves historical dates/series and v2 exists (see `decisions-log.md`) | HTTPS GET over Ktor | Outbound |
 | SQLDelight DB | Persistence | SQL (async) | Internal |
 | Ivy Wallet backup (ZIP+JSON) | Import | File read | Inbound |
 | Linden backup (JSON) | Backup/restore | File read/write | Inbound/Outbound |

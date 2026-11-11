@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/notes | Priority: high | Version: 2.0 | Updated: 2026-11-10 -->
+<!-- Context: project-intelligence/notes | Priority: high | Version: 2.1 | Updated: 2026-11-11 -->
 
 # Living Notes
 
@@ -18,6 +18,7 @@
 | Android DB with a newer schema opened by an older app | `DatabaseDriverFactory` (androidMain) overrides `onDowngrade` to no-op, so the DB opens but keeps its newer columns, re-stamped to the older `user_version`. With a single schema version this only matters across unreleased dev builds | Low | Reinstall the debug app |
 | `:shared` Android compiles via `compileAndroidMain`, not `compileDebugKotlin` | Confusing for new devs | Low | Documented in AGENTS.md |
 | Kover coverage only on JVM variant | Android target runs device tests only | Low | `koverVerifyJvm` (50% min) runs as part of `check` |
+| FX history is never stored | `FxRateEntity` is keyed `(baseCurrency, quoteCurrency)` and overwritten on refresh, so past periods convert at today's rate | Medium | See `decisions-log.md` → "Historical FX Rates and Frankfurter v1 vs v2" |
 
 ### Technical Debt Details
 
@@ -41,6 +42,7 @@
 | Question | Stakeholders | Status | Next Action |
 |----------|--------------|--------|-------------|
 | Upcoming-payment dismiss is session-scoped (in-memory), so a dismissed bill resurfaces if the OS kills the app mid-window | — | Open | Try it out first; if annoying, bump to "hidden until its due date passes" (a one-shot persisted timestamp, still no permanent table) |
+| Store historical FX rates and/or move to Frankfurter v2? | — | Open — deferred | `decisions-log.md` → "Historical FX Rates and Frankfurter v1 vs v2": v1 already supports date/series lookups; the blocker is `FxRateEntity` (one row per pair), not the API. Stay on v1 until history is built, then pin to the ECB provider |
 
 ## Known Issues
 

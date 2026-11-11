@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.2 | Updated: 2026-10-18 -->
+<!-- Context: project-intelligence/decisions | Priority: high | Version: 2.3 | Updated: 2026-11-11 -->
 
 # Decisions Log
 
@@ -500,6 +500,95 @@ A text scan is ~80 lines, needs no build plugin, and runs in the existing `jvmTe
 - `shared/src/jvmTest/kotlin/org/sjbtimdan/linden/LocaleFileParityTest.kt` - the same `File("src/...")` lookup precedent
 - `AGENTS.md` - clock and money bullets name the test; composable rule corrected
 - `.opencode/context/project-intelligence/living-notes.md` - "Executable invariants" table (rule → test)
+
+---
+
+## Decision: Historical FX Rates and Frankfurter v1 vs v2
+
+**Date**: 2026-11-11
+**Status**: Pending (deferred — stay on v1 for now)
+**Owner**: Steve
+
+### Context
+Cross-currency totals convert at the *latest* stored rate, so a past period's foreign balances and
+header total are converted at today's rate and drift every day. A user asked whether historical rates
+are feasible. Findings below were verified against the live API on 2026-11-11, not taken from docs.
+
+**The API is not the blocker.** Linden already calls v1 (`/v1/latest`), which also supports:
+- `/v1/{yyyy-mm-dd}?base=…&symbols=…` — one historical date
+- `/v1/{from}..{to}?base=…&symbols=…` — time series
+
+**The schema is the blocker.** `FxRateEntity` is `PRIMARY KEY (baseCurrency, quoteCurrency)` and
+`refreshRates` does `insertOrReplace`, so exactly one observation per pair survives; the stored `date`
+is overwritten on every refresh. History needs `FxRateHistoryEntity(base, quote, date, rate)` (or the
+rate denormalized onto the entry). Volume is trivial: ~9 pairs × ~250 business days ≈ 2,250 rows/year
+per base. That is a schema change, so it needs the migrations prerequisite first (schema is v1, no `.sqm`).
+
+### Verified API behaviour
+| Finding | Evidence |
+|---|---|
+| All 10 Linden currencies covered | `CHF` base against `CNY,EUR,GBP,HKD,IDR,INR,JPY,SGD,USD` returned every one |
+| Weekend/holiday lookups auto-settle on the last business day | `date=2026-11-08` (Sunday) → `date:"2026-11-06"`; trust the returned `date`, not the requested one |
+| Time series skips non-business days | `2026-10-26..2026-11-04` has no 10-31 / 11-01 |
+| Granularity is one observation per business day | ECB publishes ~16:00 CET; no intraday rate for an entry's `createdAt` |
+| No quotas; local caching encouraged | FAQ: "storing daily observations locally … is encouraged" |
+| No privacy-label disclosure needed | FAQ: anonymous queries, no request logs retained |
+
+### v1 vs v2
+v2 (`/v2/rates`) is current; v1 is "deprecated in favor of v2, but remains available indefinitely".
+v2 uses `quotes` (not `symbols` — `symbols` returns **422 unknown parameter**) and returns a flat
+array `[{date, base, quote, rate}]` instead of v1's `{base, date, rates:{…}}`, so it is a parser and
+model change, not a URL change. It adds `group`, `providers`, `expand=providers`, CSV and NDJSON.
+
+**v2 buys no coverage** for these 10 currencies. Its default feed is *blended* across 111 providers,
+which is not reproducible:
+
+| Date | Pair | v2 blended | v2 ECB / v1 |
+|---|---|---|---|
+| 2026-11-04 | CHF→USD | 1.2229 | 1.2263 |
+| 2026-11-08 (Sun) | CHF→EUR | 1.0922 | no ECB observation |
+
+The docs warn "the last decimal places may shift as new data comes in". Since Linden *stores* the rate
+and renders totals from it, a shifting feed means a stored conversion can disagree with a re-fetch.
+
+### Decision
+**Stay on v1 for now; do not upgrade standalone.** Upgrade only when the historical-rates work happens
+— the same file (`FxRates.kt`: model, parser, fetcher, URL) is rewritten either way — and then pin to
+`/v2/providers/ecb/rates` so current and historical conversions stay reproducible. If history is built,
+adopt **period-end rates** first (one rate per currency per period); entry-date rates are the most
+accurate but break the SQL-side aggregation (`accountDeltas`/`categoryTotals`) and are a much larger
+refactor.
+
+### Rationale
+A standalone v2 bump has no user-visible benefit (same currencies, fresher-by-one-day latest behind a
+24h cache), introduces non-reproducible blended rates, and churns the exact file the history work
+rewrites. v1 has no sunset date.
+
+### Alternatives Considered
+| Alternative | Pros | Cons | Why Rejected? |
+|---|---|---|---|
+| Upgrade to v2 now | Current API; fresher blended latest | Parser/model rewrite for no feature; blended rates shift | Do it once, with history |
+| v2 pinned to ECB provider | Reproducible + current API | Still needs array parser; must verify ECB coverage per currency | Correct target *when* upgrading |
+| Period-end historical rates | Fixes visible drift; small | Not per-entry accurate | Recommended first step if history lands |
+| Entry-date rates | Most accurate | Breaks SQL aggregation; per-entry conversion in Kotlin | Deferred; largest scope |
+
+### Impact
+**Positive**: Decision recorded with verified evidence; no risk taken on a working integration
+**Negative**: Past-period totals keep converting at today's rate until this is picked up
+**Risk**: If v1 is ever retired, the parser change lands at the worst possible time
+
+### Revisit When
+- Historical rates are built (then do v1→v2 ECB-pinned in the same change)
+- v1 shows any sign of retirement
+- Fresher-than-ECB "latest" becomes a requirement
+
+### Related
+- `data/FxRates.kt` - `FrankfurterRates`, `parseFxRatesResponse`, `FxRatesFetcher`, `FRANKFURTER_LATEST_URL`
+- `data/FxRatesRepository.kt` / `data/RatesFlowProvider.kt` - 24h staleness, rate flows
+- `FxRate.sq` - one-row-per-pair storage; `FxRate`/`FxRates` in `model/FxRate.kt`
+- `ui/accounts/AccountBalance.kt`, `ui/ledger/PeriodTotal.kt` - conversion sites
+- `docs/privacy-policy.md` - policy wording; needs "current and historical rates" if history lands
+- `.opencode/context/project-intelligence/living-notes.md` - open question + debt row
 
 ---
 
