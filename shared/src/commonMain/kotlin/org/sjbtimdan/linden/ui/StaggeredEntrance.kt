@@ -53,6 +53,9 @@ internal fun Modifier.staggeredEntrance(index: Int, animateIn: Boolean): Modifie
         animationSpec = tween(180),
         label = "staggeredEntrance",
     )
+    // Once the entrance has finished, keep no graphics layer: a lingering layer
+    // per list row adds an offscreen render target for the 99% static case.
+    if (progress >= 1f) return this
     return graphicsLayer {
         alpha = progress
         translationY = (1f - progress) * slideDistance

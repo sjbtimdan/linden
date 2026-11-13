@@ -150,6 +150,21 @@ fun EntryPoint(
 
     systemBackHandler(draft != null, exitEditing)
 
+    // The type tabs are static per language: resolve the three labels once and
+    // remember the tab list keyed on them, so a keystroke in the form doesn't
+    // rebuild the list (and force SlidingPillTabs to recompose). A language
+    // change discards this via App's key(language) recomposition.
+    val expenseName = EntryType.Expense.displayName()
+    val incomeName = EntryType.Income.displayName()
+    val transferName = EntryType.Transfer.displayName()
+    val entryTabs = remember(expenseName, incomeName, transferName) {
+        listOf(
+            SlidingPillTab(expenseName, EntryType.Expense.icon(), "entryType-Expense"),
+            SlidingPillTab(incomeName, EntryType.Income.icon(), "entryType-Income"),
+            SlidingPillTab(transferName, EntryType.Transfer.icon(), "entryType-Transfer"),
+        )
+    }
+
     Column(
         modifier = Modifier
             .screenContainerWithIme()
@@ -177,13 +192,7 @@ fun EntryPoint(
 
         if (!fieldFocused) {
             SlidingPillTabs(
-                tabs = entryTypes.map { type ->
-                    SlidingPillTab(
-                        label = type.displayName(),
-                        icon = type.icon(),
-                        tag = "entryType-${type.name}",
-                    )
-                },
+                tabs = entryTabs,
                 selectedIndex = entryTypes.indexOf(selectedType).coerceAtLeast(0),
                 onSelect = { index -> viewModel.selectType(entryTypes[index]) },
             )

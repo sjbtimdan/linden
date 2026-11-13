@@ -39,6 +39,10 @@ internal fun Modifier.pressFeedback(
             if (interaction is PressInteraction.Release) currentHaptic()
         }
     }
+    // An unpressed card scales to 1f, so drop the layer entirely: a permanent
+    // graphicsLayer on every row/button is an offscreen render target that is
+    // only needed while the press scale is animating.
+    if (scale >= 1f) return this
     return graphicsLayer {
         scaleX = scale
         scaleY = scale
