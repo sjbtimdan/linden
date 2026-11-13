@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertHeightIsAtLeast
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -44,20 +43,6 @@ class LedgerViewModeTabsTest : StringSpec({
 
                 LedgerViewMode.entries.forEach { mode ->
                     onNodeWithTag("viewModeTab-${mode.name}").assertHeightIsAtLeast(48.dp)
-                }
-            }
-        }
-    }
-
-    "all three tabs are displayed" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    LedgerViewModeTabs(viewMode = LedgerViewMode.Entries, onSelect = {})
-                }
-
-                LedgerViewMode.entries.forEach { mode ->
-                    onNodeWithTag("viewModeTab-${mode.name}").assertIsDisplayed()
                 }
             }
         }

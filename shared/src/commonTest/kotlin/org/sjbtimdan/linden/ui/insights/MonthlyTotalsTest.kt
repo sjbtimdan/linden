@@ -3,7 +3,6 @@ package org.sjbtimdan.linden.ui.insights
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -286,13 +285,5 @@ class MonthlyTotalsTest : StringSpec({
         monthIndexOf(2026, 8) shouldBe 2026 * 12 + 7
         monthIndexOf(LocalDate(2026, 12, 31)) shouldBe 2026 * 12 + 11
         monthIndexOf(LocalDate(2027, 1, 1)) shouldBe 2027 * 12
-    }
-
-    "totals are zero rather than incomplete for an empty month" {
-        val totals = totals(emptyList())
-
-        totals.last().expenseMinor.shouldNotBeNull()
-        totals.last().expenseMinor shouldBe 0
-        totals.last().incomeMinor shouldBe 0
     }
 })

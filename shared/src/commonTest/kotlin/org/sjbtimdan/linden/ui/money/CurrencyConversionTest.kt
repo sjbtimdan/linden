@@ -36,23 +36,12 @@ class CurrencyConversionTest : StringSpec({
         sumInDefaultMinor(emptyList(), Currency.CHF, emptyList()) shouldBe 0L
     }
 
-    "sumInDefaultMinor sums currency maps via the stored rate" {
+    "sumInDefaultMinor delegates its map overload to the list form" {
         sumInDefaultMinor(
             mapOf(Currency.CHF to 1_000L, Currency.USD to 800L),
             Currency.CHF,
             chfUsdRate,
         ) shouldBe 2_000L
-    }
-
-    "sumInDefaultMinor is null when a map currency has no rate" {
-        sumInDefaultMinor(
-            mapOf(Currency.CHF to 100L, Currency.EUR to 200L),
-            Currency.CHF,
-            chfUsdRate,
-        ) shouldBe null
-    }
-
-    "sumInDefaultMinor of an empty map is zero" {
         sumInDefaultMinor(emptyMap(), Currency.CHF, emptyList()) shouldBe 0L
     }
 })

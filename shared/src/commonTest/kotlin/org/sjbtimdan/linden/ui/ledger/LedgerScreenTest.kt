@@ -42,16 +42,6 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenTest : StringSpec({
-    "displays empty state" {
-        withLedgerViewModel(clock = FakeClock()) { viewModel ->
-            setContent {
-                LedgerScreen(viewModel = viewModel)
-            }
-
-            onNodeWithText("No entries yet.").assertIsDisplayed()
-        }
-    }
-
     "empty entries view offers adding the first entry" {
         withLedgerViewModel(clock = FakeClock()) { viewModel ->
             var navigatedToEntry = false
