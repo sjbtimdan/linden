@@ -171,13 +171,6 @@ fun EntryForm(
         focusManager.clearFocus()
     }
 
-    fun openToCalculator() {
-        activeField = ActiveField.ToAmount
-        toAmountWarning = null
-        keyboardController?.hide()
-        focusManager.clearFocus()
-    }
-
     // The back key closes an expanded dropdown, calculator, or description field.
     BackHandler(enabled = activeField != null) {
         activeField = null
