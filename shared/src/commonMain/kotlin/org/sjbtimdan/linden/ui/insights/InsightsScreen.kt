@@ -241,7 +241,6 @@ fun InsightsScreen(viewModel: InsightsViewModel, onNavigateBack: () -> Unit) {
                 CategoryBreakdownList(
                     breakdown = breakdownForMonth,
                     currency = defaultCurrency,
-                    language = language,
                     previousMonthLabel = previousMonthLabel,
                     modifier = Modifier.fillMaxWidth(),
                 )

@@ -9,7 +9,6 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.ui.entry.DateLanguage
 import org.sjbtimdan.linden.ui.onTestMain
 
 @OptIn(ExperimentalTestApi::class)
@@ -28,7 +27,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }
@@ -53,7 +51,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = listOf(row("Salary", 3, amountMinor = 5_000, icon = CategoryIcon.Savings)),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }
@@ -73,7 +70,6 @@ class CategoryBreakdownListTest : StringSpec({
                     CategoryBreakdownList(
                         breakdown = MonthBreakdown(emptyList(), emptyList()),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }
@@ -96,7 +92,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = "Jul 2026",
                     )
                 }
@@ -119,7 +114,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = "Jul 2026",
                     )
                 }
@@ -142,7 +136,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = "Jul 2026",
                     )
                 }
@@ -164,7 +157,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }
@@ -187,7 +179,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }
@@ -211,7 +202,6 @@ class CategoryBreakdownListTest : StringSpec({
                             incomes = emptyList(),
                         ),
                         currency = testCurrency,
-                        language = DateLanguage.English,
                         previousMonthLabel = null,
                     )
                 }

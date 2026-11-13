@@ -26,7 +26,6 @@ import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.insights_expenses
 import org.sjbtimdan.linden.resources.insights_income
 import org.sjbtimdan.linden.resources.insights_vs_previous
-import org.sjbtimdan.linden.ui.entry.DateLanguage
 import org.sjbtimdan.linden.ui.ledger.BudgetProgressBar
 import org.sjbtimdan.linden.ui.ledger.formatTotal
 import org.sjbtimdan.linden.ui.theme.accentColor
@@ -43,7 +42,6 @@ import org.sjbtimdan.linden.ui.theme.lindenCard
 internal fun CategoryBreakdownList(
     breakdown: MonthBreakdown,
     currency: Currency,
-    language: DateLanguage,
     previousMonthLabel: String?,
     modifier: Modifier = Modifier,
 ) {
@@ -54,7 +52,6 @@ internal fun CategoryBreakdownList(
                 BreakdownCard(
                     row = row,
                     currency = currency,
-                    language = language,
                     previousMonthLabel = previousMonthLabel,
                 )
             }
@@ -65,7 +62,6 @@ internal fun CategoryBreakdownList(
                 BreakdownCard(
                     row = row,
                     currency = currency,
-                    language = language,
                     previousMonthLabel = previousMonthLabel,
                 )
             }
@@ -84,12 +80,7 @@ private fun BreakdownSectionHeader(title: String) {
 }
 
 @Composable
-private fun BreakdownCard(
-    row: CategoryBreakdownRow,
-    currency: Currency,
-    language: DateLanguage,
-    previousMonthLabel: String?,
-) {
+private fun BreakdownCard(row: CategoryBreakdownRow, currency: Currency, previousMonthLabel: String?) {
     val accent = accentColor(row.category.name)
     val amount = row.amountMinor
     val delta = if (amount != null && row.previousMinor != null) {
