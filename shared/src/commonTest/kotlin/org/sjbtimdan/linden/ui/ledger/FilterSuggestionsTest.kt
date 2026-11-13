@@ -13,7 +13,6 @@ private val restaurant = Category(2, "Restaurant", CategoryType.Expense)
 private val transport = Category(3, "Transport", CategoryType.Expense)
 private val mainAccount = Account(1, "Main", Currency.CHF)
 private val coopAccount = Account(2, "Coop", Currency.CHF)
-private val savingsAccount = Account(3, "Savings", Currency.CHF)
 
 class FilterSuggestionsTest : StringSpec({
     "a blank query suggests nothing" {
