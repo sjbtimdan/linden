@@ -27,7 +27,12 @@
     <string name="first_run_choose_theme">Choisissez votre thème</string>
     <string name="first_run_continue">Continuer</string>
     <string name="first_run_capture_allowed">Accès aux notifications autorisé</string>
-    <string name="first_run_capture_later">Choisissez plus tard les applications bancaires à lire, dans Paramètres → Capture des paiements.</string>
+    <string name="first_run_capture_how">Comment ça marche</string>
+    <string name="first_run_capture_step_access">Autorisez l'accès à Linden.</string>
+    <string name="first_run_capture_step_finish">Terminez la configuration.</string>
+    <string name="first_run_capture_step_add">Ouvrez Paramètres → Capture des paiements, touchez Ajouter une application, choisissez une application bancaire, puis le compte sur lequel enregistrer ses paiements.</string>
+    <string name="first_run_capture_choose_now">Choisir les applications</string>
+    <string name="first_run_capture_later">Vous pouvez ajouter ou retirer des applications à tout moment dans Paramètres → Capture des paiements.</string>
     <string name="first_run_capture_find">Cherchez Linden dans la liste qui s'ouvre.</string>
 
     <!-- Common actions -->
@@ -329,7 +334,7 @@
         <item quantity="other">%1$d paiements à vérifier</item>
     </plurals>
     <string name="capture_apps_header">Applications autorisées</string>
-    <string name="capture_apps_empty">Aucune application autorisée pour l'instant.</string>
+    <string name="capture_apps_empty">Aucune application autorisée pour l'instant. Touchez Ajouter une application, choisissez une application bancaire, puis le compte sur lequel enregistrer ses paiements.</string>
     <string name="capture_apps_note">Seules les notifications de ces applications sont lues.</string>
     <string name="capture_add_app">Ajouter une application</string>
     <string name="capture_remove_app">Supprimer</string>

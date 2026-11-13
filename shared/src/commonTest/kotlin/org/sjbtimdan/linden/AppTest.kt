@@ -41,6 +41,17 @@ class AppTest : StringSpec({
         }
     }
 
+    "the first-run shortcut opens payment capture with settings as its origin" {
+        withApp { dependencies ->
+            setContent { App(dependencies, startInCaptureSettings = true) }
+
+            onNodeWithText("Payment capture").assertExists()
+
+            onNodeWithContentDescription("Back").performClick()
+            onNodeWithText("Import from Ivy").assertExists()
+        }
+    }
+
     "a captured payment alert shows on the entry screen, not the ledger" {
         withApp { dependencies ->
             dependencies.captureRepository.addPending(

@@ -87,6 +87,10 @@ internal val topLevelScreens = listOf(Screen.Ledger, Screen.Entry, Screen.Settin
 @Composable
 fun App(
     dependencies: AppDependencies,
+    // The first-run wizard's "Choose apps now" opens Payment capture instead of
+    // the start screen; only the first composition reads it, so a later
+    // rotation keeps wherever the user has navigated.
+    startInCaptureSettings: Boolean = false,
     // Test seam: desktop has no system back, so the real BackHandler is a no-op
     // and tests inject a handler they can invoke.
     systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
@@ -94,7 +98,7 @@ fun App(
     },
 ) {
     var currentScreen by rememberSaveable(stateSaver = ScreenSaver) {
-        mutableStateOf<Screen>(Screen.Entry)
+        mutableStateOf<Screen>(if (startInCaptureSettings) Screen.CaptureSettings else Screen.Entry)
     }
     // The top-level screen a sub-screen was opened from; both the back arrow and
     // the system back gesture return there.

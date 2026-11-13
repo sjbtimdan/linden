@@ -27,7 +27,12 @@
     <string name="first_run_choose_theme">अपनी थीम चुनें</string>
     <string name="first_run_continue">जारी रखें</string>
     <string name="first_run_capture_allowed">सूचना पहुँच अनुमत है</string>
-    <string name="first_run_capture_later">कौन-से बैंक ऐप्स पढ़ने हैं, यह बाद में सेटिंग्स → भुगतान कैप्चर में चुनें।</string>
+    <string name="first_run_capture_how">यह कैसे काम करता है</string>
+    <string name="first_run_capture_step_access">Linden को पहुँच दें।</string>
+    <string name="first_run_capture_step_finish">सेटअप पूरा करें।</string>
+    <string name="first_run_capture_step_add">सेटिंग्स → भुगतान कैप्चर खोलें, ऐप जोड़ें पर टैप करें, कोई बैंक ऐप चुनें, फिर वह खाता चुनें जिसमें उसके भुगतान दर्ज हों।</string>
+    <string name="first_run_capture_choose_now">अभी ऐप्स चुनें</string>
+    <string name="first_run_capture_later">आप सेटिंग्स → भुगतान कैप्चर में कभी भी ऐप्स जोड़ या हटा सकते हैं।</string>
     <string name="first_run_capture_find">खुलने वाली सूची में Linden खोजें।</string>
 
     <!-- Common actions -->
@@ -329,7 +334,7 @@
         <item quantity="other">%1$d भुगतान जाँचने के लिए</item>
     </plurals>
     <string name="capture_apps_header">अनुमत ऐप्स</string>
-    <string name="capture_apps_empty">अभी कोई ऐप अनुमत नहीं है।</string>
+    <string name="capture_apps_empty">अभी कोई ऐप अनुमत नहीं है। ऐप जोड़ें पर टैप करें, कोई बैंक ऐप चुनें, फिर वह खाता चुनें जिसमें उसके भुगतान दर्ज हों।</string>
     <string name="capture_apps_note">केवल इन ऐप्स की सूचनाएँ पढ़ी जाती हैं।</string>
     <string name="capture_add_app">ऐप जोड़ें</string>
     <string name="capture_remove_app">हटाएँ</string>

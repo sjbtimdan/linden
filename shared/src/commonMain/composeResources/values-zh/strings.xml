@@ -27,7 +27,12 @@
     <string name="first_run_choose_theme">选择您的主题</string>
     <string name="first_run_continue">继续</string>
     <string name="first_run_capture_allowed">已允许通知访问</string>
-    <string name="first_run_capture_later">稍后可在“设置 → 支付捕获”中选择要读取的银行应用。</string>
+    <string name="first_run_capture_how">使用方式</string>
+    <string name="first_run_capture_step_access">授予 Linden 访问权限。</string>
+    <string name="first_run_capture_step_finish">完成设置。</string>
+    <string name="first_run_capture_step_add">打开“设置 → 支付捕获”，点按“添加应用”，选择银行应用，再选择记录其付款的账户。</string>
+    <string name="first_run_capture_choose_now">现在选择应用</string>
+    <string name="first_run_capture_later">你可以随时在“设置 → 支付捕获”中添加或移除应用。</string>
     <string name="first_run_capture_find">在打开的列表中找到 Linden。</string>
 
     <!-- Common actions -->
@@ -322,7 +327,7 @@
         <item quantity="other">%1$d 笔支付待查看</item>
     </plurals>
     <string name="capture_apps_header">允许的应用</string>
-    <string name="capture_apps_empty">尚未允许任何应用。</string>
+    <string name="capture_apps_empty">尚未允许任何应用。点按“添加应用”，选择银行应用，再选择记录其付款的账户。</string>
     <string name="capture_apps_note">只读取这些应用的通知。</string>
     <string name="capture_add_app">添加应用</string>
     <string name="capture_remove_app">移除</string>

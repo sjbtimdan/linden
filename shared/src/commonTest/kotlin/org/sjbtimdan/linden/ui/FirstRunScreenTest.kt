@@ -64,7 +64,7 @@ class FirstRunScreenTest : StringSpec({
     "starts on the language step then shows the welcome copy and features" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> })
+                FirstRunScreen(onComplete = { _, _, _, _ -> })
             }
 
             onNodeWithText("Choose your language").assertIsDisplayed()
@@ -85,7 +85,7 @@ class FirstRunScreenTest : StringSpec({
     "advances through the steps with the pre-selected language, currency and theme" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> })
+                FirstRunScreen(onComplete = { _, _, _, _ -> })
             }
 
             onNodeWithText("Choose your language").assertIsDisplayed()
@@ -108,7 +108,7 @@ class FirstRunScreenTest : StringSpec({
         runFirstRunTest {
             var completed: Triple<AppLanguage, Currency, ThemeMode>? = null
             setContent {
-                FirstRunScreen { language, currency, theme ->
+                FirstRunScreen { language, currency, theme, _ ->
                     completed = Triple(language, currency, theme)
                 }
             }
@@ -123,7 +123,7 @@ class FirstRunScreenTest : StringSpec({
         runFirstRunTest {
             var completed: Currency? = null
             setContent {
-                FirstRunScreen { _, currency, _ -> completed = currency }
+                FirstRunScreen { _, currency, _, _ -> completed = currency }
             }
 
             advance(2)
@@ -138,7 +138,7 @@ class FirstRunScreenTest : StringSpec({
         runFirstRunTest {
             var completed: Triple<AppLanguage, Currency, ThemeMode>? = null
             setContent {
-                FirstRunScreen { language, currency, theme ->
+                FirstRunScreen { language, currency, theme, _ ->
                     completed = Triple(language, currency, theme)
                 }
             }
@@ -156,7 +156,7 @@ class FirstRunScreenTest : StringSpec({
         runFirstRunTest {
             var completed: ThemeMode? = null
             setContent {
-                FirstRunScreen { _, _, theme -> completed = theme }
+                FirstRunScreen { _, _, theme, _ -> completed = theme }
             }
 
             advance(3)
@@ -170,7 +170,7 @@ class FirstRunScreenTest : StringSpec({
     "picking a language previews it immediately" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> })
+                FirstRunScreen(onComplete = { _, _, _, _ -> })
             }
 
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
@@ -182,7 +182,7 @@ class FirstRunScreenTest : StringSpec({
     "the steps after the language choice render in the picked language" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> })
+                FirstRunScreen(onComplete = { _, _, _, _ -> })
             }
 
             onNodeWithTag("firstRunLanguage-FRENCH").performClick()
@@ -201,7 +201,7 @@ class FirstRunScreenTest : StringSpec({
     "back returns to the language step" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> })
+                FirstRunScreen(onComplete = { _, _, _, _ -> })
             }
 
             advance()
@@ -217,7 +217,7 @@ class FirstRunScreenTest : StringSpec({
             var opened = false
             setContent {
                 FirstRunScreen(
-                    onComplete = { _, _, _ -> },
+                    onComplete = { _, _, _, _ -> },
                     access = access(supported = true, onOpen = { opened = true }),
                 )
             }
@@ -237,7 +237,7 @@ class FirstRunScreenTest : StringSpec({
     "payment capture is not offered where the platform cannot capture" {
         runFirstRunTest {
             setContent {
-                FirstRunScreen(onComplete = { _, _, _ -> }, access = access(supported = false))
+                FirstRunScreen(onComplete = { _, _, _, _ -> }, access = access(supported = false))
             }
 
             advance(4)
@@ -251,7 +251,7 @@ class FirstRunScreenTest : StringSpec({
         runFirstRunTest {
             setContent {
                 FirstRunScreen(
-                    onComplete = { _, _, _ -> },
+                    onComplete = { _, _, _, _ -> },
                     access = access(supported = true, granted = true),
                 )
             }
@@ -260,6 +260,68 @@ class FirstRunScreenTest : StringSpec({
             onNodeWithTag("firstRunCaptureAllowed").assertIsDisplayed()
             onNodeWithTag("firstRunCaptureAccess").assertDoesNotExist()
             onNodeWithTag("firstRunCaptureFind").assertDoesNotExist()
+        }
+    }
+
+    "the capture step explains the setup and how apps are added" {
+        runFirstRunTest {
+            setContent {
+                FirstRunScreen(
+                    onComplete = { _, _, _, _ -> },
+                    access = access(supported = true),
+                )
+            }
+
+            advance(4)
+
+            onNodeWithText("How it works").assertIsDisplayed()
+            onNodeWithText("Grant access to Linden.").assertIsDisplayed()
+            onNodeWithText("Finish setup.").assertIsDisplayed()
+            onNodeWithText(
+                "Open Settings → Payment capture, tap Add app, pick a banking app, " +
+                    "then choose the account its payments post to.",
+            ).assertIsDisplayed()
+            onNodeWithText("You can add or remove apps any time in Settings → Payment capture.")
+                .assertIsDisplayed()
+            onNodeWithTag("firstRunCaptureChooseApps").assertDoesNotExist()
+        }
+    }
+
+    "choose apps now completes setup and asks for payment capture" {
+        runFirstRunTest {
+            var completed: Triple<AppLanguage, Currency, ThemeMode>? = null
+            var openCapture: Boolean? = null
+            setContent {
+                FirstRunScreen(
+                    onComplete = { language, currency, theme, capture ->
+                        completed = Triple(language, currency, theme)
+                        openCapture = capture
+                    },
+                    access = access(supported = true, granted = true),
+                )
+            }
+
+            advance(4)
+            onNodeWithTag("firstRunCaptureChooseApps").performClick()
+
+            completed shouldBe Triple(AppLanguage.ENGLISH, Currency.CHF, ThemeMode.SYSTEM)
+            openCapture shouldBe true
+        }
+    }
+
+    "continue from the capture step leaves payment capture closed" {
+        runFirstRunTest {
+            var openCapture: Boolean? = null
+            setContent {
+                FirstRunScreen(
+                    onComplete = { _, _, _, capture -> openCapture = capture },
+                    access = access(supported = true, granted = true),
+                )
+            }
+
+            advance(5)
+
+            openCapture shouldBe false
         }
     }
 })

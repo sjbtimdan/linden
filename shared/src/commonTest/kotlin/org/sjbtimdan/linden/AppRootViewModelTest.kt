@@ -92,7 +92,7 @@ class AppRootViewModelTest : StringSpec({
 
             viewModel.completeFirstRun(AppLanguage.FRENCH, Currency.EUR, ThemeMode.DARK)
             // The completion runs on Dispatchers.IO; wait for the Ready emission.
-            viewModel.state.first { it is AppRootState.Ready }
+            val ready = viewModel.state.first { it is AppRootState.Ready } as AppRootState.Ready
 
             val settings = SettingsDao(dependencies.database.settingsQueries)
             settings.getLanguage() shouldBe AppLanguage.FRENCH
@@ -100,6 +100,23 @@ class AppRootViewModelTest : StringSpec({
             settings.getDefaultCurrency() shouldBe Currency.EUR
             val accounts = AccountDao(dependencies.database.accountQueries).getAll().first()
             accounts.map { it.currency } shouldBe listOf(Currency.EUR, Currency.EUR)
+            ready.startInCaptureSettings shouldBe false
+        }
+    }
+
+    "completeFirstRun opens payment capture when the wizard offers it" {
+        onTestMain {
+            val viewModel = AppRootViewModel { testDependencies(firstRun = true) }
+
+            viewModel.completeFirstRun(
+                AppLanguage.ENGLISH,
+                Currency.CHF,
+                ThemeMode.SYSTEM,
+                openCaptureSettings = true,
+            )
+            val ready = viewModel.state.first { it is AppRootState.Ready } as AppRootState.Ready
+
+            ready.startInCaptureSettings shouldBe true
         }
     }
 })

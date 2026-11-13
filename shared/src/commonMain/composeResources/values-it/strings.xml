@@ -27,7 +27,12 @@
     <string name="first_run_choose_theme">Scegli il tema</string>
     <string name="first_run_continue">Continua</string>
     <string name="first_run_capture_allowed">Accesso alle notifiche consentito</string>
-    <string name="first_run_capture_later">Sceglierai più tardi le app bancarie da leggere, in Impostazioni → Acquisizione pagamenti.</string>
+    <string name="first_run_capture_how">Come funziona</string>
+    <string name="first_run_capture_step_access">Concedi l'accesso a Linden.</string>
+    <string name="first_run_capture_step_finish">Completa la configurazione.</string>
+    <string name="first_run_capture_step_add">Apri Impostazioni → Acquisizione pagamenti, tocca Aggiungi app, scegli un'app bancaria e poi il conto su cui registrare i pagamenti.</string>
+    <string name="first_run_capture_choose_now">Scegli le app ora</string>
+    <string name="first_run_capture_later">Puoi aggiungere o rimuovere le app in qualsiasi momento in Impostazioni → Acquisizione pagamenti.</string>
     <string name="first_run_capture_find">Cerca Linden nell'elenco che si apre.</string>
 
     <!-- Common actions -->
@@ -323,7 +328,7 @@
         <item quantity="other">%1$d pagamenti da verificare</item>
     </plurals>
     <string name="capture_apps_header">App consentite</string>
-    <string name="capture_apps_empty">Nessuna app consentita finora.</string>
+    <string name="capture_apps_empty">Nessuna app consentita finora. Tocca Aggiungi app, scegli un'app bancaria e poi il conto su cui registrare i pagamenti.</string>
     <string name="capture_apps_note">Vengono lette solo le notifiche di queste app.</string>
     <string name="capture_add_app">Aggiungi app</string>
     <string name="capture_remove_app">Rimuovi</string>

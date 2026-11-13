@@ -27,7 +27,12 @@
     <string name="first_run_choose_theme">Pilih tema Anda</string>
     <string name="first_run_continue">Lanjutkan</string>
     <string name="first_run_capture_allowed">Akses notifikasi diizinkan</string>
-    <string name="first_run_capture_later">Pilih aplikasi bank yang dibaca nanti, di Pengaturan → Tangkap pembayaran.</string>
+    <string name="first_run_capture_how">Cara kerjanya</string>
+    <string name="first_run_capture_step_access">Beri Linden akses.</string>
+    <string name="first_run_capture_step_finish">Selesaikan penyiapan.</string>
+    <string name="first_run_capture_step_add">Buka Pengaturan → Tangkap pembayaran, ketuk Tambah aplikasi, pilih aplikasi bank, lalu pilih akun tempat pembayarannya dicatat.</string>
+    <string name="first_run_capture_choose_now">Pilih aplikasi sekarang</string>
+    <string name="first_run_capture_later">Kamu dapat menambah atau menghapus aplikasi kapan saja di Pengaturan → Tangkap pembayaran.</string>
     <string name="first_run_capture_find">Cari Linden di daftar yang terbuka.</string>
 
     <!-- Common actions -->
@@ -326,7 +331,7 @@
         <item quantity="other">%1$d pembayaran untuk ditinjau</item>
     </plurals>
     <string name="capture_apps_header">Aplikasi yang diizinkan</string>
-    <string name="capture_apps_empty">Belum ada aplikasi yang diizinkan.</string>
+    <string name="capture_apps_empty">Belum ada aplikasi yang diizinkan. Ketuk Tambah aplikasi, pilih aplikasi bank, lalu pilih akun tempat pembayarannya dicatat.</string>
     <string name="capture_apps_note">Hanya notifikasi dari aplikasi ini yang dibaca.</string>
     <string name="capture_add_app">Tambah aplikasi</string>
     <string name="capture_remove_app">Hapus</string>

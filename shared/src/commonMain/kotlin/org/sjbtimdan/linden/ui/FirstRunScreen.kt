@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,8 +42,13 @@ import org.sjbtimdan.linden.resources.capture_intro
 import org.sjbtimdan.linden.resources.capture_title
 import org.sjbtimdan.linden.resources.common_back
 import org.sjbtimdan.linden.resources.first_run_capture_allowed
+import org.sjbtimdan.linden.resources.first_run_capture_choose_now
 import org.sjbtimdan.linden.resources.first_run_capture_find
+import org.sjbtimdan.linden.resources.first_run_capture_how
 import org.sjbtimdan.linden.resources.first_run_capture_later
+import org.sjbtimdan.linden.resources.first_run_capture_step_access
+import org.sjbtimdan.linden.resources.first_run_capture_step_add
+import org.sjbtimdan.linden.resources.first_run_capture_step_finish
 import org.sjbtimdan.linden.resources.first_run_choose_currency
 import org.sjbtimdan.linden.resources.first_run_choose_language
 import org.sjbtimdan.linden.resources.first_run_choose_theme
@@ -76,15 +82,17 @@ internal fun firstRunSteps(captureSupported: Boolean): List<FirstRunStep> = buil
  * pre-selected so the wizard always reaches the end.
  *
  * Where the platform has notification capture (Android), a dedicated step
- * introduces it and offers the system grant. Which apps may be read is left
- * to Settings: a capture rule binds an app to an account, and no accounts
- * exist until the wizard completes. Capture is never a gate — Continue stays
- * enabled.
+ * introduces it, explains the three steps to turn it on and offers the system
+ * grant. Once the grant is in place, "Choose apps now" finishes setup and opens
+ * Payment capture directly, so picking the first banking app is one tap away
+ * instead of a search through Settings. Continue stays enabled either way:
+ * capture is never a gate, and the allowlist lives in Settings because a rule
+ * binds an app to an account that only exists after the wizard seeds them.
  */
 @Composable
 fun FirstRunScreen(
     access: NotificationAccess = rememberNotificationAccess(),
-    onComplete: (AppLanguage, Currency, ThemeMode) -> Unit,
+    onComplete: (AppLanguage, Currency, ThemeMode, openCaptureSettings: Boolean) -> Unit,
 ) {
     var language by rememberSaveable {
         mutableStateOf(AppLanguage.resolve(AppLanguage.SYSTEM, platformLocaleTag()))
@@ -126,10 +134,17 @@ fun FirstRunScreen(
                 ) {
                     when (step) {
                         FirstRunStep.Welcome -> FirstRunWelcome()
+
                         FirstRunStep.Language -> LanguageStep(language) { language = it }
+
                         FirstRunStep.Currency -> CurrencyStep(currency) { currency = it }
+
                         FirstRunStep.Theme -> ThemeStep(theme) { theme = it }
-                        FirstRunStep.Capture -> CaptureStep(access)
+
+                        FirstRunStep.Capture -> CaptureStep(
+                            access = access,
+                            onChooseApps = { onComplete(language, currency, theme, true) },
+                        )
                     }
                 }
 
@@ -139,7 +154,7 @@ fun FirstRunScreen(
                     onBack = { stepIndex-- },
                     onContinue = {
                         if (stepIndex == steps.lastIndex) {
-                            onComplete(language, currency, theme)
+                            onComplete(language, currency, theme, false)
                         } else {
                             stepIndex++
                         }
@@ -206,12 +221,21 @@ private fun ThemeStep(selected: ThemeMode, onSelect: (ThemeMode) -> Unit) {
 }
 
 @Composable
-private fun CaptureStep(access: NotificationAccess) {
+private fun CaptureStep(access: NotificationAccess, onChooseApps: () -> Unit) {
     Text(
         text = stringResource(Res.string.capture_intro),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+    Spacer(modifier = Modifier.height(20.dp))
+    Text(
+        text = stringResource(Res.string.first_run_capture_how),
+        style = MaterialTheme.typography.titleSmall,
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+    CaptureStepRow(number = 1, text = stringResource(Res.string.first_run_capture_step_access))
+    CaptureStepRow(number = 2, text = stringResource(Res.string.first_run_capture_step_finish))
+    CaptureStepRow(number = 3, text = stringResource(Res.string.first_run_capture_step_add))
     Spacer(modifier = Modifier.height(16.dp))
     if (access.granted) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -227,6 +251,15 @@ private fun CaptureStep(access: NotificationAccess) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.testTag("firstRunCaptureAllowed"),
             )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        FilledTonalButton(
+            onClick = onChooseApps,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("firstRunCaptureChooseApps"),
+        ) {
+            Text(stringResource(Res.string.first_run_capture_choose_now))
         }
     } else {
         OutlinedButton(
@@ -249,6 +282,19 @@ private fun CaptureStep(access: NotificationAccess) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+@Composable
+private fun CaptureStepRow(number: Int, text: String) {
+    Row(modifier = Modifier.padding(vertical = 3.dp)) {
+        Text(
+            text = "$number.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.width(20.dp),
+        )
+        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+    }
 }
 
 @Composable

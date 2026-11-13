@@ -31,7 +31,10 @@ fun AppRoot(logger: AppLogger = NoOpAppLogger, createDependencies: suspend () ->
     val state by viewModel.state.collectAsState()
 
     when (val current = state) {
-        is AppRootState.Ready -> App(current.dependencies)
+        is AppRootState.Ready -> App(
+            dependencies = current.dependencies,
+            startInCaptureSettings = current.startInCaptureSettings,
+        )
 
         // FirstRunScreen carries its own theme and language override so the
         // welcome page can preview both choices live.
