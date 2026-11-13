@@ -25,6 +25,10 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Lets the shell (adb) profile the release build so Macrobenchmark can
+             capture startup and frame traces. shell="true" restricts this to the
+             shell UID only; third-party apps cannot profile Linden. -->
+        <profileable android:shell="true"/>
         <activity
                 android:exported="true"
                 android:name=".MainActivity">
