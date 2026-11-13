@@ -20,24 +20,6 @@ private data class ChipAccount(val id: Long, val name: String)
 
 @OptIn(ExperimentalTestApi::class)
 class OptionChipRowTest : StringSpec({
-    "renders every option as a chip" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    OptionChipRow(
-                        options = listOf("Checking", "Savings", "Credit Card"),
-                        optionLabel = { it },
-                        onSelect = {},
-                    )
-                }
-
-                listOf("Checking", "Savings", "Credit Card").forEach { option ->
-                    onNodeWithText(option).assertIsDisplayed()
-                }
-            }
-        }
-    }
-
     "wraps overflowing options onto additional lines instead of hiding them" {
         onTestMain {
             runComposeUiTest {

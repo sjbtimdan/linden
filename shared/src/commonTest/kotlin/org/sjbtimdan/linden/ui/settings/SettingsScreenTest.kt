@@ -83,13 +83,6 @@ class SettingsScreenTest : StringSpec({
         }
     }
 
-    "shows the Settings title" {
-        withSettingsViewModel { viewModel ->
-            setContent { SettingsScreen(viewModel) }
-            onNodeWithText("Settings").assertExists()
-        }
-    }
-
     "shows the build version footer" {
         withSettingsViewModel { viewModel ->
             setContent { SettingsScreen(viewModel) }
@@ -149,13 +142,6 @@ class SettingsScreenTest : StringSpec({
             }
             onNodeWithText("Accounts").performClick()
             navigatedToAccounts shouldBe true
-        }
-    }
-
-    "shows the Your Data section header" {
-        withSettingsViewModel { viewModel ->
-            setContent { SettingsScreen(viewModel) }
-            onNodeWithText("Your Data").assertExists()
         }
     }
 

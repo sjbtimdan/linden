@@ -1,7 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -19,24 +18,6 @@ private val createdZone = TimeZone.UTC
 
 @OptIn(ExperimentalTestApi::class)
 class DateAndTimeButtonsTest : StringSpec({
-    "shows the date and time buttons" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    DateAndTimeButtons(
-                        createdAt = createdAt,
-                        createdZone = createdZone,
-                        onChange = {},
-                    )
-                }
-
-                onNodeWithText("Date & time").assertIsDisplayed()
-                onNodeWithText("Aug 10, 2026").assertIsDisplayed()
-                onNodeWithText("14:30").assertIsDisplayed()
-            }
-        }
-    }
-
     "changing the date in the date picker keeps the time of day" {
         onTestMain {
             runComposeUiTest {

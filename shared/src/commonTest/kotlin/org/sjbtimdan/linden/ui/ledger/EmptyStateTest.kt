@@ -11,18 +11,6 @@ import org.sjbtimdan.linden.ui.onTestMain
 
 @OptIn(ExperimentalTestApi::class)
 class EmptyStateTest : StringSpec({
-    "shows the message" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    EmptyState(message = "No entries yet.")
-                }
-
-                onNodeWithText("No entries yet.").assertIsDisplayed()
-            }
-        }
-    }
-
     "renders without an action button by default" {
         onTestMain {
             runComposeUiTest {

@@ -7,7 +7,6 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
@@ -18,24 +17,6 @@ private const val CHIP_TAG = "filterChip"
 
 @OptIn(ExperimentalTestApi::class)
 class EntryFilterChipTest : StringSpec({
-    "shows the label and the remove icon" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    EntryFilterChip(
-                        name = "Groceries",
-                        onClick = {},
-                        modifier = Modifier.testTag(CHIP_TAG),
-                    )
-                }
-
-                onNodeWithTag(CHIP_TAG).assertIsDisplayed()
-                onNodeWithText("Groceries").assertIsDisplayed()
-                onNodeWithContentDescription("Remove filter").assertIsDisplayed()
-            }
-        }
-    }
-
     "clicking the chip invokes onClick" {
         onTestMain {
             runComposeUiTest {

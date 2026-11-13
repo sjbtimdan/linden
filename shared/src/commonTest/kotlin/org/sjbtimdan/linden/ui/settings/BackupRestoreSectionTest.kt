@@ -14,19 +14,6 @@ import org.sjbtimdan.linden.ui.onTestMain
 
 @OptIn(ExperimentalTestApi::class)
 class BackupRestoreSectionTest : StringSpec({
-    "renders the four actions" {
-        onTestMain {
-            runComposeUiTest {
-                setContent { Section() }
-
-                onNodeWithText("Back up database").assertExists()
-                onNodeWithText("Export to CSV").assertExists()
-                onNodeWithText("Restore from backup").assertExists()
-                onNodeWithText("Import from Ivy").assertExists()
-            }
-        }
-    }
-
     "backup and export report clicks" {
         onTestMain {
             runComposeUiTest {

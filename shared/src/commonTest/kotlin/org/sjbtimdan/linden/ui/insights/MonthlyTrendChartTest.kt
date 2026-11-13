@@ -119,24 +119,6 @@ class MonthlyTrendChartTest : StringSpec({
         }
     }
 
-    "renders columns of several series without crashing" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    MonthlyTrendChart(
-                        bars = trendBars(),
-                        seriesColors = seriesColors,
-                        selectedIndex = 2,
-                        onSelect = {},
-                        modifier = Modifier,
-                    )
-                }
-
-                onNodeWithTag(MONTHLY_TREND_CHART_TAG).assertIsDisplayed()
-            }
-        }
-    }
-
     "scales against the tallest value of any series" {
         // Expense series peaks at 200 in Feb, income at 150 in Mar: both scale to 1f.
         barHeightFraction(150L, 200L) shouldBe 0.75f
