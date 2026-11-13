@@ -56,8 +56,6 @@ class CapturedPaymentsViewModel(
     private val templates: StateFlow<List<CaptureTemplate>> =
         repository.templatesFlow().stateFlow(viewModelScope, emptyList(), SharingStarted.Eagerly)
 
-    private val seenCaptureId: StateFlow<Long> = repository.seenCaptureIdFlow().stateFlow(viewModelScope, 0L)
-
     val items: StateFlow<List<CapturedPaymentItem>> = combine(
         pendingCaptures,
         rules,
@@ -68,15 +66,6 @@ class CapturedPaymentsViewModel(
             .filterNot { it.id in consumed }
             .map { capture -> rowFor(capture, rules, accounts) }
     }.stateFlow(viewModelScope, emptyList())
-
-    /** True while a capture newer than the acknowledged watermark is still waiting for review. */
-    val hasUnseen: StateFlow<Boolean> = combine(
-        pendingCaptures,
-        seenCaptureId,
-        consumedIds,
-    ) { pending, seen, consumed ->
-        pending.any { it.id > seen && it.id !in consumed }
-    }.stateFlow(viewModelScope, false)
 
     init {
         viewModelScope.launch { repository.pendingFlow().collect { pendingCaptures.value = it } }
@@ -111,8 +100,9 @@ class CapturedPaymentsViewModel(
     }
 
     /**
-     * Acknowledges everything pending now, so the banner collapses to its bar
-     * until a newer capture arrives.
+     * Acknowledges everything pending now, raising the capture-id floor so a
+     * capture inserted after the inbox empties cannot reuse an id still held by
+     * an in-flight draft. The banner collapses to its bar on its own.
      */
     fun acknowledge() {
         viewModelScope.launch {

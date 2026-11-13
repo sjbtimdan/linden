@@ -24,9 +24,11 @@ import org.sjbtimdan.linden.ui.withLedgerViewModel
 @OptIn(ExperimentalTestApi::class)
 class LedgerScreenNarrowWidthTest : StringSpec({
     "period label, show-future toggle and total all fit on the current month at a phone width" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 11, 10))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 11, 10)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             viewModel.setPeriod(LedgerPeriod.Month)
             viewModel.goToToday()
 

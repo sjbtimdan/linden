@@ -131,7 +131,7 @@ class EntryPointCalculatorTest : StringSpec({
     "calculator header shows the amount purpose and the account context" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)

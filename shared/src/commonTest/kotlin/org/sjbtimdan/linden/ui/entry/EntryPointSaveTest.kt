@@ -251,7 +251,7 @@ class EntryPointSaveTest : StringSpec({
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             // The prior entry prefills the form, so Clear must empty it, not restore the prefill.
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)

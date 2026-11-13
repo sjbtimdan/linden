@@ -25,12 +25,12 @@ import org.sjbtimdan.linden.ui.withEntryPoint
 @OptIn(ExperimentalTestApi::class)
 class EntryPointChromeTest : StringSpec({
     "hero card shows the total balance across accounts" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -42,12 +42,12 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "hero card masks the total when hiding is enabled" {
-        withEntryPoint(clock = FakeClock(), hideEntryTotal = true) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock(), hideEntryTotal = true) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -61,12 +61,12 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "tapping the eye hides and restores the hero card total" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -90,12 +90,12 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "hero card opens insights" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 12_345)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             var navigatedToInsights = false
             setContent {
@@ -124,9 +124,9 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "the hero card compacts once the draft is touched and expands again on clear" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel)
@@ -227,7 +227,7 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "hero card is hidden until the first entry exists" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
             setContent {
@@ -237,7 +237,7 @@ class EntryPointChromeTest : StringSpec({
             onNodeWithTag("totalBalanceCard").assertDoesNotExist()
             onNodeWithText("Total balance").assertDoesNotExist()
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
             waitUntil(timeoutMillis = 5_000) {
                 onAllNodesWithText("Total balance").fetchSemanticsNodes().isNotEmpty()
             }
@@ -258,7 +258,7 @@ class EntryPointChromeTest : StringSpec({
     }
 
     "rates banner shows once entries span two currencies" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             categoryDao.create("Groceries", CategoryType.Expense)
@@ -266,8 +266,8 @@ class EntryPointChromeTest : StringSpec({
             val groceries = categoryDao.getAll().first().first()
             val main = accounts.first { it.name == "Main" }
             val savings = accounts.first { it.name == "Savings" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", savings, 900, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = TEST_NOW))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", savings, 900, createdAt = TEST_NOW))
 
             setContent {
                 EntryPoint(viewModel = viewModel, ratesWarning = RatesWarning.Missing)

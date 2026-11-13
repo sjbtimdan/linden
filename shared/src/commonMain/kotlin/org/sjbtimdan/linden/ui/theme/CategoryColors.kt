@@ -40,13 +40,6 @@ val LocalCategoryPalette = compositionLocalOf { CategoryPalette }
 /** Index into the category palettes for [name]; always non-negative. */
 internal fun categoryColorIndex(name: String): Int = (name.hashCode() and Int.MAX_VALUE) % CATEGORY_PALETTE_SIZE
 
-/**
- * Light-theme accent color for a category name. No production caller: it exists
- * as the test oracle for the light palette mapping — the UI uses the theme-aware
- * [accentColor].
- */
-internal fun categoryColor(name: String): Color = CategoryPalette[categoryColorIndex(name)]
-
 /** Theme-aware accent color for a stable name (categories, accounts). Only valid inside [LindenTheme]. */
 @Composable
 fun accentColor(name: String): Color = LocalCategoryPalette.current[categoryColorIndex(name)]

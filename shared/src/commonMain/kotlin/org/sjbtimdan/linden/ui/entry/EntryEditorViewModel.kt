@@ -20,7 +20,6 @@ import org.sjbtimdan.linden.model.Category
 import org.sjbtimdan.linden.model.CategoryIcon
 import org.sjbtimdan.linden.model.CategoryType
 import org.sjbtimdan.linden.model.Currency
-import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.model.uniqueName
 import org.sjbtimdan.linden.ui.AppViewModel
@@ -80,10 +79,6 @@ abstract class EntryEditorViewModel(
     fun onDescriptionChange(text: String) = draftState.update { it?.copy(description = text) }
     fun onCreatedAtChange(instant: Instant) = draftState.update { it?.copy(createdAt = instant) }
 
-    fun createEntry(entry: Entry) {
-        launchWrite { entryDao.create(entry) }
-    }
-
     /**
      * Creates a category and selects it in the draft; false when the name is
      * empty or already taken (case-insensitive). The draft is never cleared.
@@ -122,10 +117,6 @@ abstract class EntryEditorViewModel(
             }
         }
         return true
-    }
-
-    fun updateEntry(entry: Entry) {
-        launchWrite { entryDao.update(entry) }
     }
 
     fun deleteEntry(id: Long) {

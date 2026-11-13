@@ -3,15 +3,13 @@ package org.sjbtimdan.linden.ui.theme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 
 private const val MIN_ICON_CONTRAST = 3.0f
 
 class CategoryColorsTest : StringSpec({
-    "same name maps to the same color and index" {
-        categoryColor("Groceries") shouldBe categoryColor("Groceries")
+    "same name maps to the same index" {
         categoryColorIndex("Groceries") shouldBe categoryColorIndex("Groceries")
     }
 
@@ -34,10 +32,6 @@ class CategoryColorsTest : StringSpec({
     "different category names get different accents" {
         categoryColorIndex("Groceries") shouldNotBe categoryColorIndex("Transport")
         categoryColorIndex("Transport") shouldNotBe categoryColorIndex("Salary")
-    }
-
-    "categoryColor returns a palette color" {
-        CategoryPalette shouldContain categoryColor("Groceries")
     }
 
     "accent content keeps icons legible on every palette color" {

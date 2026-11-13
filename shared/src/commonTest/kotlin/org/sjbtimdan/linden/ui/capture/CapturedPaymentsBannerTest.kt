@@ -48,7 +48,7 @@ class CapturedPaymentsBannerTest : StringSpec({
             val main = accountDao.getAll().first().first()
             repository.setRule(CaptureRule("com.example.bank", main.id))
             repository.addPending(pending())
-            viewModel.hasUnseen.first { it }
+            viewModel.items.first { it.isNotEmpty() }
 
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
@@ -127,10 +127,10 @@ class CapturedPaymentsBannerTest : StringSpec({
         }
     }
 
-    "collapsing acknowledges the inbox and leaves the bar" {
+    "collapsing leaves the bar behind" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
-            viewModel.hasUnseen.first { it }
+            viewModel.items.first { it.isNotEmpty() }
 
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
@@ -139,8 +139,6 @@ class CapturedPaymentsBannerTest : StringSpec({
             onNodeWithText("1 payment to review").performClick()
             onNodeWithContentDescription("Collapse").performClick()
 
-            viewModel.hasUnseen.first { !it } shouldBe false
-            repository.seenCaptureId() shouldBe 1L
             onNodeWithTag("capturedPaymentsCard").assertDoesNotExist()
             onNodeWithText("1 payment to review").assertExists()
         }
@@ -164,10 +162,10 @@ class CapturedPaymentsBannerTest : StringSpec({
         }
     }
 
-    "a capture arriving after a dismissal updates the bar without opening the card" {
+    "a capture arriving after a collapse updates the bar without opening the card" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(pending())
-            viewModel.hasUnseen.first { it }
+            viewModel.items.first { it.isNotEmpty() }
 
             setContent {
                 CapturedPaymentsBanner(viewModel = viewModel, onAdd = {})
@@ -178,7 +176,7 @@ class CapturedPaymentsBannerTest : StringSpec({
             onNodeWithTag("capturedPaymentsBar").assertExists()
 
             repository.addPending(pending())
-            viewModel.hasUnseen.first { it } shouldBe true
+            viewModel.items.first { it.size == 2 }
 
             onNodeWithTag("capturedPaymentsBar").assertExists()
             onNodeWithText("2 payments to review").assertExists()

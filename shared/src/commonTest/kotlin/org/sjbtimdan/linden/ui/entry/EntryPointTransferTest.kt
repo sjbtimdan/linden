@@ -63,7 +63,7 @@ class EntryPointTransferTest : StringSpec({
             accountDao.create("Main", Currency.CHF)
             accountDao.create("Savings", Currency.EUR)
             val accounts = accountDao.getAll().first()
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(
                     0,
                     null,

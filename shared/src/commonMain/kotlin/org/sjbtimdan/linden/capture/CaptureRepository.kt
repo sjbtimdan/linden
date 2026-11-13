@@ -138,10 +138,12 @@ class CaptureRepository(
         )
     }
 
-    /** The newest capture id the user has acknowledged; 0 before any dismissal. */
+    /**
+     * The newest capture id the user has acknowledged; 0 before any dismissal.
+     * [addPending] uses it as its id floor, so an inbox that empties does not
+     * hand a new capture an id still held by an in-flight draft.
+     */
     suspend fun seenCaptureId(): Long = settingsDao.getRaw(CAPTURE_SEEN_KEY)?.toLongOrNull() ?: 0L
-
-    fun seenCaptureIdFlow(): Flow<Long> = settingsDao.rawFlow(CAPTURE_SEEN_KEY).map { it?.toLongOrNull() ?: 0L }
 
     /** Moves the acknowledged watermark forward; it never regresses. */
     suspend fun markSeen(id: Long) {
@@ -184,15 +186,6 @@ class CaptureRepository(
             PENDING_CAPTURES_KEY,
             pendingSerializer,
             pending().filterNot { it.id == id },
-            onWrite = ::notifyInboxChanged,
-        )
-    }
-
-    suspend fun clearPending() {
-        writeList(
-            PENDING_CAPTURES_KEY,
-            pendingSerializer,
-            emptyList(),
             onWrite = ::notifyInboxChanged,
         )
     }

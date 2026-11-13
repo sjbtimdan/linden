@@ -158,46 +158,10 @@ class CapturedPaymentsViewModelTest : StringSpec({
             repository.addPending(capture(1))
             viewModel.items.first { it.isNotEmpty() }
 
-            repository.clearPending()
+            repository.removePending(1)
             viewModel.refresh()
 
             viewModel.items.first().shouldBeEmpty()
-        }
-    }
-
-    "hasUnseen starts false and turns true for a waiting capture" {
-        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
-            viewModel.hasUnseen.first() shouldBe false
-
-            repository.addPending(capture(1))
-
-            viewModel.hasUnseen.first { it } shouldBe true
-        }
-    }
-
-    "acknowledge moves the watermark to the newest capture" {
-        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
-            repository.addPending(capture(1))
-            repository.addPending(capture(2))
-            viewModel.items.first { it.size == 2 }
-
-            viewModel.acknowledge()
-
-            viewModel.hasUnseen.first { !it } shouldBe false
-            repository.seenCaptureId() shouldBe 2L
-        }
-    }
-
-    "a capture arriving after an acknowledgement is unseen again" {
-        withCapturedPaymentsViewModel { repository, _, _, viewModel ->
-            repository.addPending(capture(1))
-            viewModel.hasUnseen.first { it }
-            viewModel.acknowledge()
-            viewModel.hasUnseen.first { !it }
-
-            repository.addPending(capture(2))
-
-            viewModel.hasUnseen.first { it } shouldBe true
         }
     }
 
@@ -370,15 +334,14 @@ class CapturedPaymentsViewModelTest : StringSpec({
         }
     }
 
-    "consuming every waiting capture clears the unseen count" {
+    "consuming the only waiting capture empties the list" {
         withCapturedPaymentsViewModel { repository, _, _, viewModel ->
             repository.addPending(capture(1))
-            viewModel.hasUnseen.first { it }
+            viewModel.items.first { it.isNotEmpty() }
 
             viewModel.consume(1)
 
             viewModel.items.first().shouldBeEmpty()
-            viewModel.hasUnseen.first { !it } shouldBe false
         }
     }
 })

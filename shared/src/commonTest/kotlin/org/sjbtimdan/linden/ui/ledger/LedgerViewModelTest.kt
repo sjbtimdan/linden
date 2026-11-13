@@ -50,7 +50,7 @@ class LedgerViewModelTest : StringSpec({
             viewModel.hasAnyEntries.value shouldBe false
 
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             entryDao.getAll().first().shouldHaveSize(1)
             viewModel.hasAnyEntries.first { it } shouldBe true
@@ -98,7 +98,7 @@ class LedgerViewModelTest : StringSpec({
                     clock = FakeClock(today = LocalDate(2026, 8, 15)),
                 )
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(
+                entryDao.create(
                     ExpenseEntry(
                         0,
                         groceries,
@@ -136,7 +136,7 @@ class LedgerViewModelTest : StringSpec({
                     clock = FakeClock(today = LocalDate(2026, 8, 15)),
                 )
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(
+                entryDao.create(
                     ExpenseEntry(
                         0,
                         groceries,
@@ -160,8 +160,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setSearchQuery("coffee")
             viewModel.entries.value.map { it.description } shouldBe listOf("Coffee")
@@ -180,7 +180,7 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(
                     id = 0,
                     category = null,
@@ -203,8 +203,8 @@ class LedgerViewModelTest : StringSpec({
     "amount filter greater-than keeps only larger amounts" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
 
@@ -215,8 +215,8 @@ class LedgerViewModelTest : StringSpec({
     "amount filter less-than keeps only smaller amounts" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setAmountFilter(AmountFilter(AmountOperator.LessThan, 500))
 
@@ -227,11 +227,11 @@ class LedgerViewModelTest : StringSpec({
     "amount filter approximately keeps amounts within 5%" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Low", main, 1_900))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Mid", main, 2_000))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "High", main, 2_100))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "TooLow", main, 1_899))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "TooHigh", main, 2_101))
+            entryDao.create(ExpenseEntry(0, groceries, "Low", main, 1_900))
+            entryDao.create(ExpenseEntry(0, groceries, "Mid", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "High", main, 2_100))
+            entryDao.create(ExpenseEntry(0, groceries, "TooLow", main, 1_899))
+            entryDao.create(ExpenseEntry(0, groceries, "TooHigh", main, 2_101))
 
             viewModel.setAmountFilter(AmountFilter(AmountOperator.Approximately, 2_000))
 
@@ -249,7 +249,7 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(
                     id = 0,
                     category = null,
@@ -270,9 +270,9 @@ class LedgerViewModelTest : StringSpec({
     "amount filter composes with text search" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 1_200))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setSearchQuery("coffee")
             viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
@@ -284,8 +284,8 @@ class LedgerViewModelTest : StringSpec({
     "clearing the amount filter restores all amounts" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.setAmountFilter(AmountFilter(AmountOperator.GreaterThan, 500))
             viewModel.entries.value.shouldHaveSize(1)
@@ -299,8 +299,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             viewModel.setTypeFilter(EntryType.Income)
 
@@ -316,13 +316,13 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Oldest", main, 100, createdAt = at(1_000)),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Middle", main, 500, createdAt = at(2_000)),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Newest", main, 900, createdAt = at(3_000)),
             )
 
@@ -334,11 +334,11 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             val updated = created.copy(description = "Tea", amount = 300)
 
-            viewModel.updateEntry(updated)
+            entryDao.update(updated)
 
             viewModel.entries.value.first() shouldBe updated
         }
@@ -348,8 +348,8 @@ class LedgerViewModelTest : StringSpec({
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Tea", main, 300))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Tea", main, 300))
             val created = viewModel.entries.value.first()
 
             viewModel.deleteEntry(created.id)
@@ -374,13 +374,13 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 9, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Before", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "After", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
@@ -425,16 +425,16 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 16)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "SunBefore", main, 100, createdAt = Instant.parse("2026-08-09T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "MonInside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "SunInside", main, 300, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "MonAfter", main, 400, createdAt = Instant.parse("2026-08-17T12:00:00Z")),
             )
 
@@ -449,10 +449,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "SameDay", main, 200, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Yesterday", main, 100, createdAt = Instant.parse("2026-08-14T12:00:00Z")),
             )
 
@@ -472,10 +472,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -488,10 +488,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -506,10 +506,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -524,10 +524,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -542,13 +542,13 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Past", main, 100, createdAt = Instant.parse("2026-08-01T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(
                     0,
                     groceries,
@@ -558,7 +558,7 @@ class LedgerViewModelTest : StringSpec({
                     createdAt = Instant.parse("2026-08-20T12:00:00Z"),
                 ),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Next month", main, 100, createdAt = Instant.parse("2026-09-02T12:00:00Z")),
             )
 
@@ -580,7 +580,7 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 100, createdAt = Instant.parse("2026-08-20T12:00:00Z")),
             )
 
@@ -595,7 +595,7 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 9, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-10-05T12:00:00Z")),
             )
 
@@ -615,7 +615,7 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 9, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Past", main, 100, createdAt = Instant.parse("2026-08-05T12:00:00Z")),
             )
 
@@ -637,10 +637,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 6, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Old", main, 100, createdAt = Instant.parse("2025-12-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Current", main, 200, createdAt = Instant.parse("2026-01-01T12:00:00Z")),
             )
 
@@ -655,7 +655,7 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Inside", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
 
@@ -669,8 +669,8 @@ class LedgerViewModelTest : StringSpec({
     "total is the net of income and expenses" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             viewModel.totalMinor.value shouldBe 1_550L
         }
@@ -685,7 +685,7 @@ class LedgerViewModelTest : StringSpec({
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.totalMinor.value shouldBe -100L
         }
@@ -696,7 +696,7 @@ class LedgerViewModelTest : StringSpec({
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.totalMinor.value shouldBe null
         }
@@ -705,8 +705,8 @@ class LedgerViewModelTest : StringSpec({
     "total follows search and type filters" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             viewModel.totalMinor.value shouldBe -1_650L
 
@@ -728,8 +728,8 @@ class LedgerViewModelTest : StringSpec({
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.totalMinor.value shouldBe -550L
 
@@ -742,7 +742,7 @@ class LedgerViewModelTest : StringSpec({
     "openEditDialog prefills the draft from the entry" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
 
             viewModel.openEditDialog(created)
@@ -759,7 +759,7 @@ class LedgerViewModelTest : StringSpec({
     "saveDialog updates the entry and closes the dialog" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
             viewModel.onAmountChange("5.00")
@@ -781,7 +781,7 @@ class LedgerViewModelTest : StringSpec({
             val savings = accounts.first { it.name == "Savings" }
             val general = categoryDao.getAll().first().first()
 
-            viewModel.createEntry(TransferEntry(0, general, "Move", main, 500, toAccount = savings, toAmount = null))
+            entryDao.create(TransferEntry(0, general, "Move", main, 500, toAccount = savings, toAmount = null))
             val created = entryDao.getAll().first().filterIsInstance<TransferEntry>().first()
             created.category shouldBe general
 
@@ -798,7 +798,7 @@ class LedgerViewModelTest : StringSpec({
     "deleteDialogEntry deletes the entry and closes the dialog" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
@@ -812,7 +812,7 @@ class LedgerViewModelTest : StringSpec({
     "deleteDialogEntry offers the deleted entry for undo" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
@@ -825,8 +825,8 @@ class LedgerViewModelTest : StringSpec({
     "deleting another entry replaces the previous undo offer" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
             val entries = entryDao.getAll().first().filterIsInstance<ExpenseEntry>()
             val coffee = entries.first { it.description == "Coffee" }
             val lunch = entries.first { it.description == "Lunch" }
@@ -843,7 +843,7 @@ class LedgerViewModelTest : StringSpec({
     "undoLastDeleted restores every field of the deleted entry and clears the offer" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = at(1_000)))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = at(1_000)))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
             viewModel.deleteDialogEntry()
@@ -864,7 +864,7 @@ class LedgerViewModelTest : StringSpec({
     "clearLastDeleted finalizes the delete" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
             viewModel.deleteDialogEntry()
@@ -879,7 +879,7 @@ class LedgerViewModelTest : StringSpec({
     "dismissDialog closes the dialog" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
@@ -895,7 +895,7 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("General", CategoryType.Both)
             val main = accountDao.getAll().first().first()
             val general = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, general, "Coupon", main, 1_000))
+            entryDao.create(ExpenseEntry(0, general, "Coupon", main, 1_000))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
 
             viewModel.openEditDialog(created)
@@ -923,7 +923,7 @@ class LedgerViewModelTest : StringSpec({
     "changeDialogType clears a category the target type cannot use" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
 
             viewModel.openEditDialog(created)
@@ -941,7 +941,7 @@ class LedgerViewModelTest : StringSpec({
     "duplicateDialogEntry turns the edit into a new dated copy that saveDialog creates" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coupon", main, 1_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coupon", main, 1_000))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             val now = Instant.parse("2026-09-08T09:30:00Z")
 
@@ -994,13 +994,13 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 9, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
@@ -1022,10 +1022,10 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 8, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Future", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -1061,8 +1061,8 @@ class LedgerViewModelTest : StringSpec({
             val usd = accountDao.getAll().first().first { it.name == "USD" }
             val salary = categoryDao.getAll().first().first()
 
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 1_000))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 1_000))
+            entryDao.create(IncomeEntry(0, salary, "Pay", usd, 200))
 
             // 1'000 CHF + 200 USD / 2.0 = 1'100 CHF
             viewModel.accountTotalAtPeriodEnd.value shouldBe 1_100L
@@ -1076,7 +1076,7 @@ class LedgerViewModelTest : StringSpec({
             val usd = accountDao.getAll().first().first()
             val salary = categoryDao.getAll().first().first()
 
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", usd, 200))
 
             viewModel.accountTotalAtPeriodEnd.value shouldBe null
         }
@@ -1095,8 +1095,8 @@ class LedgerViewModelTest : StringSpec({
             val usd = accountDao.getAll().first().first { it.name == "USD" }
             val salary = categoryDao.getAll().first().first()
 
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 1_000))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 1_000))
+            entryDao.create(IncomeEntry(0, salary, "Pay", usd, 200))
 
             // 1'000 CHF stays as-is; 200 USD / 2.0 = 100 CHF
             viewModel.accountConversionsAtPeriodEnd.value shouldBe mapOf(
@@ -1113,7 +1113,7 @@ class LedgerViewModelTest : StringSpec({
             val usd = accountDao.getAll().first().first()
             val salary = categoryDao.getAll().first().first()
 
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", usd, 200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", usd, 200))
 
             viewModel.accountConversionsAtPeriodEnd.value shouldBe mapOf(usd.id to null)
         }
@@ -1125,9 +1125,9 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 5_000))
 
             viewModel.categoryTotals.value shouldHaveSize (2)
             val cats = viewModel.categoryTotals.value.associateBy { it.category?.name }
@@ -1144,8 +1144,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.categoryTotal.value shouldBe 1_550L
         }
@@ -1163,9 +1163,9 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
 
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", usd, 2))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", usd, 1))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", usd, 2))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", usd, 1))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 5_000))
 
             // Per sign: 2 USD -> 3 CHF and -1 USD -> -1 CHF, so Groceries nets 2 CHF.
             // A net-per-currency-group conversion would round (2 - 1) / 0.8 = 1.25 to 1
@@ -1190,13 +1190,13 @@ class LedgerViewModelTest : StringSpec({
             clock = FakeClock(today = LocalDate(2026, 9, 15)),
         ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
@@ -1215,8 +1215,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.categoryTotals.value shouldHaveSize (2)
 
@@ -1232,8 +1232,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.setTypeFilter(EntryType.Income)
             viewModel.categoryTotals.value shouldHaveSize (1)
@@ -1253,7 +1253,7 @@ class LedgerViewModelTest : StringSpec({
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.categoryTotals.value shouldHaveSize (1)
             // 200 USD / 2.0 = 100 CHF
@@ -1266,7 +1266,7 @@ class LedgerViewModelTest : StringSpec({
             val (_, groceries) = seed(accountDao, categoryDao)
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.categoryTotal.value shouldBe null
         }
@@ -1278,9 +1278,9 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 5_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 5_000))
 
             viewModel.setViewMode(LedgerViewMode.Categories)
             viewModel.openCategory(groceries.id)
@@ -1298,8 +1298,8 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(
                 TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
             )
 
@@ -1316,9 +1316,9 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
-            viewModel.createEntry(TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+            entryDao.create(TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null))
 
             viewModel.setViewMode(LedgerViewMode.Accounts)
             viewModel.openAccount(savings.id)
@@ -1334,7 +1334,7 @@ class LedgerViewModelTest : StringSpec({
     "exitDrillDown restores the view the drill-down started from" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             viewModel.setViewMode(LedgerViewMode.Categories)
             viewModel.openCategory(groceries.id)
@@ -1354,8 +1354,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.setTypeFilter(EntryType.Income)
             viewModel.openCategory(salary.id)
@@ -1370,8 +1370,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.openCategory(groceries.id)
             viewModel.displayedEntries.value.shouldHaveSize(1)
@@ -1388,7 +1388,7 @@ class LedgerViewModelTest : StringSpec({
     "switching the view mode away from entries clears the entry filters" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             viewModel.openCategory(groceries.id)
             viewModel.setAccountFilter(main.id)
@@ -1408,8 +1408,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.setCategoryFilter(salary.id)
 
@@ -1424,8 +1424,8 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             viewModel.setAccountFilter(usd.id)
 
@@ -1442,8 +1442,8 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(
                 TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
             )
 
@@ -1459,8 +1459,8 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(
                 TransferEntry(0, groceries, "Move", main, 500, toAccount = savings, toAmount = null),
             )
 
@@ -1476,8 +1476,8 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(
                 TransferEntry(0, groceries, "Move", savings, 500, toAccount = main, toAmount = null),
             )
 
@@ -1498,7 +1498,7 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
 
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(0, null, "Convert", usd, 800, toAccount = main, toAmount = 1_000),
             )
 
@@ -1518,7 +1518,7 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
 
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(0, null, "Convert", main, 100, toAccount = usd, toAmount = 80),
             )
 
@@ -1536,9 +1536,9 @@ class LedgerViewModelTest : StringSpec({
             accountDao.create("USD", Currency.USD)
             val usd = accountDao.getAll().first().first { it.name == "USD" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.setCategoryFilter(groceries.id)
             viewModel.setAccountFilter(main.id)
@@ -1553,8 +1553,8 @@ class LedgerViewModelTest : StringSpec({
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             viewModel.openCategory(groceries.id)
             viewModel.displayedEntries.value.shouldHaveSize(1)
@@ -1812,7 +1812,7 @@ class LedgerViewModelTest : StringSpec({
                 )
                 viewModel.setPeriod(LedgerPeriod.All)
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
                 val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
                 viewModel.openEditDialog(created)
                 viewModel.onAmountChange("5.00")
@@ -1883,7 +1883,7 @@ class LedgerViewModelTest : StringSpec({
                 )
                 viewModel.setPeriod(LedgerPeriod.All)
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
                 val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
                 viewModel.openEditDialog(created)
 
@@ -1919,7 +1919,7 @@ class LedgerViewModelTest : StringSpec({
                 )
                 viewModel.setPeriod(LedgerPeriod.All)
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
                 val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
                 viewModel.openEditDialog(created)
                 viewModel.deleteDialogEntry()
@@ -1955,7 +1955,7 @@ class LedgerViewModelTest : StringSpec({
                 )
                 viewModel.setPeriod(LedgerPeriod.All)
                 val (main, groceries) = seed(accountDao, categoryDao)
-                viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
                 val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
                 viewModel.openEditDialog(created)
                 viewModel.onAmountChange("5.00")

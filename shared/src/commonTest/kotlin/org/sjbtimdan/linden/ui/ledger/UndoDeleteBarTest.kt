@@ -22,7 +22,7 @@ class UndoDeleteBarTest : StringSpec({
     "shows the undo offer after a delete and restores the entry when tapped" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
@@ -53,7 +53,7 @@ class UndoDeleteBarTest : StringSpec({
             rates = emptyList(),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
             settingsDao.setHideEntryTotal(true)
@@ -74,7 +74,7 @@ class UndoDeleteBarTest : StringSpec({
     "tapping the delete icon dismisses the offer and makes the delete final" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 
@@ -99,7 +99,7 @@ class UndoDeleteBarTest : StringSpec({
     "leaving the screen clears the offer and makes the delete final" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
             val created = entryDao.getAll().first().filterIsInstance<ExpenseEntry>().first()
             viewModel.openEditDialog(created)
 

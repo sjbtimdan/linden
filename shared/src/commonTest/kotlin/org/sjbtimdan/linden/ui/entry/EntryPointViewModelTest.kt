@@ -50,8 +50,8 @@ class EntryPointViewModelTest : StringSpec({
     "new entry state prefills from the most recent entry of the same type" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             val state = viewModel.newEntryState(EntryType.Expense)
 
@@ -67,7 +67,7 @@ class EntryPointViewModelTest : StringSpec({
     "new entry state for a type with no entries is empty" {
         withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             val state = viewModel.newEntryState(EntryType.Income)
 
@@ -88,7 +88,7 @@ class EntryPointViewModelTest : StringSpec({
             val main = accounts.first()
             val savings = accounts.last()
 
-            viewModel.createEntry(
+            entryDao.create(
                 TransferEntry(0, null, "Move money", main, 10_000, toAccount = savings, toAmount = 9_500),
             )
 
@@ -676,7 +676,7 @@ class EntryPointViewModelTest : StringSpec({
     }
 
     "total balance is the initial balance plus income minus expenses" {
-        withEntryPoint(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             categoryDao.create("Groceries", CategoryType.Expense)
             categoryDao.create("Salary", CategoryType.Income)
@@ -684,22 +684,22 @@ class EntryPointViewModelTest : StringSpec({
             val groceries = categoryDao.getAll().first().first { it.name == "Groceries" }
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
 
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Rent", main, 5_000))
-            viewModel.createEntry(IncomeEntry(0, salary, "Salary", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Rent", main, 5_000))
+            entryDao.create(IncomeEntry(0, salary, "Salary", main, 2_000))
 
             viewModel.totalMinor.first() shouldBe 10_000 - 450 - 5_000 + 2_000
         }
     }
 
     "transfers move money between accounts without changing the total" {
-        withEntryPoint(clock = FakeClock()) { accountDao, _, viewModel ->
+        withEntryPoint(clock = FakeClock()) { entryDao, accountDao, _, viewModel ->
             accountDao.create("Main", Currency.CHF, initialBalance = 10_000)
             accountDao.create("Savings", Currency.CHF)
             val main = accountDao.getAll().first().first { it.name == "Main" }
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
 
-            viewModel.createEntry(TransferEntry(0, null, "Move", main, 3_000, toAccount = savings, toAmount = null))
+            entryDao.create(TransferEntry(0, null, "Move", main, 3_000, toAccount = savings, toAmount = null))
 
             viewModel.totalMinor.first() shouldBe 10_000
         }

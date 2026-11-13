@@ -202,10 +202,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "search narrows the list" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -221,12 +221,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show future toggle on the period navigator reveals future entries" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -245,12 +247,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future notice explains what the toggle revealed and dismisses it" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Today", main, 100, createdAt = Instant.parse("2026-08-15T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -271,9 +275,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "empty entries list explains when only future entries are hidden" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -291,9 +297,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "categories view names hidden future spending and explains totals once shown" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
 
@@ -313,9 +321,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "accounts view notice says balances include entries after today" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-08-16T12:00:00Z")),
             )
             viewModel.setShowFuture(true)
@@ -359,9 +369,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "scheduled entries in a wholly future month are shown without the toggle" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 9, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-10-05T12:00:00Z")),
             )
 
@@ -384,9 +396,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "show-future notice hides once the shown period no longer includes today" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 9, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Scheduled", main, 200, createdAt = Instant.parse("2026-09-20T12:00:00Z")),
             )
             viewModel.setShowFuture(true)
@@ -465,10 +479,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "type filter narrows the list" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -487,9 +501,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "no entries match message when nothing matches" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -505,9 +519,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "editing an entry shows current values and saves changes" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -535,9 +549,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "deleting an entry from the edit dialog removes it and offers undo" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -553,9 +567,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "undoing a delete brings the entry back" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -571,9 +585,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "day headers appear when entries span multiple days" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(
                     0,
                     groceries,
@@ -583,7 +597,7 @@ class LedgerScreenTest : StringSpec({
                     createdAt = Instant.fromEpochMilliseconds(1_000_000_000_000),
                 ),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(
                     0,
                     groceries,
@@ -604,11 +618,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "day header sticks flush to the top of the list while scrolling" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             for (day in 8..12) {
                 repeat(4) { hour ->
-                    viewModel.createEntry(
+                    entryDao.create(
                         ExpenseEntry(
                             0,
                             groceries,
@@ -640,12 +654,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "selecting a period narrows the list" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "In Jul", main, 200, createdAt = Instant.parse("2026-07-01T12:00:00Z")),
             )
 
@@ -666,12 +682,14 @@ class LedgerScreenTest : StringSpec({
     }
 
     "arrows move between periods" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 9, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "In Sep", main, 200, createdAt = Instant.parse("2026-09-10T12:00:00Z")),
             )
 
@@ -701,9 +719,11 @@ class LedgerScreenTest : StringSpec({
     }
 
     "period with no entries shows no entries match" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "In Aug", main, 100, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
 
@@ -721,15 +741,17 @@ class LedgerScreenTest : StringSpec({
     }
 
     "every period view shows only the time on its rows, the date stays in the day headers" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 8, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 8, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Morning", main, 100, createdAt = Instant.parse("2026-08-15T08:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Lunch", main, 200, createdAt = Instant.parse("2026-08-15T12:30:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Dinner", main, 300, createdAt = Instant.parse("2026-08-15T19:00:00Z")),
             )
 
@@ -759,10 +781,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows the net total of the period next to the navigator" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -776,15 +798,15 @@ class LedgerScreenTest : StringSpec({
         withLedgerViewModel(
             clock = FakeClock(),
             rates = listOf(FxRate(Currency.CHF, Currency.USD, 2.0, "2026-08-13")),
-        ) { accountDao, categoryDao, viewModel ->
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first { it.name == "Main" }
             val usd = accountDao.getAll().first().first { it.name == "USD" }
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -796,12 +818,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "shows a dash when the total cannot be computed" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Groceries", CategoryType.Expense)
             val usd = accountDao.getAll().first().first()
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Foreign", usd, 200))
+            entryDao.create(ExpenseEntry(0, groceries, "Foreign", usd, 200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -818,7 +840,7 @@ class LedgerScreenTest : StringSpec({
             rates = emptyList(),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -847,7 +869,7 @@ class LedgerScreenTest : StringSpec({
             rates = emptyList(),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -933,7 +955,7 @@ class LedgerScreenTest : StringSpec({
             rates = emptyList(),
         ) { entryDao, accountDao, categoryDao, settingsDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -953,9 +975,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "mode tabs switch to the accounts view and back" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -989,10 +1011,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "type filter is hidden in the accounts view and preserved across switches" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1020,15 +1042,15 @@ class LedgerScreenTest : StringSpec({
     }
 
     "search filters accounts by name in the accounts view" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             accountDao.create("Main", Currency.CHF)
             accountDao.create("USD", Currency.USD)
             categoryDao.create("Groceries", CategoryType.Expense)
             val main = accountDao.getAll().first().first { it.name == "Main" }
             val usd = accountDao.getAll().first().first { it.name == "USD" }
             val groceries = categoryDao.getAll().first().first()
-            viewModel.createEntry(IncomeEntry(0, groceries, "Pay", main, 2_000))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Pay", usd, 200))
+            entryDao.create(IncomeEntry(0, groceries, "Pay", main, 2_000))
+            entryDao.create(IncomeEntry(0, groceries, "Pay", usd, 200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1045,15 +1067,17 @@ class LedgerScreenTest : StringSpec({
     }
 
     "accounts view shows balances at the end of the selected period" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 9, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
@@ -1089,9 +1113,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "mode tabs switch to the categories view and back" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1132,12 +1156,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "search filters categories by name in the categories view" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1154,15 +1178,17 @@ class LedgerScreenTest : StringSpec({
     }
 
     "categories view shows totals at the end of the selected period" {
-        withLedgerViewModel(clock = FakeClock(today = LocalDate(2026, 9, 15))) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(
+            clock = FakeClock(today = LocalDate(2026, 9, 15)),
+        ) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Jul", main, 100, createdAt = Instant.parse("2026-07-31T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Aug", main, 200, createdAt = Instant.parse("2026-08-10T12:00:00Z")),
             )
-            viewModel.createEntry(
+            entryDao.create(
                 ExpenseEntry(0, groceries, "Sep", main, 300, createdAt = Instant.parse("2026-09-01T12:00:00Z")),
             )
 
@@ -1186,13 +1212,13 @@ class LedgerScreenTest : StringSpec({
     }
 
     "tapping a category drills into its entries with a filter chip" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1210,12 +1236,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "removing the category filter restores the full entries list" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1233,12 +1259,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "category suggestion applies the filter and shows the chip" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1258,10 +1284,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "account suggestion applies the filter and shows the chip" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1278,12 +1304,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "tapping an account drills into its entries with a filter chip" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1299,12 +1325,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "view entries in the overflow menu drills into the account" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Bonus", savings, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1526,9 +1552,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "filters are collapsed by default, keeping the tabs, period and total visible" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1547,9 +1573,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "expanding the filters shows search and the inline filter chips" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1567,9 +1593,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "collapsing the filters hides search and chips but keeps the tabs, period and total" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1593,9 +1619,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "collapsing the filters reclaims vertical space for the list" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1614,9 +1640,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "the filter button in the collapsed header opens the panel and focuses the search field" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1633,10 +1659,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "collapsed filters still summarize active filters with removable chips" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1662,12 +1688,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "clear all removes every active filter from the summary row" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1696,12 +1722,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "picking a different category suggestion replaces the applied filter" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             categoryDao.create("Salary", CategoryType.Income)
             val salary = categoryDao.getAll().first().first { it.name == "Salary" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, salary, "Pay", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, salary, "Pay", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1725,9 +1751,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "search label describes what it filters in each view" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1752,10 +1778,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "the applied type filter reads back on the chip row" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(IncomeEntry(0, groceries, "Refund", main, 2_000))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(IncomeEntry(0, groceries, "Refund", main, 2_000))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1775,9 +1801,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "categories view shows only the type filter inline" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1802,12 +1828,12 @@ class LedgerScreenTest : StringSpec({
     }
 
     "a transfer type filter is ignored by the categories view and preserved for entries" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
             accountDao.create("Savings", Currency.CHF)
             val savings = accountDao.getAll().first().first { it.name == "Savings" }
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(
                 TransferEntry(0, null, "Move", main, 10_000, toAccount = savings, toAmount = null),
             )
 
@@ -1840,10 +1866,10 @@ class LedgerScreenTest : StringSpec({
     }
 
     "amount filter can be applied from the inline chip" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Lunch", main, 1_200))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)
@@ -1865,9 +1891,9 @@ class LedgerScreenTest : StringSpec({
     }
 
     "an amount filter matching nothing reports a filter miss, not an empty ledger" {
-        withLedgerViewModel(clock = FakeClock()) { accountDao, categoryDao, viewModel ->
+        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)
-            viewModel.createEntry(ExpenseEntry(0, groceries, "Coffee", main, 450))
+            entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450))
 
             setContent {
                 LedgerScreen(viewModel = viewModel)

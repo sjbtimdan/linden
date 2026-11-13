@@ -206,28 +206,15 @@ class CaptureRepositoryTest : StringSpec({
         repository.pending().map { it.id } shouldBe listOf(1L)
     }
 
-    "clearPending empties the inbox" {
-        val database = lindenDatabase()
-        val repository = CaptureRepository(SettingsDao(database.settingsQueries))
-        repository.addPending(capture(1))
-        repository.addPending(capture(2))
-
-        repository.clearPending()
-
-        repository.pending().shouldBeEmpty()
-    }
-
     "the seen watermark starts at zero and round-trips" {
         val database = lindenDatabase()
         val repository = CaptureRepository(SettingsDao(database.settingsQueries))
 
         repository.seenCaptureId() shouldBe 0L
-        repository.seenCaptureIdFlow().first() shouldBe 0L
 
         repository.markSeen(7L)
 
         repository.seenCaptureId() shouldBe 7L
-        repository.seenCaptureIdFlow().first() shouldBe 7L
     }
 
     "markSeen never moves the watermark backwards" {
@@ -252,8 +239,9 @@ class CaptureRepositoryTest : StringSpec({
         val database = lindenDatabase()
         val repository = CaptureRepository(SettingsDao(database.settingsQueries))
         repository.addPending(capture(1))
-        repository.addPending(capture(2))
-        repository.clearPending()
+        val second = repository.addPending(capture(2))
+        repository.removePending(1)
+        repository.removePending(second.id)
         repository.markSeen(2L)
 
         val next = repository.addPending(capture(3))
