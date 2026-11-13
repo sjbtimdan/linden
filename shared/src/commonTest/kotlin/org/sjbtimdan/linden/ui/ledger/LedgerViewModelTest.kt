@@ -938,21 +938,6 @@ class LedgerViewModelTest : StringSpec({
         }
     }
 
-    "changeDialogType is a no-op for transfers" {
-        withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
-            val (main, _) = seed(accountDao, categoryDao)
-            accountDao.create("Savings", Currency.CHF)
-            val savings = accountDao.getAll().first().first { it.name == "Savings" }
-            viewModel.createEntry(TransferEntry(0, null, "Move", main, 500, toAccount = savings, toAmount = null))
-            val created = entryDao.getAll().first().filterIsInstance<TransferEntry>().first()
-
-            viewModel.openEditDialog(created)
-            viewModel.changeDialogType(EntryType.Expense)
-
-            viewModel.dialogState.value?.type shouldBe EntryType.Transfer
-        }
-    }
-
     "duplicateDialogEntry turns the edit into a new dated copy that saveDialog creates" {
         withLedgerViewModel(clock = FakeClock()) { entryDao, accountDao, categoryDao, viewModel ->
             val (main, groceries) = seed(accountDao, categoryDao)

@@ -52,17 +52,17 @@ internal fun LedgerAccountsView(
 
             else -> stringResource(Res.string.ledger_accounts_all_hidden)
         },
-        emptyActionLabel = when {
+        emptyAction = when {
             filter.isNotEmpty() && balances.isNotEmpty() -> null
 
             filter.isEmpty() && accounts.isEmpty() ->
-                stringResource(Res.string.ledger_action_create_account)
+                EmptyStateAction(stringResource(Res.string.ledger_action_create_account), onEmptyAction)
 
-            filter.isEmpty() -> stringResource(Res.string.ledger_action_manage_accounts)
+            filter.isEmpty() ->
+                EmptyStateAction(stringResource(Res.string.ledger_action_manage_accounts), onEmptyAction)
 
             else -> null
         },
-        onEmptyAction = onEmptyAction,
         canAdjustBalance = canAdjustBalance,
         onAccountClick = onAccountClick,
         onAdjustBalance = { item ->

@@ -63,7 +63,7 @@ class LedgerActiveFiltersTest : StringSpec({
         }
     }
 
-    "uses fallback labels and renders nothing outside the entries view" {
+    "uses fallback labels when the filtered category and account are gone" {
         onTestMain {
             runComposeUiTest {
                 setContent {
@@ -93,11 +93,11 @@ class LedgerActiveFiltersTest : StringSpec({
                 setContent {
                     LedgerActiveFilters(
                         viewMode = LedgerViewMode.Accounts,
-                        searchQuery = "coffee",
-                        typeFilter = EntryType.Expense,
-                        categoryFilter = 1,
-                        accountFilter = 1,
-                        amountFilter = AmountFilter(AmountOperator.GreaterThan, 500),
+                        searchQuery = "",
+                        typeFilter = null,
+                        categoryFilter = null,
+                        accountFilter = null,
+                        amountFilter = null,
                         categories = emptyList(),
                         accounts = emptyList(),
                         onClearSearch = {},

@@ -52,12 +52,11 @@ internal fun LedgerCategoriesView(
             // Categories exist but none of them was used in the period.
             else -> stringResource(Res.string.ledger_categories_no_spending)
         },
-        emptyActionLabel = if (filter.isEmpty() && categories.isEmpty()) {
-            stringResource(Res.string.ledger_action_add_categories)
+        emptyAction = if (filter.isEmpty() && categories.isEmpty()) {
+            EmptyStateAction(stringResource(Res.string.ledger_action_add_categories), onEmptyAction)
         } else {
             null
         },
-        onEmptyAction = onEmptyAction,
         onCategoryClick = onCategoryClick,
         modifier = modifier,
     )

@@ -44,8 +44,8 @@ import org.sjbtimdan.linden.ui.theme.lindenCard
 
 /**
  * Category totals at the end of the selected period, or the empty state.
- * [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided one:
- * a button pointing at the next step for a brand-new user. [hideAmounts] masks
+ * [emptyAction] turns the empty state into a guided one: a button pointing at
+ * the next step for a brand-new user. [hideAmounts] masks
  * each total and drops the budget progress while "Hide Totals" is on, so the
  * spending amounts behind the mask never leak.
  */
@@ -56,16 +56,14 @@ fun CategoryTotalsList(
     modifier: Modifier,
     hideAmounts: Boolean = false,
     emptyMessage: String,
-    emptyActionLabel: String? = null,
-    onEmptyAction: (() -> Unit)? = null,
+    emptyAction: EmptyStateAction? = null,
     onCategoryClick: (CategoryWithTotal) -> Unit,
 ) {
     if (categories.isEmpty()) {
         EmptyState(
             message = emptyMessage,
             modifier = modifier,
-            actionLabel = emptyActionLabel,
-            onAction = onEmptyAction,
+            action = emptyAction,
         )
     } else {
         val entranceComplete = rememberEntranceComplete(categories.size)

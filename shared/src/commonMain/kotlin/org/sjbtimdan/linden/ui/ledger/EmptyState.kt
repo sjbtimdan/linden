@@ -14,19 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+/** The optional call to action on an [EmptyState]: [label] on a button running [onClick]. */
+class EmptyStateAction(val label: String, val onClick: () -> Unit)
+
 /**
  * A centered placeholder for an empty list. [message] names what is missing;
- * when [actionLabel] and [onAction] are given, an action button points at the
- * next step (used for guided new-user states, so a brand-new dataset never
- * dead-ends on a bare message).
+ * when [action] is given, a button points at the next step (used for guided
+ * new-user states, so a brand-new dataset never dead-ends on a bare message).
  */
 @Composable
-fun EmptyState(
-    message: String,
-    modifier: Modifier = Modifier,
-    actionLabel: String? = null,
-    onAction: (() -> Unit)? = null,
-) {
+fun EmptyState(message: String, modifier: Modifier = Modifier, action: EmptyStateAction? = null) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
@@ -41,10 +38,10 @@ fun EmptyState(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            if (actionLabel != null && onAction != null) {
+            action?.let {
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onAction) {
-                    Text(actionLabel)
+                Button(onClick = it.onClick) {
+                    Text(it.label)
                 }
             }
         }

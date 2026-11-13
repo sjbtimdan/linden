@@ -60,7 +60,7 @@ private fun ComposeUiTest.showDialog(
     onSave: () -> Unit = {},
     onDelete: (() -> Unit)? = null,
     onDuplicate: (() -> Unit)? = null,
-    onTypeChange: ((EntryType) -> Unit)? = null,
+    onTypeChange: (EntryType) -> Unit = {},
 ) {
     setContent {
         EntryDialog(
@@ -207,14 +207,10 @@ class EntryDialogTest : StringSpec({
         }
     }
 
-    "type picker is hidden for transfers and when no handler is wired" {
+    "type picker is hidden for transfers" {
         onTestMain {
             runComposeUiTest {
                 showDialog(draft(type = EntryType.Transfer), onTypeChange = {})
-                onNodeWithTag("dialogTypePicker").assertDoesNotExist()
-            }
-            runComposeUiTest {
-                showDialog(draft())
                 onNodeWithTag("dialogTypePicker").assertDoesNotExist()
             }
         }

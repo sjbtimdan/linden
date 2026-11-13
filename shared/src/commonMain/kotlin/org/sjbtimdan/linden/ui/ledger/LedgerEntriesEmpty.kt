@@ -84,14 +84,13 @@ internal fun LedgerEntriesEmpty(
 
             LedgerEntriesEmptyState.NoMatch -> stringResource(Res.string.ledger_empty_no_match)
         },
-        actionLabel = when (state) {
-            LedgerEntriesEmptyState.Guided -> stringResource(Res.string.ledger_action_add_first_entry)
-            LedgerEntriesEmptyState.UpcomingHidden -> stringResource(Res.string.ledger_action_show_future_entries)
-            else -> null
-        },
-        onAction = when (state) {
-            LedgerEntriesEmptyState.Guided -> onAddFirstEntry
-            LedgerEntriesEmptyState.UpcomingHidden -> onRevealUpcoming
+        action = when (state) {
+            LedgerEntriesEmptyState.Guided ->
+                EmptyStateAction(stringResource(Res.string.ledger_action_add_first_entry), onAddFirstEntry)
+
+            LedgerEntriesEmptyState.UpcomingHidden ->
+                EmptyStateAction(stringResource(Res.string.ledger_action_show_future_entries), onRevealUpcoming)
+
             else -> null
         },
         modifier = modifier,

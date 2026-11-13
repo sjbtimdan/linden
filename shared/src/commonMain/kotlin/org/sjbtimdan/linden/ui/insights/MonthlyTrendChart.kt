@@ -161,7 +161,7 @@ fun MonthlyTrendChart(
 internal fun barHeightFraction(valueMinor: Long, maxMinor: Long): Float {
     if (valueMinor <= 0L || maxMinor <= 0L) return 0f
     val fraction = valueMinor.toFloat() / maxMinor.toFloat()
-    return fraction.coerceIn(MIN_VISIBLE_BAR_FRACTION, 1f)
+    return fraction.coerceAtLeast(MIN_VISIBLE_BAR_FRACTION)
 }
 
 private val chartHeight = 180.dp

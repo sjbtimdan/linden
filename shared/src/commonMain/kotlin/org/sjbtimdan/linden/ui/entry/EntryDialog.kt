@@ -57,7 +57,7 @@ fun EntryDialog(
     onToAmountChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onCreatedAtChange: (Instant) -> Unit,
-    onTypeChange: ((EntryType) -> Unit)? = null,
+    onTypeChange: (EntryType) -> Unit,
     onSave: () -> Unit,
     onDelete: (() -> Unit)?,
     onDuplicate: (() -> Unit)? = null,
@@ -84,8 +84,8 @@ fun EntryDialog(
         text = {
             Column {
                 // Flipping the type while editing: only Expense/Income, never a
-                // Transfer. Hidden when no handler is wired (e.g. a read-only host).
-                if (onTypeChange != null && state.type != EntryType.Transfer) {
+                // Transfer.
+                if (state.type != EntryType.Transfer) {
                     SlidingPillTabs(
                         tabs = flippableEntryTypes.map { type ->
                             SlidingPillTab(

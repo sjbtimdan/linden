@@ -52,8 +52,8 @@ import org.sjbtimdan.linden.ui.theme.lindenCard
  * Tapping a row drills into its entries ([onAccountClick]); the overflow menu
  * offers the same drill-in plus Adjust Balance, which is disabled with a
  * reason while [canAdjustBalance] is false so the action never pretends to
- * work. [emptyActionLabel]/[onEmptyAction] turn the empty state into a guided
- * one: a button pointing at the next step for a brand-new user. [hideAmounts]
+ * work. [emptyAction] turns the empty state into a guided one: a button
+ * pointing at the next step for a brand-new user. [hideAmounts]
  * masks each balance, and its conversion, while "Hide Totals" is on.
  */
 @Composable
@@ -64,8 +64,7 @@ fun AccountsList(
     modifier: Modifier = Modifier,
     hideAmounts: Boolean = false,
     emptyMessage: String,
-    emptyActionLabel: String? = null,
-    onEmptyAction: (() -> Unit)? = null,
+    emptyAction: EmptyStateAction? = null,
     canAdjustBalance: Boolean = true,
     onAccountClick: (AccountWithBalance) -> Unit,
     onAdjustBalance: (AccountWithBalance) -> Unit,
@@ -74,8 +73,7 @@ fun AccountsList(
         EmptyState(
             message = emptyMessage,
             modifier = modifier,
-            actionLabel = emptyActionLabel,
-            onAction = onEmptyAction,
+            action = emptyAction,
         )
     } else {
         val entranceComplete = rememberEntranceComplete(balances.size)

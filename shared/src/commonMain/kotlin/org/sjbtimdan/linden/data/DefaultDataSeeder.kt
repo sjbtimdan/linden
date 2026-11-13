@@ -9,7 +9,7 @@ import org.sjbtimdan.linden.model.Currency
 /**
  * Populates a brand-new database with a starter set of categories and accounts so
  * the first launch is usable without manual setup. Seeding is skipped as soon as
- * the database holds any account, category or entry, so a user who deletes the
+ * the database holds any account or category, so a user who deletes the
  * defaults does not get them back on the next launch.
  */
 class DefaultDataSeeder(private val database: LindenDatabase) {
@@ -30,8 +30,7 @@ class DefaultDataSeeder(private val database: LindenDatabase) {
     }
 
     private suspend fun isEmpty(): Boolean = database.accountQueries.accountExists().awaitAsOneOrNull() == null &&
-        database.categoryQueries.categoryExists().awaitAsOneOrNull() == null &&
-        database.entryQueries.entryExists().awaitAsOneOrNull() == null
+        database.categoryQueries.categoryExists().awaitAsOneOrNull() == null
 }
 
 /** Starter expense categories, in seeding order. Also the cold-start suggestion fallback. */

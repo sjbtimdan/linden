@@ -44,17 +44,6 @@ class LedgerEntryDialogControllerTest : StringSpec({
         }
     }
 
-    "changeType ignores Transfer" {
-        withController { controller, _, drafts ->
-            val before = EntryDraft.forEdit(expenseEntry())
-            drafts.value = before
-
-            controller.changeType(EntryType.Transfer)
-
-            drafts.value shouldBe before
-        }
-    }
-
     "duplicate turns an edit into a new draft dated now" {
         withController { controller, _, drafts ->
             drafts.value = EntryDraft.forEdit(

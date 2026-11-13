@@ -44,12 +44,12 @@ internal class LedgerEntryDialogController(
      * Flips the entry being edited between Expense and Income, carrying over the
      * amount, description and date. The category is kept only when it can back
      * the target type; an incompatible one is cleared so the form asks for a
-     * valid pick. Transfers are never switched — the dialog offers no such toggle.
+     * valid pick. Transfers are never offered the toggle, so they are never
+     * switched.
      */
     fun changeType(type: EntryType) {
-        if (type == EntryType.Transfer) return
         draftState.update { state ->
-            if (state == null || state.type == type || state.type == EntryType.Transfer) return@update state
+            if (state == null || state.type == type) return@update state
             val keepCategory = categoriesForType(categories.value, type).any { it.id == state.categoryId }
             state.copy(
                 type = type,

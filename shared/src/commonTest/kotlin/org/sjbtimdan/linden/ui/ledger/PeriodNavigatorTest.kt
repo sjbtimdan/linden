@@ -25,6 +25,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -43,6 +45,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -61,6 +65,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -83,6 +89,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = { previous++ },
                         onNext = { next++ },
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -106,6 +114,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = { selected = it },
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -166,25 +176,6 @@ class PeriodNavigatorTest : StringSpec({
         }
     }
 
-    "today jump is hidden without a callback" {
-        onTestMain {
-            runComposeUiTest {
-                setContent {
-                    PeriodNavigator(
-                        period = LedgerPeriod.Month,
-                        anchor = LocalDate(2026, 7, 15),
-                        onPeriodChange = {},
-                        onPrevious = {},
-                        onNext = {},
-                        today = LocalDate(2026, 8, 20),
-                    )
-                }
-
-                onNodeWithTag("jumpToToday").assertDoesNotExist()
-            }
-        }
-    }
-
     "future toggle is hidden without a toggle callback" {
         onTestMain {
             runComposeUiTest {
@@ -195,6 +186,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                     )
                 }
 
@@ -214,6 +207,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                         showFuture = false,
                         onToggleShowFuture = { toggled++ },
                     )
@@ -238,6 +233,8 @@ class PeriodNavigatorTest : StringSpec({
                         onPeriodChange = {},
                         onPrevious = {},
                         onNext = {},
+                        today = LocalDate(2026, 8, 15),
+                        onToday = {},
                         showFuture = true,
                         onToggleShowFuture = { toggled++ },
                     )

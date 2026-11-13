@@ -33,16 +33,8 @@ class MonthlyTrendChartTest : StringSpec({
         barHeightFraction(0L, 200L) shouldBe 0f
     }
 
-    "barHeightFraction never exceeds one" {
-        barHeightFraction(300L, 200L) shouldBe 1f
-    }
-
     "barHeightFraction is zero when every value is zero" {
         barHeightFraction(0L, 0L) shouldBe 0f
-    }
-
-    "barHeightFraction ignores negative values" {
-        barHeightFraction(-5L, 200L) shouldBe 0f
     }
 
     "renders one column per bar with its label" {

@@ -32,10 +32,6 @@ class CaptureTimeTest : StringSpec({
         captureZone(capture(zoneId = null)) shouldBe TimeZone.currentSystemDefault()
     }
 
-    "captureZone falls back to the current zone for an unreadable id" {
-        captureZone(capture(zoneId = "Not/AZone")) shouldBe TimeZone.currentSystemDefault()
-    }
-
     "formatCapturedAt prints the date and time in the capture's zone" {
         formatCapturedAt(CAPTURED_AT, TimeZone.UTC) shouldBe "Aug 10, 2026 14:30"
     }

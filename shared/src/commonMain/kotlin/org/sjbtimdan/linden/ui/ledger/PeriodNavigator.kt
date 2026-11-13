@@ -45,21 +45,20 @@ import org.sjbtimdan.linden.resources.ledger_show_future_entries
 /**
  * The selected period with arrows and a dropdown to switch granularity. When
  * [onToggleShowFuture] is provided, a calendar toggle next to the arrows shows
- * whether future-dated entries count towards the period. When [onToday] is
- * provided, a today button appears whenever the shown window does not contain
- * [today].
+ * whether future-dated entries count towards the period. A today button appears
+ * whenever the shown window does not contain [today].
  */
 @Composable
 fun PeriodNavigator(
     period: LedgerPeriod,
     anchor: LocalDate,
+    today: LocalDate,
     onPeriodChange: (LedgerPeriod) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    onToday: () -> Unit,
     showFuture: Boolean = false,
     onToggleShowFuture: (() -> Unit)? = null,
-    today: LocalDate? = null,
-    onToday: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val canNavigate = period != LedgerPeriod.All
@@ -120,7 +119,7 @@ fun PeriodNavigator(
                 contentDescription = stringResource(Res.string.ledger_next_period),
             )
         }
-        if (onToday != null && today != null && !period.includes(today, anchor)) {
+        if (!period.includes(today, anchor)) {
             IconButton(
                 onClick = onToday,
                 modifier = Modifier.testTag("jumpToToday"),
