@@ -88,10 +88,20 @@ internal fun firstRunSteps(captureSupported: Boolean): List<FirstRunStep> = buil
  * instead of a search through Settings. Continue stays enabled either way:
  * capture is never a gate, and the allowlist lives in Settings because a rule
  * binds an app to an account that only exists after the wizard seeds them.
+ *
+ * The system back gesture walks the wizard back like [ScreenHeader]'s arrow
+ * instead of finishing the host activity: grants happen in system settings, so
+ * coming back to the wizard and stepping back must not drop the picks. On the
+ * first step it stays disabled and back leaves the app as usual.
  */
 @Composable
 fun FirstRunScreen(
     access: NotificationAccess = rememberNotificationAccess(),
+    // Test seam: desktop has no system back, so the real BackHandler is a no-op
+    // and tests inject a handler they can invoke.
+    systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
+        BackHandler(enabled, onBack)
+    },
     onComplete: (AppLanguage, Currency, ThemeMode, openCaptureSettings: Boolean) -> Unit,
 ) {
     var language by rememberSaveable {
@@ -103,6 +113,8 @@ fun FirstRunScreen(
 
     val steps = firstRunSteps(access.supported)
     val step = steps[stepIndex]
+    val goBack: () -> Unit = { if (stepIndex > 0) stepIndex-- }
+    systemBackHandler(stepIndex > 0, goBack)
 
     ApplyLanguageOverride(language)
     key(language) {
@@ -116,7 +128,7 @@ fun FirstRunScreen(
                     if (stepIndex > 0) {
                         ScreenHeader(
                             title = stepTitle(step),
-                            onBack = { stepIndex-- },
+                            onBack = goBack,
                         )
                     } else {
                         Text(
@@ -151,7 +163,7 @@ fun FirstRunScreen(
                 FirstRunFooter(
                     canGoBack = stepIndex > 0,
                     isWelcome = step == FirstRunStep.Welcome,
-                    onBack = { stepIndex-- },
+                    onBack = goBack,
                     onContinue = {
                         if (stepIndex == steps.lastIndex) {
                             onComplete(language, currency, theme, false)

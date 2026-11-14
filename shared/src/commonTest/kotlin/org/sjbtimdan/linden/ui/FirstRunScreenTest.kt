@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.sjbtimdan.linden.model.AppLanguage
 import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.ThemeMode
@@ -322,6 +323,46 @@ class FirstRunScreenTest : StringSpec({
             advance(5)
 
             openCapture shouldBe false
+        }
+    }
+
+    "system back is disabled on the first step" {
+        runFirstRunTest {
+            var backEnabled: Boolean? = null
+            setContent {
+                FirstRunScreen(
+                    onComplete = { _, _, _, _ -> },
+                    systemBackHandler = { enabled, _ -> backEnabled = enabled },
+                )
+            }
+
+            onNodeWithText("Choose your language").assertIsDisplayed()
+            onNodeWithTag("firstRunBack").assertDoesNotExist()
+
+            backEnabled shouldBe false
+        }
+    }
+
+    "system back walks the wizard back instead of leaving it" {
+        runFirstRunTest {
+            var systemBack: (() -> Unit)? = null
+            setContent {
+                FirstRunScreen(
+                    onComplete = { _, _, _, _ -> },
+                    access = access(supported = true),
+                    systemBackHandler = { enabled, onBack -> if (enabled) systemBack = onBack },
+                )
+            }
+
+            advance(4)
+            onNodeWithText("Payment capture").assertIsDisplayed()
+            waitForIdle()
+
+            systemBack shouldNotBe null
+            systemBack!!.invoke()
+            waitForIdle()
+
+            onNodeWithText("Choose your theme").assertIsDisplayed()
         }
     }
 })
