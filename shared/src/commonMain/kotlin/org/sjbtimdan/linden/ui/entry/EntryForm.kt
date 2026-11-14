@@ -68,6 +68,7 @@ fun EntryForm(
     onDescriptionChange: (String) -> Unit,
     onCreatedAtChange: (Instant) -> Unit,
     onFieldFocusChange: (Boolean) -> Unit = {},
+    onCalculatorOpenChange: (Boolean) -> Unit = {},
     editEpoch: Int = 0,
     suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
     onQuickEntry: (QuickEntry) -> Unit = {},
@@ -154,6 +155,7 @@ fun EntryForm(
     var toAmountWarning by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(activeField) {
         onFieldFocusChange(activeField != null)
+        onCalculatorOpenChange(activeField == ActiveField.Amount || activeField == ActiveField.ToAmount)
     }
     val editing = activeField != null
 

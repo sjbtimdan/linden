@@ -142,6 +142,24 @@ class EntryDialogTest : StringSpec({
         }
     }
 
+    "hides Save while the amount calculator is open" {
+        onTestMain {
+            runComposeUiTest {
+                showDialog(draft())
+                onNodeWithText("Save").assertIsDisplayed()
+
+                onNodeWithTag("amountField").performClick()
+                waitForIdle()
+                onNodeWithText("Enter").assertIsDisplayed()
+                onNodeWithText("Save").assertDoesNotExist()
+
+                onNodeWithText("Enter").performClick()
+                waitForIdle()
+                onNodeWithText("Save").assertIsDisplayed()
+            }
+        }
+    }
+
     "explains why Save is disabled" {
         onTestMain {
             runComposeUiTest {

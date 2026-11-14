@@ -9,6 +9,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -64,6 +68,9 @@ fun EntryDialog(
     onDismiss: () -> Unit,
     saving: Boolean = false,
 ) {
+    // The calculator's Enter is the confirmation while the keypad is up, so the
+    // dialog's footer Save is hidden then.
+    var calculatorOpen by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = DialogShape,
@@ -118,15 +125,18 @@ fun EntryDialog(
                     onToAmountChange = onToAmountChange,
                     onDescriptionChange = onDescriptionChange,
                     onCreatedAtChange = onCreatedAtChange,
+                    onCalculatorOpenChange = { calculatorOpen = it },
                 )
             }
         },
         confirmButton = {
-            Button(
-                onClick = onSave,
-                enabled = state.isValid(accounts) && !saving,
-            ) {
-                Text(stringResource(Res.string.common_save))
+            if (!calculatorOpen) {
+                Button(
+                    onClick = onSave,
+                    enabled = state.isValid(accounts) && !saving,
+                ) {
+                    Text(stringResource(Res.string.common_save))
+                }
             }
         },
         dismissButton = {
