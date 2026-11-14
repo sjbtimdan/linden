@@ -1,3 +1,19 @@
+## Version 1.15.0
+
+<en-US>
+- First-run setup now starts with your language, then introduces Linden before asking for currency, theme and payment capture.
+- Payment capture setup (Android) explains each step during first run, with a "Choose apps now" shortcut straight to Payment capture once access is granted.
+- If captured payments stop arriving (Android), Settings → Payment capture now has "Check notifications", which re-reads the notifications still in your shade and restarts capture.
+- However you finish setup, Linden lands on the Entry screen and confirms it once.
+- The system back gesture now steps back through the welcome steps.
+- The Ledger's Entries, Accounts and Categories views animate as you switch between them.
+- On tablets and desktop the app is centred in a comfortable column, and the floating navigation bar stays compact instead of stretching across the window.
+- The keyboard's search key now closes the keyboard on the account and category lists.
+- The entry dialog hides Save while the calculator is open; the keypad's Enter commits the amount, then Save returns.
+- Totals, balances, pace and Insights are computed in the background, so a large ledger no longer stalls when you change period or filter.
+- Technical upgrades and bug fixes.
+</en-US>
+
 ## Version 1.4.0
 
 <en-US>
