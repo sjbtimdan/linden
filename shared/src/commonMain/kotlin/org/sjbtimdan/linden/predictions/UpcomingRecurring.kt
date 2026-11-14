@@ -34,7 +34,7 @@ data class UpcomingRecurring(
 /**
  * Returns recurring bills of [type] whose next occurrence — the most recent
  * entry plus the detected cadence's interval — lands within the due window,
- * most imminent first. Monthly bills surface up to [horizonDays] ahead, so a
+ * most imminent first. Monthly bills surface up to [UPCOMING_HORIZON_DAYS] ahead, so a
  * bill a few days out still reads as a heads-up; weekly bills only while
  * actually due (within [DUE_WINDOW_DAYS]), since their next occurrence is
  * always inside a week and would otherwise never leave the list. A description
@@ -47,8 +47,6 @@ fun predictUpcomingRecurring(
     type: EntryType,
     now: Instant,
     timeZone: TimeZone,
-    horizonDays: Int = UPCOMING_HORIZON_DAYS,
-    topN: Int = UPCOMING_TOP_N,
     suppressed: Set<String> = emptySet(),
 ): List<UpcomingRecurring> {
     val typed = entries.filter { it.type == type && !it.description.isNullOrBlank() }
@@ -61,7 +59,7 @@ fun predictUpcomingRecurring(
             val nextDue = nextOccurrence(last.createdAt, cadence, timeZone)
             val forward = when (cadence) {
                 RecurrenceCadence.Weekly -> DUE_WINDOW_DAYS.days
-                RecurrenceCadence.Monthly -> horizonDays.days
+                RecurrenceCadence.Monthly -> UPCOMING_HORIZON_DAYS.days
             }
             if (nextDue < now - DUE_WINDOW_DAYS.days || nextDue > now + forward) {
                 return@mapNotNull null
@@ -69,5 +67,5 @@ fun predictUpcomingRecurring(
             UpcomingRecurring(last, cadence, nextDue)
         }
         .sortedBy { it.nextDue }
-        .take(topN)
+        .take(UPCOMING_TOP_N)
 }

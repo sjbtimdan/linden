@@ -110,12 +110,6 @@ private val AmoledColors = darkColorScheme(
 /** Corner radius of dialogs across the app. */
 val DialogShape = RoundedCornerShape(28.dp)
 
-/** Corner radius of list rows/cards across the app. */
-val CardShape = RoundedCornerShape(20.dp)
-
-/** Subtle shadow elevation for list-row cards. */
-val CardElevation = 2.dp
-
 /** Fixed-width digits app-wide so amounts, dates and times line up and stop shifting as values change. */
 private fun TextStyle.tabularDigits(): TextStyle = copy(fontFeatureSettings = "\"tnum\" 1")
 

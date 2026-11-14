@@ -63,7 +63,6 @@ fun EntryDialog(
     onDuplicate: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     saving: Boolean = false,
-    suggestions: EntryFormSuggestions = EmptyEntryFormSuggestions,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -119,7 +118,6 @@ fun EntryDialog(
                     onToAmountChange = onToAmountChange,
                     onDescriptionChange = onDescriptionChange,
                     onCreatedAtChange = onCreatedAtChange,
-                    suggestions = suggestions,
                 )
             }
         },

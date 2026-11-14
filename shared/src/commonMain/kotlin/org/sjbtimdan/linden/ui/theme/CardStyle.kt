@@ -2,13 +2,12 @@ package org.sjbtimdan.linden.ui.theme
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
@@ -16,17 +15,20 @@ import androidx.compose.ui.unit.dp
  * border and a shadow tinted with the current accent instead of black.
  */
 @Composable
-fun Modifier.lindenCard(shape: Shape = CardShape, elevation: Dp = CardElevation): Modifier {
+fun Modifier.lindenCard(): Modifier {
     val accent = MaterialTheme.colorScheme.primary
     return this
         .shadow(
-            elevation = elevation,
-            shape = shape,
+            elevation = CardElevation,
+            shape = CardShape,
             clip = false,
             ambientColor = accent.copy(alpha = 0.20f),
             spotColor = accent.copy(alpha = 0.26f),
         )
-        .clip(shape)
+        .clip(CardShape)
         .background(lindenColors().cardSurface)
-        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
+        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CardShape)
 }
+
+private val CardShape = RoundedCornerShape(20.dp)
+private val CardElevation = 2.dp

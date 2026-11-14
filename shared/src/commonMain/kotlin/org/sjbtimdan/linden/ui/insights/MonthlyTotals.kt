@@ -34,7 +34,7 @@ internal fun monthIndexOf(year: Int, monthNumber: Int): Int = year * 12 + (month
 internal fun monthIndexOf(date: LocalDate): Int = monthIndexOf(date.year, date.month.number)
 
 /**
- * Expense and income totals of the [windowMonths] months ending with the month
+ * Expense and income totals of the [WINDOW_MONTHS] months ending with the month
  * of [windowEnd], one [MonthTotal] per month in ascending order. Transfers
  * never contribute; entries are bucketed by the day they fall on in [zone] so
  * a month boundary near midnight never misplaces an entry. Months without
@@ -48,14 +48,12 @@ fun monthlyTotals(
     defaultCurrency: Currency,
     rates: List<FxRate>,
     zone: TimeZone,
-    windowMonths: Int = 12,
 ): List<MonthTotal> {
-    require(windowMonths > 0)
     val anchorIndex = monthIndexOf(windowEnd)
-    val firstIndex = anchorIndex - windowMonths + 1
+    val firstIndex = anchorIndex - WINDOW_MONTHS + 1
 
     // Per month, per type, per source currency: the summed amounts.
-    val sums = Array(windowMonths) { monthSums() }
+    val sums = Array(WINDOW_MONTHS) { monthSums() }
     for (entry in entries) {
         val monthKey = entry.dayIn(zone)
         val offset = monthIndexOf(monthKey) - firstIndex
@@ -67,7 +65,7 @@ fun monthlyTotals(
     }
 
     val currentIndex = monthIndexOf(currentMonth)
-    return List(windowMonths) { offset ->
+    return List(WINDOW_MONTHS) { offset ->
         val index = firstIndex + offset
         val month = sums[offset]
         MonthTotal(

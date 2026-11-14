@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
@@ -35,23 +34,16 @@ internal fun CalculatorActions(enter: () -> Unit) {
 }
 
 @Composable
-private fun GradientActionButton(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
+private fun GradientActionButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = lindenColors()
     val interaction = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .alpha(if (enabled) 1f else 0.38f)
             .clip(ActionShape)
             .background(Brush.linearGradient(colors.heroGradient))
             .clickable(
                 interactionSource = interaction,
                 indication = LocalIndication.current,
-                enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,
             )

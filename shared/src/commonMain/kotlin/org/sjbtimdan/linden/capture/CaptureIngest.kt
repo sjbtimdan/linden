@@ -19,17 +19,16 @@ data class CaptureCandidate(
 )
 
 /**
- * The allowlisted candidates posted no earlier than [windowMillis] before
- * [nowMillis], oldest first, so a catch-up imports in posting order and the
- * newest capture ends up at the top of the inbox.
+ * The allowlisted candidates posted no earlier than [CATCH_UP_WINDOW_MILLIS]
+ * before [nowMillis], oldest first, so a catch-up imports in posting order and
+ * the newest capture ends up at the top of the inbox.
  */
 fun recentCaptureCandidates(
     candidates: List<CaptureCandidate>,
     allowedPackages: Set<String>,
     nowMillis: Long,
-    windowMillis: Long = CATCH_UP_WINDOW_MILLIS,
 ): List<CaptureCandidate> = candidates
-    .filter { it.packageName in allowedPackages && it.postTime >= nowMillis - windowMillis }
+    .filter { it.packageName in allowedPackages && it.postTime >= nowMillis - CATCH_UP_WINDOW_MILLIS }
     .sortedBy { it.postTime }
 
 /**
