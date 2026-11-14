@@ -78,18 +78,6 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-        create("benchmark") {
-            // Release-like variant for macrobenchmarking: non-debuggable (so the
-            // benchmark doesn't trip the DEBUGGABLE error) but unminified (a
-            // minified target would force the test module to shrink too, and
-            // unminified gives more reproducible numbers). Signed with the debug
-            // key so local `connectedCheck` needs no release keystore.
-            isDebuggable = false
-            isMinifyEnabled = false
-            isShrinkResources = false
-            signingConfig = signingConfigs.getByName("debug")
-            matchingFallbacks += listOf("release")
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
