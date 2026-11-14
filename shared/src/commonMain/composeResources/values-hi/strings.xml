@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">अपनी मुद्रा चुनें</string>
     <string name="first_run_choose_theme">अपनी थीम चुनें</string>
     <string name="first_run_continue">जारी रखें</string>
+    <string name="first_run_complete">सेटअप पूरा हुआ। आप भाषा, मुद्रा और थीम कभी भी सेटिंग्स में बदल सकते हैं।</string>
     <string name="first_run_capture_allowed">सूचना पहुँच अनुमत है</string>
     <string name="first_run_capture_how">यह कैसे काम करता है</string>
     <string name="first_run_capture_step_access">Linden को पहुँच दें।</string>

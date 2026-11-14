@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">Wähle deine Währung</string>
     <string name="first_run_choose_theme">Wähle dein Design</string>
     <string name="first_run_continue">Weiter</string>
+    <string name="first_run_complete">Einrichtung abgeschlossen. Du kannst Sprache, Währung und Design jederzeit in den Einstellungen ändern.</string>
     <string name="first_run_capture_allowed">Benachrichtigungszugriff erlaubt</string>
     <string name="first_run_capture_how">So funktioniert es</string>
     <string name="first_run_capture_step_access">Erlaube Linden den Zugriff.</string>

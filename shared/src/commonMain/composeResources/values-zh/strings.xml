@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">选择您的货币</string>
     <string name="first_run_choose_theme">选择您的主题</string>
     <string name="first_run_continue">继续</string>
+    <string name="first_run_complete">设置完成。您随时可以在设置中更改语言、货币和主题。</string>
     <string name="first_run_capture_allowed">已允许通知访问</string>
     <string name="first_run_capture_how">使用方式</string>
     <string name="first_run_capture_step_access">授予 Linden 访问权限。</string>

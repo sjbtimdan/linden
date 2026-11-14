@@ -29,7 +29,8 @@ class AppRootViewModelTest : StringSpec({
     "loads dependencies eagerly and reaches Ready" {
         onTestMain {
             val viewModel = AppRootViewModel { testDependencies() }
-            (viewModel.state.value is AppRootState.Ready) shouldBe true
+            val ready = viewModel.state.value as AppRootState.Ready
+            ready.justCompletedSetup shouldBe false
         }
     }
 
@@ -101,6 +102,7 @@ class AppRootViewModelTest : StringSpec({
             val accounts = AccountDao(dependencies.database.accountQueries).getAll().first()
             accounts.map { it.currency } shouldBe listOf(Currency.EUR, Currency.EUR)
             ready.startInCaptureSettings shouldBe false
+            ready.justCompletedSetup shouldBe true
         }
     }
 
@@ -117,6 +119,7 @@ class AppRootViewModelTest : StringSpec({
             val ready = viewModel.state.first { it is AppRootState.Ready } as AppRootState.Ready
 
             ready.startInCaptureSettings shouldBe true
+            ready.justCompletedSetup shouldBe true
         }
     }
 })

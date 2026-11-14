@@ -59,7 +59,8 @@ class AppRootViewModel(
      * Completes the first-run setup with the chosen language, currency and
      * theme, then shows the app. When the user chose to pick capture apps from
      * the last step, the app opens Payment capture instead of Entry, so the
-     * allowlist they just read about is immediately in front of them. The
+     * allowlist they just read about is immediately in front of them; back from
+     * there returns to Entry, which confirms the finished setup. The
      * dependencies are reused: only the settings write and the deferred
      * seeding happen here.
      */
@@ -73,7 +74,11 @@ class AppRootViewModel(
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) { dependencies.completeFirstRun(language, currency, theme) }
-                _state.value = AppRootState.Ready(dependencies, startInCaptureSettings = openCaptureSettings)
+                _state.value = AppRootState.Ready(
+                    dependencies,
+                    startInCaptureSettings = openCaptureSettings,
+                    justCompletedSetup = true,
+                )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -101,6 +106,11 @@ sealed interface AppRootState {
         val dependencies: AppDependencies,
         /** The app opens Payment capture first, offered by the first-run wizard. */
         val startInCaptureSettings: Boolean = false,
+        /**
+         * Built by [AppRootViewModel.completeFirstRun]: the start screen says so
+         * once. False on a normal start, so the confirmation never replays.
+         */
+        val justCompletedSetup: Boolean = false,
     ) : AppRootState
 
     /** Dependencies built but seeding deferred: the user must pick a currency first. */

@@ -32,6 +32,9 @@ import org.sjbtimdan.linden.time.TEST_NOW
 import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.withApp
 
+private const val SETUP_COMPLETE =
+    "Setup complete. You can change the language, currency and theme any time in Settings."
+
 @OptIn(ExperimentalTestApi::class)
 class AppTest : StringSpec({
     "starts on the entry screen" {
@@ -41,14 +44,40 @@ class AppTest : StringSpec({
         }
     }
 
-    "the first-run shortcut opens payment capture with settings as its origin" {
+    "the first-run shortcut opens payment capture and back returns to entry" {
         withApp { dependencies ->
             setContent { App(dependencies, startInCaptureSettings = true) }
 
             onNodeWithText("Payment capture").assertExists()
 
+            // Entry, not Settings: finishing setup leads to the start screen.
             onNodeWithContentDescription("Back").performClick()
-            onNodeWithText("Import from Ivy").assertExists()
+            onNodeWithText("Add").assertExists()
+        }
+    }
+
+    "finishing setup confirms it on the entry screen" {
+        withApp { dependencies ->
+            setContent { App(dependencies, setupComplete = true) }
+
+            waitUntil(timeoutMillis = 5_000) {
+                onAllNodesWithText(SETUP_COMPLETE).fetchSemanticsNodes().isNotEmpty()
+            }
+        }
+    }
+
+    "the setup confirmation waits until the user leaves payment capture" {
+        withApp { dependencies ->
+            setContent { App(dependencies, startInCaptureSettings = true, setupComplete = true) }
+
+            onNodeWithText("Payment capture").assertExists()
+            onAllNodesWithText(SETUP_COMPLETE).assertCountEquals(0)
+
+            onNodeWithContentDescription("Back").performClick()
+
+            waitUntil(timeoutMillis = 5_000) {
+                onAllNodesWithText(SETUP_COMPLETE).fetchSemanticsNodes().isNotEmpty()
+            }
         }
     }
 

@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">Pilih mata uang Anda</string>
     <string name="first_run_choose_theme">Pilih tema Anda</string>
     <string name="first_run_continue">Lanjutkan</string>
+    <string name="first_run_complete">Penyiapan selesai. Anda dapat mengubah bahasa, mata uang, dan tema kapan saja di Pengaturan.</string>
     <string name="first_run_capture_allowed">Akses notifikasi diizinkan</string>
     <string name="first_run_capture_how">Cara kerjanya</string>
     <string name="first_run_capture_step_access">Beri Linden akses.</string>

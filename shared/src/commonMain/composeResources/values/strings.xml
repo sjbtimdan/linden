@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">Choose your currency</string>
     <string name="first_run_choose_theme">Choose your theme</string>
     <string name="first_run_continue">Continue</string>
+    <string name="first_run_complete">Setup complete. You can change the language, currency and theme any time in Settings.</string>
     <string name="first_run_capture_allowed">Notification access allowed</string>
     <string name="first_run_capture_how">How it works</string>
     <string name="first_run_capture_step_access">Grant access to Linden.</string>

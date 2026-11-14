@@ -34,6 +34,7 @@ fun AppRoot(logger: AppLogger = NoOpAppLogger, createDependencies: suspend () ->
         is AppRootState.Ready -> App(
             dependencies = current.dependencies,
             startInCaptureSettings = current.startInCaptureSettings,
+            setupComplete = current.justCompletedSetup,
         )
 
         // FirstRunScreen carries its own theme and language override so the

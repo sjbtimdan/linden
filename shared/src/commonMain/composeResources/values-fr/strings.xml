@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">Choisissez votre devise</string>
     <string name="first_run_choose_theme">Choisissez votre thème</string>
     <string name="first_run_continue">Continuer</string>
+    <string name="first_run_complete">Configuration terminée. Vous pouvez modifier la langue, la devise et le thème à tout moment dans les Paramètres.</string>
     <string name="first_run_capture_allowed">Accès aux notifications autorisé</string>
     <string name="first_run_capture_how">Comment ça marche</string>
     <string name="first_run_capture_step_access">Autorisez l'accès à Linden.</string>

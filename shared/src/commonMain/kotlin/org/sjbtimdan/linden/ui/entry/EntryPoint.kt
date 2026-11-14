@@ -34,6 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.model.EntryType
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.common_back
+import org.sjbtimdan.linden.resources.first_run_complete
 import org.sjbtimdan.linden.ui.BackHandler
 import org.sjbtimdan.linden.ui.ErrorSnackbar
 import org.sjbtimdan.linden.ui.LocalBottomBarContentPadding
@@ -53,6 +54,9 @@ fun EntryPoint(
     onNavigateToInsights: () -> Unit = {},
     ratesWarning: RatesWarning? = null,
     captureViewModel: CapturedPaymentsViewModel? = null,
+    // First-run setup just finished somewhere the user could not see the app:
+    // confirm it once, when this screen first appears.
+    setupComplete: Boolean = false,
     // Test seam: desktop has no system back, so the real BackHandler is a no-op
     // and tests inject a handler they can invoke.
     systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
@@ -82,6 +86,19 @@ fun EntryPoint(
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
+
+    // Finishing setup leaves the wizard behind (or lands here on the way back
+    // from Payment capture), so the start screen is where the user learns setup
+    // is done and where the three choices can be changed later. Saveable so a
+    // rotation does not replay it.
+    var setupConfirmed by rememberSaveable { mutableStateOf(false) }
+    val setupCompleteMessage = stringResource(Res.string.first_run_complete)
+    LaunchedEffect(setupComplete) {
+        if (setupComplete && !setupConfirmed) {
+            setupConfirmed = true
+            snackbarHostState.showSnackbar(setupCompleteMessage)
+        }
+    }
 
     var fieldFocused by remember { mutableStateOf(false) }
 

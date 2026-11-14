@@ -121,9 +121,12 @@ git describe). It is generated code — never edit it.
   supports it, the same screen introduces payment capture and offers the system notification-access grant
   (`NotificationAccess` passed in for tests); the step lists how to finish setup and add a banking app (Settings →
   Payment capture → Add app → account), and once access is granted a "Choose apps now" action completes setup and opens
-  Payment capture directly (`App(startInCaptureSettings)`). The app allowlist itself stays in Settings, because a
-  capture rule binds an app to an account and no accounts exist until Continue seeds them, and Continue is never gated
-  on capture. `testTag("loading")` marks the spinner; startup failure shows `StartupError`.
+  Payment capture directly (`App(startInCaptureSettings)`, with Entry as the sub-screen origin, so back lands on the
+  start screen). Either exit ends on Entry, which confirms the finished setup once with a snackbar (`first_run_complete`,
+  driven by `AppRootState.Ready.justCompletedSetup`). The wizard's system back steps back like its on-screen arrow. The
+  app allowlist itself stays in Settings, because a capture rule binds an app to an account and no accounts exist until
+  Continue seeds them, and Continue is never gated on capture. `testTag("loading")` marks the spinner; startup failure
+  shows `StartupError`.
 - Money is stored as integer minor units (`Long`), never `Double`/`BigDecimal` — `450` = 4.50. Every currency
   (CHF/CNY/EUR/GBP/HKD/IDR/INR/JPY/SGD/USD) is stored at a fixed 2-decimal scale; `Currency.decimalDigits` is the
   display/input precision — 0 for zero-decimal IDR/JPY, 2 for the rest. `formatAmount(amount, decimalDigits)` in

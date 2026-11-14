@@ -91,6 +91,8 @@ fun App(
     // the start screen; only the first composition reads it, so a later
     // rotation keeps wherever the user has navigated.
     startInCaptureSettings: Boolean = false,
+    // First-run setup just finished: the start screen confirms it once.
+    setupComplete: Boolean = false,
     // Test seam: desktop has no system back, so the real BackHandler is a no-op
     // and tests inject a handler they can invoke.
     systemBackHandler: @Composable (enabled: Boolean, onBack: () -> Unit) -> Unit = { enabled, onBack ->
@@ -101,9 +103,11 @@ fun App(
         mutableStateOf<Screen>(if (startInCaptureSettings) Screen.CaptureSettings else Screen.Entry)
     }
     // The top-level screen a sub-screen was opened from; both the back arrow and
-    // the system back gesture return there.
+    // the system back gesture return there. The first-run shortcut opens capture
+    // before any top-level screen was visited, and Entry is what finishing setup
+    // leads to, so back from there lands on the start screen instead of Settings.
     var subScreenOrigin by rememberSaveable(stateSaver = ScreenSaver) {
-        mutableStateOf<Screen>(Screen.Settings)
+        mutableStateOf<Screen>(if (startInCaptureSettings) Screen.Entry else Screen.Settings)
     }
     val subScreen = currentScreen.takeIf { it !in topLevelScreens }
     val openSubScreen: (Screen) -> Unit = { screen ->
@@ -193,6 +197,7 @@ fun App(
                                             onNavigateToInsights = { openSubScreen(Screen.Insights) },
                                             ratesWarning = ratesWarning,
                                             captureViewModel = capturedPaymentsViewModel,
+                                            setupComplete = setupComplete,
                                         )
 
                                         else -> SettingsScreen(

@@ -26,6 +26,7 @@
     <string name="first_run_choose_currency">選擇您的貨幣</string>
     <string name="first_run_choose_theme">選擇您的主題</string>
     <string name="first_run_continue">繼續</string>
+    <string name="first_run_complete">設定完成。您隨時可以在設定中更改語言、貨幣和主題。</string>
     <string name="first_run_capture_allowed">已允許通知存取</string>
     <string name="first_run_capture_how">使用方式</string>
     <string name="first_run_capture_step_access">授予 Linden 存取權限。</string>
