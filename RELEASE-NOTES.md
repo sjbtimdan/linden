@@ -1,3 +1,12 @@
+## Version 1.5.0
+
+<en-US>
+- Welcome screen improvements.
+- UI tweaks to make Linden sparkle more.
+- Totals, balances, pace and Insights are computed in the background, so a large ledger no longer stalls when you change period or filter.
+- Technical upgrades and bug fixes.
+</en-US>
+
 ## Version 1.4.0
 
 <en-US>
