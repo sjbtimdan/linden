@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">Te damos la bienvenida a Linden</string>
-    <string name="first_run_tagline">Registra tus gastos e ingresos en distintas cuentas y monedas.</string>
-    <string name="first_run_feature_accounts_title">Varias cuentas y monedas</string>
-    <string name="first_run_feature_accounts_body">Cuentas en distintas monedas.</string>
+    <string name="first_run_tagline">Linden te ayuda a registrar tus ingresos y gastos.</string>
+    <string name="first_run_feature_accounts_title">Varias monedas</string>
+    <string name="first_run_feature_accounts_body">Registra el dinero de cada una de tus cuentas en distintas monedas.</string>
     <string name="first_run_feature_private_title">Guardado en tu dispositivo</string>
     <string name="first_run_feature_private_body">Tus datos financieros se quedan en tu dispositivo. No necesitas una cuenta.</string>
     <string name="first_run_feature_fast_title">Entrada rápida</string>
-    <string name="first_run_feature_fast_body">Sugerencias de tus entradas anteriores y una calculadora exacta.</string>
+    <string name="first_run_feature_fast_body">Sugerencias de tus entradas anteriores.</string>
     <string name="first_run_feature_ledger_title">Movimientos</string>
     <string name="first_run_feature_ledger_body">Busca tus ingresos y gastos anteriores.</string>
     <string name="first_run_get_started">Empezar</string>

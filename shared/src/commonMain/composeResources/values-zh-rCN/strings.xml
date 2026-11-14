@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">欢迎使用 Linden</string>
-    <string name="first_run_tagline">跨账户和货币追踪支出与收入。</string>
-    <string name="first_run_feature_accounts_title">多个账户与货币</string>
-    <string name="first_run_feature_accounts_body">不同货币的账户。</string>
+    <string name="first_run_tagline">Linden 帮助你追踪收入和支出。</string>
+    <string name="first_run_feature_accounts_title">多种货币</string>
+    <string name="first_run_feature_accounts_body">以不同货币追踪每个账户中的资金。</string>
     <string name="first_run_feature_private_title">存储在您的设备上</string>
     <string name="first_run_feature_private_body">您的财务数据保存在设备上。无需账户。</string>
     <string name="first_run_feature_fast_title">快速记账</string>
-    <string name="first_run_feature_fast_body">来自历史记录的建议和精确计算器。</string>
+    <string name="first_run_feature_fast_body">来自历史记录的建议。</string>
     <string name="first_run_feature_ledger_title">账本</string>
     <string name="first_run_feature_ledger_body">搜索您过去的收入与支出。</string>
     <string name="first_run_get_started">开始使用</string>

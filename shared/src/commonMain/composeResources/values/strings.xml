@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">Welcome to Linden</string>
-    <string name="first_run_tagline">Track expenses and income across accounts and currencies.</string>
-    <string name="first_run_feature_accounts_title">Multiple accounts and currencies</string>
-    <string name="first_run_feature_accounts_body">Accounts in different currencies.</string>
+    <string name="first_run_tagline">Linden helps you to track your income and expenses.</string>
+    <string name="first_run_feature_accounts_title">Multiple currencies</string>
+    <string name="first_run_feature_accounts_body">Track money in each of your accounts in different currencies.</string>
     <string name="first_run_feature_private_title">Stored on your device</string>
     <string name="first_run_feature_private_body">Your financial data stays on your device. No account required.</string>
     <string name="first_run_feature_fast_title">Fast entry</string>
-    <string name="first_run_feature_fast_body">Suggestions from past entries and an exact calculator.</string>
+    <string name="first_run_feature_fast_body">Suggestions from past entries.</string>
     <string name="first_run_feature_ledger_title">Ledger</string>
     <string name="first_run_feature_ledger_body">Search your past income and spending.</string>
     <string name="first_run_get_started">Get started</string>

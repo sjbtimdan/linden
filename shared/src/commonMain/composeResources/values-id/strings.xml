@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">Selamat datang di Linden</string>
-    <string name="first_run_tagline">Lacak pengeluaran dan pemasukan di berbagai akun dan mata uang.</string>
-    <string name="first_run_feature_accounts_title">Beberapa akun dan mata uang</string>
-    <string name="first_run_feature_accounts_body">Akun dalam mata uang yang berbeda.</string>
+    <string name="first_run_tagline">Linden membantumu melacak pemasukan dan pengeluaran.</string>
+    <string name="first_run_feature_accounts_title">Beberapa mata uang</string>
+    <string name="first_run_feature_accounts_body">Lacak uang di setiap akunmu dalam mata uang yang berbeda.</string>
     <string name="first_run_feature_private_title">Tersimpan di perangkat Anda</string>
     <string name="first_run_feature_private_body">Data keuangan Anda tetap di perangkat Anda. Tidak perlu akun.</string>
     <string name="first_run_feature_fast_title">Entri cepat</string>
-    <string name="first_run_feature_fast_body">Saran dari entri sebelumnya dan kalkulator yang tepat.</string>
+    <string name="first_run_feature_fast_body">Saran dari entri sebelumnya.</string>
     <string name="first_run_feature_ledger_title">Catatan</string>
     <string name="first_run_feature_ledger_body">Cari pemasukan dan pengeluaran Anda sebelumnya.</string>
     <string name="first_run_get_started">Mulai</string>

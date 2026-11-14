@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">Bienvenue dans Linden</string>
-    <string name="first_run_tagline">Suivez vos dépenses et vos revenus sur tous vos comptes et devises.</string>
-    <string name="first_run_feature_accounts_title">Plusieurs comptes et devises</string>
-    <string name="first_run_feature_accounts_body">Des comptes dans différentes devises.</string>
+    <string name="first_run_tagline">Linden vous aide à suivre vos revenus et vos dépenses.</string>
+    <string name="first_run_feature_accounts_title">Plusieurs devises</string>
+    <string name="first_run_feature_accounts_body">Suivez l'argent sur chacun de vos comptes, dans différentes devises.</string>
     <string name="first_run_feature_private_title">Stocké sur votre appareil</string>
     <string name="first_run_feature_private_body">Vos données financières restent sur votre appareil. Aucun compte requis.</string>
     <string name="first_run_feature_fast_title">Saisie rapide</string>
-    <string name="first_run_feature_fast_body">Des suggestions issues de vos entrées passées et une calculatrice exacte.</string>
+    <string name="first_run_feature_fast_body">Des suggestions issues de vos entrées passées.</string>
     <string name="first_run_feature_ledger_title">Journal</string>
     <string name="first_run_feature_ledger_body">Recherchez vos revenus et dépenses passés.</string>
     <string name="first_run_get_started">Commencer</string>

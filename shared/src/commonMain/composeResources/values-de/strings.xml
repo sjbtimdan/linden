@@ -12,13 +12,13 @@
 
     <!-- First run -->
     <string name="first_run_title">Willkommen bei Linden</string>
-    <string name="first_run_tagline">Verfolge Ausgaben und Einnahmen über Konten und Währungen hinweg.</string>
-    <string name="first_run_feature_accounts_title">Mehrere Konten und Währungen</string>
-    <string name="first_run_feature_accounts_body">Konten in verschiedenen Währungen.</string>
+    <string name="first_run_tagline">Linden hilft dir, deine Einnahmen und Ausgaben im Blick zu behalten.</string>
+    <string name="first_run_feature_accounts_title">Mehrere Währungen</string>
+    <string name="first_run_feature_accounts_body">Verfolge dein Geld in jedem deiner Konten in verschiedenen Währungen.</string>
     <string name="first_run_feature_private_title">Auf deinem Gerät gespeichert</string>
     <string name="first_run_feature_private_body">Deine Finanzdaten bleiben auf deinem Gerät. Kein Konto erforderlich.</string>
     <string name="first_run_feature_fast_title">Schnelle Erfassung</string>
-    <string name="first_run_feature_fast_body">Vorschläge aus früheren Einträgen und ein exakter Rechner.</string>
+    <string name="first_run_feature_fast_body">Vorschläge aus früheren Einträgen.</string>
     <string name="first_run_feature_ledger_title">Übersicht</string>
     <string name="first_run_feature_ledger_body">Durchsuche deine vergangenen Einnahmen und Ausgaben.</string>
     <string name="first_run_get_started">Loslegen</string>
