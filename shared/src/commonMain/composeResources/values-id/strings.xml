@@ -321,7 +321,7 @@
     <string name="budget_empty">Belum ada anggaran. Tambahkan satu anggaran untuk melacak pengeluaran bulanan kategori.</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Tangkap pembayaran</string>
-    <string name="capture_intro">Linden dapat membaca notifikasi dari aplikasi yang kamu pilih dan mengubah notifikasi pembayaran menjadi entri untuk ditinjau. Tidak ada yang ditambahkan ke catatan secara otomatis.</string>
+    <string name="capture_intro">Linden dapat membaca notifikasi dari aplikasi yang kamu pilih dan mengubah notifikasi pembayaran menjadi entri untuk ditinjau.</string>
     <string name="capture_enable">Izinkan akses notifikasi</string>
     <string name="capture_unsupported">Penangkapan notifikasi tersedia di aplikasi Android.</string>
     <string name="capture_disclosure_title">Izinkan akses notifikasi?</string>

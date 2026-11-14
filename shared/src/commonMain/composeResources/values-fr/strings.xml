@@ -323,7 +323,7 @@
     <string name="budget_empty">Aucun budget pour l'instant. Ajoutez-en un pour suivre les dépenses mensuelles d'une catégorie.</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Capture des paiements</string>
-    <string name="capture_intro">Linden peut lire les notifications des applications que vous choisissez et transformer les notifications de paiement en opérations à vérifier. Rien n'est ajouté au journal automatiquement.</string>
+    <string name="capture_intro">Linden peut lire les notifications des applications que vous choisissez et transformer les notifications de paiement en opérations à vérifier.</string>
     <string name="capture_enable">Autoriser l'accès aux notifications</string>
     <string name="capture_unsupported">La capture des notifications est disponible dans l'application Android.</string>
     <string name="capture_disclosure_title">Autoriser l'accès aux notifications ?</string>

@@ -317,7 +317,7 @@
     <string name="budget_empty">还没有预算。添加一个预算，即可跟踪分类的每月支出。</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">支付捕获</string>
-    <string name="capture_intro">Linden 可以读取你选择的应用的通知，并将支付通知转换为待查看的记录。账本不会被自动写入。</string>
+    <string name="capture_intro">Linden 可以读取你选择的应用的通知，并将支付通知转换为待查看的记录。</string>
     <string name="capture_enable">允许通知访问</string>
     <string name="capture_unsupported">通知捕获仅在 Android 应用中可用。</string>
     <string name="capture_disclosure_title">允许通知访问？</string>

@@ -323,11 +323,11 @@
     <string name="budget_empty">No budgets yet. Add one to track a category's monthly spending.</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Payment capture</string>
-    <string name="capture_intro">Linden can read notifications from the apps you choose and turn payment notifications into entries you review. Nothing is added to the ledger automatically.</string>
+    <string name="capture_intro">Linden can read notifications from the apps you choose and turn payment notifications into entries you review.</string>
     <string name="capture_enable">Allow notification access</string>
     <string name="capture_unsupported">Notification capture is available in the Android app.</string>
     <string name="capture_disclosure_title">Allow notification access?</string>
-    <string name="capture_disclosure_body">Linden reads notifications only from the apps you allow and keeps just payment-like ones. Every capture waits for your confirmation and is never sent anywhere.</string>
+    <string name="capture_disclosure_body">Linden reads notifications from the apps you allow.</string>
     <string name="capture_continue">Continue</string>
     <string name="capture_pending_title">Captured payments</string>
     <plurals name="capture_pending_count">

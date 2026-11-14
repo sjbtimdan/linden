@@ -323,7 +323,7 @@
     <string name="budget_empty">Noch keine Budgets. Füge eines hinzu, um die monatlichen Ausgaben einer Kategorie zu verfolgen.</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">Zahlungserfassung</string>
-    <string name="capture_intro">Linden kann Benachrichtigungen der von dir gewählten Apps lesen und Zahlungsbenachrichtigungen in zu prüfende Buchungen umwandeln. In die Übersicht wird nichts automatisch übernommen.</string>
+    <string name="capture_intro">Linden kann Benachrichtigungen der von dir gewählten Apps lesen und Zahlungsbenachrichtigungen in zu prüfende Buchungen umwandeln.</string>
     <string name="capture_enable">Benachrichtigungszugriff erlauben</string>
     <string name="capture_unsupported">Die Benachrichtigungserfassung ist in der Android-App verfügbar.</string>
     <string name="capture_disclosure_title">Benachrichtigungszugriff erlauben?</string>

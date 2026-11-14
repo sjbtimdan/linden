@@ -323,7 +323,7 @@
     <string name="budget_empty">अभी कोई बजट नहीं है। किसी श्रेणी के मासिक खर्च पर नज़र रखने के लिए एक बजट जोड़ें।</string>
     <!-- Payment capture (Android notification listener) -->
     <string name="capture_title">भुगतान कैप्चर</string>
-    <string name="capture_intro">Linden आपके चुने हुए ऐप्स की सूचनाएँ पढ़ सकता है और भुगतान सूचनाओं को जाँचने योग्य प्रविष्टियों में बदल सकता है। बहीखाते में कुछ भी अपने आप नहीं जुड़ता।</string>
+    <string name="capture_intro">Linden आपके चुने हुए ऐप्स की सूचनाएँ पढ़ सकता है और भुगतान सूचनाओं को जाँचने योग्य प्रविष्टियों में बदल सकता है।</string>
     <string name="capture_enable">सूचना पहुँच की अनुमति दें</string>
     <string name="capture_unsupported">सूचना कैप्चर Android ऐप में उपलब्ध है।</string>
     <string name="capture_disclosure_title">सूचना पहुँच की अनुमति दें?</string>

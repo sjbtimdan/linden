@@ -21,7 +21,7 @@ FAST, SMART ENTRY
 
 PAYMENT CAPTURE (ANDROID)
 • Let Linden read payment notifications from the banking apps you choose
-• Each payment waits in a compact bar on the Entry screen until you confirm it — nothing is added automatically
+• Each payment waits in a compact bar on the Entry screen until you confirm it
 • Linden remembers how you classified a payment and prefills the next matching one
 
 UNDERSTAND YOUR SPENDING
