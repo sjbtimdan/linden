@@ -1,9 +1,17 @@
 package org.sjbtimdan.linden.ui.ledger
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -21,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import org.sjbtimdan.linden.model.Account
 import org.sjbtimdan.linden.model.Category
@@ -133,6 +142,9 @@ fun LedgerScreen(
     }
 
     viewModel.ErrorSnackbar(snackbarHostState)
+
+    // Distance the outgoing/incoming view slides during a mode switch.
+    val viewModeSlide = with(LocalDensity.current) { 16.dp.roundToPx() }
 
     Column(
         modifier = Modifier.screenContainerWithIme(),
@@ -256,53 +268,63 @@ fun LedgerScreen(
             },
         )
 
-        when (viewMode) {
-            LedgerViewMode.Accounts -> LedgerAccountsRegion(
-                viewModel = viewModel,
-                accounts = accounts,
-                defaultCurrency = defaultCurrency,
-                hideAmounts = hideTotal,
-                searchQuery = searchQuery,
-                canAdjustBalance = periodSpansToday,
-                onEmptyAction = onNavigateToAccounts,
-                onAdjustBalance = { adjustState = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            )
+        AnimatedContent(
+            targetState = viewMode,
+            transitionSpec = {
+                val travel = viewModeTravel(initialState, targetState)
+                val enter = slideInHorizontally(animationSpec = tween(220)) { travel * viewModeSlide } +
+                    fadeIn(animationSpec = tween(220))
+                val exit = slideOutHorizontally(animationSpec = tween(160)) { -travel * viewModeSlide } +
+                    fadeOut(animationSpec = tween(120))
+                enter togetherWith exit
+            },
+            label = "ledgerViewMode",
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) { mode ->
+            when (mode) {
+                LedgerViewMode.Accounts -> LedgerAccountsRegion(
+                    viewModel = viewModel,
+                    accounts = accounts,
+                    defaultCurrency = defaultCurrency,
+                    hideAmounts = hideTotal,
+                    searchQuery = searchQuery,
+                    canAdjustBalance = periodSpansToday,
+                    onEmptyAction = onNavigateToAccounts,
+                    onAdjustBalance = { adjustState = it },
+                    modifier = Modifier.fillMaxSize(),
+                )
 
-            LedgerViewMode.Categories -> LedgerCategoriesRegion(
-                viewModel = viewModel,
-                categories = categories,
-                defaultCurrency = defaultCurrency,
-                hideAmounts = hideTotal,
-                searchQuery = searchQuery,
-                showFuture = showFuture,
-                upcomingCount = upcomingCount,
-                onEmptyAction = onNavigateToCategories,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            )
+                LedgerViewMode.Categories -> LedgerCategoriesRegion(
+                    viewModel = viewModel,
+                    categories = categories,
+                    defaultCurrency = defaultCurrency,
+                    hideAmounts = hideTotal,
+                    searchQuery = searchQuery,
+                    showFuture = showFuture,
+                    upcomingCount = upcomingCount,
+                    onEmptyAction = onNavigateToCategories,
+                    modifier = Modifier.fillMaxSize(),
+                )
 
-            LedgerViewMode.Entries -> LedgerEntriesRegion(
-                viewModel = viewModel,
-                hideAmounts = hideTotal,
-                searchQuery = searchQuery,
-                typeFilter = typeFilter,
-                categoryFilter = categoryFilter,
-                accountFilter = accountFilter,
-                amountFilter = amountFilter,
-                periodIsAll = periodSelection.period == LedgerPeriod.All,
-                showFuture = showFuture,
-                upcomingCount = upcomingCount,
-                hasAnyEntries = hasAnyEntries,
-                paceHeader = paceHeader,
-                onAddFirstEntry = onNavigateToEntry,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-            )
+                LedgerViewMode.Entries -> LedgerEntriesRegion(
+                    viewModel = viewModel,
+                    hideAmounts = hideTotal,
+                    searchQuery = searchQuery,
+                    typeFilter = typeFilter,
+                    categoryFilter = categoryFilter,
+                    accountFilter = accountFilter,
+                    amountFilter = amountFilter,
+                    periodIsAll = periodSelection.period == LedgerPeriod.All,
+                    showFuture = showFuture,
+                    upcomingCount = upcomingCount,
+                    hasAnyEntries = hasAnyEntries,
+                    paceHeader = paceHeader,
+                    onAddFirstEntry = onNavigateToEntry,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
 
         SnackbarHost(
