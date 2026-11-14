@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -46,6 +47,9 @@ internal val FloatingNavigationBarMargin = 10.dp
 /** Extra clearance below scrollable content so the last row clears the pill. */
 internal val FloatingNavigationBarContentGap = 8.dp
 
+/** Widest the pill grows on tablets and desktop; phones still get the full width. */
+internal val FloatingNavigationBarMaxWidth = 480.dp
+
 private val FloatingNavigationBarShape = RoundedCornerShape(percent = 50)
 private const val PILL_SHADOW = 10
 private const val PILL_BLUR_RADIUS = 24
@@ -82,8 +86,10 @@ internal fun FloatingNavigationBar(
     ) {
         Box(
             modifier = Modifier
+                .widthIn(max = FloatingNavigationBarMaxWidth)
                 .fillMaxWidth()
-                .height(FloatingNavigationBarHeight),
+                .height(FloatingNavigationBarHeight)
+                .testTag("bottomNavPill"),
         ) {
             Box(
                 modifier = Modifier
