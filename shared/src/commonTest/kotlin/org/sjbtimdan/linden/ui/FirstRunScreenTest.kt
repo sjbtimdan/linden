@@ -73,8 +73,8 @@ class FirstRunScreenTest : StringSpec({
 
             advance()
             onNodeWithText("Welcome to Linden").assertIsDisplayed()
-            onNodeWithText("Track expenses and income across accounts and currencies.").assertIsDisplayed()
-            onNodeWithText("Multiple accounts and currencies").assertIsDisplayed()
+            onNodeWithText("Linden helps you to track your income and expenses.").assertIsDisplayed()
+            onNodeWithText("Multiple currencies").assertIsDisplayed()
             onNodeWithText("Stored on your device").assertIsDisplayed()
             onNodeWithText("Fast entry").assertIsDisplayed()
             onNodeWithText("Ledger").assertIsDisplayed()
