@@ -52,8 +52,8 @@ android {
         applicationId = "org.sjbtimdan.linden"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 21
-        versionName = "1.4.0"
+        versionCode = 22
+        versionName = "1.5.0"
     }
     packaging {
         resources {
