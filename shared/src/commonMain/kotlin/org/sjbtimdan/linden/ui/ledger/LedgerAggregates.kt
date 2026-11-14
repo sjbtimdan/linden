@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -24,6 +25,7 @@ import org.sjbtimdan.linden.ui.accounts.accountConversionsMinor
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.budget.budgetsByCategoryName
 import org.sjbtimdan.linden.ui.insights.PaceForecast
+import org.sjbtimdan.linden.util.computationDispatcher
 import org.sjbtimdan.linden.util.stateFlow
 import kotlin.math.abs
 import org.sjbtimdan.linden.ui.insights.paceForecast as computePaceForecast
@@ -65,6 +67,7 @@ internal class LedgerAggregates(
                     .map(::SearchableEntry)
             }
         }
+        .flowOn(computationDispatcher)
         .stateFlow(scope, emptyList())
 
     /**
@@ -85,7 +88,8 @@ internal class LedgerAggregates(
             .filter { searchable -> normalized.isEmpty() || searchable.matches(normalized) }
             .map { it.entry }
             .toList()
-    }.stateFlow(scope, emptyList())
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, emptyList())
 
     val entries: StateFlow<List<Entry>> = filteredEntries(filters.typeFilter)
 
@@ -118,7 +122,8 @@ internal class LedgerAggregates(
                 matchesCategory && matchesAccount
             }
         }
-    }.stateFlow(scope, emptyList())
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, emptyList())
 
     /**
      * Net total of the displayed entries in the default currency; null when a rate
@@ -138,7 +143,8 @@ internal class LedgerAggregates(
             val account = accounts.firstOrNull { it.id == accountId } ?: return@combine 0L
             accountNetInDefaultMinor(account, entries, currency, rates)
         }
-    }.stateFlow(scope, 0L)
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, 0L)
 
     /** Current-month expense pace in the default currency; null until enough history. */
     val paceForecast: StateFlow<PaceForecast?> = combine(
@@ -147,7 +153,8 @@ internal class LedgerAggregates(
         rates,
     ) { entries, currency, rates ->
         computePaceForecast(entries, today(), currency, rates, zone)
-    }.stateFlow(scope, null)
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, null)
 
     /** Whether any entry exists at all, regardless of period or filters — drives the
      * guided empty state for a new app vs the plain message for an empty match. */
@@ -181,7 +188,8 @@ internal class LedgerAggregates(
             val day = entry.dayIn(zone)
             day > now && (end == null || day <= end)
         }
-    }.stateFlow(scope, 0)
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, 0)
 
     /**
      * Balance of each visible account at period end in its own currency: initial balance
@@ -199,7 +207,8 @@ internal class LedgerAggregates(
         // toggle is off; past and wholly-future windows count through their own end.
         val cutoff = if (showFuture) window?.end else hideFutureBound(window?.start, window?.end, now)
         accountBalancesAtEnd(entries, cutoff, accounts, zone)
-    }.stateFlow(scope, emptyList())
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, emptyList())
 
     /** Net total of all period-end balances in the default currency; null when a rate is missing. */
     val accountTotalAtPeriodEnd: StateFlow<Long?> = combine(
@@ -234,7 +243,8 @@ internal class LedgerAggregates(
         allEntries,
     ) { accounts, entries ->
         accountBalancesAtEnd(entries, today(), accounts, zone).associate { it.account.id to it.balance }
-    }.stateFlow(scope, emptyMap())
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, emptyMap())
 
     /** Net total per category in the default currency derived from the filtered entries. */
     val categoryTotals: StateFlow<List<CategoryWithTotal>> = combine(
@@ -258,7 +268,8 @@ internal class LedgerAggregates(
         totals.map { total ->
             total.copy(budget = total.category?.let { budgetByName[it.name.lowercase()] })
         }
-    }.stateFlow(scope, emptyList())
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, emptyList())
 
     /** Net total of all categories in the default currency; null when a rate is missing. */
     val categoryTotal: StateFlow<Long?> = combine(
@@ -267,5 +278,6 @@ internal class LedgerAggregates(
         rates,
     ) { entries, currency, rates ->
         periodTotalMinor(entries, currency, rates)
-    }.stateFlow(scope, null)
+    }.flowOn(computationDispatcher)
+        .stateFlow(scope, null)
 }

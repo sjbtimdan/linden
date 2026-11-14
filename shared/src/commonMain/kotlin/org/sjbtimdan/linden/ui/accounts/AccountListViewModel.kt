@@ -3,6 +3,7 @@ package org.sjbtimdan.linden.ui.accounts
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.datetime.TimeZone
 import org.sjbtimdan.linden.data.AccountDao
 import org.sjbtimdan.linden.data.EntryDao
@@ -15,6 +16,7 @@ import org.sjbtimdan.linden.model.Currency
 import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.uniqueName
 import org.sjbtimdan.linden.ui.SearchableListViewModel
+import org.sjbtimdan.linden.util.computationDispatcher
 
 class AccountListViewModel(
     private val accountDao: AccountDao,
@@ -48,7 +50,8 @@ class AccountListViewModel(
     ) { accounts, entries ->
         accountBalancesAtEnd(entries, cutoff = null, accounts, TimeZone.currentSystemDefault())
             .associate { item -> item.account.id to item.balance }
-    }.stateFlow(emptyMap())
+    }.flowOn(computationDispatcher)
+        .stateFlow(emptyMap())
 
     /** Hides or reveals [id]; hidden accounts stay in history but leave the ledger, pickers and filters. */
     fun setHidden(id: Long, hidden: Boolean) {

@@ -4,7 +4,9 @@ import app.cash.sqldelight.Query
 import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.coroutines.asFlow
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +25,18 @@ private val ScreenStateSharing = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MIL
  * `FlowExtensionsTest`.
  */
 internal var stateFlowStartedOverrideForTest: SharingStarted? = null
+
+/** Test-only override for [computationDispatcher]; production leaves it null. */
+internal var computationDispatcherOverrideForTest: CoroutineDispatcher? = null
+
+/**
+ * Dispatcher for CPU-bound flow work (entry aggregation, sorting, formatting
+ * totals). Production runs it on [Dispatchers.Default] so a large ledger never
+ * stalls the main thread; tests override it with their unconfined dispatcher so
+ * `StateFlow.value` reads stay synchronous (see [onTestMain]).
+ */
+internal val computationDispatcher: CoroutineDispatcher
+    get() = computationDispatcherOverrideForTest ?: Dispatchers.Default
 
 /**
  * Default sharing for UI state: start on the first collector, stop 5 s after

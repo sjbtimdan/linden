@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.datetime.DateTimeUnit
@@ -26,6 +27,7 @@ import org.sjbtimdan.linden.model.Entry
 import org.sjbtimdan.linden.model.FxRate
 import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.AppViewModel
+import org.sjbtimdan.linden.util.computationDispatcher
 
 /** Number of months in the trend window and of bars in the chart. */
 internal const val WINDOW_MONTHS = 12
@@ -76,7 +78,8 @@ class InsightsViewModel(
         _windowEnd,
     ) { entries, currency, rates, windowEnd ->
         monthlyTotals(entries, windowEnd, currentMonthStart(today()), currency, rates, zone)
-    }.stateFlow(emptyList())
+    }.flowOn(computationDispatcher)
+        .stateFlow(emptyList())
 
     /** False once the window already ends with the current month. */
     val canStepForward: StateFlow<Boolean> = _windowEnd
@@ -96,7 +99,8 @@ class InsightsViewModel(
         val index = if (selected == -1 || selected >= WINDOW_MONTHS) WINDOW_MONTHS - 1 else selected
         val month = monthBefore(input.windowEnd, WINDOW_MONTHS - 1 - index)
         categoryBreakdown(input.entries, month, input.currency, input.rates, input.budgets, zone)
-    }.stateFlow(null)
+    }.flowOn(computationDispatcher)
+        .stateFlow(null)
 
     /** Inspects the month at [index] within the window. */
     fun selectMonth(index: Int) {

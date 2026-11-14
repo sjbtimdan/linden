@@ -52,18 +52,24 @@ import org.sjbtimdan.linden.ui.ledger.LedgerPeriod
 import org.sjbtimdan.linden.ui.ledger.LedgerViewModel
 import org.sjbtimdan.linden.ui.rates.RatesViewModel
 import org.sjbtimdan.linden.ui.settings.SettingsViewModel
+import org.sjbtimdan.linden.util.computationDispatcherOverrideForTest
 import org.sjbtimdan.linden.util.stateFlowStartedOverrideForTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 fun onTestMain(block: suspend () -> Unit) {
-    Dispatchers.setMain(UnconfinedTestDispatcher())
+    val dispatcher = UnconfinedTestDispatcher()
+    Dispatchers.setMain(dispatcher)
     // Tests assert on StateFlow.value without collecting, so they run the
     // production WhileSubscribed sharing eagerly. FlowExtensionsTest covers the
-    // real sharing behavior directly.
+    // real sharing behavior directly. Aggregation also stays on this unconfined
+    // dispatcher so its results are available synchronously (production moves it
+    // to Dispatchers.Default).
+    computationDispatcherOverrideForTest = dispatcher
     stateFlowStartedOverrideForTest = SharingStarted.Eagerly
     try {
         runBlocking { block() }
     } finally {
+        computationDispatcherOverrideForTest = null
         stateFlowStartedOverrideForTest = null
         Dispatchers.resetMain()
     }

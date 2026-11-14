@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,6 +32,7 @@ import org.sjbtimdan.linden.time.AppClock
 import org.sjbtimdan.linden.ui.accounts.accountBalancesAtEnd
 import org.sjbtimdan.linden.ui.accounts.accountTotalMinor
 import org.sjbtimdan.linden.ui.insights.PaceForecast
+import org.sjbtimdan.linden.util.computationDispatcher
 import org.sjbtimdan.linden.ui.insights.paceForecast as computePaceForecast
 
 class EntryPointViewModel(
@@ -80,7 +82,8 @@ class EntryPointViewModel(
             currency,
             rates,
         )
-    }.stateFlow(null)
+    }.flowOn(computationDispatcher)
+        .stateFlow(null)
 
     /** Current-month expense pace in the default currency; null until enough history. */
     val paceForecast: StateFlow<PaceForecast?> = combine(
@@ -89,7 +92,8 @@ class EntryPointViewModel(
         rates,
     ) { entries, currency, rates ->
         computePaceForecast(entries, clock.todayIn(zone), currency, rates, zone)
-    }.stateFlow(null)
+    }.flowOn(computationDispatcher)
+        .stateFlow(null)
 
     /** Pace after the draft expense is saved; null unless it is a new expense with an account. */
     val paceAfterThis: StateFlow<PaceAfterThis?> = combine(
