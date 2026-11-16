@@ -247,6 +247,8 @@ class EntryPointSuggestionsTest : StringSpec({
             }
 
             waitForText("Quick entry")
+            viewModel.onDescriptionChange("")
+            waitForText("Coffee · 4.50")
             onNodeWithText("Coffee · 4.50").performClick()
             waitForIdle()
 
@@ -274,6 +276,8 @@ class EntryPointSuggestionsTest : StringSpec({
             }
 
             waitForText("Quick entry")
+            viewModel.onDescriptionChange("")
+            waitForText("Coffee · 4.50")
             enterAmount("9.99")
             onNodeWithText("Coffee · 4.50").performClick()
             waitForIdle()

@@ -201,6 +201,65 @@ class EntrySuggestionsProviderTest : StringSpec({
         }
     }
 
+    "quick entries are filtered by the typed description and fill from matching entries" {
+        withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
+            val (main, groceries) = seed(accountDao, categoryDao)
+            val zone = TimeZone.currentSystemDefault()
+            fun occurred(daysBeforeNow: Int) = TEST_NOW.minus(daysBeforeNow, DateTimeUnit.DAY, zone)
+            // Recurring entries with descriptions that start with the typed prefix should remain,
+            // while non-matching descriptions are excluded.
+            repeat(2) { copy ->
+                entryDao.create(ExpenseEntry(0, groceries, "Tea", main, 450, createdAt = occurred(1 + copy)))
+            }
+            repeat(2) { copy ->
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 450, createdAt = occurred(3 + copy)))
+            }
+            repeat(2) { copy ->
+                entryDao.create(ExpenseEntry(0, groceries, "Coffee", main, 550, createdAt = occurred(5 + copy)))
+            }
+            repeat(2) { copy ->
+                entryDao.create(
+                    ExpenseEntry(0, groceries, "Coffee Beans", main, 450, createdAt = occurred(7 + copy)),
+                )
+            }
+            repeat(2) { copy ->
+                entryDao.create(
+                    ExpenseEntry(0, groceries, "Caramel", main, 450, createdAt = occurred(9 + copy)),
+                )
+            }
+            draft.value = EntryDraft.forNew(EntryType.Expense, clock = FakeClock(now = TEST_NOW))
+
+            withTimeout(5.seconds) {
+                provider.quickEntries.first {
+                    it.map { quickEntry -> quickEntry.entry.description.orEmpty() }.sorted() ==
+                        listOf("Caramel", "Coffee", "Coffee", "Coffee Beans", "Tea")
+                }
+            }
+
+            draft.value = draft.value?.copy(description = "cof")
+
+            withTimeout(5.seconds) {
+                provider.quickEntries.first {
+                    it.map { quickEntry -> quickEntry.entry.description.orEmpty() }.sorted() ==
+                        listOf("Coffee", "Coffee", "Coffee Beans")
+                }
+            }
+
+            draft.value = draft.value?.copy(description = "Coffee B")
+
+            provider.quickEntries.awaitDescriptions(listOf("Coffee Beans"))
+
+            draft.value = draft.value?.copy(description = "")
+
+            withTimeout(5.seconds) {
+                provider.quickEntries.first {
+                    it.map { quickEntry -> quickEntry.entry.description.orEmpty() }.sorted() ==
+                        listOf("Caramel", "Coffee", "Coffee", "Coffee Beans", "Tea")
+                }
+            }
+        }
+    }
+
     "quick entries re-rank when the draft date changes" {
         withSuggestionsProvider { entryDao, accountDao, categoryDao, provider, draft ->
             val (main, groceries) = seed(accountDao, categoryDao)

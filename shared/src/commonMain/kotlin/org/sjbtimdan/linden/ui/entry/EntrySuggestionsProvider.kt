@@ -190,8 +190,14 @@ class EntrySuggestionsProvider(
         entries = allTypeEntries,
         suppressed = activeSuppressed,
     ) { state, entries, _, suppressed ->
+        val query = state.description.trim()
+        val candidates = if (query.isEmpty()) {
+            entries
+        } else {
+            entries.filter { it.description?.trim()?.startsWith(query, ignoreCase = true) == true }
+        }
         predictQuickEntries(
-            entries = entries,
+            entries = candidates,
             input = state.fieldInput(),
             now = clock.now(),
             timeZone = TimeZone.currentSystemDefault(),
