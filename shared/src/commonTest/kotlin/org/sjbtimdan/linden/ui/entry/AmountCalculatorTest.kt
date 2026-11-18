@@ -398,4 +398,63 @@ class AmountCalculatorTest : StringSpec({
             }
         }
     }
+
+    "hardware keyboard types digits and decimal without clicking a key" {
+        onTestMain {
+            runComposeUiTest {
+                var committed: String? = null
+                showForm(draft(""), onAmountChange = { committed = it })
+                openCalculator()
+
+                onRoot().performKeyInput {
+                    pressKey(Key.One)
+                    pressKey(Key.Two)
+                    pressKey(Key.Period)
+                    pressKey(Key.Five)
+                    pressKey(Key.Enter)
+                }
+                waitForIdle()
+
+                committed shouldBe "12.50"
+            }
+        }
+    }
+
+    "hardware backspace deletes typed digits without clicking a key" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft(""))
+                openCalculator()
+
+                onRoot().performKeyInput {
+                    pressKey(Key.One)
+                    pressKey(Key.Two)
+                    pressKey(Key.Three)
+                    pressKey(Key.Backspace)
+                    pressKey(Key.Four)
+                }
+                waitForIdle()
+
+                onNodeWithTag("calculatorDisplay").assertTextEquals("124")
+            }
+        }
+    }
+
+    "hardware backspace edits a prefilled amount without clicking a key" {
+        onTestMain {
+            runComposeUiTest {
+                showForm(draft("2261.42"))
+                openCalculator()
+
+                onRoot().performKeyInput {
+                    pressKey(Key.Backspace)
+                    pressKey(Key.Backspace)
+                    pressKey(Key.Backspace)
+                }
+                waitForIdle()
+
+                onNodeWithTag("calculatorDisplay").assertTextEquals("2261")
+            }
+        }
+    }
 })

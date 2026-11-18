@@ -152,7 +152,18 @@ class CalculatorModel(
     }
 
     fun onBackspace() {
-        if (error || resultMode) return
+        if (error) return
+        if (resultMode && entry.isEmpty()) {
+            // Turn the displayed result or prefill into an editable entry so it can
+            // be trimmed instead of forcing a full retype.
+            entry = display.dropLast(1)
+            acc = null
+            op = null
+            resultMode = false
+            updateDisplay()
+            return
+        }
+        if (resultMode) return
         entry = entry.dropLast(1)
         updateDisplay()
     }

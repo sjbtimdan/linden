@@ -1,5 +1,6 @@
 package org.sjbtimdan.linden.ui.entry
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -11,12 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -47,6 +51,7 @@ fun AmountCalculator(
     var display by remember { mutableStateOf(model.display) }
     var expression by remember { mutableStateOf(model.pendingExpression) }
     var calculatorMode by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
 
     fun press(change: () -> Unit) {
         change()
@@ -65,9 +70,15 @@ fun AmountCalculator(
         return true
     }
 
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .focusable()
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (event.key) {
@@ -78,6 +89,36 @@ fun AmountCalculator(
 
                     Key.Escape -> {
                         onCancel()
+                        true
+                    }
+
+                    Key.Backspace, Key.Delete -> {
+                        press { model.onBackspace() }
+                        true
+                    }
+
+                    Key.Zero, Key.NumPad0 -> press { model.onDigit('0') }.let { true }
+
+                    Key.One, Key.NumPad1 -> press { model.onDigit('1') }.let { true }
+
+                    Key.Two, Key.NumPad2 -> press { model.onDigit('2') }.let { true }
+
+                    Key.Three, Key.NumPad3 -> press { model.onDigit('3') }.let { true }
+
+                    Key.Four, Key.NumPad4 -> press { model.onDigit('4') }.let { true }
+
+                    Key.Five, Key.NumPad5 -> press { model.onDigit('5') }.let { true }
+
+                    Key.Six, Key.NumPad6 -> press { model.onDigit('6') }.let { true }
+
+                    Key.Seven, Key.NumPad7 -> press { model.onDigit('7') }.let { true }
+
+                    Key.Eight, Key.NumPad8 -> press { model.onDigit('8') }.let { true }
+
+                    Key.Nine, Key.NumPad9 -> press { model.onDigit('9') }.let { true }
+
+                    Key.Period, Key.Comma, Key.NumPadDot -> {
+                        press { model.onDot() }
                         true
                     }
 

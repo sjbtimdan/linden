@@ -125,6 +125,22 @@ class CalculatorModelTest : StringSpec({
         CalculatorModel(null).type("123bb").display shouldBe "1"
     }
 
+    "backspace edits a prefilled amount" {
+        CalculatorModel(226_142).type("bb").display shouldBe "2261."
+        CalculatorModel(226_142).type("bbb").display shouldBe "2261"
+    }
+
+    "backspace edits the result of a calculation" {
+        CalculatorModel(null).type("100+3=bb").display shouldBe "103."
+    }
+
+    "backspace on a prefill can clear everything" {
+        val model = CalculatorModel(1_000)
+        model.type("bbbbb")
+        model.display shouldBe "0.00"
+        model.commitValue.shouldBeNull()
+    }
+
     "swallows leading zeros" {
         CalculatorModel(null).type("007").display shouldBe "7"
         CalculatorModel(null).type("00.5").display shouldBe "0.5"

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Dialpad
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.stringResource
 import org.sjbtimdan.linden.resources.Res
 import org.sjbtimdan.linden.resources.entry_calculator
@@ -91,7 +93,13 @@ internal fun CalculatorDisplay(
                     Text(
                         text = value,
                         style = MaterialTheme.typography.displayMedium,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 12.sp,
+                            maxFontSize = MaterialTheme.typography.displayMedium.fontSize,
+                            stepSize = 0.5.sp,
+                        ),
                         textAlign = TextAlign.End,
+                        softWrap = false,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth().testTag("calculatorDisplay"),
